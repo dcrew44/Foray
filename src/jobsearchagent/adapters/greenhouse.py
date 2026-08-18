@@ -24,7 +24,7 @@ def parse_compensation(data):
 def format_post_date(data: dict[str, Any]) -> datetime | None:
     try:
         if "first_published" in data:
-            return datetime.fromisoformat(data["first_published"])
+            return datetime.fromisoformat(data.get("first_published") or "")
     except ValueError:
         return None
     return None
@@ -40,8 +40,8 @@ def format_description(data: dict[str, Any]) -> str:
 def format_location(data: dict[str, Any]) -> list[str]:
     if "location" not in data:
         raise FieldNotFoundError("location", data.keys())
-    location_str = (data.get("location") or {}).get("name")
-    location = location_str.split("; ") if location_str or []
+    location_str = (data.get("location") or {}).get("name") or ""
+    location = location_str.split("; ") if location_str else []
     return location
 
 

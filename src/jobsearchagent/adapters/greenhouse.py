@@ -40,8 +40,8 @@ def format_description(data: dict[str, Any]) -> str:
 def format_location(data: dict[str, Any]) -> list[str]:
     if "location" not in data:
         raise FieldNotFoundError("location", data.keys())
-    location_str = data.get("location", {}).get("name", "")
-    location = location_str.split("; ")
+    location_str = (data.get("location") or {}).get("name")
+    location = location_str.split("; ") if location_str or []
     return location
 
 

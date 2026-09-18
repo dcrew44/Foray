@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+.next
+out
+dist
+data
+coverage
+test-results
+playwright-report
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.claude

@@ -21,7 +21,9 @@
     "test:watch": "vitest",
     "llm:smoke": "tsx scripts/llm-smoke.ts",
     "llm:bakeoff": "tsx scripts/model-bakeoff.ts",
-    "fetch:board": "tsx scripts/fetch-board.ts"
+    "fetch:board": "tsx scripts/fetch-board.ts",
+    "verify:boards": "tsx scripts/verify-boards.ts",
+    "seed:companies": "tsx scripts/seed-companies.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.57",

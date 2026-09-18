@@ -11,6 +11,11 @@ import {
   PreferencesSchema,
 } from "@/lib/profile/interview";
 
+import {
+  addCompany,
+  discoverCompanies,
+  listRegisteredCompanies,
+} from "./tools/companies";
 import { getProfileSummary } from "./tools/get-profile-summary";
 import { updateProfilePreferences } from "./tools/update-profile-preferences";
 import { systemPrompt } from "./system-prompt";
@@ -44,6 +49,9 @@ export async function chatAgent(userId: string) {
     tools: {
       get_profile_summary: getProfileSummary(userId),
       update_profile_preferences: updateProfilePreferences(userId),
+      add_company: addCompany(userId),
+      discover_companies: discoverCompanies(userId),
+      list_companies: listRegisteredCompanies(),
     },
     stopWhen: isStepCount(8),
   });

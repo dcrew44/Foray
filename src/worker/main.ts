@@ -5,6 +5,10 @@ import { createBoss, ensureQueues } from "@/lib/queue/boss";
 import { QUEUES } from "@/lib/queue/queues";
 import { pool } from "@/lib/db";
 
+import {
+  handleCompanyDiscover,
+  handleCompanyRefresh,
+} from "./handlers/company";
 import { handlePing } from "./handlers/ping";
 
 /**
@@ -28,6 +32,32 @@ async function main() {
     { batchSize: 1 },
     handlePing,
   );
+
+  await boss.work<import("@/lib/queue/queues").CompanyDiscoverPayload>(
+    QUEUES.companyDiscover,
+    { batchSize: 1 },
+    handleCompanyDiscover,
+  );
+
+  // One at a time: a refresh already fans out across boards internally, and two
+  // overlapping refreshes would double the load we put on free public APIs.
+  await boss.work<import("@/lib/queue/queues").CompanyRefreshPayload>(
+    QUEUES.companyRefresh,
+    { batchSize: 1 },
+    handleCompanyRefresh,
+  );
+
+  /**
+   * Keep the mirror warm. Every six hours, any board not fetched in the last
+   * two hours is refetched, and postings that have vanished are marked
+   * inactive. `missed: "once"` means a laptop that was closed overnight
+   * catches up with a single run rather than firing every window it slept
+   * through.
+   */
+  await boss.schedule(QUEUES.companyRefresh, "0 */6 * * *", null, {
+    key: "company-refresh-cron",
+    missed: "once",
+  });
 
   console.log(
     `[worker] ready (pid ${process.pid}, concurrency ${env.WORKER_CONCURRENCY})`,

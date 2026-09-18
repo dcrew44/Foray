@@ -1,0 +1,2403 @@
+[
+  {
+    "name": "1Password",
+    "slug": "1password",
+    "sourceType": "ashby",
+    "atsSlug": "1password",
+    "domain": "1password.com",
+    "tags": [
+      "security",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Abnormal Security",
+    "slug": "abnormalsecurity",
+    "sourceType": "greenhouse",
+    "atsSlug": "abnormalsecurity",
+    "domain": "abnormal.ai",
+    "tags": [
+      "security",
+      "ai"
+    ]
+  },
+  {
+    "name": "Abridge",
+    "slug": "abridge",
+    "sourceType": "ashby",
+    "atsSlug": "abridge",
+    "domain": "abridge.com",
+    "tags": [
+      "healthtech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Affirm",
+    "slug": "affirm",
+    "sourceType": "greenhouse",
+    "atsSlug": "affirm",
+    "domain": "affirm.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Airbnb",
+    "slug": "airbnb",
+    "sourceType": "greenhouse",
+    "atsSlug": "airbnb",
+    "domain": "airbnb.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Airbyte",
+    "slug": "airbyte",
+    "sourceType": "ashby",
+    "atsSlug": "airbyte",
+    "domain": "airbyte.com",
+    "tags": [
+      "data",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Airtable",
+    "slug": "airtable",
+    "sourceType": "greenhouse",
+    "atsSlug": "airtable",
+    "domain": "airtable.com",
+    "tags": [
+      "enterprise",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Airwallex",
+    "slug": "airwallex",
+    "sourceType": "ashby",
+    "atsSlug": "airwallex",
+    "domain": "airwallex.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Alchemy",
+    "slug": "alchemy",
+    "sourceType": "ashby",
+    "atsSlug": "alchemy",
+    "domain": "alchemy.com",
+    "tags": [
+      "crypto",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Alloy",
+    "slug": "alloy",
+    "sourceType": "greenhouse",
+    "atsSlug": "alloy",
+    "domain": "alloy.com",
+    "tags": [
+      "fintech",
+      "security"
+    ]
+  },
+  {
+    "name": "Ambience Healthcare",
+    "slug": "ambiencehealthcare",
+    "sourceType": "ashby",
+    "atsSlug": "ambiencehealthcare",
+    "domain": "ambiencehealthcare.com",
+    "tags": [
+      "healthtech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Amplitude",
+    "slug": "amplitude",
+    "sourceType": "greenhouse",
+    "atsSlug": "amplitude",
+    "domain": "amplitude.com",
+    "tags": [
+      "data",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Anchorage Digital",
+    "slug": "anchorage",
+    "sourceType": "lever",
+    "atsSlug": "anchorage",
+    "domain": "anchorage.com",
+    "tags": [
+      "crypto",
+      "fintech"
+    ]
+  },
+  {
+    "name": "Anduril",
+    "slug": "andurilindustries",
+    "sourceType": "greenhouse",
+    "atsSlug": "andurilindustries",
+    "domain": "anduril.com",
+    "tags": [
+      "hardware",
+      "ai"
+    ]
+  },
+  {
+    "name": "Anthropic",
+    "slug": "anthropic",
+    "sourceType": "greenhouse",
+    "atsSlug": "anthropic",
+    "domain": "anthropic.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Anyscale",
+    "slug": "anyscale",
+    "sourceType": "lever",
+    "atsSlug": "anyscale",
+    "domain": "anyscale.com",
+    "tags": [
+      "ai",
+      "infra"
+    ]
+  },
+  {
+    "name": "Applied Intuition",
+    "slug": "applied",
+    "sourceType": "ashby",
+    "atsSlug": "applied",
+    "domain": "appliedintuition.com",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Arize AI",
+    "slug": "arizeai",
+    "sourceType": "greenhouse",
+    "atsSlug": "arizeai",
+    "domain": "arize.com",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
+    "name": "Asana",
+    "slug": "asana",
+    "sourceType": "greenhouse",
+    "atsSlug": "asana",
+    "domain": "asana.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Ashby",
+    "slug": "ashby",
+    "sourceType": "ashby",
+    "atsSlug": "ashby",
+    "domain": "ashbyhq.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "AssemblyAI",
+    "slug": "assemblyai",
+    "sourceType": "greenhouse",
+    "atsSlug": "assemblyai",
+    "domain": "assemblyai.com",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Astranis",
+    "slug": "astranis",
+    "sourceType": "greenhouse",
+    "atsSlug": "astranis",
+    "domain": "astranis.com",
+    "tags": [
+      "hardware",
+      "infra"
+    ]
+  },
+  {
+    "name": "Astronomer",
+    "slug": "astronomer",
+    "sourceType": "ashby",
+    "atsSlug": "astronomer",
+    "domain": "astronomer.io",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Attentive",
+    "slug": "attentive",
+    "sourceType": "greenhouse",
+    "atsSlug": "attentive",
+    "domain": "attentive.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Aurora Solar",
+    "slug": "aurorasolar",
+    "sourceType": "ashby",
+    "atsSlug": "aurorasolar",
+    "domain": "aurorasolar.com",
+    "tags": [
+      "climate"
+    ]
+  },
+  {
+    "name": "Baseten",
+    "slug": "baseten",
+    "sourceType": "ashby",
+    "atsSlug": "baseten",
+    "domain": "baseten.co",
+    "tags": [
+      "ai",
+      "infra"
+    ]
+  },
+  {
+    "name": "Benchling",
+    "slug": "benchling",
+    "sourceType": "ashby",
+    "atsSlug": "benchling",
+    "domain": "benchling.com",
+    "tags": [
+      "biotech",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Betterment",
+    "slug": "betterment",
+    "sourceType": "greenhouse",
+    "atsSlug": "betterment",
+    "domain": "betterment.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Box",
+    "slug": "boxinc",
+    "sourceType": "greenhouse",
+    "atsSlug": "boxinc",
+    "domain": "box.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Braze",
+    "slug": "braze",
+    "sourceType": "greenhouse",
+    "atsSlug": "braze",
+    "domain": "braze.com",
+    "tags": [
+      "enterprise",
+      "data"
+    ]
+  },
+  {
+    "name": "Brex",
+    "slug": "brex",
+    "sourceType": "greenhouse",
+    "atsSlug": "brex",
+    "domain": "brex.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Buildkite",
+    "slug": "buildkite",
+    "sourceType": "greenhouse",
+    "atsSlug": "buildkite",
+    "domain": "buildkite.com",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Calm",
+    "slug": "calm",
+    "sourceType": "greenhouse",
+    "atsSlug": "calm",
+    "domain": "calm.com",
+    "tags": [
+      "consumer",
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Carbon Health",
+    "slug": "carbon",
+    "sourceType": "greenhouse",
+    "atsSlug": "carbon",
+    "domain": "carbonhealth.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Carta",
+    "slug": "carta",
+    "sourceType": "greenhouse",
+    "atsSlug": "carta",
+    "domain": "carta.com",
+    "tags": [
+      "fintech",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Cedar",
+    "slug": "cedar",
+    "sourceType": "ashby",
+    "atsSlug": "cedar",
+    "domain": "cedar.com",
+    "tags": [
+      "healthtech",
+      "fintech"
+    ]
+  },
+  {
+    "name": "Cerebras",
+    "slug": "cerebras",
+    "sourceType": "ashby",
+    "atsSlug": "cerebras",
+    "domain": "cerebras.ai",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Chainguard",
+    "slug": "chainguard",
+    "sourceType": "greenhouse",
+    "atsSlug": "chainguard",
+    "domain": "chainguard.dev",
+    "tags": [
+      "security",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Character.AI",
+    "slug": "character",
+    "sourceType": "ashby",
+    "atsSlug": "character",
+    "domain": "character.ai",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Checkr",
+    "slug": "checkr",
+    "sourceType": "greenhouse",
+    "atsSlug": "checkr",
+    "domain": "checkr.com",
+    "tags": [
+      "enterprise",
+      "data"
+    ]
+  },
+  {
+    "name": "Chime",
+    "slug": "chime",
+    "sourceType": "greenhouse",
+    "atsSlug": "chime",
+    "domain": "chime.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Circle",
+    "slug": "circle",
+    "sourceType": "ashby",
+    "atsSlug": "circle",
+    "domain": "circle.com",
+    "tags": [
+      "crypto",
+      "fintech"
+    ]
+  },
+  {
+    "name": "CircleCI",
+    "slug": "circleci",
+    "sourceType": "greenhouse",
+    "atsSlug": "circleci",
+    "domain": "circleci.com",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "ClickHouse",
+    "slug": "clickhouse",
+    "sourceType": "ashby",
+    "atsSlug": "clickhouse",
+    "domain": "clickhouse.com",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Cloudflare",
+    "slug": "cloudflare",
+    "sourceType": "greenhouse",
+    "atsSlug": "cloudflare",
+    "domain": "cloudflare.com",
+    "tags": [
+      "infra",
+      "security"
+    ]
+  },
+  {
+    "name": "Cockroach Labs",
+    "slug": "cockroachlabs",
+    "sourceType": "greenhouse",
+    "atsSlug": "cockroachlabs",
+    "domain": "cockroachlabs.com",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Cohere",
+    "slug": "cohere",
+    "sourceType": "ashby",
+    "atsSlug": "cohere",
+    "domain": "cohere.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Coinbase",
+    "slug": "coinbase",
+    "sourceType": "greenhouse",
+    "atsSlug": "coinbase",
+    "domain": "coinbase.com",
+    "tags": [
+      "crypto",
+      "fintech"
+    ]
+  },
+  {
+    "name": "Color Health",
+    "slug": "color-health",
+    "sourceType": "ashby",
+    "atsSlug": "color-health",
+    "domain": "color.com",
+    "tags": [
+      "healthtech",
+      "biotech"
+    ]
+  },
+  {
+    "name": "Column",
+    "slug": "column",
+    "sourceType": "ashby",
+    "atsSlug": "column",
+    "domain": "column.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Confluent",
+    "slug": "confluent",
+    "sourceType": "ashby",
+    "atsSlug": "confluent",
+    "domain": "confluent.io",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "CoreWeave",
+    "slug": "coreweave",
+    "sourceType": "greenhouse",
+    "atsSlug": "coreweave",
+    "domain": "coreweave.com",
+    "tags": [
+      "infra",
+      "ai"
+    ]
+  },
+  {
+    "name": "Coursera",
+    "slug": "coursera",
+    "sourceType": "greenhouse",
+    "atsSlug": "coursera",
+    "domain": "coursera.org",
+    "tags": [
+      "consumer",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Cresta",
+    "slug": "cresta",
+    "sourceType": "greenhouse",
+    "atsSlug": "cresta",
+    "domain": "cresta.com",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Crusoe",
+    "slug": "crusoe",
+    "sourceType": "ashby",
+    "atsSlug": "crusoe",
+    "domain": "crusoe.ai",
+    "tags": [
+      "infra",
+      "climate"
+    ]
+  },
+  {
+    "name": "Curri",
+    "slug": "curri",
+    "sourceType": "ashby",
+    "atsSlug": "curri",
+    "domain": "curri.com",
+    "tags": [
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Cursor",
+    "slug": "cursor",
+    "sourceType": "ashby",
+    "atsSlug": "cursor",
+    "domain": "cursor.com",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Databricks",
+    "slug": "databricks",
+    "sourceType": "greenhouse",
+    "atsSlug": "databricks",
+    "domain": "databricks.com",
+    "tags": [
+      "data",
+      "ai"
+    ]
+  },
+  {
+    "name": "Datadog",
+    "slug": "datadog",
+    "sourceType": "greenhouse",
+    "atsSlug": "datadog",
+    "domain": "datadoghq.com",
+    "tags": [
+      "infra",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Decagon",
+    "slug": "decagon",
+    "sourceType": "ashby",
+    "atsSlug": "decagon",
+    "domain": "decagon.ai",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Deepgram",
+    "slug": "deepgram",
+    "sourceType": "ashby",
+    "atsSlug": "deepgram",
+    "domain": "deepgram.com",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Descope",
+    "slug": "descope",
+    "sourceType": "greenhouse",
+    "atsSlug": "descope",
+    "domain": "descope.com",
+    "tags": [
+      "security",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Descript",
+    "slug": "descript",
+    "sourceType": "greenhouse",
+    "atsSlug": "descript",
+    "domain": "descript.com",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Discord",
+    "slug": "discord",
+    "sourceType": "greenhouse",
+    "atsSlug": "discord",
+    "domain": "discord.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Docker",
+    "slug": "docker",
+    "sourceType": "ashby",
+    "atsSlug": "docker",
+    "domain": "docker.com",
+    "tags": [
+      "devtools",
+      "infra"
+    ]
+  },
+  {
+    "name": "DoorDash",
+    "slug": "doordashusa",
+    "sourceType": "greenhouse",
+    "atsSlug": "doordashusa",
+    "domain": "doordash.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Doppler",
+    "slug": "doppler",
+    "sourceType": "ashby",
+    "atsSlug": "doppler",
+    "domain": "doppler.com",
+    "tags": [
+      "security",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Drata",
+    "slug": "drata",
+    "sourceType": "ashby",
+    "atsSlug": "drata",
+    "domain": "drata.com",
+    "tags": [
+      "security",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Dropbox",
+    "slug": "dropbox",
+    "sourceType": "greenhouse",
+    "atsSlug": "dropbox",
+    "domain": "dropbox.com",
+    "tags": [
+      "consumer",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Duolingo",
+    "slug": "duolingo",
+    "sourceType": "greenhouse",
+    "atsSlug": "duolingo",
+    "domain": "duolingo.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Elastic",
+    "slug": "elastic",
+    "sourceType": "greenhouse",
+    "atsSlug": "elastic",
+    "domain": "elastic.co",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "ElevenLabs",
+    "slug": "elevenlabs",
+    "sourceType": "ashby",
+    "atsSlug": "elevenlabs",
+    "domain": "elevenlabs.io",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Envoy",
+    "slug": "envoy",
+    "sourceType": "ashby",
+    "atsSlug": "envoy",
+    "domain": "envoy.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Eventbrite",
+    "slug": "eventbriteinc",
+    "sourceType": "greenhouse",
+    "atsSlug": "eventbriteinc",
+    "domain": "eventbrite.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Expensify",
+    "slug": "expensify",
+    "sourceType": "ashby",
+    "atsSlug": "expensify",
+    "domain": "expensify.com",
+    "tags": [
+      "fintech",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Faire",
+    "slug": "faire",
+    "sourceType": "greenhouse",
+    "atsSlug": "faire",
+    "domain": "faire.com",
+    "tags": [
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Figma",
+    "slug": "figma",
+    "sourceType": "greenhouse",
+    "atsSlug": "figma",
+    "domain": "figma.com",
+    "tags": [
+      "devtools",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Figure",
+    "slug": "figureai",
+    "sourceType": "greenhouse",
+    "atsSlug": "figureai",
+    "domain": "figure.ai",
+    "tags": [
+      "hardware",
+      "ai"
+    ]
+  },
+  {
+    "name": "Finch",
+    "slug": "finch",
+    "sourceType": "lever",
+    "atsSlug": "finch",
+    "domain": "tryfinch.com",
+    "tags": [
+      "fintech",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Fireworks AI",
+    "slug": "fireworks",
+    "sourceType": "ashby",
+    "atsSlug": "fireworks",
+    "domain": "fireworks.ai",
+    "tags": [
+      "ai",
+      "infra"
+    ]
+  },
+  {
+    "name": "Fivetran",
+    "slug": "fivetran",
+    "sourceType": "greenhouse",
+    "atsSlug": "fivetran",
+    "domain": "fivetran.com",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "name": "Flexport",
+    "slug": "flexport",
+    "sourceType": "greenhouse",
+    "atsSlug": "flexport",
+    "domain": "flexport.com",
+    "tags": [
+      "marketplace",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Form Energy",
+    "slug": "formenergy",
+    "sourceType": "ashby",
+    "atsSlug": "formenergy",
+    "domain": "formenergy.com",
+    "tags": [
+      "climate",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Front",
+    "slug": "frontcareers",
+    "sourceType": "ashby",
+    "atsSlug": "frontcareers",
+    "domain": "front.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Ginkgo Bioworks",
+    "slug": "ginkgobioworks",
+    "sourceType": "greenhouse",
+    "atsSlug": "ginkgobioworks",
+    "domain": "ginkgobioworks.com",
+    "tags": [
+      "biotech"
+    ]
+  },
+  {
+    "name": "GitLab",
+    "slug": "gitlab",
+    "sourceType": "greenhouse",
+    "atsSlug": "gitlab",
+    "domain": "gitlab.com",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Glean",
+    "slug": "gleanwork",
+    "sourceType": "greenhouse",
+    "atsSlug": "gleanwork",
+    "domain": "glean.com",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "GOAT Group",
+    "slug": "goatgroup",
+    "sourceType": "greenhouse",
+    "atsSlug": "goatgroup",
+    "domain": "goat.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Gong",
+    "slug": "gongio",
+    "sourceType": "greenhouse",
+    "atsSlug": "gongio",
+    "domain": "gong.io",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Grafana Labs",
+    "slug": "grafanalabs",
+    "sourceType": "greenhouse",
+    "atsSlug": "grafanalabs",
+    "domain": "grafana.com",
+    "tags": [
+      "infra",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Greenhouse",
+    "slug": "greenhouse",
+    "sourceType": "greenhouse",
+    "atsSlug": "greenhouse",
+    "domain": "greenhouse.io",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Gusto",
+    "slug": "gusto",
+    "sourceType": "greenhouse",
+    "atsSlug": "gusto",
+    "domain": "gusto.com",
+    "tags": [
+      "fintech",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Handshake",
+    "slug": "handshake",
+    "sourceType": "greenhouse",
+    "atsSlug": "handshake",
+    "domain": "joinhandshake.com",
+    "tags": [
+      "marketplace",
+      "ai"
+    ]
+  },
+  {
+    "name": "Harness",
+    "slug": "harnessinc",
+    "sourceType": "greenhouse",
+    "atsSlug": "harnessinc",
+    "domain": "harness.io",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Harvey",
+    "slug": "harvey",
+    "sourceType": "ashby",
+    "atsSlug": "harvey",
+    "domain": "harvey.ai",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Headway",
+    "slug": "headway",
+    "sourceType": "ashby",
+    "atsSlug": "headway",
+    "domain": "headway.co",
+    "tags": [
+      "healthtech",
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Hex",
+    "slug": "hextechnologies",
+    "sourceType": "greenhouse",
+    "atsSlug": "hextechnologies",
+    "domain": "hex.tech",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "name": "Highnote",
+    "slug": "highnote",
+    "sourceType": "greenhouse",
+    "atsSlug": "highnote",
+    "domain": "highnote.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Hightouch",
+    "slug": "hightouch",
+    "sourceType": "greenhouse",
+    "atsSlug": "hightouch",
+    "domain": "hightouch.com",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "name": "Hinge Health",
+    "slug": "hinge-health",
+    "sourceType": "ashby",
+    "atsSlug": "hinge-health",
+    "domain": "hingehealth.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Honeycomb",
+    "slug": "honeycomb",
+    "sourceType": "greenhouse",
+    "atsSlug": "honeycomb",
+    "domain": "honeycomb.io",
+    "tags": [
+      "devtools",
+      "infra"
+    ]
+  },
+  {
+    "name": "Imbue",
+    "slug": "imbue",
+    "sourceType": "greenhouse",
+    "atsSlug": "imbue",
+    "domain": "imbue.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Included Health",
+    "slug": "includedhealth",
+    "sourceType": "lever",
+    "atsSlug": "includedhealth",
+    "domain": "includedhealth.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Instacart",
+    "slug": "instacart",
+    "sourceType": "greenhouse",
+    "atsSlug": "instacart",
+    "domain": "instacart.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Instawork",
+    "slug": "instawork",
+    "sourceType": "greenhouse",
+    "atsSlug": "instawork",
+    "domain": "instawork.com",
+    "tags": [
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Intercom",
+    "slug": "intercom",
+    "sourceType": "greenhouse",
+    "atsSlug": "intercom",
+    "domain": "intercom.com",
+    "tags": [
+      "enterprise",
+      "ai"
+    ]
+  },
+  {
+    "name": "Ironclad",
+    "slug": "ironcladhq",
+    "sourceType": "ashby",
+    "atsSlug": "ironcladhq",
+    "domain": "ironcladapp.com",
+    "tags": [
+      "enterprise",
+      "ai"
+    ]
+  },
+  {
+    "name": "Iterable",
+    "slug": "iterable",
+    "sourceType": "greenhouse",
+    "atsSlug": "iterable",
+    "domain": "iterable.com",
+    "tags": [
+      "enterprise",
+      "data"
+    ]
+  },
+  {
+    "name": "Klaviyo",
+    "slug": "klaviyo",
+    "sourceType": "greenhouse",
+    "atsSlug": "klaviyo",
+    "domain": "klaviyo.com",
+    "tags": [
+      "enterprise",
+      "data"
+    ]
+  },
+  {
+    "name": "Komodo Health",
+    "slug": "komodohealth",
+    "sourceType": "greenhouse",
+    "atsSlug": "komodohealth",
+    "domain": "komodohealth.com",
+    "tags": [
+      "healthtech",
+      "data"
+    ]
+  },
+  {
+    "name": "Lambda",
+    "slug": "lambda",
+    "sourceType": "ashby",
+    "atsSlug": "lambda",
+    "domain": "lambda.ai",
+    "tags": [
+      "ai",
+      "infra"
+    ]
+  },
+  {
+    "name": "LangChain",
+    "slug": "langchain",
+    "sourceType": "ashby",
+    "atsSlug": "langchain",
+    "domain": "langchain.com",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Lattice",
+    "slug": "lattice",
+    "sourceType": "greenhouse",
+    "atsSlug": "lattice",
+    "domain": "lattice.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "LaunchDarkly",
+    "slug": "launchdarkly",
+    "sourceType": "greenhouse",
+    "atsSlug": "launchdarkly",
+    "domain": "launchdarkly.com",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Life360",
+    "slug": "life360",
+    "sourceType": "greenhouse",
+    "atsSlug": "life360",
+    "domain": "life360.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Linear",
+    "slug": "linear",
+    "sourceType": "ashby",
+    "atsSlug": "linear",
+    "domain": "linear.app",
+    "tags": [
+      "devtools",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Lithic",
+    "slug": "lithic",
+    "sourceType": "greenhouse",
+    "atsSlug": "lithic",
+    "domain": "lithic.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Lucid Motors",
+    "slug": "lucidmotors",
+    "sourceType": "greenhouse",
+    "atsSlug": "lucidmotors",
+    "domain": "lucidmotors.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Luma AI",
+    "slug": "lumaai",
+    "sourceType": "ashby",
+    "atsSlug": "lumaai",
+    "domain": "lumalabs.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Lyft",
+    "slug": "lyft",
+    "sourceType": "greenhouse",
+    "atsSlug": "lyft",
+    "domain": "lyft.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Material Security",
+    "slug": "materialsecurity",
+    "sourceType": "ashby",
+    "atsSlug": "materialsecurity",
+    "domain": "material.security",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "name": "Materialize",
+    "slug": "materialize",
+    "sourceType": "ashby",
+    "atsSlug": "materialize",
+    "domain": "materialize.com",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Melio",
+    "slug": "melio",
+    "sourceType": "greenhouse",
+    "atsSlug": "melio",
+    "domain": "meliopayments.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Mercor",
+    "slug": "mercor",
+    "sourceType": "ashby",
+    "atsSlug": "mercor",
+    "domain": "mercor.com",
+    "tags": [
+      "ai",
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Mercury",
+    "slug": "mercury",
+    "sourceType": "greenhouse",
+    "atsSlug": "mercury",
+    "domain": "mercury.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Merge",
+    "slug": "merge",
+    "sourceType": "ashby",
+    "atsSlug": "merge",
+    "domain": "merge.dev",
+    "tags": [
+      "devtools",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Metabase",
+    "slug": "metabase",
+    "sourceType": "lever",
+    "atsSlug": "metabase",
+    "domain": "metabase.com",
+    "tags": [
+      "data",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Middesk",
+    "slug": "middesk",
+    "sourceType": "ashby",
+    "atsSlug": "middesk",
+    "domain": "middesk.com",
+    "tags": [
+      "fintech",
+      "data"
+    ]
+  },
+  {
+    "name": "Miro",
+    "slug": "miro",
+    "sourceType": "ashby",
+    "atsSlug": "miro",
+    "domain": "miro.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Mixpanel",
+    "slug": "mixpanel",
+    "sourceType": "greenhouse",
+    "atsSlug": "mixpanel",
+    "domain": "mixpanel.com",
+    "tags": [
+      "data",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Modal",
+    "slug": "modal",
+    "sourceType": "ashby",
+    "atsSlug": "modal",
+    "domain": "modal.com",
+    "tags": [
+      "infra",
+      "ai"
+    ]
+  },
+  {
+    "name": "Modern Treasury",
+    "slug": "moderntreasury",
+    "sourceType": "ashby",
+    "atsSlug": "moderntreasury",
+    "domain": "moderntreasury.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "MongoDB",
+    "slug": "mongodb",
+    "sourceType": "greenhouse",
+    "atsSlug": "mongodb",
+    "domain": "mongodb.com",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Monte Carlo",
+    "slug": "montecarlodata",
+    "sourceType": "ashby",
+    "atsSlug": "montecarlodata",
+    "domain": "montecarlodata.com",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "name": "Motive",
+    "slug": "motive",
+    "sourceType": "greenhouse",
+    "atsSlug": "motive",
+    "domain": "gomotive.com",
+    "tags": [
+      "enterprise",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Neon",
+    "slug": "neon",
+    "sourceType": "lever",
+    "atsSlug": "neon",
+    "domain": "neon.com",
+    "tags": [
+      "data",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Netlify",
+    "slug": "netlify",
+    "sourceType": "greenhouse",
+    "atsSlug": "netlify",
+    "domain": "netlify.com",
+    "tags": [
+      "devtools",
+      "infra"
+    ]
+  },
+  {
+    "name": "Nextdoor",
+    "slug": "nextdoor",
+    "sourceType": "greenhouse",
+    "atsSlug": "nextdoor",
+    "domain": "nextdoor.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Notion",
+    "slug": "notion",
+    "sourceType": "ashby",
+    "atsSlug": "notion",
+    "domain": "notion.com",
+    "tags": [
+      "enterprise",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Nova Credit",
+    "slug": "novacredit",
+    "sourceType": "greenhouse",
+    "atsSlug": "novacredit",
+    "domain": "novacredit.com",
+    "tags": [
+      "fintech",
+      "data"
+    ]
+  },
+  {
+    "name": "Nuro",
+    "slug": "nuro",
+    "sourceType": "greenhouse",
+    "atsSlug": "nuro",
+    "domain": "nuro.ai",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Okta",
+    "slug": "okta",
+    "sourceType": "greenhouse",
+    "atsSlug": "okta",
+    "domain": "okta.com",
+    "tags": [
+      "security",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Omada Health",
+    "slug": "omadahealth",
+    "sourceType": "greenhouse",
+    "atsSlug": "omadahealth",
+    "domain": "omadahealth.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "OpenAI",
+    "slug": "openai",
+    "sourceType": "ashby",
+    "atsSlug": "openai",
+    "domain": "openai.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Oscar Health",
+    "slug": "oscar",
+    "sourceType": "greenhouse",
+    "atsSlug": "oscar",
+    "domain": "hioscar.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Outreach",
+    "slug": "outreach",
+    "sourceType": "lever",
+    "atsSlug": "outreach",
+    "domain": "outreach.io",
+    "tags": [
+      "enterprise",
+      "ai"
+    ]
+  },
+  {
+    "name": "Patreon",
+    "slug": "patreon",
+    "sourceType": "ashby",
+    "atsSlug": "patreon",
+    "domain": "patreon.com",
+    "tags": [
+      "consumer",
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Perplexity",
+    "slug": "perplexity",
+    "sourceType": "ashby",
+    "atsSlug": "perplexity",
+    "domain": "perplexity.ai",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Persona",
+    "slug": "persona",
+    "sourceType": "ashby",
+    "atsSlug": "persona",
+    "domain": "withpersona.com",
+    "tags": [
+      "security",
+      "fintech"
+    ]
+  },
+  {
+    "name": "Photoroom",
+    "slug": "photoroom",
+    "sourceType": "ashby",
+    "atsSlug": "photoroom",
+    "domain": "photoroom.com",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Physical Intelligence",
+    "slug": "physicalintelligence",
+    "sourceType": "ashby",
+    "atsSlug": "physicalintelligence",
+    "domain": "physicalintelligence.company",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Pilot",
+    "slug": "pilothq",
+    "sourceType": "greenhouse",
+    "atsSlug": "pilothq",
+    "domain": "pilot.com",
+    "tags": [
+      "fintech",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Pinecone",
+    "slug": "pinecone",
+    "sourceType": "ashby",
+    "atsSlug": "pinecone",
+    "domain": "pinecone.io",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
+    "name": "Pinterest",
+    "slug": "pinterest",
+    "sourceType": "greenhouse",
+    "atsSlug": "pinterest",
+    "domain": "pinterest.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Plaid",
+    "slug": "plaid",
+    "sourceType": "ashby",
+    "atsSlug": "plaid",
+    "domain": "plaid.com",
+    "tags": [
+      "fintech",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Poshmark",
+    "slug": "poshmark",
+    "sourceType": "ashby",
+    "atsSlug": "poshmark",
+    "domain": "poshmark.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Railway",
+    "slug": "railway",
+    "sourceType": "ashby",
+    "atsSlug": "railway",
+    "domain": "railway.com",
+    "tags": [
+      "infra",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Ramp",
+    "slug": "ramp",
+    "sourceType": "ashby",
+    "atsSlug": "ramp",
+    "domain": "ramp.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Recursion",
+    "slug": "recursionpharmaceuticals",
+    "sourceType": "greenhouse",
+    "atsSlug": "recursionpharmaceuticals",
+    "domain": "recursion.com",
+    "tags": [
+      "biotech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Reddit",
+    "slug": "reddit",
+    "sourceType": "greenhouse",
+    "atsSlug": "reddit",
+    "domain": "reddit.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Redis",
+    "slug": "redis",
+    "sourceType": "ashby",
+    "atsSlug": "redis",
+    "domain": "redis.io",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Redwood Materials",
+    "slug": "redwoodmaterials",
+    "sourceType": "greenhouse",
+    "atsSlug": "redwoodmaterials",
+    "domain": "redwoodmaterials.com",
+    "tags": [
+      "climate",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Render",
+    "slug": "render",
+    "sourceType": "ashby",
+    "atsSlug": "render",
+    "domain": "render.com",
+    "tags": [
+      "infra",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Rent the Runway",
+    "slug": "renttherunway",
+    "sourceType": "greenhouse",
+    "atsSlug": "renttherunway",
+    "domain": "renttherunway.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Replit",
+    "slug": "replit",
+    "sourceType": "ashby",
+    "atsSlug": "replit",
+    "domain": "replit.com",
+    "tags": [
+      "devtools",
+      "ai"
+    ]
+  },
+  {
+    "name": "Ripple",
+    "slug": "ripple",
+    "sourceType": "greenhouse",
+    "atsSlug": "ripple",
+    "domain": "ripple.com",
+    "tags": [
+      "crypto",
+      "fintech"
+    ]
+  },
+  {
+    "name": "Ro",
+    "slug": "ro",
+    "sourceType": "lever",
+    "atsSlug": "ro",
+    "domain": "ro.co",
+    "tags": [
+      "healthtech",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Robinhood",
+    "slug": "robinhood",
+    "sourceType": "greenhouse",
+    "atsSlug": "robinhood",
+    "domain": "robinhood.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Roblox",
+    "slug": "roblox",
+    "sourceType": "greenhouse",
+    "atsSlug": "roblox",
+    "domain": "roblox.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Roku",
+    "slug": "roku",
+    "sourceType": "greenhouse",
+    "atsSlug": "roku",
+    "domain": "roku.com",
+    "tags": [
+      "consumer",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Rover",
+    "slug": "rover",
+    "sourceType": "lever",
+    "atsSlug": "rover",
+    "domain": "rover.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Rubrik",
+    "slug": "rubrik",
+    "sourceType": "greenhouse",
+    "atsSlug": "rubrik",
+    "domain": "rubrik.com",
+    "tags": [
+      "security",
+      "infra"
+    ]
+  },
+  {
+    "name": "Runway",
+    "slug": "runway",
+    "sourceType": "ashby",
+    "atsSlug": "runway",
+    "domain": "runway.com",
+    "tags": [
+      "fintech",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "SambaNova",
+    "slug": "sambanovasystems",
+    "sourceType": "greenhouse",
+    "atsSlug": "sambanovasystems",
+    "domain": "sambanova.ai",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Samsara",
+    "slug": "samsara",
+    "sourceType": "greenhouse",
+    "atsSlug": "samsara",
+    "domain": "samsara.com",
+    "tags": [
+      "enterprise",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Sardine",
+    "slug": "sardine",
+    "sourceType": "ashby",
+    "atsSlug": "sardine",
+    "domain": "sardine.ai",
+    "tags": [
+      "fintech",
+      "security"
+    ]
+  },
+  {
+    "name": "Scale AI",
+    "slug": "scaleai",
+    "sourceType": "greenhouse",
+    "atsSlug": "scaleai",
+    "domain": "scale.com",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
+    "name": "Scribd",
+    "slug": "scribdinc",
+    "sourceType": "ashby",
+    "atsSlug": "scribdinc",
+    "domain": "scribd.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Semgrep",
+    "slug": "semgrep",
+    "sourceType": "ashby",
+    "atsSlug": "semgrep",
+    "domain": "semgrep.dev",
+    "tags": [
+      "security",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Sentry",
+    "slug": "sentry",
+    "sourceType": "ashby",
+    "atsSlug": "sentry",
+    "domain": "sentry.io",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Sierra",
+    "slug": "sierra",
+    "sourceType": "ashby",
+    "atsSlug": "sierra",
+    "domain": "sierra.ai",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Sigma Computing",
+    "slug": "sigmacomputing",
+    "sourceType": "greenhouse",
+    "atsSlug": "sigmacomputing",
+    "domain": "sigmacomputing.com",
+    "tags": [
+      "data",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Skydio",
+    "slug": "skydio",
+    "sourceType": "ashby",
+    "atsSlug": "skydio",
+    "domain": "skydio.com",
+    "tags": [
+      "hardware",
+      "ai"
+    ]
+  },
+  {
+    "name": "Snorkel AI",
+    "slug": "snorkelai",
+    "sourceType": "greenhouse",
+    "atsSlug": "snorkelai",
+    "domain": "snorkel.ai",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
+    "name": "Snowflake",
+    "slug": "snowflake",
+    "sourceType": "ashby",
+    "atsSlug": "snowflake",
+    "domain": "snowflake.com",
+    "tags": [
+      "data",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Socket",
+    "slug": "socket",
+    "sourceType": "greenhouse",
+    "atsSlug": "socket",
+    "domain": "socket.dev",
+    "tags": [
+      "security",
+      "devtools"
+    ]
+  },
+  {
+    "name": "SoFi",
+    "slug": "sofi",
+    "sourceType": "greenhouse",
+    "atsSlug": "sofi",
+    "domain": "sofi.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Sourcegraph",
+    "slug": "sourcegraph91",
+    "sourceType": "greenhouse",
+    "atsSlug": "sourcegraph91",
+    "domain": "sourcegraph.com",
+    "tags": [
+      "devtools",
+      "ai"
+    ]
+  },
+  {
+    "name": "SpaceX",
+    "slug": "spacex",
+    "sourceType": "greenhouse",
+    "atsSlug": "spacex",
+    "domain": "spacex.com",
+    "tags": [
+      "hardware",
+      "infra"
+    ]
+  },
+  {
+    "name": "StackBlitz",
+    "slug": "stackblitz",
+    "sourceType": "greenhouse",
+    "atsSlug": "stackblitz",
+    "domain": "stackblitz.com",
+    "tags": [
+      "devtools",
+      "ai"
+    ]
+  },
+  {
+    "name": "StockX",
+    "slug": "stockx",
+    "sourceType": "greenhouse",
+    "atsSlug": "stockx",
+    "domain": "stockx.com",
+    "tags": [
+      "marketplace",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Strava",
+    "slug": "strava",
+    "sourceType": "ashby",
+    "atsSlug": "strava",
+    "domain": "strava.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Stripe",
+    "slug": "stripe",
+    "sourceType": "greenhouse",
+    "atsSlug": "stripe",
+    "domain": "stripe.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Substack",
+    "slug": "substack",
+    "sourceType": "ashby",
+    "atsSlug": "substack",
+    "domain": "substack.com",
+    "tags": [
+      "consumer",
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Supabase",
+    "slug": "supabase",
+    "sourceType": "ashby",
+    "atsSlug": "supabase",
+    "domain": "supabase.com",
+    "tags": [
+      "devtools",
+      "infra"
+    ]
+  },
+  {
+    "name": "Surge AI",
+    "slug": "surge-ai",
+    "sourceType": "ashby",
+    "atsSlug": "surge-ai",
+    "domain": "surgehq.ai",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
+    "name": "Sword Health",
+    "slug": "swordhealth",
+    "sourceType": "greenhouse",
+    "atsSlug": "swordhealth",
+    "domain": "swordhealth.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Tailscale",
+    "slug": "tailscale",
+    "sourceType": "greenhouse",
+    "atsSlug": "tailscale",
+    "domain": "tailscale.com",
+    "tags": [
+      "infra",
+      "security"
+    ]
+  },
+  {
+    "name": "Temporal",
+    "slug": "temporal",
+    "sourceType": "ashby",
+    "atsSlug": "temporal",
+    "domain": "temporal.io",
+    "tags": [
+      "devtools",
+      "infra"
+    ]
+  },
+  {
+    "name": "Thumbtack",
+    "slug": "thumbtack",
+    "sourceType": "ashby",
+    "atsSlug": "thumbtack",
+    "domain": "thumbtack.com",
+    "tags": [
+      "marketplace"
+    ]
+  },
+  {
+    "name": "TigerData",
+    "slug": "tigerdata",
+    "sourceType": "ashby",
+    "atsSlug": "tigerdata",
+    "domain": "tigerdata.com",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Together AI",
+    "slug": "togetherai",
+    "sourceType": "greenhouse",
+    "atsSlug": "togetherai",
+    "domain": "together.ai",
+    "tags": [
+      "ai",
+      "infra"
+    ]
+  },
+  {
+    "name": "Torq",
+    "slug": "torq",
+    "sourceType": "greenhouse",
+    "atsSlug": "torq",
+    "domain": "torq.io",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "name": "Twelve",
+    "slug": "twelve",
+    "sourceType": "ashby",
+    "atsSlug": "twelve",
+    "domain": "twelve.co",
+    "tags": [
+      "climate"
+    ]
+  },
+  {
+    "name": "Twilio",
+    "slug": "twilio",
+    "sourceType": "greenhouse",
+    "atsSlug": "twilio",
+    "domain": "twilio.com",
+    "tags": [
+      "infra",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Twitch",
+    "slug": "twitch",
+    "sourceType": "greenhouse",
+    "atsSlug": "twitch",
+    "domain": "twitch.tv",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Two Chairs",
+    "slug": "twochairs",
+    "sourceType": "greenhouse",
+    "atsSlug": "twochairs",
+    "domain": "twochairs.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Udemy",
+    "slug": "udemy",
+    "sourceType": "greenhouse",
+    "atsSlug": "udemy",
+    "domain": "udemy.com",
+    "tags": [
+      "consumer",
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Unit",
+    "slug": "unit",
+    "sourceType": "ashby",
+    "atsSlug": "unit",
+    "domain": "unit.co",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Upwork",
+    "slug": "upwork",
+    "sourceType": "greenhouse",
+    "atsSlug": "upwork",
+    "domain": "upwork.com",
+    "tags": [
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Vanta",
+    "slug": "vanta",
+    "sourceType": "ashby",
+    "atsSlug": "vanta",
+    "domain": "vanta.com",
+    "tags": [
+      "security",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Vercel",
+    "slug": "vercel",
+    "sourceType": "greenhouse",
+    "atsSlug": "vercel",
+    "domain": "vercel.com",
+    "tags": [
+      "devtools",
+      "infra"
+    ]
+  },
+  {
+    "name": "Verkada",
+    "slug": "verkada",
+    "sourceType": "greenhouse",
+    "atsSlug": "verkada",
+    "domain": "verkada.com",
+    "tags": [
+      "security",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Watershed",
+    "slug": "watershed",
+    "sourceType": "greenhouse",
+    "atsSlug": "watershed",
+    "domain": "watershed.com",
+    "tags": [
+      "climate",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Waymo",
+    "slug": "waymo",
+    "sourceType": "greenhouse",
+    "atsSlug": "waymo",
+    "domain": "waymo.com",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Wealthfront",
+    "slug": "wealthfront",
+    "sourceType": "lever",
+    "atsSlug": "wealthfront",
+    "domain": "wealthfront.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Webflow",
+    "slug": "webflow",
+    "sourceType": "greenhouse",
+    "atsSlug": "webflow",
+    "domain": "webflow.com",
+    "tags": [
+      "devtools",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Wiz",
+    "slug": "wizinc",
+    "sourceType": "greenhouse",
+    "atsSlug": "wizinc",
+    "domain": "wiz.io",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "name": "WorkOS",
+    "slug": "workos",
+    "sourceType": "ashby",
+    "atsSlug": "workos",
+    "domain": "workos.com",
+    "tags": [
+      "devtools",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "World Labs",
+    "slug": "worldlabs",
+    "sourceType": "ashby",
+    "atsSlug": "worldlabs",
+    "domain": "worldlabs.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Writer",
+    "slug": "writer",
+    "sourceType": "ashby",
+    "atsSlug": "writer",
+    "domain": "writer.com",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Zed",
+    "slug": "zed",
+    "sourceType": "ashby",
+    "atsSlug": "zed",
+    "domain": "zed.dev",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Zip",
+    "slug": "zip",
+    "sourceType": "ashby",
+    "atsSlug": "zip",
+    "domain": "ziphq.com",
+    "tags": [
+      "enterprise",
+      "fintech"
+    ]
+  },
+  {
+    "name": "Zocdoc",
+    "slug": "zocdoc",
+    "sourceType": "greenhouse",
+    "atsSlug": "zocdoc",
+    "domain": "zocdoc.com",
+    "tags": [
+      "healthtech",
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Zscaler",
+    "slug": "zscaler",
+    "sourceType": "greenhouse",
+    "atsSlug": "zscaler",
+    "domain": "zscaler.com",
+    "tags": [
+      "security"
+    ]
+  }
+]

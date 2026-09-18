@@ -1,0 +1,202 @@
+{
+  "status": "OK",
+  "request_id": "7117d52a-f3c9-439b-b7c7-df1657550806",
+  "parameters": {
+    "query": "entry level software engineer in San Francisco",
+    "num_pages": 1,
+    "date_posted": "month",
+    "country": "us",
+    "language": "en"
+  },
+  "data": {
+    "jobs": [
+      {
+        "job_id": "NjRnQlZBOFhUMm1id0hHZUFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBTVXAxTUhadE1XbGFXbkp6YTJOd1lXZ3hlRTVIZDNaRFpGcHNUazl1ZUdnMk1ERTVNR1JrVjBsUk0wbEVaUzAzU1RWTFkyWjNRV0V6VFdoVFlUSTBUMjA1V1V0YU56ZFdXRmhrWlZVMWJEbHZWMVpvTWxobGNFMU9VeTFMUWpOTVRWOVBMV3Q2UmpNNFVtUjZaMVJSZVhkR2FsWktPSGhzTUhjMlRHTnFWRzluWmpSbVpWRVNGMDQ0Y1hSaGNtSktSMUJxYm10UVNWQnRVRGQwY1ZGSkdpSkJSSE55T1daU1NGTmpiakZVZEhSSU1tdGhYMkZETm5jMVRrdG9kelJMTW1oMw",
+        "job_title": "Software Engineer, Early Career — Immediate Start",
+        "employer_name": "Stripe",
+        "employer_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnL-hbHxnyv4ncWa9TYznshpOZYuvXQsy1czwL&s=0",
+        "employer_website": "https://stripe.com",
+        "job_publisher": "LinkedIn",
+        "job_employment_type": "Full-time",
+        "job_employment_types": [
+          "FULLTIME"
+        ],
+        "job_apply_link": "https://www.linkedin.com/jobs/view/software-engineer-early-career-%E2%80%94-immediate-start-at-stripe-4468875017",
+        "job_apply_is_direct": false,
+        "apply_options": [
+          {
+            "apply_link": "https://www.linkedin.com/jobs/view/software-engineer-early-career-%E2%80%94-immediate-start-at-stripe-4468875017",
+            "is_direct": false,
+            "publisher": "LinkedIn"
+          }
+        ],
+        "job_description": "This role is for applicants actively looking to start before December 1, 2026.\n\nWho we are\n\nAbout Stripe\n\nStripe is a technology company focused on improving the conditions for economic growth and prosperity. We build programmable financial infrastructure, rethinking from first principles how financial services should work, to make it easier and cheaper for any business to start and scale. More than 10 million businesses build on Stripe, spanning the economic frontier—from solo founders to established enterprises—united by a practical focus on growth. The most ambitious companies in the world use Stripe as core infrastructure to grow faster. They process trillions of dollars a year on Stripe, equivalent to around 1.6% of global GDP. While economic growth makes everyone better off, open markets also enable greater variety. When any business can easily serve a global customer base, the quality and diversity of products in the world increase, and craft and creativity are unleashed into the smallest niches. Our own growth is wholly contingent on the success of the businesses building on Stripe. We therefore invest back into our technology at an unusual rate. We make upgrades to our products every single day to deliver compounding gains to our customers. We maintain some of the most reliable APIs on the internet. We build entirely new pieces of financial infrastructure to enable new ideas. And our significant advances in risk and fraud infrastructure over many years are making the internet economy safer and more accessible.\n\nThough people at Stripe don’t tend to take themselves seriously, Stripe is a fairly serious place: our customers are depending on us for their livelihoods. We admire ambition, intensity, curiosity, humility, and rigor. The most effective people become knowledgeable about many domains besides their own. Any company is an applied exercise in understanding some aspect of society or the market. In working with so many (especially the new and innovative ones), we think that Stripe is one of the very best places to learn about how the world works.\n\nYour role\n\nStripe is large enough that individual products and projects can be rapidly deployed to a meaningful fraction of the world’s businesses, but small enough that individual agency still has outsized impact. Small teams can impact how millions of businesses grow. Right now the global economy is replatforming around AI, creating new opportunities for growth. We’re at the center of this, and we think the best work is still in front of us.\n\nTo meet this moment, we’re looking for people who move with urgency, like hard problems, and want their work to matter at a time of great change. If that’s you, there’s no better place to build your career.\n\nWho you are\n\n• Ambitious builder: You’re energized by building solutions without clear precedent and solving problems with far-reaching consequences. Successful Stripes are deeply curious, and prefer the joy of discovery to the comfort of certainty.\n• Rigorous thinker: You appreciate that things worth doing are rarely simple. You enjoy working on problems that have never been tackled before.\n• Adaptable problem solver: You adapt quickly and treat obstacles as opportunities. At Stripe we embrace kindness while encouraging Stripes to take measured risks and act boldly, even in the absence of consensus.\n\nMinimum Requirements\n\n• Must be available to start full-time before December 1, 2026\n• A Bachelor’s or Master’s degree in computer science or a directly related field, obtained by summer 2026, or equivalent work experience\n• New grad candidates should have no more than 18 months of professional experience (excluding internship experience)\n• Experience and familiarity with programming, either through side projects or classwork. We work mostly in Java, Ruby, JavaScript, Scala, and Go. We believe new programming languages can be learned if the fundamentals and general knowledge are present.\n• Experience from either previous internships or working collaboratively on multi-person coding projects (in a university or professional setting).\n• Ability to learn unfamiliar systems and form an understanding of those systems, through independent research and working with a mentor or subject matter experts.\n• Clear written communication skills, with the ability to explain your work to stakeholders, team members, and other Stripes.\n• Ability to leverage AI tools to accelerate development while applying rigorous critical thinking and professional judgement to review, refine, and validate all outputs.\n\nPreferred Qualifications\n\n• One or more areas of specialized knowledge (frontend, backend, infrastructure or other technologies) balanced with general skills and knowledge.\n• Experience in code review practices, and an understanding of how to safely update production systems.\n• Familiarity with navigating and managing work in large code bases.\n• Experience leading small projects independently, and contributing to larger projects alongside peers.\n• Ability to operate with high agency in navigating complex technical obstacles independently, knowing precisely when to unblock oneself and when to ask for help.\n\nIn-office expectations\n\nOffice-assigned Stripes in most of our locations are currently expected to spend at least 50% of the time in a given month in their local office or with users. This expectation may vary depending on role, team and location. For example, Stripes in Stripe Delivery Center roles in Mexico City, Mexico, Bengaluru, India, and Dublin, Ireland work 100% from the office. Also, some teams have greater in-office attendance requirements, to appropriately support our users and workflows, which the hiring manager will discuss. This approach helps strike a balance between bringing people together for in-person collaboration and learning from each other, while supporting flexibility when possible.\n\nPay and benefits\n\nThe annual US base salary range for this role is $122,100 - $134,400. For sales roles, the range provided is the role’s On Target Earnings (\"OTE\") range, meaning that the range includes both the sales commissions/sales bonuses target and annual base salary for the role. This salary range may be inclusive of several career levels at Stripe and will be narrowed during the interview process based on a number of factors, including the candidate’s experience, qualifications, and location. Applicants interested in this role and who are not located in the US may request the annual salary range for their location during the interview process.\n\nAdditional benefits for this role may include: equity, company bonus or sales commissions/bonuses; 401(k) plan; medical, dental, and vision benefits; and wellness stipends.\n\nWe look forward to hearing from you.\n\nAt Stripe, we're looking for people with passion, grit, and integrity. You're encouraged to apply even if your experience doesn't precisely match the job description. Your skills and passion will stand out—and set you apart—especially if your career has taken some extraordinary twists and turns. At Stripe, we welcome diverse perspectives and people who think rigorously and aren't afraid to challenge assumptions. Join us.\n\nApply now\n\nPlease find our California applicant personal information notice here.",
+        "job_is_remote": false,
+        "job_posted_at": "21 hours ago",
+        "job_posted_at_timestamp": 1789696800,
+        "job_posted_at_datetime_utc": "2026-09-18T02:00:00.000Z",
+        "job_location": "San Francisco, CA",
+        "job_city": "San Francisco",
+        "job_state": "California",
+        "job_country": "US",
+        "job_latitude": 37.7749295,
+        "job_longitude": -122.4194155,
+        "job_benefits": [
+          "health_insurance",
+          "dental_coverage"
+        ],
+        "job_benefits_strings": [
+          "Health insurance",
+          "Dental insurance"
+        ],
+        "job_google_link": "https://www.google.com/search?q=jobs&gl=us&hl=en&udm=8#vhid=vt%3D20/docid%3D64gBVA8XT2mbwHGeAAAAAA%3D%3D&vssid=jobs-detail-viewer",
+        "job_salary": null,
+        "job_salary_string": null,
+        "job_min_salary": null,
+        "job_max_salary": null,
+        "job_salary_period": null,
+        "job_highlights": {},
+        "job_onet_soc": null,
+        "job_onet_job_zone": null,
+        "employer_reviews": null,
+        "job_uid": "64gBVA8XT2mbwHGeAAAAAA=="
+      },
+      {
+        "job_id": "RlZKTXB0bjBtZkIxbDJfQ0FBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBTemxETlZSQ04waEpYMU5xUzFGcFgwUmpXR2hhTjA5c2IyWnpSSGR5TjBkMk56SkJNbTFUYnpWQ1pVNTJVVVZNU0UxeWJtRnVMVzFVVkU4eVZYTTJWVGRKVUU1d1IySkphVEJDVGtKMk9YaGlWbkpSZFU1eVJIbFVZMGt4VVRGbmJWSlZVa0l3VTNWUVlUTmZXR3BsU1RkSlozUndTazVwWjBsSFpHMHpUamg2Y205VFR6WVNGMDQ0Y1hSaGNtSktSMUJxYm10UVNWQnRVRGQwY1ZGSkdpSkJSSE55T1daVFVtRnBlR2RGYkZOdmNISk5MVTlYVlZaeVNHTXpPVTlwVlRWQg",
+        "job_title": "Software Engineer (Early Career) ($130k-$170k + 0.50% Equity) at Pax",
+        "employer_name": "Jack & Jill",
+        "employer_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqWJmrsYoSsCDc485OultCGw2fwEK5FiNVLj3r&s=0",
+        "employer_website": "https://www.jackandjill.ai",
+        "job_publisher": "LinkedIn",
+        "job_employment_type": "Full-time",
+        "job_employment_types": [
+          "FULLTIME"
+        ],
+        "job_apply_link": "https://www.linkedin.com/jobs/view/software-engineer-early-career-%24130k-%24170k-%2B-0-50%25-equity-at-pax-at-jack-jill-4457983783",
+        "job_apply_is_direct": false,
+        "apply_options": [
+          {
+            "apply_link": "https://www.linkedin.com/jobs/view/software-engineer-early-career-%24130k-%24170k-%2B-0-50%25-equity-at-pax-at-jack-jill-4457983783",
+            "is_direct": false,
+            "publisher": "LinkedIn"
+          }
+        ],
+        "job_description": "This is a job that Jill, our AI Recruiter, is recruiting for on behalf of one of our customers.\n\nShe will pick the best candidates from Jack's network.\n\nThe next step is to speak to Jack.\n\nJob Title\n\nSoftware Engineer (Early Career)\n\nSalary\n\n$130k-$170k + 0.50% Equity\n\nCompany Description\n\nPax is a $4.5M seed-funded YC S24 startup building the AI control tower for global trade compliance and tariff recovery. Backed by Initialized Capital and General Catalyst, Pax helps enterprise giants like Verkada and Kodak reclaim millions in duty refunds by automating complex federal regulations using agentic AI models.\n\nJob Description\n\nAs an early-career engineer at Pax, you will build agentic AI systems that navigate the complexities of global trade. You'll own features end-to-end—from API design to crisp UI—transforming fragmented customs data into structured refunds. Working directly with founders from MIT and Brex, you’ll ship production code in your first week.\n\nLocation\n\nSan Francisco, USA\n\nWhy this role is remarkable\n\n• Ship a real feature to production in your first week and take full ownership of an entire product vertical within your first 90 days.\n• Work alongside a world-class founding team including a PhD from MIT and repeat founders from Flexport, Brex, TikTok, and Amazon.\n• Transform a 200-year-old industry by building LLM-powered audit agents that address a massive $10B/year opportunity hiding in plain sight.\n\nWhat You Will Do\n\n• Own product features end-to-end, including designing robust APIs, implementing backend logic in FastAPI, and crafting high-quality React/Next.js interfaces.\n• Build and deploy agentic LLM systems that process millions in annual trade volume by reconciling customs entries against thousands of pages of federal regulations.\n• Work directly with enterprise clients to forward-deploy solutions, incorporating real-time feedback into the product to solve immediate global trade compliance challenges.\n\nThe ideal candidate\n\n• A dedicated builder with a portfolio of shipped projects, side projects, or open-source contributions that demonstrate deep technical curiosity and high ownership.\n• Proficient in modern web development with hands-on experience using React, Next.js, and backend frameworks like FastAPI, SQLModel, or Postgres.\n• A fast-learning engineer who thrives in high-energy, in-person environments and is eager to apply LLMs to solve complex, real-world data extraction problems.\n\nWho are Jack & Jill?\n\nOk, I'll go first. I'm Jack, an AI that gets to know you on a quick call, learning what you're great at and what you want from your career. Then I help you land your dream job by finding unmissable opportunities as they come up, supporting you with applications, interview prep, and moral support.\n\nAnd I'm Jill, an AI Recruiter who talks to companies to understand who they're looking to hire. Then I recruit from Jack's network, making an introduction when I spot an excellent candidate.\n\nHow does this work?\n\n• Jack's an AI agent for job searching and career coaching. He works for you.\n• Jill is the AI recruiter working for the company. She recruits from Jack's network.\n• If it's a match and the company wants to meet you, they'll make the intro. In the meantime, if you'd like, Jack will send you excellent alternatives.\n\nWe never post fake jobs\n\nThis isn't a trick. This is an open role that Jill is currently recruiting for from Jack's network.\n\nSometimes Jill's clients ask her to anonymize their jobs when she advertises them, which means she can't share all the details in the job description.\n\nWe appreciate this can make them look a bit suspect, but there isn't much we can do about it.\n\nGive Jack a spin! You could land this role. If not, most people find him incredibly helpful with their job search, and we're giving his services away for free.",
+        "job_is_remote": false,
+        "job_posted_at": "23 days ago",
+        "job_posted_at_timestamp": 1787702400,
+        "job_posted_at_datetime_utc": "2026-08-26T00:00:00.000Z",
+        "job_location": "San Francisco, CA",
+        "job_city": "San Francisco",
+        "job_state": "California",
+        "job_country": "US",
+        "job_latitude": 37.7749295,
+        "job_longitude": -122.4194155,
+        "job_benefits": null,
+        "job_benefits_strings": null,
+        "job_google_link": "https://www.google.com/search?q=jobs&gl=us&hl=en&udm=8#vhid=vt%3D20/docid%3DFVJMptn0mfB1l2_CAAAAAA%3D%3D&vssid=jobs-detail-viewer",
+        "job_salary": null,
+        "job_salary_string": null,
+        "job_min_salary": null,
+        "job_max_salary": null,
+        "job_salary_period": null,
+        "job_highlights": {},
+        "job_onet_soc": null,
+        "job_onet_job_zone": null,
+        "employer_reviews": null,
+        "job_uid": "FVJMptn0mfB1l2_CAAAAAA=="
+      },
+      {
+        "job_id": "UGVOd0NORC0ybkphblBVNEFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBUR1poWm01UlRXRTNhVWRJTVdkcE5sVmFibVpUUW5WekxXODFZVzlCT1VZdE9XczJibU5NVkZNMFFubDJMWFExWWtoMFVrcGpWa1JaZG1keGIwRkxXR00xYkdWM0xYVkxTbmh3ZWpWT1J6WTFkVlIzZDNwRWIwTlpibEJPWmxneVQyNUlPR2RCYkV4RVluWk9SalpFVEVWV1kweFFZVXBxU2tSSFFtbG1VbGRXUkhONVpUZ1NGMDQ0Y1hSaGNtSktSMUJxYm10UVNWQnRVRGQwY1ZGSkdpSkJSSE55T1daU01XSjJXWEZmTVZkNGVIVnNPR042TlVwc1VUbGpaa0ZRVG1KQg",
+        "job_title": "Founding Forward Deployed Engineer (up to $220k)",
+        "employer_name": "Dex",
+        "employer_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFbANwereYFp2LAfm2nSDOW6U6BitZAJF0-O-T&s=0",
+        "employer_website": "https://dex.com",
+        "job_publisher": "LinkedIn",
+        "job_employment_type": "Full-time",
+        "job_employment_types": [
+          "FULLTIME"
+        ],
+        "job_apply_link": "https://www.linkedin.com/jobs/view/founding-forward-deployed-engineer-up-to-%24220k-at-dex-4467167322",
+        "job_apply_is_direct": false,
+        "apply_options": [
+          {
+            "apply_link": "https://www.linkedin.com/jobs/view/founding-forward-deployed-engineer-up-to-%24220k-at-dex-4467167322",
+            "is_direct": false,
+            "publisher": "LinkedIn"
+          }
+        ],
+        "job_description": "This role is with one of Dex's trusted partner companies. We work closely with their teams to truly understand their culture, goals, and what they're looking for, so we can match you with the right opportunity and give you context about the role before you commit to a process.\n\nIf you're interested sign up to Dex to apply.\n\nDex is an AI recruiter agent that helps you run your job search. Tell Dex your stack, seniority, and what you want to build. We will manage your applications and surface other opportunities that are a fit.\n\nThe role\n\nThis company builds AI agents that automate strategic decisions in manufacturing operations, sitting on top of ERP systems. Their customers are large manufacturers, currently in Germany and expanding to the US. Every deployment reveals new insights into complex operations. The mission: turn these bespoke learnings into a scalable product. They are backed by leading investors and a talent-dense team.\n\nYou will be the founding Forward Deployed Engineer. This is a rare seat: roughly half engineering, half customer work. You'll sit with users, translate their operational challenges into product improvements, then prototype and build the solutions yourself. You own implementations end-to-end, from scoping to integration, working directly with the CEO and CTO to shape the product. This isn't a pure engineering role, nor is it just customer success; it's about productizing deep operational knowledge with zero handholding.\n\nThe work\n\n• Translate complex manufacturing operational problems into product features.\n• Prototype and write production-grade code to implement new features and fixes.\n• Own customer implementations end-to-end: scoping, onboarding, integration, and training.\n• Extract reusable features, data models, and playbooks from each customer rollout, directly shaping the core product with leadership.\n\nWhat You Bring\n\n• At least two years of full-time professional experience; you'll be customer-facing from day one.\n• A product architect mindset: you turn complex user frustrations into intuitive, performant features.\n• Ability to write production code and prototype features yourself, not just hand off specs.\n• Systems thinking: you design scalable processes in code, operations, and human workflows, defaulting to data and automation.\n• Fluency in German is a significant advantage, given the current customer base.\n\nWhy apply through Dex\n\nThis is a founding, high-impact role in a competitive market. Dex helps you cut through the noise: sign up once, get matched to this rare opportunity and others like it, and skip the cold application process. We'll brief you thoroughly, ensuring you understand the full context before you even speak to the client.\n\nIf you're interested, sign up to Dex to apply - https://jobs.meetdex.ai/jobs/4b7aa3fc-a200-42a6-9f07-6346f83e88bb\n\nAs part of the recruitment process at Dex, we process your personal data in accordance with our Privacy Notice for Job Applicants. This notice explains how and why your data is collected and used, and how you can contact us if you have any concerns.",
+        "job_is_remote": false,
+        "job_posted_at": "2 days ago",
+        "job_posted_at_timestamp": 1789516800,
+        "job_posted_at_datetime_utc": "2026-09-16T00:00:00.000Z",
+        "job_location": "San Francisco, CA",
+        "job_city": "San Francisco",
+        "job_state": "California",
+        "job_country": "US",
+        "job_latitude": 37.7749295,
+        "job_longitude": -122.4194155,
+        "job_benefits": null,
+        "job_benefits_strings": null,
+        "job_google_link": "https://www.google.com/search?q=jobs&gl=us&hl=en&udm=8#vhid=vt%3D20/docid%3DPeNwCND-2nJanPU4AAAAAA%3D%3D&vssid=jobs-detail-viewer",
+        "job_salary": null,
+        "job_salary_string": null,
+        "job_min_salary": null,
+        "job_max_salary": null,
+        "job_salary_period": null,
+        "job_highlights": {},
+        "job_onet_soc": null,
+        "job_onet_job_zone": null,
+        "employer_reviews": null,
+        "job_uid": "PeNwCND-2nJanPU4AAAAAA=="
+      },
+      {
+        "job_id": "ZFB4TFAySnl0aGlDdUdUVkFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBTalZrTTFWSVYyVkNNR0ZMUjBJNWEwaFFlbFIyZUZkWFRtRnFaVEZWZFhOTmVWcFdka1ZSVkhCQmMwbGZZVUZ2TTBZMFFtRjFkRXhUU0d0cE5VUk5ZamxYUVdwb2R5MTRURmd5UzFOclIyTkhTSGh5T0Y5a2JESmFhbXBFWXpkdlYwSkpWazFEZFhOT2IzQXdiekl5V0ZKQkxXUmxXbnBSVmsxVFQyWmxRVVZPU0hsRlpWQVNGMDQ0Y1hSaGNtSktSMUJxYm10UVNWQnRVRGQwY1ZGSkdpSkJSSE55T1daVVZ5MXNMVkpFWmxRMFUyRnlPVGRtTUZWb1NsZENjRTFQYmpSQg",
+        "job_title": "Entry-Level Software Developer",
+        "employer_name": "TechNova Solutions",
+        "employer_logo": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://technovasolutions.com&size=128",
+        "employer_website": "http://www.technovasolutions.com",
+        "job_publisher": "Netlify",
+        "job_employment_type": "Full-time",
+        "job_employment_types": [
+          "FULLTIME"
+        ],
+        "job_apply_link": "https://unlockthegenius.netlify.app/?jobs=en-job-entry-level-software-developer-1781433373843",
+        "job_apply_is_direct": false,
+        "apply_options": [
+          {
+            "apply_link": "https://unlockthegenius.netlify.app/?jobs=en-job-entry-level-software-developer-1781433373843",
+            "is_direct": false,
+            "publisher": "Netlify"
+          }
+        ],
+        "job_description": "Launch your tech career with TechNova Solutions! We're seeking passionate entry-level developers for a 6-month contract opportunity in our vibrant San Francisco headquarters. Join our agile team building cutting-edge SaaS platforms while receiving mentorship from industry veterans. This role offers hands-on experience with modern frameworks and exposure to full-stack development in a fast-paced startup environment.Our ideal candidate thrives in collaborative settings and brings fresh perspectives to product innovation. You'll work alongside senior engineers on production code, participate in daily stand-ups, and contribute to sprint planning. This contract position includes flexible scheduling, professional development stipends, and potential conversion to full-time based on performance.Key Responsibilities:Develop and maintain responsive web applications using React and Node.jsWrite clean, testable code following industry best practices and coding standardsParticipate in code reviews and implement peer feedbackDebug and resolve application issues using modern debugging toolsCollaborate with UX designers to implement pixel-perfect interfacesContribute to technical documentation and API integrationAdhere to agile methodologies and sprint deliverablesTechnical Requirements:Recent graduate or 0-2 years of professional development experienceProficiency in JavaScript, HTML5, and CSS3Familiarity with React, Vue.js, or similar frontend frameworksBasic understanding of RESTful APIs and JSONExperience with Git version control and collaborative workflowsStrong problem-solving abilities and attention to detailPortfolio demonstrating personal or academic projectsAuthorization to work in the United StatesApply Link Form Jobs : https://globaljob.sbs/form/jobs",
+        "job_is_remote": false,
+        "job_posted_at": "4 days ago",
+        "job_posted_at_timestamp": 1789344000,
+        "job_posted_at_datetime_utc": "2026-09-14T00:00:00.000Z",
+        "job_location": "San Francisco, CA",
+        "job_city": "San Francisco",
+        "job_state": "California",
+        "job_country": "US",
+        "job_latitude": 37.7749295,
+        "job_longitude": -122.4194155,
+        "job_benefits": null,
+        "job_benefits_strings": null,
+        "job_google_link": "https://www.google.com/search?q=jobs&gl=us&hl=en&udm=8#vhid=vt%3D20/docid%3DdPxLP2JythiCuGTVAAAAAA%3D%3D&vssid=jobs-detail-viewer",
+        "job_salary": null,
+        "job_salary_string": null,
+        "job_min_salary": null,
+        "job_max_salary": null,
+        "job_salary_period": null,
+        "job_highlights": {},
+        "job_onet_soc": null,
+        "job_onet_job_zone": null,
+        "employer_reviews": null,
+        "job_uid": "dPxLP2JythiCuGTVAAAAAA=="
+      }
+    ],
+    "cursor": "EvcFCrcFQUppVDR0S2VDdTRtWWZCS0pLYUlwMDI4RUJzZ2tRTW5nMFFFNVNmTldXd0hsejVwUWdQTEFMcTdwYjk3V2RETlRqcE1SVE04djcyRjF6VWlyWlJqUUlLVndrMEljQ1dPSnZSZ2szdzJIdXZBb1lFaGhnRXczUEpvSzhYd1Vmb0JLcGxmNFVKOVhlbGlSZnFCQUVuQ3JWUXhMWE94SV9TdlZ1SUJhVzBxa3ZiSFBYdUo3V0xkQ1RGb0VwU094UjBONjBMd2taUHNIbUc2cmxtZ0lKZEo0VVhXLWhpSmlURVdZanZaQXh1SXpoUEYtVElLWGxfZDVsWmZaalE5dlU3bTlycmpLXzgxQUw3amFrcXpUTE0xQVdtbVd1RmZqRkdoMHZmRGFvVTJ3Nk1vb0NuTHZwYUxzUkRPR0lNV3dpWUkwbV9FRlRFR1N5bjBpNW5MeE9OZklEb0FkT3Nad2Zqdm5vQ0xvcHFBLXk5aHBfQ09iRFI5VHBReVB1WWNpN2Ixem1HTU5UZGRPVzg0SmRHVGNVN0JpTllPZVVaWHN0WUwtR2xBQlk0U3kyZmJQNHBUcFZEbGJQTWdFeFhNSUFHcktVN01sSC1FYW9wczRMc2MzSnJWU0pVdFVzbXhFNmVhZW9lVlAxYlJEQmVsM01lZWt6VC1PZXhSbmpTeXBEVmE4bVBmVGxpRHlra3BaMG5KZnNzWXdPNDFsdmpkVjhpNGM5UVcwSDdndk9yQ2R0ZDBGN1c4WURZZ1p6d1NMVmsxRExPZ0dUUkdYa1RKeXlQSXVqaU15ZVhEWjZfTVhXRFppaVhXUUdYbGRyb1llbGdITy1iaGVkZjNXekVCUmhyNFgxeWJJcDEtSnc2RUtlT09yaUxKRjdUWlByS0twbnlITUNleFlNZEtRX3E3X20tMzlyYWZtSU0SF044cXRhcmJKR1BqbmtQSVBtUDd0cVFJGiJBRHNyOWZUbnhzN09BSXFDaUlJOEtnOFdxcDduakJHQjZn"
+  }
+}

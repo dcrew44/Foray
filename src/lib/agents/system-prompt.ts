@@ -28,9 +28,18 @@ How to behave:
   profile, say you do not know it and ask.
 - When you cannot do something yet, say so plainly rather than pretending.`;
 
-const NOT_BUILT_YET = `
-Searching, ranking and tailoring are not wired up yet. If asked for them, say
-what is not built yet instead of improvising.`;
+const CAPABILITIES = `
+## What you can do today
+
+- Read and update their profile and preferences.
+- Register companies so their boards are searched: add_company for one,
+  discover_companies for several matching a description. A company is only
+  registered after its board is verified live, so say plainly when one could
+  not be found rather than implying it was added.
+- Report what is registered with list_companies.
+
+Ranking, tailoring and the search run itself are not wired up yet. If asked for
+them, say what is not built yet instead of improvising.`;
 
 export function systemPrompt(input: {
   hasProfile: boolean;
@@ -45,7 +54,7 @@ export function systemPrompt(input: {
 This user has no profile yet. They need to upload a resume on the profile page
 before you can help them meaningfully. Say so, briefly, and offer to answer
 questions in the meantime.
-${NOT_BUILT_YET}`;
+${CAPABILITIES}`;
   }
 
   const progress = interviewProgress(input.preferences, input.interviewState);
@@ -59,7 +68,7 @@ ${describePreferences(input.preferences)}
 
 Their preferences are on file. Do not re-interview them. If they mention a
 change, record it with update_profile_preferences.
-${NOT_BUILT_YET}`;
+${CAPABILITIES}`;
   }
 
   return `${BASE}
@@ -95,5 +104,5 @@ ${
         .join(", ")}.`
     : ""
 }
-${NOT_BUILT_YET}`;
+${CAPABILITIES}`;
 }

@@ -8,6 +8,10 @@
 export const QUEUES = {
   /** Liveness check: proves the app can enqueue and the worker can emit. */
   ping: "ping",
+  /** Resolve a company name or URL to a verified board and register it. */
+  companyDiscover: "company.discover",
+  /** Re-fetch registered boards into the shared job mirror. */
+  companyRefresh: "company.refresh",
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -17,6 +21,23 @@ export type PingPayload = {
   note?: string;
 };
 
+export type CompanyDiscoverPayload = {
+  userId: string;
+  /** Company names or URLs. Each is resolved independently. */
+  names: string[];
+  runId?: string | null;
+};
+
+export type CompanyRefreshPayload = {
+  /** Set when a person asked, so the activity feed can report back. */
+  userId?: string | null;
+  runId?: string | null;
+  /** Refresh every active board rather than only the stale ones. */
+  all?: boolean;
+};
+
 export type QueuePayloads = {
   [QUEUES.ping]: PingPayload;
+  [QUEUES.companyDiscover]: CompanyDiscoverPayload;
+  [QUEUES.companyRefresh]: CompanyRefreshPayload;
 };

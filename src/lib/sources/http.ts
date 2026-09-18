@@ -60,6 +60,8 @@ export async function fetchText(
     retries?: number;
     signal?: AbortSignal;
     accept?: string;
+    /** Extra request headers, e.g. an API key. Never logged. */
+    headers?: Record<string, string>;
   } = {},
 ): Promise<string> {
   const retries = options.retries ?? DEFAULT_RETRIES;
@@ -77,6 +79,7 @@ export async function fetchText(
         headers: {
           "user-agent": USER_AGENT,
           accept: options.accept ?? "application/json",
+          ...options.headers,
         },
       });
 

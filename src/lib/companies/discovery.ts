@@ -1,6 +1,9 @@
 import { env } from "@/env";
 import { fetchText, HttpError } from "@/lib/sources/http";
-import { upsertCompany } from "@/lib/db/queries/companies";
+import {
+  getCompanyByBoard,
+  upsertCompany,
+} from "@/lib/db/queries/companies";
 import type { Company } from "@/lib/db/schema";
 import type { BoardSourceId } from "@/lib/sources";
 
@@ -394,4 +397,49 @@ function titleCase(value: string): string {
     .split(/\s+/)
     .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
     .join(" ");
+}
+
+/**
+ * Registers boards found in an aggregator's apply links.
+ *
+ * The aggregator costs a request per page and returns a truncated description;
+ * the company's own board is free and complete. So every result that applies
+ * through a board we can read is a standing invitation to stop paying for that
+ * company. Each is still verified before being written down — an apply link can
+ * point at a board that has since been taken down.
+ */
+export async function registerBoardsFromApplyLinks(
+  boards: Array<{
+    source: BoardSourceId;
+    slug: string;
+    companyName: string;
+  }>,
+  options: { addedByUserId?: string | null } = {},
+): Promise<Company[]> {
+  const registered: Company[] = [];
+
+  for (const board of boards) {
+    const existing = await getCompanyByBoard(board.source, board.slug);
+    if (existing) continue;
+
+    const outcome = await verifyBoard(board.source, board.slug);
+    if (outcome.status !== "ok") continue;
+
+    registered.push(
+      await upsertCompany({
+        name: board.companyName,
+        slug: board.slug,
+        domain: null,
+        sourceType: board.source,
+        atsSlug: board.slug,
+        careersUrls: [],
+        tags: [],
+        status: "active",
+        discoveredVia: "jsearch",
+        addedByUserId: options.addedByUserId ?? null,
+      }),
+    );
+  }
+
+  return registered;
 }

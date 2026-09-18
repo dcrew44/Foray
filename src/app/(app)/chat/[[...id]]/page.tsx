@@ -1,18 +1,37 @@
+import { notFound } from "next/navigation";
+
+import { Chat } from "@/components/chat/chat";
+import type { ForayUIMessage } from "@/lib/agents/chat-agent";
 import { requireUser } from "@/lib/auth/session";
+import { getConversation, loadMessages } from "@/lib/db/queries/conversations";
 
 /**
- * Placeholder until Step 7 replaces it with the AI Elements conversation.
- * It exists now so the auth redirect has something real to protect.
+ * /chat starts a new thread; /chat/<id> resumes one.
+ *
+ * The history is read on the server and handed to the client as the initial
+ * messages, so a reload shows the conversation without a flash of empty state.
  */
-export default async function ChatPage() {
+export default async function ChatPage({
+  params,
+}: {
+  params: Promise<{ id?: string[] }>;
+}) {
   const user = await requireUser();
+  const conversationId = (await params).id?.[0] ?? null;
 
-  return (
-    <main className="mx-auto flex min-h-svh max-w-2xl flex-col justify-center gap-2 p-8">
-      <h1 className="text-2xl font-semibold">Chat</h1>
-      <p className="text-muted-foreground text-sm">
-        Signed in as {user.email}. The conversation lands here in Step 7.
-      </p>
-    </main>
-  );
+  if (!conversationId) {
+    return <Chat conversationId={null} initialMessages={[]} />;
+  }
+
+  // Someone else's conversation is indistinguishable from one that does not
+  // exist: getConversation filters on user id.
+  const conversation = await getConversation(user.id, conversationId);
+  if (!conversation) notFound();
+
+  const history = (await loadMessages(
+    user.id,
+    conversation.id,
+  )) as ForayUIMessage[];
+
+  return <Chat conversationId={conversation.id} initialMessages={history} />;
 }

@@ -16,9 +16,19 @@
     "db:studio": "drizzle-kit studio",
     "auth:generate": "better-auth generate --config src/lib/auth/index.ts",
     "dev:worker": "tsx watch src/worker/main.ts",
-    "dev:all": "concurrently -n next,worker -c cyan,magenta \"pnpm dev\" \"pnpm dev:worker\""
+    "dev:all": "concurrently -n next,worker -c cyan,magenta \"pnpm dev\" \"pnpm dev:worker\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "llm:smoke": "tsx scripts/llm-smoke.ts",
+    "llm:bakeoff": "tsx scripts/model-bakeoff.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.57",
+    "@ai-sdk/deepseek": "^3.0.48",
+    "@ai-sdk/google": "^4.0.75",
+    "@ai-sdk/openai": "^4.0.70",
+    "@ai-sdk/openai-compatible": "^3.0.52",
+    "@ai-sdk/react": "^4.0.109",
     "@base-ui/react": "^1.8.0",
     "@better-auth/drizzle-adapter": "^1.7.5",
     "@radix-ui/react-use-controllable-state": "^1.2.6",
@@ -62,7 +72,8 @@
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "~5.9"
+    "typescript": "~5.9",
+    "vitest": "^5.0.1"
   },
   "packageManager": "pnpm@10.34.5",
   "type": "module",

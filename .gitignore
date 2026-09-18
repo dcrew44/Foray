@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# production build
+dist/
+build/
+*.tsbuildinfo
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# runtime data (uploads, rendered PDFs) — see STORAGE_DIR
+data/
+
+# test output
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# editors / OS
+.DS_Store
+*.log
+npm-debug.log*
+yarn-error.log*
+.idea/
+
+# python prototype leftovers (see git tag python-prototype)
+__pycache__/
+*.pyc
+.venv/

@@ -52,8 +52,12 @@ These are the rules that must survive every later change.
    per-user data.
 9. **Call sites ask for a purpose, never a model name** (`model('score')`). Vendor
    quirks live in `src/lib/llm/models.ts` only.
-10. **Every LLM call goes through `src/lib/llm/call.ts`** and writes an `llm_calls`
-    ledger row (provider, model, purpose, tokens, cached tokens, USD, run id).
+10. **Every LLM call writes an `llm_calls` ledger row** (provider, model, purpose,
+    tokens, cached tokens, USD, run id). This is enforced by middleware on the
+    model itself (`src/lib/llm/ledger.ts`), not by discipline at call sites: an
+    agent loop calls the model from inside the SDK, so a wrapper only our own
+    helpers used recorded nothing for an entire conversation. Attribution to a
+    user or run travels through async-local storage (`llm/context.ts`).
 11. **Import boundaries** (enforced by ESLint): Next never imports Playwright; the
     worker never imports `src/app`; both import `src/lib`.
 12. **Nothing heavy runs inside a Next request.** Long work is a pg-boss job; chat turns

@@ -1,42 +1,33 @@
 import { describe, expect, it } from "vitest";
-import type { LanguageModelUsage } from "ai";
 
-import { tokensFrom } from "@/lib/llm/call";
+import { tokensFromProviderUsage } from "@/lib/llm/ledger";
 import { costUsd } from "@/lib/llm/pricing";
 
 /**
- * AI SDK 7 normalizes cached/uncached token reporting across vendors onto
- * `usage.inputTokenDetails`, which is a different shape from earlier versions.
- * The ledger's cost attribution depends on reading it correctly, so it is
- * pinned here.
+ * The ledger reads usage at the *provider* level, where counts are nested
+ * under inputTokens/outputTokens rather than flattened onto the `ai`-level
+ * *TokenDetails fields. Cost attribution depends on reading that shape
+ * correctly, so it is pinned here.
  */
 
-function usage(partial: Partial<LanguageModelUsage>): LanguageModelUsage {
+type Usage = Parameters<typeof tokensFromProviderUsage>[0];
+
+function usage(partial: {
+  input?: Partial<NonNullable<NonNullable<Usage>["inputTokens"]>>;
+  output?: Partial<NonNullable<NonNullable<Usage>["outputTokens"]>>;
+}): Usage {
   return {
-    inputTokens: undefined,
-    inputTokenDetails: {
-      noCacheTokens: undefined,
-      cacheReadTokens: undefined,
-      cacheWriteTokens: undefined,
-    },
-    outputTokens: undefined,
-    outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
-    totalTokens: undefined,
-    ...partial,
-  } as LanguageModelUsage;
+    inputTokens: partial.input ?? {},
+    outputTokens: partial.output ?? {},
+  };
 }
 
-describe("tokensFrom", () => {
+describe("tokensFromProviderUsage", () => {
   it("splits cached from uncached input", () => {
-    const tokens = tokensFrom(
+    const tokens = tokensFromProviderUsage(
       usage({
-        inputTokens: 1000,
-        inputTokenDetails: {
-          noCacheTokens: 400,
-          cacheReadTokens: 600,
-          cacheWriteTokens: undefined,
-        },
-        outputTokens: 120,
+        input: { total: 1000, noCache: 400, cacheRead: 600 },
+        output: { total: 120 },
       }),
     );
 
@@ -45,16 +36,9 @@ describe("tokensFrom", () => {
     expect(tokens.outputTokens).toBe(120);
   });
 
-  it("derives uncached input when a provider reports no detail", () => {
-    const tokens = tokensFrom(
-      usage({
-        inputTokens: 1000,
-        inputTokenDetails: {
-          noCacheTokens: undefined,
-          cacheReadTokens: 250,
-          cacheWriteTokens: undefined,
-        },
-      }),
+  it("derives uncached input when a provider reports only a total", () => {
+    const tokens = tokensFromProviderUsage(
+      usage({ input: { total: 1000, cacheRead: 250 } }),
     );
 
     expect(tokens.inputTokens).toBe(750);
@@ -62,29 +46,17 @@ describe("tokensFrom", () => {
   });
 
   it("never reports negative input if the totals disagree", () => {
-    const tokens = tokensFrom(
-      usage({
-        inputTokens: 100,
-        inputTokenDetails: {
-          noCacheTokens: undefined,
-          cacheReadTokens: 400,
-          cacheWriteTokens: undefined,
-        },
-      }),
+    const tokens = tokensFromProviderUsage(
+      usage({ input: { total: 100, cacheRead: 400 } }),
     );
 
     expect(tokens.inputTokens).toBe(0);
   });
 
   it("carries Anthropic's cache writes through to cost", () => {
-    const tokens = tokensFrom(
+    const tokens = tokensFromProviderUsage(
       usage({
-        inputTokens: 1000,
-        inputTokenDetails: {
-          noCacheTokens: 0,
-          cacheReadTokens: 1000,
-          cacheWriteTokens: 1_000_000,
-        },
+        input: { total: 1000, noCache: 0, cacheRead: 1000, cacheWrite: 1_000_000 },
       }),
     );
 
@@ -97,19 +69,22 @@ describe("tokensFrom", () => {
   });
 
   it("keeps reasoning tokens visible without charging them twice", () => {
-    const tokens = tokensFrom(
-      usage({
-        outputTokens: 900,
-        outputTokenDetails: { textTokens: 400, reasoningTokens: 500 },
-      }),
+    const tokens = tokensFromProviderUsage(
+      usage({ output: { total: 900, text: 400, reasoning: 500 } }),
     );
 
     expect(tokens.reasoningTokens).toBe(500);
     expect(tokens.outputTokens).toBe(900);
+    // 900 output tokens on Terra at $12/M — the 500 reasoning tokens are
+    // already inside that total and must not add a second charge.
+    expect(costUsd("openai:gpt-5.6-terra", tokens)).toBeCloseTo(
+      (900 / 1_000_000) * 12,
+      10,
+    );
   });
 
   it("treats a missing usage object as a zero-cost row rather than throwing", () => {
-    const tokens = tokensFrom(undefined);
+    const tokens = tokensFromProviderUsage(undefined);
     expect(tokens).toMatchObject({ inputTokens: 0, outputTokens: 0 });
     expect(costUsd("openai:gpt-5.6-luna", tokens)).toBe(0);
   });

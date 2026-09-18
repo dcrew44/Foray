@@ -1,6 +1,7 @@
-import type { LanguageModel } from "ai";
+import { wrapLanguageModel, type LanguageModel } from "ai";
 
 import { env } from "@/env";
+import { ledgerMiddleware } from "./ledger";
 import {
   PROVIDER_KEY_ENV,
   hasCredential,
@@ -112,11 +113,22 @@ export function providerOf(purpose: Purpose): ProviderId {
   return modelRef(purpose).split(":")[0] as ProviderId;
 }
 
-/** The model instance for a purpose. */
+/**
+ * The model instance for a purpose, wrapped so every call it makes is
+ * ledgered.
+ *
+ * The wrapping happens here rather than at the call sites because the agent
+ * loop calls the model from inside the SDK: anything that merely wraps our own
+ * helper functions is bypassed the moment an agent is involved.
+ */
 export function model(purpose: Purpose): LanguageModel {
-  return registry.languageModel(
-    modelRef(purpose) as Parameters<typeof registry.languageModel>[0],
-  );
+  const ref = modelRef(purpose);
+  return wrapLanguageModel({
+    model: registry.languageModel(
+      ref as Parameters<typeof registry.languageModel>[0],
+    ),
+    middleware: ledgerMiddleware(purpose, ref),
+  });
 }
 
 export function reasoningFor(purpose: Purpose): ReasoningEffort {

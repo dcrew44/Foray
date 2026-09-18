@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marcus Oyelaran-Priest — Resume</title>
+<style>
+  /* A genuine two-column layout: a narrow tinted sidebar down the left
+     (contact / skills / education) and a wide experience column on the right,
+     side by side on the page.
+
+     The grid is ROW-ALIGNED: each row pairs one sidebar block with one main
+     block. That is how real-world two-column resumes are built (Word tables,
+     Canva, InDesign, LaTeX paracol), and it is why their PDF text layer comes
+     out interleaved: Chrome paints row by row, so the content stream reads
+     sidebar-block, main-block, sidebar-block, main-block. */
+  @page { size: Letter; margin: 0.5in; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.42;
+    color: #1b1f23;
+    margin: 0;
+  }
+
+  .sheet {
+    display: grid;
+    grid-template-columns: 2.15in 1fr;
+    column-gap: 0.32in;
+    row-gap: 0;
+    align-items: stretch;   /* sidebar cells fill the row so the tint is continuous */
+  }
+
+  .side {
+    grid-column: 1;
+    background: #eef2f5;
+    border-right: 2px solid #b9c4cc;
+    padding: 0 14px 10px 14px;
+  }
+  .side.first { padding-top: 16px; }
+  .main { grid-column: 2; }
+  .main.first { padding-top: 4px; }
+
+  h1 {
+    font-size: 19pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0 0 3px 0;
+  }
+  .tagline {
+    font-size: 9.5pt;
+    color: #4d565d;
+    margin: 0 0 14px 0;
+    letter-spacing: 0.03em;
+  }
+
+  .side-h {
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2b3a45;
+    margin: 14px 0 6px 0;
+    border-bottom: 1px solid #aab7c0;
+    padding-bottom: 3px;
+  }
+  .side.first .side-h:first-child { margin-top: 0; }
+
+  .main-h {
+    font-size: 10pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2b3a45;
+    margin: 0 0 8px 0;
+    border-bottom: 2px solid #2b3a45;
+    padding-bottom: 3px;
+  }
+
+  .side-item { margin-bottom: 7px; font-size: 9pt; }
+  .side-item .k { display: block; font-weight: 600; color: #333c43; }
+  .side-item .v { display: block; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    background: #fff;
+    border: 1px solid #b9c4cc;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 8.5pt;
+  }
+
+  .edu { font-size: 9pt; margin-bottom: 10px; }
+  .edu .deg { font-weight: 600; }
+  .edu .school { color: #3c454b; }
+  .edu .when { color: #5b666d; font-size: 8.5pt; }
+
+  .job { margin-bottom: 12px; }
+  .job:last-child { margin-bottom: 0; }
+  .job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .role { font-weight: 700; font-size: 10pt; }
+  .dates { font-size: 8.5pt; color: #4d565d; white-space: nowrap; }
+  .org { font-size: 9pt; color: #3c454b; font-style: italic; margin-bottom: 3px; }
+  ul { margin: 3px 0 0 0; padding-left: 15px; }
+  li { margin-bottom: 3px; }
+  p { margin: 0 0 7px 0; }
+  .proj { margin-bottom: 9px; }
+  .proj .pname { font-weight: 700; }
+  .proj .plink { color: #1a4f8a; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <!-- row 1 -->
+  <aside class="side first">
+    <div class="side-h">Contact</div>
+    <div class="side-item"><span class="k">Location</span><span class="v">Providence, RI</span></div>
+    <div class="side-item"><span class="k">Phone</span><span class="v">(555) 0177-4412</span></div>
+    <div class="side-item"><span class="k">Email</span><span class="v">m.oyelaran.priest@example.com</span></div>
+    <div class="side-item"><span class="k">GitHub</span><span class="v">github.com/moyelaran</span></div>
+    <div class="side-item"><span class="k">LinkedIn</span><span class="v">linkedin.com/in/moyelaranpriest</span></div>
+    <div class="side-item"><span class="k">Site</span><span class="v">oyelaran.example.dev</span></div>
+  </aside>
+  <main class="main first">
+    <h1>Marcus Oyelaran-Priest</h1>
+    <div class="tagline">Full-Stack Software Engineer &middot; Distributed Systems &amp; Developer Tooling</div>
+    <div class="main-h">Summary</div>
+    <p>Software engineer with three and a half years of experience shipping customer-facing web
+    products and the services behind them. Strongest on the seam between the API and the browser:
+    schema design, caching, and the kind of front-end performance work that shows up in real user
+    metrics. Looking for a mid-level role on a team that takes testing seriously.</p>
+  </main>
+
+  <!-- row 2 -->
+  <aside class="side">
+    <div class="side-h">Languages</div>
+    <div class="chips">
+      <span class="chip">TypeScript</span><span class="chip">Java</span><span class="chip">Python</span>
+      <span class="chip">Kotlin</span><span class="chip">SQL</span><span class="chip">HTML/CSS</span>
+    </div>
+    <div class="side-h">Frameworks</div>
+    <div class="chips">
+      <span class="chip">React</span><span class="chip">Next.js</span><span class="chip">Spring Boot</span>
+      <span class="chip">Node.js</span><span class="chip">Django</span><span class="chip">Playwright</span>
+      <span class="chip">JUnit</span>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="main-h">Experience</div>
+    <div class="job">
+      <div class="job-head">
+        <span class="role">Software Engineer</span>
+        <span class="dates">January 2024 &ndash; Present</span>
+      </div>
+      <div class="org">Tidewater Systems &mdash; Providence, RI</div>
+      <ul>
+        <li>Own the billing-events service (Kotlin, Spring Boot, PostgreSQL) that reconciles about
+            2.4 million usage records per day against the invoicing ledger.</li>
+        <li>Eliminated a long-standing double-charge bug by moving reconciliation onto idempotency
+            keys, which cut billing support tickets by 61% quarter over quarter.</li>
+        <li>Led the migration of 14 services from CircleCI to a self-hosted runner pool, taking the
+            median pipeline from 11 minutes to 4 minutes 20 seconds and cutting CI spend by $3,100
+            per month.</li>
+        <li>Wrote the team's Playwright end-to-end suite covering the seven highest-traffic flows;
+            it now gates every deploy to production.</li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- row 3 -->
+  <aside class="side">
+    <div class="side-h">Platform</div>
+    <div class="chips">
+      <span class="chip">PostgreSQL</span><span class="chip">MySQL</span><span class="chip">Redis</span>
+      <span class="chip">RabbitMQ</span><span class="chip">Docker</span><span class="chip">Kubernetes</span>
+      <span class="chip">GCP</span><span class="chip">Datadog</span><span class="chip">CircleCI</span>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="job">
+      <div class="job-head">
+        <span class="role">Associate Software Engineer</span>
+        <span class="dates">August 2022 &ndash; December 2023</span>
+      </div>
+      <div class="org">Blue Harbor Media &mdash; Boston, MA</div>
+      <ul>
+        <li>Built the subscriber paywall front end in React and Next.js, serving roughly 310,000
+            monthly unique readers.</li>
+        <li>Improved Largest Contentful Paint on article pages from 4.1 s to 1.8 s by deferring
+            third-party embeds and moving hero images to responsive AVIF, which lifted measured
+            article completion rate by 9%.</li>
+        <li>Added a Redis-backed edge cache for the article API, dropping origin load by about 70%
+            during traffic spikes tied to breaking news.</li>
+        <li>Ran the accessibility audit that brought the reader app to WCAG 2.1 AA on all templates.</li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- row 4 -->
+  <aside class="side">
+    <div class="side-h">Education</div>
+    <div class="edu">
+      <div class="deg">B.S. Software Engineering</div>
+      <div class="school">Rennick Institute of Technology</div>
+      <div class="when">2018 &ndash; 2022 &middot; Providence, RI</div>
+      <div class="when">Senior capstone: distributed rate limiting. GPA 3.71.</div>
+    </div>
+    <div class="edu">
+      <div class="deg">Certificate, Cloud Architecture</div>
+      <div class="school">Rennick Professional Studies</div>
+      <div class="when">2023</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="job">
+      <div class="job-head">
+        <span class="role">Engineering Intern</span>
+        <span class="dates">June 2021 &ndash; August 2021</span>
+      </div>
+      <div class="org">Fernhollow Robotics &mdash; Worcester, MA</div>
+      <ul>
+        <li>Wrote the telemetry dashboard used by the field-test team to review autonomous runs.</li>
+        <li>Reduced log ingestion storage by 38% by switching to columnar Parquet with daily
+            compaction.</li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- row 5 -->
+  <aside class="side">
+    <div class="side-h">Interests</div>
+    <div class="side-item"><span class="v">Competitive rowing, letterpress printing, and maintaining
+      a small Mastodon instance for a local makerspace.</span></div>
+    <div class="side-h">References</div>
+    <div class="side-item"><span class="v">Available on request.</span></div>
+  </aside>
+  <main class="main">
+    <div class="main-h">Projects</div>
+    <div class="proj">
+      <div class="pname">Harborlight</div>
+      <div class="plink">github.com/moyelaran/harborlight</div>
+      <p>A self-hostable status page that derives incident timelines from existing alerting
+      webhooks instead of asking engineers to write updates by hand. About 1,400 stars.</p>
+    </div>
+    <div class="proj">
+      <div class="pname">quiettype</div>
+      <div class="plink">github.com/moyelaran/quiettype</div>
+      <p>A TypeScript codemod that finds and narrows implicit <em>any</em> in large codebases,
+      written up at oyelaran.example.dev/posts/quiettype.</p>
+    </div>
+  </main>
+
+</div>
+
+</body>
+</html>

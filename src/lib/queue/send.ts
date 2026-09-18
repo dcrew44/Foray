@@ -1,5 +1,3 @@
-import "server-only";
-
 import type { PgBoss } from "pg-boss";
 
 import { createBoss, ensureQueues } from "./boss";

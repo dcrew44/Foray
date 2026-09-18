@@ -1,5 +1,3 @@
-import "server-only";
-
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import type { UIMessage } from "ai";
 

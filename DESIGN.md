@@ -132,6 +132,31 @@ is an open question to be settled with those measurements, not guessed.
 - **Phase 4 — SaaS hardening.** Cloud deploy of the same containers, Browserbase,
   S3 storage, usage billing off `llm_calls`, own company dataset, retention policy.
 
+### Chat UI rebuild (roadmap, scheduled with or before Milestone E)
+
+The Step 7 chat is a working vertical slice, not a finished interface: it proves
+streaming, tool rendering and persistence, and it looks and behaves like it. The
+user has asked for a clean, non-buggy UI as its own piece of work rather than as
+incidental polish. Known gaps as of Step 7:
+
+- **No app chrome.** No navigation between chat, activity, pipeline, profile and
+  settings; no sign-out; no way to start a new conversation or reach an old one,
+  even though conversations are persisted and addressable at `/chat/<id>`.
+- **No layout discipline.** Messages run the full window width with no reading
+  measure, and the composer is pinned to a bare full-height flex column.
+- **Thin feedback.** Streaming state shows only on the submit button; errors
+  render as one unstyled line; there is no retry, stop or copy affordance.
+- **Unnecessary refetching.** The client calls `router.refresh()` on every
+  finished turn, re-rendering the server component when only the URL changed.
+- **Vendored components adapted, not exercised.** `ai-elements/prompt-input.tsx`
+  was ported from the Radix-based shadcn primitives to the Base UI ones this
+  project actually uses; several of its paths (attachments, the action menu, the
+  hover card) have had no real use yet.
+
+This overlaps Milestone E's polish items — the activity drawer, approval badges,
+run cancel/retry and error surfaces — so the two should be planned together
+rather than done twice.
+
 Roadmap items deliberately out of Phase 1: LinkedIn automation through the user's own
 account, and a career-counselor onboarding mode (Phase 1 only reserves
 `profiles.assessment` and versions the interview config).

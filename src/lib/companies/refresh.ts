@@ -1,4 +1,8 @@
+import { db } from "@/lib/db";
 import { recordFetch } from "@/lib/db/queries/companies";
+import { companies } from "@/lib/db/schema";
+import { fetchCareersPage } from "@/lib/sources/careers-page";
+import { eq } from "drizzle-orm";
 import type { Company } from "@/lib/db/schema";
 import { BOARD_ADAPTERS, type BoardSourceId } from "@/lib/sources";
 import { ingestJobs, type IngestResult } from "@/lib/sources/ingest";
@@ -26,8 +30,12 @@ export async function refreshCompany(company: Company): Promise<RefreshOutcome> 
       ? BOARD_ADAPTERS[company.sourceType as BoardSourceId]
       : null;
 
+  // No API for this company: read its careers pages with a model instead.
+  if (company.sourceType === "careers_page") {
+    return refreshCareersPage(company);
+  }
+
   if (!adapter?.fetchBoard || !company.atsSlug) {
-    // careers_page companies are handled by the LLM extractor in Step 14.
     return { company: company.name, status: "unsupported", jobs: 0 };
   }
 
@@ -93,4 +101,62 @@ export async function refreshCompanies(
   );
 
   return results;
+}
+
+/**
+ * The careers-page path.
+ *
+ * Deliberately does not deactivate missing postings: an extraction that reads
+ * fewer roles than last time is more likely to be a page that changed shape
+ * than a company that closed half its jobs. Board fetches are authoritative
+ * about disappearance; this is not.
+ */
+async function refreshCareersPage(company: Company): Promise<RefreshOutcome> {
+  if (company.careersUrls.length === 0) {
+    return { company: company.name, status: "unsupported", jobs: 0 };
+  }
+
+  try {
+    const result = await fetchCareersPage(company, {
+      context: { userId: company.addedByUserId },
+    });
+
+    const ingest = await ingestJobs({ company, jobs: result.jobs });
+
+    await recordFetch({
+      companyId: company.id,
+      status: result.needsBrowser ? "needs-browser" : "ok",
+      jobCount: result.jobs.length,
+    });
+
+    // The flag is set *and cleared* here. A page that failed once and then
+    // extracted fine — because the site changed, or because the extractor did
+    // — must stop being routed to Phase 2's browser, which is expensive and
+    // not yet built.
+    if (result.needsBrowser !== company.needsBrowser) {
+      await db
+        .update(companies)
+        .set({ needsBrowser: result.needsBrowser, updatedAt: new Date() })
+        .where(eq(companies.id, company.id));
+    }
+
+    return {
+      company: company.name,
+      status: "ok",
+      jobs: result.jobs.length,
+      ingest,
+    };
+  } catch (error) {
+    await recordFetch({
+      companyId: company.id,
+      status: "error",
+      jobCount: 0,
+    });
+    return {
+      company: company.name,
+      status: "error",
+      jobs: 0,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }

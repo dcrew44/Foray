@@ -182,3 +182,37 @@ export function cleanDescription(raw: string | null | undefined): CleanResult {
 
   return { text: kept.join("\n\n").trim(), removed };
 }
+
+/**
+ * Like `htmlToText`, but keeps links as `[text](url)`.
+ *
+ * Plain text conversion throws away every href, which is fine for a job
+ * description and fatal for a careers listing: the extractor is asked to copy
+ * each posting's real link rather than invent one, so it has to be able to see
+ * the links. Absolute URLs are resolved against `baseUrl` where one is given.
+ */
+export function htmlToTextWithLinks(html: string, baseUrl?: string): string {
+  const withLinks = html.replace(
+    /<a\b[^>]*?href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+    (_match, href: string, inner: string) => {
+      const label = inner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      if (!label) return " ";
+
+      let url = href.trim();
+      if (baseUrl) {
+        try {
+          url = new URL(url, baseUrl).toString();
+        } catch {
+          // Leave a malformed href as written; the caller resolves and
+          // validates it again anyway.
+        }
+      }
+      // Anchors and javascript: links are navigation, not postings.
+      if (/^(?:#|javascript:|mailto:)/i.test(url)) return ` ${label} `;
+
+      return ` [${label}](${url}) `;
+    },
+  );
+
+  return htmlToText(withLinks);
+}

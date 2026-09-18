@@ -132,6 +132,18 @@ is an open question to be settled with those measurements, not guessed.
 - **Phase 4 — SaaS hardening.** Cloud deploy of the same containers, Browserbase,
   S3 storage, usage billing off `llm_calls`, own company dataset, retention policy.
 
+### Deferred: LinkedIn PDF import
+
+Skipped by the user on 2026-09-18, after Step 8. It was to be the first consumer
+of the provenance work: the same upload path with `kind: linkedin_pdf`, a
+`resume/merge.ts` using the `merge` purpose, and a diff the user accepts, never
+overwriting `source: user` items.
+
+Nothing was removed for it — `linkedin_pdf` remains in the `document_kind` enum
+and in `ItemSource`, and `/api/uploads` already accepts, stores and parses that
+kind; it simply does not merge into the base resume. So this stays a small,
+additive piece of work rather than a rewrite.
+
 ### Chat UI rebuild (roadmap, scheduled with or before Milestone E)
 
 The Step 7 chat is a working vertical slice, not a finished interface: it proves

@@ -56,9 +56,13 @@ export async function POST(request: Request) {
   // Everything the agent does downstream — including model calls made from
   // inside the SDK's own loop — is attributed to this user by the ledger
   // middleware, which reads the context back out of async-local storage.
+  // Built before entering the context so the agent's own profile read is not
+  // attributed as a model call.
+  const agent = await chatAgent(user.id);
+
   return withLlmContext({ userId: user.id }, () =>
     createAgentUIStreamResponse({
-      agent: chatAgent(user.id),
+      agent,
       uiMessages,
       originalMessages: uiMessages,
       headers: { "x-conversation-id": conversation.id },

@@ -1,21 +1,49 @@
 import { ToolLoopAgent, isStepCount, type InferAgentUIMessage } from "ai";
+import { eq } from "drizzle-orm";
 
+import { db } from "@/lib/db";
+import { profiles } from "@/lib/db/schema";
 import { model } from "@/lib/llm/models";
+import {
+  EMPTY_INTERVIEW_STATE,
+  EMPTY_PREFERENCES,
+  InterviewStateSchema,
+  PreferencesSchema,
+} from "@/lib/profile/interview";
+
 import { getProfileSummary } from "./tools/get-profile-summary";
-import { SYSTEM_PROMPT } from "./system-prompt";
+import { updateProfilePreferences } from "./tools/update-profile-preferences";
+import { systemPrompt } from "./system-prompt";
 
 /**
  * The chat agent, built per request around one user.
  *
- * The step cap matters: a chat turn runs inside a Next request, so a loop that
- * will not terminate has to be bounded rather than merely discouraged.
+ * The instructions are assembled from that user's stored state, so the agent
+ * knows what it has already been told. The step cap matters: a chat turn runs
+ * inside a Next request, so a loop that will not terminate has to be bounded
+ * rather than merely discouraged.
  */
-export function chatAgent(userId: string) {
+export async function chatAgent(userId: string) {
+  const [profile] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.userId, userId))
+    .limit(1);
+
   return new ToolLoopAgent({
     model: model("chat"),
-    instructions: SYSTEM_PROMPT,
+    instructions: systemPrompt({
+      hasProfile: Boolean(profile),
+      preferences:
+        PreferencesSchema.safeParse(profile?.preferences).data ??
+        EMPTY_PREFERENCES,
+      interviewState:
+        InterviewStateSchema.safeParse(profile?.interviewState).data ??
+        EMPTY_INTERVIEW_STATE,
+    }),
     tools: {
       get_profile_summary: getProfileSummary(userId),
+      update_profile_preferences: updateProfilePreferences(userId),
     },
     stopWhen: isStepCount(8),
   });
@@ -26,4 +54,6 @@ export function chatAgent(userId: string) {
  * types baked in. The client infers tool parts from it, so a renamed tool is a
  * type error rather than a silently unrendered part.
  */
-export type ForayUIMessage = InferAgentUIMessage<ReturnType<typeof chatAgent>>;
+export type ForayUIMessage = InferAgentUIMessage<
+  Awaited<ReturnType<typeof chatAgent>>
+>;

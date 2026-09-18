@@ -4,7 +4,6 @@ import {
   pgTable,
   text,
   timestamp,
-  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -13,6 +12,12 @@ import {
  * Better Auth owns this shape: `pnpm auth:generate` regenerates it from the
  * auth config, and the generated file is what this must agree with. Nothing
  * here is ours to redesign — our own columns go on `profiles`, not on `user`.
+ *
+ * Verified against the generator's output. It differs only in index names,
+ * which we keep snake_case for consistency with the rest of the schema, and in
+ * defaultNow() on session/account.updated_at, which the generator omits because
+ * Better Auth always supplies the value — a default there costs nothing and
+ * turns a missed write into a correct row rather than a not-null violation.
  */
 
 export const user = pgTable("user", {
@@ -22,7 +27,10 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
 export const session = pgTable(
@@ -32,7 +40,10 @@ export const session = pgTable(
     expiresAt: timestamp("expires_at").notNull(),
     token: text("token").notNull().unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: text("user_id")
@@ -59,12 +70,12 @@ export const account = pgTable(
     scope: text("scope"),
     password: text("password"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
   },
-  (t) => [
-    index("account_user_id_idx").on(t.userId),
-    uniqueIndex("account_provider_account_idx").on(t.providerId, t.accountId),
-  ],
+  (t) => [index("account_user_id_idx").on(t.userId)],
 );
 
 export const verification = pgTable(
@@ -75,7 +86,10 @@ export const verification = pgTable(
     value: text("value").notNull(),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
   },
   (t) => [index("verification_identifier_idx").on(t.identifier)],
 );

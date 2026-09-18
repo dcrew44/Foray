@@ -41,8 +41,10 @@ Working notes for Foray. Read [DESIGN.md](DESIGN.md) for *why*; this file is *ho
 
 ## API drift warning
 
-Next 16, AI SDK 7, and Better Auth 1.7 all differ from model training data. Check
-`AGENTS.md` and the installed `vercel/ai` skill before writing AI SDK code. Notably:
+Next 16, AI SDK 7, and Better Auth 1.7 all differ from model training data. Before
+writing AI SDK code, read the vendored skills in `.agents/skills/` (`ai-sdk` and
+`migrate-ai-sdk-v6-to-v7`, symlinked into `.claude/skills/`), and heed `AGENTS.md` —
+Next re-writes its block there and points at `node_modules/next/dist/docs/`. Notably:
 `ToolLoopAgent` takes `instructions` (not `system`), `stopWhen: isStepCount(n)`,
 structured output via `generateText({ output: Output.object({ schema }) })`,
 `createUIMessageStreamResponse()`, tool approval via `toolApproval`.

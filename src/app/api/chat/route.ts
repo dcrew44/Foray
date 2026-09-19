@@ -1,4 +1,4 @@
-import { createAgentUIStreamResponse } from "ai";
+import { createAgentUIStreamResponse, generateId } from "ai";
 
 import { withLlmContext } from "@/lib/llm/context";
 
@@ -66,6 +66,13 @@ export async function POST(request: Request) {
       uiMessages,
       originalMessages: uiMessages,
       headers: { "x-conversation-id": conversation.id },
+      // Without this the SDK leaves the response message id empty: an id is
+      // only derived from `originalMessages` when the last one is already an
+      // assistant message, which it never is at the start of a turn. An empty
+      // id collides with every other assistant message on the `messages`
+      // primary key, so `saveMessages` upserts them all onto one orphan row
+      // and the reply is never readable in its own conversation.
+      generateMessageId: generateId,
       // Persist once the stream is done, so a reload shows what the user saw.
       onEnd: async ({ responseMessage }) => {
         if (responseMessage) {

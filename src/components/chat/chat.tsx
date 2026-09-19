@@ -2,7 +2,6 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isStaticToolUIPart } from "ai";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -19,6 +18,7 @@ import {
 import {
   PromptInput,
   PromptInputBody,
+  PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
@@ -40,7 +40,6 @@ export function Chat({
   conversationId: string | null;
   initialMessages: ForayUIMessage[];
 }) {
-  const router = useRouter();
   const [id] = useState(() => conversationId ?? crypto.randomUUID());
 
   const { messages, sendMessage, status, error } = useChat<ForayUIMessage>({
@@ -56,8 +55,18 @@ export function Chat({
     }),
     onFinish: () => {
       // Put the conversation in the URL so a reload lands back on this thread.
-      if (!conversationId) router.replace(`/chat/${id}`);
-      router.refresh();
+      //
+      // Deliberately the native history API rather than `router.replace`: a
+      // real navigation to /chat/<id> remounts this component with
+      // `initialMessages` re-read from Postgres, which throws away the reply
+      // that just streamed in. `replaceState` rewrites the address bar only —
+      // no remount, no refetch, so the client keeps its own messages, and a
+      // genuine reload still server-renders the thread from the database.
+      // Nothing else on this route is server-rendered from the conversation,
+      // so there is nothing for `router.refresh()` to bring up to date either.
+      if (!conversationId) {
+        window.history.replaceState(null, "", `/chat/${id}`);
+      }
     },
   });
 
@@ -145,7 +154,9 @@ export function Chat({
           <PromptInputBody>
             <PromptInputTextarea placeholder="Ask anything about your search…" />
           </PromptInputBody>
-          <PromptInputSubmit status={status} />
+          <PromptInputFooter className="justify-end">
+            <PromptInputSubmit status={status} />
+          </PromptInputFooter>
         </PromptInput>
       </div>
     </div>

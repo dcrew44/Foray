@@ -15,9 +15,9 @@ import { profiles } from "@/lib/db/schema";
 export function getProfileSummary(userId: string) {
   return tool({
     description:
-      "Read what is known about the current user: profile completeness and " +
-      "their stated job preferences. Call this before giving advice that " +
-      "depends on their background or what they are looking for.",
+      "How complete the user's profile is, and what they have said they are " +
+      "looking for. This reports counts, NOT resume content — to read what " +
+      "their resume actually says, use get_resume.",
     inputSchema: z.object({}),
     execute: async () => {
       const [profile] = await db

@@ -17,6 +17,7 @@ import {
   listRegisteredCompanies,
 } from "./tools/companies";
 import { getProfileSummary } from "./tools/get-profile-summary";
+import { getResume } from "./tools/resume";
 import {
   cancelRun,
   getJob,
@@ -55,6 +56,7 @@ export async function chatAgent(userId: string) {
     }),
     tools: {
       get_profile_summary: getProfileSummary(userId),
+      get_resume: getResume(userId),
       update_profile_preferences: updateProfilePreferences(userId),
       add_company: addCompany(userId),
       discover_companies: discoverCompanies(userId),

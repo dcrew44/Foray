@@ -5,7 +5,9 @@ import { registerBoardsFromApplyLinks } from "@/lib/companies/discovery";
 import { db } from "@/lib/db";
 import { staleCompanies } from "@/lib/db/queries/companies";
 import { jobMatches, jobs, runs, type Run } from "@/lib/db/schema";
-import { getProfile } from "@/lib/db/queries/profile";
+import { getBaseResume, getProfile } from "@/lib/db/queries/profile";
+import { scoreMatches, scoreSummary } from "@/lib/ranking/fast-score";
+import { ResumeSchema } from "@/lib/resume/schema";
 import {
   EMPTY_PREFERENCES,
   PreferencesSchema,
@@ -191,11 +193,56 @@ export async function executeSearchRun(run: Run): Promise<void> {
       newMatches: created,
     });
 
+    if (await isCancelled(run.id)) return void (await cancelled(run, userId));
+
+    // 6. Score them. Cheap tier, one call per posting, triage not judgement.
+    const baseResume = await getBaseResume(userId);
+    const resume = baseResume
+      ? (ResumeSchema.safeParse(baseResume.data).data ?? null)
+      : null;
+
+    await emit({
+      userId,
+      runId: run.id,
+      kind: "scoring.start",
+      message: `Scoring ${prefilter.jobIds.length} roles against your profile`,
+    });
+
+    const scoring = await scoreMatches({
+      userId,
+      preferences,
+      resume,
+      jobIds: prefilter.jobIds,
+      context: { userId, runId: run.id },
+      shouldStop: () => isCancelled(run.id),
+      onProgress: async (done, total) => {
+        await mergeStats(run.id, { scored: done });
+        await emit({
+          userId,
+          runId: run.id,
+          kind: "scoring.progress",
+          level: "debug",
+          message: `Scored ${done} of ${total}`,
+        });
+      },
+    });
+
+    const summary = await scoreSummary(userId);
+
+    await mergeStats(run.id, {
+      scored: scoring.scored,
+      autoArchived: scoring.archived,
+      scoringFailed: scoring.failed,
+    });
+
     await finishRun(run.id, {
       status: "completed",
       output: {
         candidates: prefilter.jobIds.length,
         newMatches: created,
+        scored: scoring.scored,
+        autoArchived: scoring.archived,
+        strong: summary.strong,
       },
     });
 
@@ -203,7 +250,10 @@ export async function executeSearchRun(run: Run): Promise<void> {
       userId,
       runId: run.id,
       kind: "run.completed",
-      message: `Found ${prefilter.jobIds.length} matching roles (${created} new)`,
+      message:
+        `Found ${prefilter.jobIds.length} roles, scored ${scoring.scored}. ` +
+        `${summary.strong} look strong, ${summary.good} are worth a look, ` +
+        `${scoring.archived} were archived as too weak.`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

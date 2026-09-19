@@ -61,7 +61,7 @@ const PURPOSE_ENV: Record<Purpose, string | undefined> = {
  * the most because a fabricated bullet is the worst failure mode in the
  * product; bulk passes get the least because they run hundreds of times.
  */
-const REASONING: Record<Purpose, ReasoningEffort> = {
+const REASONING_DEFAULTS: Record<Purpose, ReasoningEffort> = {
   chat: "low",
   extract: "low",
   score: "minimal",
@@ -131,8 +131,31 @@ export function model(purpose: Purpose): LanguageModel {
   });
 }
 
+/**
+ * Reasoning effort is worth tuning without a deploy, because it dominates the
+ * bill on the bulk passes. Measured on DeepSeek Flash: 92% of the output tokens
+ * a scoring call produces are reasoning tokens — about 2,085 of 2,255 — for a
+ * task whose answer is a number and three short phrases. Turning that down is
+ * the single largest cost lever in the product, so it is an env setting:
+ * LLM_REASONING_SCORE=none, and so on per purpose.
+ */
 export function reasoningFor(purpose: Purpose): ReasoningEffort {
-  return REASONING[purpose];
+  const override = process.env[`LLM_REASONING_${purpose.toUpperCase()}`];
+  if (override && isReasoningEffort(override)) return override;
+  return REASONING_DEFAULTS[purpose];
+}
+
+const EFFORTS: ReasoningEffort[] = [
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+];
+
+function isReasoningEffort(value: string): value is ReasoningEffort {
+  return (EFFORTS as string[]).includes(value);
 }
 
 /**

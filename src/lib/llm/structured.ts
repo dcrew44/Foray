@@ -7,7 +7,7 @@ import {
 } from "ai";
 import type { z } from "zod";
 
-import { callLLM, type CallContext } from "./call";
+import { callLLM, type CallContext, type CallOverrides } from "./call";
 import type { Purpose } from "./models";
 
 /**
@@ -65,12 +65,14 @@ export async function generateStructured<T>(
   schema: z.ZodType<T>,
   args: StructuredArgs,
   context: CallContext = {},
+  overrides: CallOverrides = {},
 ): Promise<StructuredResult<T>> {
   const attempt = async () => {
     const result = await callLLM(
       purpose,
       { ...args, output: Output.object({ schema }) },
       context,
+      overrides,
     );
     // `output` is a getter that throws when the response did not parse, so it
     // must be read inside the try rather than returned lazily.

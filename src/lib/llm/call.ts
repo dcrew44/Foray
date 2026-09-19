@@ -29,21 +29,29 @@ type GenerateArgs = Omit<
   "model" | "reasoning"
 >;
 
+export type CallOverrides = {
+  /** Used by the bake-off to compare the same prompt across models. */
+  model?: Parameters<typeof generateText>[0]["model"];
+  reasoning?: Parameters<typeof generateText>[0]["reasoning"];
+  providerId?: string;
+};
+
 export async function callLLM<T extends GenerateArgs>(
   purpose: Purpose,
   args: T,
   context: LlmContext = {},
+  overrides: CallOverrides = {},
 ) {
   const ref = modelRef(purpose);
   const quirks = quirksFor(ref);
 
-  await acquire(providerOf(purpose));
+  await acquire(overrides.providerId ?? providerOf(purpose));
 
   return withLlmContext(context, () =>
     generateText({
       ...args,
-      model: model(purpose),
-      reasoning: reasoningFor(purpose),
+      model: overrides.model ?? model(purpose),
+      reasoning: overrides.reasoning ?? reasoningFor(purpose),
       // Some vendors reject an explicit temperature on reasoning models rather
       // than ignoring it, so it is dropped instead of passed through.
       ...(quirks.supportsTemperature ? {} : { temperature: undefined }),

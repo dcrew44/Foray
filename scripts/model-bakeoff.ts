@@ -2,7 +2,11 @@ import "@/lib/load-dotenv";
 
 import { pool } from "@/lib/db";
 import { costUsd, isPriced, type TokenCounts } from "@/lib/llm/pricing";
-import type { Purpose } from "@/lib/llm/models";
+import type { Purpose, ReasoningEffort } from "@/lib/llm/models";
+import {
+  runScoringFixture,
+  scoreAgreement,
+} from "@/lib/ranking/bakeoff-fixture";
 
 /**
  * Compare models for one purpose on fixed fixtures.
@@ -22,11 +26,20 @@ type Args = {
   purpose: Purpose;
   models: string[];
   reference?: string;
+  /**
+   * Compare at one effort level. Worth varying on its own: on DeepSeek Flash,
+   * reasoning is 92% of a scoring call's output tokens, so effort moves the
+   * bill more than the choice of model does.
+   */
+  reasoning?: ReasoningEffort;
 };
 
 export type FixtureRun<TOutput> = {
   /** Runs the purpose's real prompt against one model, without the ledger's purpose routing. */
-  run: (modelRef: string) => Promise<{
+  run: (
+    modelRef: string,
+    options?: { reasoning?: ReasoningEffort },
+  ) => Promise<{
     outputs: TOutput[];
     tokens: TokenCounts;
     latencyMs: number;
@@ -42,9 +55,26 @@ export type FixtureRun<TOutput> = {
  * baked off yet".
  */
 export const FIXTURES: Partial<Record<Purpose, FixtureRun<unknown>>> = {
-  // score:    → Step 16 (20 postings against a fixed profile)
-  // extract:  → Step 8  (3 resumes: single column, two column, LaTeX export)
-  // tailor:   → Step 20 (3 job/resume pairs, scored by the verifier)
+  score: {
+    run: async (modelRef, options) => {
+      const result = await runScoringFixture(modelRef, {
+        reasoning: options?.reasoning,
+      });
+      return {
+        outputs: result.outputs,
+        tokens: result.tokens,
+        latencyMs: result.latencyMs,
+        schemaFailures: result.schemaFailures,
+      };
+    },
+    agreement: (candidate, reference) =>
+      scoreAgreement(
+        candidate as Array<{ jobId: string; score: number }>,
+        reference as Array<{ jobId: string; score: number }>,
+      ),
+  } as FixtureRun<unknown>,
+  // extract: → resumes (single column, two column, LaTeX export)
+  // tailor:  → Step 20 (3 job/resume pairs, scored by the verifier)
 };
 
 function parseArgs(argv: string[]): Args {
@@ -63,7 +93,12 @@ function parseArgs(argv: string[]): Args {
     process.exit(2);
   }
 
-  return { purpose, models, reference: get("--reference") };
+  return {
+    purpose,
+    models,
+    reference: get("--reference"),
+    reasoning: get("--reasoning") as ReasoningEffort | undefined,
+  };
 }
 
 async function main() {
@@ -88,18 +123,24 @@ async function main() {
   }
 
   const referenceOutputs = args.reference
-    ? (await fixture.run(args.reference)).outputs
+    ? (await fixture.run(args.reference, { reasoning: args.reasoning })).outputs
     : null;
 
   const rows: Array<Record<string, string>> = [];
 
   for (const modelRef of args.models) {
-    const result = await fixture.run(modelRef);
+    const result = await fixture.run(modelRef, { reasoning: args.reasoning });
+    const total = result.outputs.length + result.schemaFailures;
+    const cost = costUsd(modelRef, result.tokens);
+
     rows.push({
       model: modelRef,
-      cost: `$${costUsd(modelRef, result.tokens).toFixed(4)}`,
-      latency: `${result.latencyMs}ms`,
-      schemaFail: `${result.schemaFailures}/${result.outputs.length + result.schemaFailures}`,
+      cost: `$${cost.toFixed(4)}`,
+      // The number that actually decides: one search scores hundreds.
+      per500: `$${(total > 0 ? (cost / total) * 500 : 0).toFixed(2)}`,
+      latency: `${(result.latencyMs / 1000).toFixed(1)}s`,
+      reasoningShare: `${Math.round(((result.tokens.reasoningTokens ?? 0) / Math.max(result.tokens.outputTokens, 1)) * 100)}%`,
+      schemaFail: `${result.schemaFailures}/${total}`,
       agreement: referenceOutputs
         ? fixture.agreement(result.outputs, referenceOutputs).toFixed(2)
         : "—",

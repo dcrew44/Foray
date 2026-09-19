@@ -37,3 +37,6 @@ yarn-error.log*
 __pycache__/
 *.pyc
 .venv/
+
+# scratch scripts used while verifying a step
+/.*.ts

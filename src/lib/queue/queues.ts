@@ -12,6 +12,8 @@ export const QUEUES = {
   companyDiscover: "company.discover",
   /** Re-fetch registered boards into the shared job mirror. */
   companyRefresh: "company.refresh",
+  /** Find and record matching roles for one user. */
+  search: "search",
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -36,8 +38,14 @@ export type CompanyRefreshPayload = {
   all?: boolean;
 };
 
+export type SearchPayload = {
+  userId: string;
+  runId: string;
+};
+
 export type QueuePayloads = {
   [QUEUES.ping]: PingPayload;
+  [QUEUES.search]: SearchPayload;
   [QUEUES.companyDiscover]: CompanyDiscoverPayload;
   [QUEUES.companyRefresh]: CompanyRefreshPayload;
 };

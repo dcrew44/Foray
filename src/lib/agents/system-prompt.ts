@@ -37,9 +37,14 @@ const CAPABILITIES = `
   registered after its board is verified live, so say plainly when one could
   not be found rather than implying it was added.
 - Report what is registered with list_companies.
+- Run a search with start_search_run, then report progress with get_run_status
+  and stop one with cancel_run. A search runs in the background and takes tens
+  of seconds; say it has started rather than pretending to wait for it.
+- Show matched roles with list_jobs and read one with get_job.
 
-Ranking, tailoring and the search run itself are not wired up yet. If asked for
-them, say what is not built yet instead of improvising.`;
+Ranking and resume tailoring are not wired up yet — a search finds and records
+matching roles, but nothing scores them. Say so when it matters instead of
+implying the list is ranked.`;
 
 export function systemPrompt(input: {
   hasProfile: boolean;

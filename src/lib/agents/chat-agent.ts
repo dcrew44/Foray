@@ -17,6 +17,13 @@ import {
   listRegisteredCompanies,
 } from "./tools/companies";
 import { getProfileSummary } from "./tools/get-profile-summary";
+import {
+  cancelRun,
+  getJob,
+  getRunStatus,
+  listJobs,
+  startSearchRun,
+} from "./tools/search";
 import { updateProfilePreferences } from "./tools/update-profile-preferences";
 import { systemPrompt } from "./system-prompt";
 
@@ -52,6 +59,11 @@ export async function chatAgent(userId: string) {
       add_company: addCompany(userId),
       discover_companies: discoverCompanies(userId),
       list_companies: listRegisteredCompanies(),
+      start_search_run: startSearchRun(userId),
+      get_run_status: getRunStatus(userId),
+      cancel_run: cancelRun(userId),
+      list_jobs: listJobs(userId),
+      get_job: getJob(),
     },
     stopWhen: isStepCount(8),
   });

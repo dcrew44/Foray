@@ -31,6 +31,8 @@ import {
 } from "@/components/ai-elements/tool";
 import type { ForayUIMessage } from "@/lib/agents/chat-agent";
 
+import { RunCard } from "./run-card";
+
 export function Chat({
   conversationId,
   initialMessages,
@@ -84,6 +86,25 @@ export function Chat({
 
                   // Static tools only — the agent declares its tool set, so a
                   // dynamic-tool part would mean something went wrong upstream.
+                  // A started run gets a live card rather than a JSON blob:
+                  // the run outlives this turn, so its progress is the useful
+                  // thing to show.
+                  if (
+                    part.type === "tool-start_search_run" &&
+                    part.state === "output-available" &&
+                    part.output &&
+                    typeof part.output === "object" &&
+                    "runId" in part.output &&
+                    typeof part.output.runId === "string"
+                  ) {
+                    return (
+                      <RunCard
+                        key={`${message.id}-${index}`}
+                        runId={part.output.runId}
+                      />
+                    );
+                  }
+
                   if (isStaticToolUIPart(part)) {
                     return (
                       <Tool key={`${message.id}-${index}`}>

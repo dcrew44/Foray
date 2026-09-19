@@ -1,5 +1,6 @@
 import {
   NoObjectGeneratedError,
+  NoOutputGeneratedError,
   Output,
   TypeValidationError,
   type LanguageModelUsage,
@@ -31,8 +32,24 @@ export type StructuredResult<T> = {
   retried: boolean;
 };
 
-/** Distinguishes "the model wrote bad JSON" from "the call itself failed". */
-function isSchemaFailure(error: unknown): boolean {
+/**
+ * Failures worth one more attempt.
+ *
+ * Two distinct ways a model can fail to produce usable structured output:
+ *
+ * - It wrote JSON that does not match the schema. Modelling failure, not
+ *   transport, so the SDK's `maxRetries` does not cover it.
+ * - It produced no output at all. Providers without native JSON-schema support
+ *   get the schema injected into the system message instead, and occasionally
+ *   answer with reasoning and no object. Seen in practice on DeepSeek, which is
+ *   exactly the cheap-tier model the bulk passes use.
+ *
+ * Both are worth exactly one retry. A second failure usually means the schema
+ * or the prompt is wrong, and looping would quietly multiply the bill.
+ */
+function isRetryableOutputFailure(error: unknown): boolean {
+  if (NoOutputGeneratedError.isInstance(error)) return true;
+
   if (!NoObjectGeneratedError.isInstance(error)) return false;
   // A `length` finish means the response was truncated: retrying the same
   // request just truncates again, so treat it as a real failure.
@@ -63,9 +80,11 @@ export async function generateStructured<T>(
   try {
     return { ...(await attempt()), retried: false };
   } catch (error) {
-    if (!isSchemaFailure(error)) throw error;
+    if (!isRetryableOutputFailure(error)) throw error;
     console.warn(
-      `[llm] ${purpose}: response did not match schema, retrying once`,
+      `[llm] ${purpose}: unusable structured output (${
+        error instanceof Error ? error.name : "unknown"
+      }), retrying once`,
     );
     return { ...(await attempt()), retried: true };
   }

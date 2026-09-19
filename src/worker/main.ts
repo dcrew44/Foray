@@ -10,6 +10,7 @@ import {
   handleCompanyRefresh,
 } from "./handlers/company";
 import { handlePing } from "./handlers/ping";
+import { handleSearch } from "./handlers/search";
 
 /**
  * The long-running half of Foray.
@@ -37,6 +38,12 @@ async function main() {
     QUEUES.companyDiscover,
     { batchSize: 1 },
     handleCompanyDiscover,
+  );
+
+  await boss.work<import("@/lib/queue/queues").SearchPayload>(
+    QUEUES.search,
+    { batchSize: 1 },
+    handleSearch,
   );
 
   // One at a time: a refresh already fans out across boards internally, and two

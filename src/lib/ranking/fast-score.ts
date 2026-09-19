@@ -28,8 +28,15 @@ import { FastScore } from "./schemas";
 const MAX_DESCRIPTION_CHARS = 4_000;
 /** Below this, a match is archived rather than shown. */
 export const DEFAULT_SCORE_THRESHOLD = 55;
-/** Concurrent scoring calls. The provider limiter is the real ceiling. */
-const CONCURRENCY = 8;
+/**
+ * Concurrent scoring calls.
+ *
+ * Each call takes about two seconds regardless, so this is what decides how
+ * long a run feels. Measured: 16 postings took 6.1s at 8-way and 3.0s at
+ * 16-way. The per-provider limiter is the real ceiling above this, which is
+ * where an account's actual rate limit belongs.
+ */
+const CONCURRENCY = 16;
 
 const RUBRIC = `You triage job postings for one candidate. Score 0–100.
 

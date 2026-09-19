@@ -10,7 +10,22 @@ import { env } from "@/env";
  * not consume the chat model's headroom.
  */
 
-const DEFAULT_RPM = 60;
+/**
+ * Requests per minute assumed when a provider has no explicit setting.
+ *
+ * 60 was far too low and made the limiter, rather than the provider, the
+ * bottleneck on any real run: the bucket starts full, so the first 60 calls
+ * fly and everything after them throttles to one per second. Measured on a
+ * batch of 80 scoring calls, the first 60 finished in 9s and the last 20 took
+ * 12.9s — and a 500-posting run would have spent seven minutes waiting on us
+ * rather than on OpenAI.
+ *
+ * 300/min is comfortably under what the providers here allow on a paid account
+ * and still ten times what any single pipeline needs. A brand-new account with
+ * low limits should set LLM_RPM_<PROVIDER> down rather than discovering this
+ * through 429s.
+ */
+const DEFAULT_RPM = 300;
 
 class TokenBucket {
   private tokens: number;

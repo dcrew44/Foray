@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist_Mono, Instrument_Sans } from "next/font/google";
 
+import { ThemeSync } from "@/components/shell/theme-sync";
+import { THEME_COLORS, THEME_SCRIPT } from "@/lib/theme";
+
 import "./globals.css";
 
 /**
@@ -31,37 +34,28 @@ export const metadata: Metadata = {
     "An AI job-search agent. It searches the boards, ranks every role against your background, and tailors your resume for the ones worth applying to.",
 };
 
+/** Dark is the default theme; the browser chrome matches until someone picks light. */
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ecefea" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d1310" },
-  ],
+  themeColor: THEME_COLORS.dark,
+  colorScheme: "dark light",
 };
-
-/**
- * Applied before first paint so a dark-mode user never sees a white flash.
- * The choice lives in localStorage ("light" | "dark" | "system"); absent means
- * follow the operating system.
- */
-const THEME_SCRIPT = `(() => {
-  try {
-    const stored = localStorage.getItem("foray-theme");
-    const dark = stored === "dark" || ((!stored || stored === "system") && matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", dark);
-  } catch {}
-})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      className={`${bricolage.variable} ${instrument.variable} ${geistMono.variable} h-full antialiased`}
+      // Rendered dark: that is the default, and the head script switches to
+      // light before first paint for anyone who chose it.
+      className={`${bricolage.variable} ${instrument.variable} ${geistMono.variable} dark h-full antialiased`}
       lang="en"
       suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <ThemeSync />
+        {children}
+      </body>
     </html>
   );
 }

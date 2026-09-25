@@ -207,6 +207,10 @@ The UI was rebuilt as its own piece of work at the end of Phase 1.
   green, the better the match, so a board reads as a heat map.
 - **Type**: Bricolage Grotesque for display (titles, headline sentences, scores),
   Instrument Sans for everything read or operated.
+- **Dark by default.** The server renders dark; a script in `<head>` switches to light
+  before first paint only for someone who chose Light (or Match system on a light OS).
+  The choice lives in the browser (`src/lib/theme.ts`) and is set from Settings →
+  Appearance or the account menu.
 - **Chat renders tool calls as what they did**: a started run is a live run card (with
   its approval inline when it pauses), a job list is clickable match lines, a saved
   preference is one sentence. Raw JSON is one click away, never the default.

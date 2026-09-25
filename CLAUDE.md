@@ -41,6 +41,8 @@ Working notes for Foray. Read [DESIGN.md](DESIGN.md) for *why*; this file is *ho
 
 ## UI conventions
 
+- Dark is the default theme and the one most people see; check new UI in dark first,
+  then light. Theme logic lives only in `src/lib/theme.ts`.
 - Tokens live in `src/app/globals.css`; never hardcode colors. `signal` (marigold) means
   only "agents working" or "waiting on the user"; `destructive` only errors; match fit uses
   the `fit-0..5` pine scale via `ScoreChip`.

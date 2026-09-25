@@ -23,7 +23,7 @@ See [DESIGN.md](DESIGN.md) for the settled decisions and architecture, and
 | **Activity** | Every run and every step the agents took. |
 | **Profile** | Your resume, as the structured facts every model judges you by, and what you're looking for. |
 | **Companies** | The job boards Foray watches. Add one by name, domain or board URL. |
-| **Settings** | Autonomy, score threshold, deep-review count, model spend this month, model configuration, worker status. |
+| **Settings** | Autonomy, score threshold, deep-review count, model spend this month, model configuration, worker status, appearance (dark by default, light, or match your system). |
 
 ## Quickstart
 

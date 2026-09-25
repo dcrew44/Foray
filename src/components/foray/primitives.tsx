@@ -173,13 +173,14 @@ export function CompanyMark({
       aria-hidden
       className={cn(
         "text-display inline-flex shrink-0 items-center justify-center font-semibold tracking-[-0.01em] select-none",
+        // Pale tint with deep text in light; deep tint with pale text in
+        // dark. The hue per company stays the same in both.
+        "bg-[oklch(0.94_0.035_var(--hue))] text-[oklch(0.36_0.07_var(--hue))]",
+        "dark:bg-[oklch(0.31_0.05_var(--hue))] dark:text-[oklch(0.87_0.07_var(--hue))]",
         dims,
         className,
       )}
-      style={{
-        background: `oklch(0.94 0.035 ${hue})`,
-        color: `oklch(0.36 0.07 ${hue})`,
-      }}
+      style={{ "--hue": hue } as React.CSSProperties}
     >
       {initials(name)}
     </span>

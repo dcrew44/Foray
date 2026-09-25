@@ -17,35 +17,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/lib/auth/client";
 import { initials } from "@/lib/format";
+import {
+  chooseTheme,
+  DEFAULT_THEME,
+  readThemeChoice,
+  THEME_EVENT,
+  type ThemeChoice,
+} from "@/lib/theme";
 
 import type { ShellUser } from "./app-shell";
-
-type Theme = "light" | "dark" | "system";
-
-const THEME_EVENT = "foray:theme";
-
-function readTheme(): Theme {
-  try {
-    const stored = localStorage.getItem("foray-theme");
-    return stored === "light" || stored === "dark" ? stored : "system";
-  } catch {
-    return "system";
-  }
-}
-
-function applyTheme(theme: Theme) {
-  try {
-    if (theme === "system") localStorage.removeItem("foray-theme");
-    else localStorage.setItem("foray-theme", theme);
-  } catch {
-    // Storage blocked: the choice still applies for this page view.
-  }
-  const dark =
-    theme === "dark" ||
-    (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.classList.toggle("dark", dark);
-  window.dispatchEvent(new Event(THEME_EVENT));
-}
 
 function subscribe(callback: () => void) {
   window.addEventListener(THEME_EVENT, callback);
@@ -54,7 +34,7 @@ function subscribe(callback: () => void) {
 
 export function UserMenu({ user }: { user: ShellUser }) {
   const router = useRouter();
-  const theme = useSyncExternalStore(subscribe, readTheme, () => "system" as Theme);
+  const theme = useSyncExternalStore(subscribe, readThemeChoice, () => DEFAULT_THEME);
 
   return (
     <DropdownMenu>
@@ -73,11 +53,13 @@ export function UserMenu({ user }: { user: ShellUser }) {
         <ChevronDown className="text-muted-foreground size-4 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56" side="top">
-        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         <DropdownMenuRadioGroup
-          onValueChange={(value) => applyTheme(value as Theme)}
+          onValueChange={(value) => chooseTheme(value as ThemeChoice)}
           value={theme}
         >
+          {/* Base UI requires a group's label inside the group; outside it,
+              opening the menu throws and takes the page down. */}
+          <DropdownMenuLabel>Appearance</DropdownMenuLabel>
           <DropdownMenuRadioItem value="light">
             <Sun />
             Light

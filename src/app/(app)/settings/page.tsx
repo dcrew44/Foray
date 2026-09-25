@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageBody, PageHeader, Section, SignalDot, Stat } from "@/components/foray/primitives";
 import { PageNav } from "@/components/profile/page-nav";
 import { BehaviourForm } from "@/components/settings/behaviour-form";
+import { AppearanceForm } from "@/components/settings/appearance-form";
 import { SignOutButton } from "@/components/settings/sign-out-button";
 import {
   AggregatorMeter,
@@ -256,6 +257,15 @@ export default async function SettingsPage() {
             </Section>
           </div>
 
+          <div className="scroll-mt-20 lg:scroll-mt-8" id="appearance">
+            <Section
+              description="Saved in this browser, and applied the moment you pick it."
+              title="Appearance"
+            >
+              <AppearanceForm />
+            </Section>
+          </div>
+
           <div className="scroll-mt-20 lg:scroll-mt-8" id="account">
             <Section title="Account">
               <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
@@ -282,6 +292,7 @@ export default async function SettingsPage() {
               { id: "usage", label: "Spend this month", detail: formatUsd(total.usd) },
               { id: "models", label: "Models" },
               { id: "worker", label: "Worker" },
+              { id: "appearance", label: "Appearance" },
               { id: "account", label: "Account" },
             ]}
           />

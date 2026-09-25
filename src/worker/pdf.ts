@@ -1,5 +1,7 @@
 import { chromium, type Browser, type LaunchOptions } from "playwright-core";
 
+import { env } from "@/env";
+
 /**
  * HTML in, PDF out, with headless Chromium.
  *
@@ -38,7 +40,7 @@ let hooksInstalled = false;
  * `PDF_BROWSER_CHANNEL` forces a channel ("chrome", "msedge", …) outright.
  */
 async function launch(): Promise<Browser> {
-  const channel = process.env.PDF_BROWSER_CHANNEL?.trim();
+  const channel = env.PDF_BROWSER_CHANNEL?.trim();
   if (channel) return chromium.launch({ ...LAUNCH, channel });
 
   try {

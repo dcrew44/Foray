@@ -1,5 +1,3 @@
-import { and, asc, eq, gt } from "drizzle-orm";
-
 import { db } from "@/lib/db";
 import { agentEvents } from "@/lib/db/schema";
 import type { AgentEvent, NewAgentEvent } from "@/lib/db/schema";
@@ -7,7 +5,7 @@ import type { AgentEvent, NewAgentEvent } from "@/lib/db/schema";
 /**
  * Progress is an append-only table, not a socket.
  *
- * Long pipelines write here as they go and the UI polls `/api/events?since=`.
+ * Long pipelines write here as they go and the UI polls `/api/live?since=`.
  * That means progress survives a page reload, a worker restart and a browser
  * that was closed for an hour — none of which a stream would.
  */
@@ -37,21 +35,4 @@ export async function emit(input: EmitInput): Promise<AgentEvent> {
     .returning();
 
   return event;
-}
-
-/**
- * Events for one user newer than `since`. `since` is the last id the client
- * saw, so a client that misses a poll catches up rather than skipping ahead.
- */
-export async function eventsSince(
-  userId: string,
-  since: number,
-  limit = 200,
-): Promise<AgentEvent[]> {
-  return db
-    .select()
-    .from(agentEvents)
-    .where(and(eq(agentEvents.userId, userId), gt(agentEvents.id, since)))
-    .orderBy(asc(agentEvents.id))
-    .limit(limit);
 }

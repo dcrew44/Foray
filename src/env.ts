@@ -69,9 +69,16 @@ export const env = createEnv({
       .enum(["true", "false"])
       .default("false")
       .transform((v) => v === "true"),
+    /** Requests per month the app allows itself; the free tier is 200. */
+    JSEARCH_MONTHLY_BUDGET: z.coerce.number().int().positive().default(180),
     SEARCH_API_KEY: z.string().optional(),
 
     STORAGE_DIR: z.string().default("./data"),
+    /**
+     * Forces the browser the worker renders PDFs with ("chrome", "msedge").
+     * Unset: the bundled Chromium, falling back to installed Chrome.
+     */
+    PDF_BROWSER_CHANNEL: z.string().optional(),
     WORKER_CONCURRENCY: z.coerce.number().int().positive().default(4),
   },
 

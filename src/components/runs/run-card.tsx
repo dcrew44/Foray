@@ -104,6 +104,7 @@ function describe(run: LiveRun, workerOnline: boolean): string {
     case "evaluating": {
       const done = num(s, "evaluated") ?? 0;
       const total = num(s, "toEvaluate");
+      if (total === 1) return "Reading the posting in full against your resume";
       return total ? `Reading ${done} of ${total} postings in full` : "Reading postings in full";
     }
     case "tailoring":

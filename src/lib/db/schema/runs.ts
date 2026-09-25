@@ -71,7 +71,7 @@ export const runs = pgTable(
 );
 
 /**
- * Append-only progress. `/api/events?since=<id>` polls this while a run is
+ * Append-only progress. `/api/live?since=<id>` polls this while a run is
  * active, which is why the id is a monotonic bigserial rather than a uuid.
  */
 export const agentEvents = pgTable(

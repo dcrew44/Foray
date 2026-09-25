@@ -521,17 +521,35 @@ export async function scoreBandsForJobs(
   return row ?? { strong: 0, good: 0 };
 }
 
-/** Stores a deep evaluation. Returns null when the match is not this user's. */
+/**
+ * Stores a deep evaluation. Returns null when the match is not this user's.
+ *
+ * A "skip" verdict archives the match, as a low triage score does: the review
+ * read the whole posting against the resume and found a blocker, and leaving
+ * it in Found buries the roles worth applying to. Only an untouched match
+ * moves — one the user has already placed anywhere else stays put — and the
+ * verdict stays on the match for anyone who looks in Archived.
+ */
 export async function saveDeepEval(
   userId: string,
   matchId: string,
   evaluation: DeepEval,
 ): Promise<JobMatch | null> {
+  const archive =
+    evaluation.recommendation === "skip"
+      ? {
+          stage: sql`case when ${jobMatches.stage} = 'found' then 'archived'::match_stage else ${jobMatches.stage} end`,
+          stageChangedAt: sql`case when ${jobMatches.stage} = 'found' then now() else ${jobMatches.stageChangedAt} end`,
+          notes: sql`case when ${jobMatches.stage} = 'found' then concat_ws(E'\n\n', nullif(${jobMatches.notes}, ''), ${"Archived: the deep review recommended skipping this one."}::text) else ${jobMatches.notes} end`,
+        }
+      : {};
+
   const [row] = await db
     .update(jobMatches)
     .set({
       deepScore: evaluation.score,
       deepEval: evaluation,
+      ...archive,
       updatedAt: new Date(),
     })
     .where(and(eq(jobMatches.userId, userId), eq(jobMatches.id, matchId)))

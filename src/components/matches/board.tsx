@@ -124,8 +124,16 @@ export function Board({ matches, showClosed }: { matches: BoardMatch[]; showClos
   const visible = showClosed ? [...OPEN, ...CLOSED] : OPEN;
 
   return (
-    <DndContext onDragCancel={() => setDragging(null)} onDragEnd={onDragEnd} onDragStart={onDragStart} sensors={sensors}>
-      <div className="scrollbar-thin -mx-5 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-4 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:-mx-10 lg:scroll-px-10 lg:px-10">
+    <DndContext
+      // A fixed id keeps the accessibility ids dnd-kit generates identical on the
+      // server and the client; its default counter differs and breaks hydration.
+      id="matches-board"
+      onDragCancel={() => setDragging(null)}
+      onDragEnd={onDragEnd}
+      onDragStart={onDragStart}
+      sensors={sensors}
+    >
+      <div className="scrollbar-thin -mx-5 flex snap-x scroll-px-5 items-start gap-3 overflow-x-auto px-5 pb-4 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:-mx-10 lg:scroll-px-10 lg:px-10">
         {visible.map((stage) => (
           <Column key={stage} matches={columns.get(stage) ?? []} stage={stage} />
         ))}
@@ -173,7 +181,7 @@ function Column({ stage, matches }: { stage: StageId; matches: BoardMatch[] }) {
           </button>
         )}
         {matches.length === 0 && (
-          <p className="text-muted-foreground/80 flex flex-1 items-center justify-center rounded-xl border border-dashed px-3 py-6 text-center text-[12.5px]">
+          <p className="text-muted-foreground/80 flex min-h-40 flex-1 items-center justify-center rounded-xl border border-dashed px-3 py-6 text-center text-[12.5px]">
             Drag a card here
           </p>
         )}

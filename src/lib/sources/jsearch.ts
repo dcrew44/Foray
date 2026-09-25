@@ -31,7 +31,7 @@ const HOST = "jsearch.p.rapidapi.com";
 const BASE = `https://${HOST}`;
 
 /** The free tier. Set deliberately low so an accident cannot empty a month. */
-const MONTHLY_BUDGET = Number(process.env.JSEARCH_MONTHLY_BUDGET ?? 180);
+const MONTHLY_BUDGET = env.JSEARCH_MONTHLY_BUDGET ?? 180;
 
 export class JSearchDisabledError extends Error {
   constructor(reason: string) {

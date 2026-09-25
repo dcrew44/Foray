@@ -1,5 +1,6 @@
 import type { Job } from "pg-boss";
 
+import { getMatchDetail } from "@/lib/db/queries/matches";
 import { recordDocument } from "@/lib/db/queries/profile";
 import { getResume, markRendered } from "@/lib/db/queries/resumes";
 import type {
@@ -155,7 +156,13 @@ export async function renderStoredResume(
     if (compact.pages < rendered.pages) rendered = compact;
   }
 
-  const filename = pdfFilename(resume);
+  // A tailored resume is named for the company it was written for, so several
+  // downloads do not all arrive as the same "Resume.pdf".
+  const company =
+    row.kind === "tailored" && row.jobMatchId
+      ? ((await getMatchDetail(userId, row.jobMatchId))?.job.companyName ?? null)
+      : null;
+  const filename = pdfFilename(resume, company);
   const path = await storage.put(
     storageKey(userId, "resume_pdf", filename),
     rendered.pdf,
@@ -179,12 +186,16 @@ export async function renderStoredResume(
 }
 
 /** "Dana Reyes - Resume.pdf": what a recruiter sees when they download it. */
-function pdfFilename(resume: Resume): string {
-  const name = resume.basics.name
-    ?.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  return name ? `${name} - Resume.pdf` : "Resume.pdf";
+function pdfFilename(resume: Resume, company: string | null = null): string {
+  const safe = (value: string | null | undefined) =>
+    value
+      ?.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  const name = safe(resume.basics.name);
+  const target = safe(company);
+  const base = name ? `${name} - Resume` : "Resume";
+  return target ? `${base} - ${target}.pdf` : `${base}.pdf`;
 }
 
 function doneMessage(label: string, pages: number | null, unsupported: number): string {

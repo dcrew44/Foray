@@ -40,13 +40,17 @@ export default async function HomePage() {
   const firstName = (user.name || "").split(" ")[0];
   const { headline, detail } = describeState({ onboarding, counts, best, waiting, firstName });
 
+  // Suggest tailoring for the best match that does not have a resume yet.
+  const untailored = best.find((row) => !row.tailoredResumeId);
   const suggestions = onboarding.ready
     ? [
         onboarding.preferences.target_roles?.[0]
           ? `Find new ${onboarding.preferences.target_roles[0].toLowerCase()} roles`
           : "Find new roles for me",
         "Which of my matches fit me best, and why?",
-        best[0] ? `Tailor my resume for the ${best[0].company} role` : "What should I improve on my resume?",
+        untailored
+          ? `Tailor my resume for the ${untailored.company} role`
+          : "What should I improve on my resume?",
       ]
     : onboarding.hasResume
       ? ["Help me set up what I'm looking for", "What does my resume say about me?"]

@@ -7,10 +7,12 @@ import { StartSearchButton } from "@/components/home/live-panels";
 import { RefreshOn } from "@/components/live/refresh-on";
 import { Board } from "@/components/matches/board";
 import { MatchTable } from "@/components/matches/match-table";
+import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { ALL_STAGES, countByStage, listMatches, OPEN_STAGES } from "@/lib/db/queries/matches";
 import type { StageId } from "@/lib/format";
 import { plural } from "@/lib/format";
+import { getOnboardingState } from "@/lib/profile/onboarding";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Matches" };
@@ -30,12 +32,13 @@ export default async function MatchesPage({
   const view = params.view === "list" || stageParam ? "list" : "board";
   const showClosed = params.closed === "1";
 
-  const [counts, matches] = await Promise.all([
+  const [counts, matches, onboarding] = await Promise.all([
     countByStage(user.id),
     listMatches(user.id, {
       stages: view === "board" && !showClosed ? OPEN_STAGES : ALL_STAGES,
       limit: 1000,
     }),
+    getOnboardingState(user.id),
   ]);
 
   const open = OPEN_STAGES.reduce((total, stage) => total + counts[stage], 0);
@@ -51,7 +54,7 @@ export default async function MatchesPage({
               <ViewLink active={view === "board"} href="/matches" icon={<Columns3 className="size-4" />} label="Board" />
               <ViewLink active={view === "list"} href="/matches?view=list" icon={<LayoutList className="size-4" />} label="List" />
             </div>
-            <StartSearchButton label="Search again" variant="outline" />
+            {onboarding.ready && <StartSearchButton label="Search again" variant="outline" />}
           </>
         }
         description={
@@ -63,7 +66,19 @@ export default async function MatchesPage({
       />
 
       <div className="mt-8">
-        {matches.length === 0 && open === 0 ? (
+        {matches.length === 0 && open === 0 && !onboarding.ready ? (
+          <EmptyState
+            action={
+              <Link className={buttonVariants()} href="/home">
+                Finish setting up
+              </Link>
+            }
+            title="Set up your search first"
+          >
+            Foray needs your resume and a few answers about what you want before it can look for
+            roles. It takes about five minutes.
+          </EmptyState>
+        ) : matches.length === 0 && open === 0 ? (
           <EmptyState action={<StartSearchButton label="Run a search" />} title="No matches yet">
             A search reads every open posting on the boards Foray tracks, scores the ones that fit
             your preferences, and puts them here.

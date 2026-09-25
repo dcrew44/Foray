@@ -62,11 +62,25 @@ These are the rules that must survive every later change.
     worker never imports `src/app`; both import `src/lib`.
 12. **Nothing heavy runs inside a Next request.** Long work is a pg-boss job; chat turns
     are capped with `isStepCount(8)` and a timeout.
+13. **One set of resume facts.** The latest `resumes(base)` row is what scoring, deep
+    review, tailoring and the chat agent read. Editor saves create a new base version;
+    `profiles.data` only mirrors the latest one. (Before this rule, the editor wrote
+    `profiles.data` while every model read the base resume, so corrections were
+    silently ignored.)
+14. **One role, one match.** The prefilter collapses postings to one per role (company +
+    normalized title, preferring the company's own board and the newest copy) and skips
+    roles the user already has a match for. The ingest dedupe key keeps locations apart
+    because the mirror should; a person does not want the same role four times.
+15. **No silent re-spend, no zombie runs.** Queues that call models have `retryLimit: 0`
+    (their handlers record failure on the run instead), and a booting worker marks any
+    run it finds still `running` as interrupted. A user can always re-run a search, and
+    because scoring and deep review skip finished work, a re-run resumes rather than
+    repaying.
 
 ## Architecture
 
 ```
-Browser ─▶ Next.js 16 (pages, /api/chat streaming, /api/events polling, uploads, server actions)
+Browser ─▶ Next.js 16 (pages, /api/chat streaming, /api/live polling, uploads, server actions)
               │ enqueue (send-only pg-boss)              ▲ reads runs / events / approvals / matches
               ▼                                          │
           Postgres 18 (app tables + pgboss schema) ◀─────┤
@@ -75,9 +89,20 @@ Browser ─▶ Next.js 16 (pages, /api/chat streaming, /api/events polling, uplo
                         headless Chromium PDF renderer
 ```
 
-- **Queue**: pg-boss 12 (Postgres only, no Redis).
-- **Progress**: an append-only `agent_events` table polled by `/api/events?since=<id>`
-  every 2 s while a run is active. SSE via `LISTEN/NOTIFY` is an optional later step.
+- **Queue**: pg-boss 12 (Postgres only, no Redis), with per-queue policies in
+  `lib/queue/boss.ts` (retry limits, expiry) and LISTEN/NOTIFY wake-ups so a job starts
+  the moment it is sent. Each queue has its own concurrency, so a long search never
+  blocks a tailoring job the user is waiting on.
+- **Progress, one channel**: an append-only `agent_events` table. The app shell's
+  `LiveProvider` polls a single endpoint, `/api/live?since=<id>`, which returns new
+  events, active and recently finished runs, pending approvals and the worker's
+  heartbeat in one read. Every run card, approval card, sidebar badge and toast reads
+  from that one snapshot, so they always agree. Cadence adapts: 1.5 s while work is in
+  flight, 6 s idle, 30 s in a hidden tab. (Previously each component polled its own
+  endpoint.)
+- **Worker liveness**: the worker writes a heartbeat to `system_state` every 10 s; the
+  sidebar says "Worker offline" when it goes quiet, because a queued search with no
+  worker is otherwise indistinguishable from a slow one.
 - **Agents**: an AI SDK `ToolLoopAgent` drives chat. Search / rank / tailor / discovery
   are plain pg-boss pipelines with approval gates, not agent loops. Browser-driving agent
   loops arrive in Phase 2.
@@ -91,9 +116,33 @@ Browser ─▶ Next.js 16 (pages, /api/chat streaming, /api/events polling, uplo
 
 - **Shared mirror** (`companies`, `jobs`): one continuously refreshed copy of every
   posting pulled from any source, shared by all users. One fetch serves everyone.
-- **Per-user layer** (everything else): `profiles`, `documents`, `resumes`,
-  `job_matches`, `runs`, `agent_events`, `approvals`, `conversations`, `messages`,
-  `llm_calls` — each carries `user_id`.
+- **Per-user layer** (everything else): `profiles` (including `settings`: default
+  autonomy, score threshold, deep-review count), `documents`, `resumes`, `job_matches`,
+  `runs`, `agent_events`, `approvals`, `conversations`, `messages`, `llm_calls` — each
+  carries `user_id`.
+- **Process state**: `system_state` (the worker heartbeat) and `api_usage` (third-party
+  request quotas by month).
+
+### The search pipeline
+
+A search is one run that moves through phases, pausing at two gates in `approve_each`:
+
+1. derive title criteria from preferences (cheap model, cached on the run)
+2. refresh stale boards, query the aggregator (3 requests per run)
+3. SQL prefilter over the mirror, one posting per role
+4. fast score every new candidate (cheap model, triage), archive below the threshold
+5. **gate: deep review** — the top N unreviewed matches, with a cost estimate from
+   `pricing.ts`; autopilot approves it automatically
+6. deep review (strong model): requirement-by-requirement evidence quoted from the
+   resume, gaps rated learnable or disqualifying, fit on level, location and pay
+7. **gate: shortlist** — matches the review recommends; approving moves them to
+   Shortlisted
+8. complete, with the best matches linked from the run card
+
+Tailoring is separate and on demand: the strong model reorders, selects and rephrases
+only what the base resume says; a verifier (deterministic rules plus a cheap-model
+check) flags any claim it cannot trace to a base fact, unsupported lines are reverted
+once automatically, and the result renders to PDF in the worker.
 
 ## Interfaces with one implementation in Phase 1
 
@@ -122,8 +171,10 @@ is an open question to be settled with those measurements, not guessed.
 
 ## Phase plan
 
-- **Phase 1 — find, rank, tailor** (no submitting). Milestones: A foundation,
-  B onboarding, C search and rank, D tailor, E polish and containers.
+- **Phase 1 — find, rank, tailor** (no submitting). **Complete**: onboarding (resume
+  extraction, preferences interview or form), search across ~200 boards + JSearch,
+  fast scoring, deep review and shortlisting with approval gates, the pipeline board,
+  tailored resumes with a fact-checker, PDF rendering, usage and model settings.
 - **Phase 2 — browser agent + auto-apply.** `BrowserProvider`, `applications` and
   reusable `application_answers`, `apply` and `career_page_scan` run kinds, an
   `apply_submit` approval showing the filled form.
@@ -144,30 +195,22 @@ and in `ItemSource`, and `/api/uploads` already accepts, stores and parses that
 kind; it simply does not merge into the base resume. So this stays a small,
 additive piece of work rather than a rewrite.
 
-### Chat UI rebuild (roadmap, scheduled with or before Milestone E)
+## Interface
 
-The Step 7 chat is a working vertical slice, not a finished interface: it proves
-streaming, tool rendering and persistence, and it looks and behaves like it. The
-user has asked for a clean, non-buggy UI as its own piece of work rather than as
-incidental polish. Known gaps as of Step 7:
+The UI was rebuilt as its own piece of work at the end of Phase 1.
 
-- **No app chrome.** No navigation between chat, activity, pipeline, profile and
-  settings; no sign-out; no way to start a new conversation or reach an old one,
-  even though conversations are persisted and addressable at `/chat/<id>`.
-- **No layout discipline.** Messages run the full window width with no reading
-  measure, and the composer is pinned to a bare full-height flex column.
-- **Thin feedback.** Streaming state shows only on the submit button; errors
-  render as one unstyled line; there is no retry, stop or copy affordance.
-- **Unnecessary refetching.** The client calls `router.refresh()` on every
-  finished turn, re-rendering the server component when only the URL changed.
-- **Vendored components adapted, not exercised.** `ai-elements/prompt-input.tsx`
-  was ported from the Radix-based shadcn primitives to the Base UI ones this
-  project actually uses; several of its paths (attachments, the action menu, the
-  hover card) have had no real use yet.
-
-This overlaps Milestone E's polish items — the activity drawer, approval badges,
-run cancel/retry and error surfaces — so the two should be planned together
-rather than done twice.
+- **Shell**: a quiet sidebar on a lichen-grey canvas, and every page on a raised white
+  sheet. Navigation: Home, Matches, Activity; Profile, Companies, Settings; recent chats.
+- **Palette**: deep pine ink and primary, one signal colour (marigold) reserved for
+  "agents working now" and "decisions waiting on you", brick only for errors. Match fit
+  is one sequential pine scale (`--fit-0..5`), never traffic lights: the deeper the
+  green, the better the match, so a board reads as a heat map.
+- **Type**: Bricolage Grotesque for display (titles, headline sentences, scores),
+  Instrument Sans for everything read or operated.
+- **Chat renders tool calls as what they did**: a started run is a live run card (with
+  its approval inline when it pauses), a job list is clickable match lines, a saved
+  preference is one sentence. Raw JSON is one click away, never the default.
+- **Home is a status report**, not a greeting: the headline says what needs attention.
 
 Roadmap items deliberately out of Phase 1: LinkedIn automation through the user's own
 account, and a career-counselor onboarding mode (Phase 1 only reserves

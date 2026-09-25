@@ -94,6 +94,8 @@ export type ListMatchesOptions = {
   query?: string;
   /** Only matches with a deep evaluation. */
   evaluatedOnly?: boolean;
+  /** Only matches for these postings, e.g. what one search run found. */
+  jobIds?: string[];
   limit?: number;
   offset?: number;
 };
@@ -113,6 +115,10 @@ export async function listMatches(
   }
   if (options.evaluatedOnly) {
     conditions.push(sql`${jobMatches.deepEval} is not null`);
+  }
+  if (options.jobIds) {
+    if (options.jobIds.length === 0) return [];
+    conditions.push(inArray(jobMatches.jobId, options.jobIds));
   }
   if (options.query?.trim()) {
     const pattern = `%${options.query.trim()}%`;
@@ -338,25 +344,23 @@ export type DeepEvalCandidate = {
   fastScore: number | null;
   /** Length of the cleaned description — the variable part of the prompt. */
   descriptionChars: number;
-  /** Whether the posting was among the preferred ids (a run's own candidates). */
-  preferred: boolean;
 };
 
 /**
- * The matches worth the strong model's time: open (found or shortlisted),
- * fast-scored at or above the threshold, never deep-evaluated, on a posting
- * that is still live. Best fast score first, with the preferred postings — a
- * search run's own candidates — ahead of older unevaluated matches.
+ * The matches among these postings worth the strong model's time: open (found
+ * or shortlisted), fast-scored at or above the threshold, never
+ * deep-evaluated, on a posting that is still live. Best fast score first.
+ *
+ * Limited to the postings given — a search run's own candidates. It used to
+ * top the batch up with unevaluated matches from earlier searches, which put
+ * senior backend roles into the review of a search for entry-level roles at
+ * one company.
  */
 export async function selectForDeepEval(
   userId: string,
-  options: { minFastScore: number; limit: number; preferJobIds?: string[] },
+  options: { jobIds: string[]; minFastScore: number; limit: number },
 ): Promise<DeepEvalCandidate[]> {
-  if (options.limit <= 0) return [];
-
-  const preferred = options.preferJobIds?.length
-    ? sql<boolean>`(${inArray(jobMatches.jobId, options.preferJobIds)})`
-    : sql<boolean>`false`;
+  if (options.limit <= 0 || options.jobIds.length === 0) return [];
 
   return db
     .select({
@@ -366,13 +370,13 @@ export async function selectForDeepEval(
       company: jobs.companyName,
       fastScore: jobMatches.fastScore,
       descriptionChars: sql<number>`coalesce(length(${jobs.descriptionText}), 0)::int`,
-      preferred,
     })
     .from(jobMatches)
     .innerJoin(jobs, eq(jobs.id, jobMatches.jobId))
     .where(
       and(
         eq(jobMatches.userId, userId),
+        inArray(jobMatches.jobId, options.jobIds),
         inArray(jobMatches.stage, ["found", "shortlisted"]),
         sql`${jobMatches.fastScore} >= ${options.minFastScore}`,
         sql`${jobMatches.deepEval} is null`,
@@ -380,7 +384,6 @@ export async function selectForDeepEval(
       ),
     )
     .orderBy(
-      sql`${preferred} desc`,
       sql`${jobMatches.fastScore} desc`,
       sql`${jobs.postedAt} desc nulls last`,
     )

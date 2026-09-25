@@ -63,6 +63,7 @@ Rules:
 /** The half of the prompt that never changes within a run. */
 function candidateBlock(input: {
   preferences: Preferences;
+  focus?: string | null;
   resume: Resume | null;
 }): string {
   const resume = input.resume;
@@ -88,7 +89,7 @@ function candidateBlock(input: {
   const skills = (resume?.skills ?? []).map((skill) => skill.name).join(", ");
 
   return `<candidate>
-Wants: ${JSON.stringify(input.preferences)}
+Wants: ${JSON.stringify(input.preferences)}${input.focus ? `\nThis search: ${input.focus}` : ""}
 
 Experience:
 ${experience || "(none on file)"}
@@ -109,7 +110,10 @@ export type ScoreOutcome = {
 
 export async function scoreMatches(input: {
   userId: string;
+  /** The search's effective preferences: saved ones with its brief applied. */
   preferences: Preferences;
+  /** Anything else the search asked for that should shape the score. */
+  focus?: string | null;
   resume: Resume | null;
   jobIds: string[];
   threshold?: number;

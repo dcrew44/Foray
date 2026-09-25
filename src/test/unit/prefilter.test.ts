@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   escapeForRegex,
+  guardSeniority,
   titleMatches,
   type DerivedCriteria,
 } from "@/lib/ranking/prefilter";
@@ -79,5 +80,65 @@ describe("titleMatches", () => {
   it("keeps everything when no criteria were derived", () => {
     // Better to score a wide set than to silently return nothing.
     expect(titleMatches("Anything At All", criteria([]))).toBe(true);
+  });
+});
+
+describe("title terms for a junior search", () => {
+  // What the model proposed for "the most entry-level developer positions at
+  // Anthropic": literal phrases that missed "Staff+" and shut out new grads.
+  const proposed: DerivedCriteria = {
+    title_include: ["software engineer", "developer", "fellows program"],
+    title_exclude: ["senior software engineer", "staff software engineer", "intern", "new grad"],
+    keywords: [],
+  };
+  const junior = guardSeniority(proposed, "entry", ["software engineer"]);
+  const passes = (title: string) => titleMatches(title, junior);
+
+  it("excludes senior titles however they are written", () => {
+    expect(passes("Staff+ Software Engineer, Scaling")).toBe(false);
+    expect(passes("Staff + Sr. Software Engineer, Cloud Inference")).toBe(false);
+    expect(passes("Sr. Software Engineer")).toBe(false);
+    expect(passes("Software Engineer, Team Lead")).toBe(false);
+    expect(passes("Engineering Manager")).toBe(false);
+  });
+
+  it("keeps plain and early-career titles, including ones that say senior", () => {
+    expect(passes("Software Engineer, Research Data Platform")).toBe(true);
+    expect(passes("New Grad Software Engineer")).toBe(true);
+    expect(passes("Software Engineer Intern")).toBe(true);
+    expect(passes("Senior Software Engineer, New Grad Program")).toBe(true);
+    expect(passes("Anthropic Fellows Program, ML Systems")).toBe(true);
+    // A word boundary, not a substring: SRE is not "sr", Leadership is not "lead".
+    expect(passes("Software Engineer, SRE")).toBe(true);
+    expect(passes("Software Engineer, Leadership Tools")).toBe(true);
+  });
+
+  it("does not exclude a senior word the requested role itself contains", () => {
+    const apm = guardSeniority(
+      { title_include: ["product manager"], title_exclude: [], keywords: [] },
+      "entry",
+      ["associate product manager"],
+    );
+    expect(titleMatches("Associate Product Manager", apm)).toBe(true);
+    expect(titleMatches("Product Manager", apm)).toBe(true);
+    expect(titleMatches("Senior Product Manager", apm)).toBe(false);
+  });
+
+  it("includes every early-career title when the search names companies", () => {
+    const base = { title_include: ["software engineer"], title_exclude: [], keywords: [] };
+    const targeted = guardSeniority(base, "entry", ["software engineer"], { companies: true });
+    expect(titleMatches("Anthropic Fellows Program, ML Systems", targeted)).toBe(true);
+    expect(titleMatches("Associate, Rotational Program", targeted)).toBe(true);
+    // A word, not a substring: "Internal" and "International" are not "intern".
+    expect(titleMatches("Accounting, Revenue Internal Controls", targeted)).toBe(false);
+    expect(titleMatches("Marketing Events Manager, International", targeted)).toBe(false);
+
+    const broad = guardSeniority(base, "entry", ["software engineer"]);
+    expect(titleMatches("Anthropic Fellows Program, ML Systems", broad)).toBe(false);
+  });
+
+  it("leaves other searches alone", () => {
+    expect(guardSeniority(proposed, "senior", null)).toEqual(proposed);
+    expect(guardSeniority(proposed, null, null)).toEqual(proposed);
   });
 });

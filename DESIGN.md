@@ -76,6 +76,13 @@ These are the rules that must survive every later change.
     run it finds still `running` as interrupted. A user can always re-run a search, and
     because scoring and deep review skip finished work, a re-run resumes rather than
     repaying.
+16. **A search follows its request.** Each run reads what was asked into a brief
+    (`lib/ranking/brief.ts`): companies, roles, level, places, remote, focus. The brief
+    overrides the saved preferences for that run only, and filtering, scoring, deep
+    review and the results all read the effective preferences. A search's deep-review
+    batch and its results come only from its own postings. (Before this, the request
+    was stored "for the record": every search ran on the saved preferences, returned
+    the same roles, and topped up its review with leftovers from earlier searches.)
 
 ## Architecture
 
@@ -127,12 +134,15 @@ Browser ─▶ Next.js 16 (pages, /api/chat streaming, /api/live polling, upload
 
 A search is one run that moves through phases, pausing at two gates in `approve_each`:
 
-1. derive title criteria from preferences (cheap model, cached on the run)
-2. refresh stale boards, query the aggregator (3 requests per run)
-3. SQL prefilter over the mirror, one posting per role
+1. read the request into a brief and title terms (cheap model, cached on the run);
+   fields the chat agent already resolved win over what is read from the text
+2. resolve named companies, registering a board the first time one is mentioned;
+   refresh their boards (or every stale board for a broad search), query the
+   aggregator unless every named company has a board (3 requests per run)
+3. SQL prefilter over the mirror, limited to the named companies, one posting per role
 4. fast score every new candidate (cheap model, triage), archive below the threshold
-5. **gate: deep review** — the top N unreviewed matches, with a cost estimate from
-   `pricing.ts`; autopilot approves it automatically
+5. **gate: deep review** — the top N unreviewed matches among this run's postings, with
+   a cost estimate from `pricing.ts`; autopilot approves it automatically
 6. deep review (strong model): requirement-by-requirement evidence quoted from the
    resume, gaps rated learnable or disqualifying, fit on level, location and pay
 7. **gate: shortlist** — matches the review recommends; approving moves them to

@@ -154,3 +154,46 @@ export async function knownSlugs(slugs: string[]): Promise<Set<string>> {
     .where(inArray(companies.slug, slugs));
   return new Set(rows.map((row) => row.slug));
 }
+
+/**
+ * Registered companies for names a user typed ("Anthropic", "stripe.com").
+ * Matches the name ignoring case and punctuation, our slug, the board slug,
+ * or the domain. Returns what each name resolved to, in the order given, and
+ * the names that matched nothing.
+ */
+export async function findCompaniesByNames(names: string[]): Promise<{
+  found: Array<{ name: string; company: Company }>;
+  missing: string[];
+}> {
+  const found: Array<{ name: string; company: Company }> = [];
+  const missing: string[] = [];
+
+  for (const name of names) {
+    const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
+    const domain = name.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0] ?? "";
+    if (!key) continue;
+
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(
+        and(
+          eq(companies.status, "active"),
+          or(
+            sql`regexp_replace(lower(${companies.name}), '[^a-z0-9]+', '', 'g') = ${key}`,
+            sql`regexp_replace(${companies.slug}, '[^a-z0-9]+', '', 'g') = ${key}`,
+            sql`regexp_replace(lower(coalesce(${companies.atsSlug}, '')), '[^a-z0-9]+', '', 'g') = ${key}`,
+            domain.includes(".") ? eq(companies.domain, domain) : undefined,
+          ),
+        ),
+      )
+      // Prefer a board over a careers page when a name has both.
+      .orderBy(sql`case when ${companies.sourceType} in ('greenhouse', 'lever', 'ashby') then 0 else 1 end`)
+      .limit(1);
+
+    if (company) found.push({ name, company });
+    else missing.push(name);
+  }
+
+  return { found, missing };
+}

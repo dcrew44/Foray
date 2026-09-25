@@ -166,9 +166,9 @@ export function RunCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
             <span className="text-[14px] font-semibold">{KIND_TITLE[run.kind] ?? "Run"}</span>
-            {run.kind === "search" && run.prompt && (
+            {run.kind === "search" && (run.summary ?? run.prompt) && (
               <span className="text-muted-foreground max-w-full truncate text-[13px]">
-                {run.prompt}
+                {run.summary ?? run.prompt}
               </span>
             )}
           </div>
@@ -204,7 +204,7 @@ export function RunCard({
       {!compact && run.status === "completed" && <RunResults run={run} />}
 
       {run.kind === "search" && (run.status === "failed" || run.status === "cancelled") && (
-        <RunAgain prompt={run.prompt} />
+        <RunAgain runId={run.id} />
       )}
 
       {active && !approval && (
@@ -234,7 +234,7 @@ export function RunCard({
  * review skips what is already reviewed, so a new run picks up where this one
  * stopped rather than paying twice.
  */
-function RunAgain({ prompt }: { prompt: string | null }) {
+function RunAgain({ runId }: { runId: string }) {
   const [pending, startTransition] = useTransition();
   const [started, setStarted] = useState(false);
 
@@ -255,7 +255,7 @@ function RunAgain({ prompt }: { prompt: string | null }) {
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
-            const result = await startSearchAction({ prompt: prompt ?? undefined });
+            const result = await startSearchAction({ againFrom: runId });
             if (!result.ok) {
               toast.error(result.message);
               return;

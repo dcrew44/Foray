@@ -147,8 +147,8 @@ beforeEach(async () => {
   sent.mockClear();
   fake.failing.clear();
   fake.evaluated.length = 0;
-  // A clean board per test: the gate deliberately picks up earlier
-  // unevaluated matches, so one test's leftovers would join the next's batch.
+  // A clean board per test, so one test's leftovers never muddy the next's
+  // counts.
   await db.delete(jobMatches).where(eq(jobMatches.userId, userId));
 });
 
@@ -240,36 +240,32 @@ const settings = (patch: Partial<Settings> = {}): Settings => ({
 });
 
 describe("selecting what to evaluate", () => {
-  it("takes open, unevaluated matches at or above the threshold, this run's first", async () => {
+  it("takes this run's open, unevaluated matches at or above the threshold, and nothing else", async () => {
     const { matchIds, jobIds } = await seed([
       { fastScore: 90 }, // 0: selected
       { stage: "shortlisted", fastScore: 70 }, // 1: selected
       { fastScore: 40 }, // 2: below threshold
       { fastScore: 95, deepEval: { score: 90, recommendation: "strong", summary: "x" } }, // 3: already evaluated
       { stage: "archived", fastScore: 99 }, // 4: closed
-      { fastScore: 60 }, // 5: preferred
+      { fastScore: 60 }, // 5: selected
       { fastScore: null }, // 6: unscored
+      { fastScore: 98 }, // 7: not this run's: from an earlier search
     ]);
+    const runJobIds = jobIds.slice(0, 7);
 
     const all = await selectForDeepEval(userId, {
+      jobIds: runJobIds,
       minFastScore: 55,
       limit: 10,
-      preferJobIds: [jobIds[5]],
     });
-    const mine = all.filter((row) => matchIds.includes(row.matchId));
-    expect(mine.map((row) => row.matchId)).toEqual([matchIds[5], matchIds[0], matchIds[1]]);
-    expect(mine[0].preferred).toBe(true);
-    expect(mine[1].preferred).toBe(false);
-    expect(mine[0].descriptionChars).toBeGreaterThanOrEqual(0);
+    expect(all.map((row) => row.matchId)).toEqual([matchIds[0], matchIds[1], matchIds[5]]);
+    expect(all[0].descriptionChars).toBeGreaterThanOrEqual(0);
 
-    const top = await selectForDeepEval(userId, {
-      minFastScore: 55,
-      limit: 1,
-      preferJobIds: [jobIds[5]],
-    });
-    expect(top.map((row) => row.matchId)).toEqual([matchIds[5]]);
+    const top = await selectForDeepEval(userId, { jobIds: runJobIds, minFastScore: 55, limit: 1 });
+    expect(top.map((row) => row.matchId)).toEqual([matchIds[0]]);
 
-    expect(await selectForDeepEval(userId, { minFastScore: 55, limit: 0 })).toEqual([]);
+    expect(await selectForDeepEval(userId, { jobIds: runJobIds, minFastScore: 55, limit: 0 })).toEqual([]);
+    expect(await selectForDeepEval(userId, { jobIds: [], minFastScore: 55, limit: 10 })).toEqual([]);
 
     // Clear these so later selections in this file start clean.
     await db.delete(jobMatches).where(inArray(jobMatches.id, matchIds));

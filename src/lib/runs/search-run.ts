@@ -1,11 +1,17 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { refreshCompanies, staleCutoff } from "@/lib/companies/refresh";
-import { registerBoardsFromApplyLinks } from "@/lib/companies/discovery";
+import {
+  discoverCompany,
+  registerBoardsFromApplyLinks,
+} from "@/lib/companies/discovery";
 import { db } from "@/lib/db";
-import { staleCompanies } from "@/lib/db/queries/companies";
+import {
+  findCompaniesByNames,
+  staleCompanies,
+} from "@/lib/db/queries/companies";
 import { selectForDeepEval } from "@/lib/db/queries/matches";
-import { jobMatches, runs, type Run } from "@/lib/db/schema";
+import { jobMatches, runs, type Company, type Run } from "@/lib/db/schema";
 import { getBaseResume, getProfile } from "@/lib/db/queries/profile";
 import {
   costPhrase,
@@ -24,8 +30,16 @@ import {
 } from "@/lib/profile/interview";
 import { getSettings, type Settings } from "@/lib/profile/settings";
 import {
-  deriveCriteria,
+  applyBrief,
+  describeBrief,
+  parseBrief,
+  requestText,
+  type SearchBrief,
+} from "@/lib/ranking/brief";
+import {
+  deriveSearch,
   prefilterJobs,
+  type CompanyFilter,
   type DerivedCriteria,
 } from "@/lib/ranking/prefilter";
 import { QUEUES } from "@/lib/queue/queues";
@@ -71,9 +85,16 @@ import { isCancelled, mergeStats, setRunStatusIf } from "./runs";
 const MAX_JSEARCH_REQUESTS = 3;
 
 export type SearchRunInput = {
-  /** What the user asked for, verbatim, for the record. */
+  /** What the user asked for. Read, with the saved preferences, into the brief. */
   prompt?: string | null;
-  /** Cached so a resumed run does not pay to derive them twice. */
+  /**
+   * Brief fields the chat agent resolved from the conversation — companies,
+   * roles, level, places. They win over what is read from the prompt.
+   */
+  hints?: Partial<SearchBrief> | null;
+  /** What this search is for — see ranking/brief.ts. Derived once, cached. */
+  brief?: SearchBrief;
+  /** Cached with the brief so a resumed run does not pay to derive them twice. */
   criteria?: DerivedCriteria;
   skipRefresh?: boolean;
   /**
@@ -137,36 +158,68 @@ export async function executeSearchRun(run: Run): Promise<void> {
 
   try {
     const settings = await getSettings(userId);
-    const preferences = await assertCanSearch(userId);
+    const saved = await assertCanSearch(userId);
 
-    // 1. Criteria — cached on the run so a resume does not pay twice.
-    const criteria =
-      input.criteria ??
-      (await deriveCriteria(preferences, { userId, runId: run.id }));
+    // 1. What this search is for, and the title terms that find it. Cached on
+    //    the run so a resume does not pay twice.
+    const derived =
+      input.brief && input.criteria
+        ? { brief: parseBrief(input.brief), criteria: input.criteria }
+        : await deriveSearch({
+            preferences: saved,
+            request: requestText(input.prompt),
+            hints: input.hints,
+            context: { userId, runId: run.id },
+          });
+    await saveInput(run.id, derived);
 
-    await saveInput(run.id, { criteria });
+    const { brief, criteria } = derived;
+    // Everything downstream reads these, not the saved preferences: a search
+    // for entry-level roles must not be filtered or judged as a senior one.
+    const preferences = applyBrief(saved, brief);
+    const described = describeBrief(brief);
 
     await emit({
       userId,
       runId: run.id,
       kind: "search.criteria",
-      message: `Looking for titles like: ${criteria.title_include.slice(0, 6).join(", ")}`,
-      data: criteria,
+      message:
+        `${described ? `Looking for ${lowerFirst(described)}.` : "Looking for roles that fit your saved preferences."} ` +
+        `Titles like: ${criteria.title_include.slice(0, 6).join(", ")}.`,
+      data: { brief, criteria },
     });
 
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
-    // 2. Refresh stale boards, so the search is over current postings.
+    // 2. The companies the request names, registered if we do not track them.
+    const targets = brief.companies
+      ? await resolveTargets(run, brief.companies)
+      : null;
+    const companyFilter: CompanyFilter | null = targets
+      ? { ids: targets.found.map((company) => company.id), names: brief.companies ?? [] }
+      : null;
+
+    if (await isCancelled(run.id)) return void (await cancelled(run, userId));
+
+    // 3. Refresh stale boards, so the search is over current postings. A
+    //    search limited to named companies refreshes only theirs.
     await mergeStats(run.id, { phase: "refreshing" });
 
     if (!input.skipRefresh) {
-      const stale = await staleCompanies(staleCutoff());
+      const cutoff = staleCutoff();
+      const stale = targets
+        ? targets.found.filter(
+            (company) => !company.lastFetchedAt || company.lastFetchedAt < cutoff,
+          )
+        : await staleCompanies(cutoff);
       if (stale.length > 0) {
         await emit({
           userId,
           runId: run.id,
           kind: "source.refresh.start",
-          message: `Refreshing ${stale.length} stale job boards`,
+          message: targets
+            ? `Refreshing ${joinNames(stale.map((company) => company.name))}`
+            : `Refreshing ${stale.length} stale job boards`,
         });
 
         const outcomes = await refreshCompanies(stale);
@@ -180,22 +233,30 @@ export async function executeSearchRun(run: Run): Promise<void> {
           userId,
           runId: run.id,
           kind: "source.refresh.done",
-          message: `Refreshed ${ok.length}/${stale.length} boards`,
+          message: `Refreshed ${ok.length}/${stale.length} ${stale.length === 1 ? "board" : "boards"}`,
         });
       }
     }
 
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
-    // 3. The aggregator, for companies we do not already track.
-    await mergeStats(run.id, { phase: "aggregating" });
-    await runAggregator(run, preferences, criteria);
+    // 4. The aggregator, for companies we do not already track. A search
+    //    whose named companies all have boards has nothing to gain from it.
+    if (!targets || targets.missing.length > 0) {
+      await mergeStats(run.id, { phase: "aggregating" });
+      await runAggregator(run, preferences, criteria, brief);
+    }
 
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
-    // 4. Narrow the mirror to what is worth scoring.
+    // 5. Narrow the mirror to what is worth scoring.
     await mergeStats(run.id, { phase: "filtering" });
-    const prefilter = await prefilterJobs({ userId, preferences, criteria });
+    const prefilter = await prefilterJobs({
+      userId,
+      preferences,
+      criteria,
+      companies: companyFilter,
+    });
 
     await mergeStats(run.id, {
       activeInMirror: prefilter.funnel.activeInMirror,
@@ -207,12 +268,12 @@ export async function executeSearchRun(run: Run): Promise<void> {
       kind: "prefilter.done",
       message:
         `${prefilter.funnel.selected} of ${prefilter.funnel.activeInMirror.toLocaleString()} ` +
-        `open postings match your criteria` +
+        `open postings match ${described ? "this search" : "your criteria"}` +
         (prefilter.funnel.cappedAt ? " (capped)" : ""),
       data: prefilter.funnel,
     });
 
-    // 5. Record them as matches, and remember which postings they were.
+    // 6. Record them as matches, and remember which postings they were.
     const created = await upsertMatches(userId, prefilter.jobIds);
     await saveInput(run.id, { candidateJobIds: prefilter.jobIds });
 
@@ -223,7 +284,7 @@ export async function executeSearchRun(run: Run): Promise<void> {
 
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
-    // 6. Score them. Cheap tier, one call per posting, triage not judgement.
+    // 7. Score them. Cheap tier, one call per posting, triage not judgement.
     await mergeStats(run.id, { phase: "scoring" });
 
     const baseResume = await getBaseResume(userId);
@@ -241,6 +302,7 @@ export async function executeSearchRun(run: Run): Promise<void> {
     const scoring = await scoreMatches({
       userId,
       preferences,
+      focus: brief.focus,
       resume,
       jobIds: prefilter.jobIds,
       threshold: settings.scoreThreshold,
@@ -282,8 +344,8 @@ export async function executeSearchRun(run: Run): Promise<void> {
             (scoring.failed > 0 ? ` ${scoring.failed} could not be scored.` : ""),
     });
 
-    // 7. The first gate: which matches earn the strong model's time.
-    await gateDeepEvaluation(run, settings, prefilter.jobIds);
+    // 8. The first gate: which matches earn the strong model's time.
+    await gateDeepEvaluation(run, settings, prefilter.jobIds, brief);
   } catch (error) {
     await failRun(run, error);
   }
@@ -300,6 +362,7 @@ export async function gateDeepEvaluation(
   run: Run,
   settings: Settings,
   candidateJobIds: string[],
+  brief: SearchBrief = parseBrief((run.input as SearchRunInput | null)?.brief),
 ): Promise<void> {
   const userId = run.userId;
 
@@ -308,10 +371,12 @@ export async function gateDeepEvaluation(
     return;
   }
 
+  // Only this run's own postings. Topping the batch up with leftovers from
+  // earlier searches put unrelated roles into a targeted search's review.
   const selected = await selectForDeepEval(userId, {
+    jobIds: candidateJobIds,
     minFastScore: settings.scoreThreshold,
     limit: settings.deepEvalTopN,
-    preferJobIds: candidateJobIds,
   });
 
   if (selected.length === 0) {
@@ -319,7 +384,7 @@ export async function gateDeepEvaluation(
     return;
   }
 
-  const candidate = await loadEvalCandidate(userId);
+  const candidate = await loadEvalCandidate(userId, { brief });
   if (!candidate) {
     await emit({
       userId,
@@ -354,11 +419,7 @@ export async function gateDeepEvaluation(
   const n = selected.length;
   const cost = costPhrase(estimate.usd);
   const priced = cost ? ` (${cost})` : "";
-  const earlier = selected.filter((row) => !row.preferred).length;
-
   const notes = [
-    earlier > 0 &&
-      `${earlier === n ? "All" : earlier} of these ${earlier === 1 ? "comes" : "come"} from earlier searches and ${earlier === 1 ? "was" : "were"} never deep-evaluated.`,
     estimate.usd == null &&
       `${estimate.model} has no price on file, so there is no cost estimate.`,
   ].filter((note): note is string => Boolean(note));
@@ -410,6 +471,81 @@ async function cancelled(run: Run, userId: string) {
   });
 }
 
+/**
+ * The registered companies a search is limited to. A name we do not track is
+ * looked up and registered the way "add a company" does, so "roles at X"
+ * works the first time X is mentioned; one that cannot be found is reported
+ * and searched for by name in aggregator postings only.
+ */
+async function resolveTargets(
+  run: Run,
+  names: string[],
+): Promise<{ found: Company[]; missing: string[] }> {
+  const userId = run.userId;
+  const lookup = await findCompaniesByNames(names);
+  const found = lookup.found.map((entry) => entry.company);
+  const added: string[] = [];
+  const missing: string[] = [];
+
+  for (const name of lookup.missing) {
+    try {
+      const result = await discoverCompany({
+        nameOrUrl: name,
+        addedByUserId: userId,
+        discoveredVia: "user",
+      });
+      if (result.registered) {
+        found.push(result.registered);
+        added.push(result.registered.name);
+      } else {
+        missing.push(name);
+      }
+    } catch (error) {
+      console.error(`[search] could not look up ${name}:`, error);
+      missing.push(name);
+    }
+  }
+
+  await mergeStats(run.id, {
+    companies: found.map((company) => company.name),
+    companiesMissing: missing,
+  });
+
+  if (added.length > 0) {
+    await emit({
+      userId,
+      runId: run.id,
+      kind: "search.companies.added",
+      message: `Started tracking ${joinNames(added)}.`,
+    });
+  }
+  if (missing.length > 0) {
+    await emit({
+      userId,
+      runId: run.id,
+      kind: "search.companies.missing",
+      level: "warn",
+      message:
+        `Couldn't find a job board for ${joinNames(missing)}, so ` +
+        `${missing.length === 1 ? "its" : "their"} roles only come from the job aggregator. ` +
+        "Ask Foray to add the company with its careers page link to search it directly.",
+    });
+  }
+
+  return { found, missing };
+}
+
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
+function lowerFirst(text: string): string {
+  // "Entry-level roles" reads as "entry-level roles" mid-sentence, but a
+  // company or an acronym at the start ("iOS roles") keeps its case.
+  return /^[A-Z][a-z]/.test(text) ? text.charAt(0).toLowerCase() + text.slice(1) : text;
+}
+
 /** Merges into `runs.input`, so a later write does not drop an earlier one. */
 async function saveInput(runId: string, patch: Partial<SearchRunInput>) {
   await db
@@ -431,12 +567,19 @@ async function runAggregator(
   run: Run,
   preferences: Preferences,
   criteria: DerivedCriteria,
+  brief: SearchBrief,
 ) {
-  const roles = preferences.target_roles?.slice(0, 1) ?? [];
-  const where = preferences.locations?.[0] ?? "";
-  const query = [roles[0] ?? criteria.title_include[0] ?? "software engineer", where]
-    .filter(Boolean)
-    .join(" in ");
+  const role =
+    preferences.target_roles?.[0] ?? criteria.title_include[0] ?? "software engineer";
+  const level =
+    brief.seniority === "entry" || brief.seniority === "new_grad"
+      ? "entry level "
+      : brief.seniority === "intern"
+        ? "intern "
+        : "";
+  const company = brief.companies?.[0] ? ` at ${brief.companies[0]}` : "";
+  const where = preferences.locations?.[0] ? ` in ${preferences.locations[0]}` : "";
+  const query = `${level}${role}${company}${where}`;
 
   try {
     const result = await searchJSearch({

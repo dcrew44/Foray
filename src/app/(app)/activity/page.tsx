@@ -9,6 +9,7 @@ import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { getMatchRows } from "@/lib/db/queries/matches";
 import { llmCalls, resumes, type Run } from "@/lib/db/schema";
+import { describeBrief, parseBrief } from "@/lib/ranking/brief";
 import { toLiveRun } from "@/lib/runs/live";
 import { listRuns } from "@/lib/runs/runs";
 
@@ -41,6 +42,8 @@ export default async function ActivityPage() {
 
 type Input = {
   prompt?: unknown;
+  brief?: unknown;
+  hints?: unknown;
   matchId?: unknown;
   matchIds?: unknown;
   resumeId?: unknown;
@@ -122,7 +125,10 @@ function target(
 ): string | null {
   switch (kind) {
     case "search":
-      return typeof input.prompt === "string" ? input.prompt : null;
+      return (
+        describeBrief(parseBrief(input.brief ?? input.hints)) ??
+        (typeof input.prompt === "string" ? input.prompt : null)
+      );
     case "rank_deep": {
       const ids = Array.isArray(input.matchIds) ? input.matchIds : [];
       const first = typeof ids[0] === "string" ? roleById.get(ids[0]) : undefined;

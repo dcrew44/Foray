@@ -11,7 +11,9 @@ import {
   resolveMatch,
   type MatchRow,
 } from "@/lib/db/queries/matches";
+import { RemotePreference, Seniority } from "@/lib/profile/interview";
 import { getSettings } from "@/lib/profile/settings";
+import { cleanBrief, describeBrief } from "@/lib/ranking/brief";
 import { QUEUES } from "@/lib/queue/queues";
 import { send } from "@/lib/queue/send";
 import {
@@ -37,14 +39,46 @@ import {
 export function startSearchRun(userId: string, conversationId?: string | null) {
   return tool({
     description:
-      "Start a background search for roles matching the user's profile and " +
-      "preferences: refresh job boards, filter, score every candidate, then " +
-      "deep-evaluate the best. Returns a run id immediately; the chat shows a " +
-      "live card for it. Refuses if essential preferences are not yet known.",
+      "Start a background search: refresh job boards, filter, score every " +
+      "candidate against the user's resume, then deep-evaluate the best. " +
+      "The search follows what the user asked for this time: fill companies, " +
+      "roles, seniority, locations, remote and focus from their request, and " +
+      "leave a field null to use their saved preference. These apply to this " +
+      "search only and never change saved preferences (use " +
+      "update_profile_preferences for lasting changes). Returns a run id " +
+      "immediately; the chat shows a live card for it. Refuses if essential " +
+      "preferences are not yet known.",
     inputSchema: z.object({
       prompt: z
         .string()
         .describe("What the user asked for, in their own words."),
+      companies: z
+        .array(z.string())
+        .nullable()
+        .describe(
+          'Companies to limit the search to, when the user names any ("at Anthropic"). ' +
+            "Unknown companies are looked up and added automatically.",
+        ),
+      roles: z
+        .array(z.string())
+        .nullable()
+        .describe('Kinds of role for this search, as short titles ("software engineer").'),
+      seniority: Seniority.nullable().describe(
+        'Level for this search when the user states one. "Entry-level", "junior" or "most entry-level" is entry.',
+      ),
+      locations: z
+        .array(z.string())
+        .nullable()
+        .describe("Places for this search, when the user names any."),
+      remote: RemotePreference.nullable().describe(
+        "Remote preference for this search, only when the user states one.",
+      ),
+      focus: z
+        .string()
+        .nullable()
+        .describe(
+          'Anything else about this search that should shape the ranking, in one sentence ("lowest experience requirements first").',
+        ),
       mode: z
         .enum(["approve_each", "autopilot"])
         .nullable()
@@ -54,7 +88,7 @@ export function startSearchRun(userId: string, conversationId?: string | null) {
             "from settings — only set it when they say which they want.",
         ),
     }),
-    execute: async ({ prompt, mode }) => {
+    execute: async ({ prompt, mode, ...hints }) => {
       try {
         await assertCanSearch(userId);
       } catch (error) {
@@ -93,16 +127,18 @@ export function startSearchRun(userId: string, conversationId?: string | null) {
         kind: "search",
         mode: resolvedMode,
         status: "queued",
-        input: { prompt },
+        input: { prompt, hints: cleanBrief(hints) },
         conversationId: conversationId ?? null,
       });
 
       await send(QUEUES.search, { userId, runId: run.id });
 
+      const scope = describeBrief(cleanBrief(hints));
       return {
         ok: true as const,
         runId: run.id,
         mode: resolvedMode,
+        searchingFor: scope,
         message:
           resolvedMode === "autopilot"
             ? "Search started on autopilot. It will score, evaluate and shortlist without stopping."
@@ -192,15 +228,31 @@ export function listJobs(userId: string) {
     description:
       "List the user's matched roles, best first (deep score, else fast score). " +
       "Filter by pipeline stage, a minimum score, or text in the title/company. " +
-      "By default excludes rejected and archived matches.",
+      "Pass run_id to list only what one search found; without it this lists " +
+      "matches from every search. By default excludes rejected and archived matches.",
     inputSchema: z.object({
+      run_id: z
+        .string()
+        .nullable()
+        .describe("Only the roles this search run found."),
       limit: z.number().int().min(1).max(50).nullable(),
       stage: z.enum(ALL_STAGES as [string, ...string[]]).nullable(),
       min_score: z.number().int().min(0).max(100).nullable(),
       query: z.string().nullable().describe("Text to match in title or company."),
     }),
-    execute: async ({ limit, stage, min_score, query }) => {
+    execute: async ({ run_id, limit, stage, min_score, query }) => {
+      let jobIds: string[] | undefined;
+      if (run_id) {
+        const run = await getRun(userId, run_id);
+        if (!run || run.kind !== "search") {
+          return { ok: false as const, message: "No such search run." };
+        }
+        const found = (run.input as { candidateJobIds?: unknown } | null)?.candidateJobIds;
+        jobIds = Array.isArray(found) ? found.filter((id): id is string => typeof id === "string") : [];
+      }
+
       const matches = await listMatches(userId, {
+        jobIds,
         limit: limit ?? 10,
         stages: stage
           ? [stage as MatchRow["stage"]]

@@ -26,6 +26,7 @@ import {
   type EvalCandidate,
   type MatchEvaluation,
 } from "@/lib/ranking/deep-eval";
+import { parseBrief } from "@/lib/ranking/brief";
 import type { Recommendation } from "@/lib/ranking/schemas";
 
 import {
@@ -270,7 +271,9 @@ export async function continueSearchEvaluate(
 
     const batch = approvedItemIds(approval);
 
-    const candidate = await loadEvalCandidate(userId);
+    const candidate = await loadEvalCandidate(userId, {
+      brief: parseBrief(asRecord(run.input).brief),
+    });
     if (!candidate) {
       await emit({
         userId,

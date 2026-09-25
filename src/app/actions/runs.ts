@@ -6,7 +6,8 @@ import { requireUser } from "@/lib/auth/session";
 import { getSettings, type AutonomyMode } from "@/lib/profile/settings";
 import { QUEUES } from "@/lib/queue/queues";
 import { send } from "@/lib/queue/send";
-import { activeSearch, createRun, requestCancel } from "@/lib/runs/runs";
+import { SAVED_PREFERENCES_PROMPT } from "@/lib/ranking/brief";
+import { activeSearch, createRun, getRun, requestCancel } from "@/lib/runs/runs";
 import {
   assertCanSearch,
   PreferencesIncompleteError,
@@ -21,6 +22,8 @@ import {
 export async function startSearchAction(input: {
   prompt?: string;
   mode?: AutonomyMode;
+  /** Repeat this earlier search: the same request, companies, level and places. */
+  againFrom?: string;
 } = {}): Promise<
   { ok: true; runId: string; message: string } | { ok: false; message: string }
 > {
@@ -50,14 +53,24 @@ export async function startSearchAction(input: {
   }
 
   const settings = await getSettings(user.id);
-  const mode = input.mode ?? settings.defaultMode;
+  const earlier = input.againFrom ? await getRun(user.id, input.againFrom) : null;
+  const previous = (earlier?.kind === "search" ? earlier.input : null) as {
+    prompt?: string | null;
+    hints?: unknown;
+  } | null;
+  const mode = input.mode ?? earlier?.mode ?? settings.defaultMode;
 
   const run = await createRun({
     userId: user.id,
     kind: "search",
     mode,
     status: "queued",
-    input: { prompt: input.prompt?.trim() || "Search with my saved preferences" },
+    input: {
+      prompt: input.prompt?.trim() || previous?.prompt || SAVED_PREFERENCES_PROMPT,
+      // The brief is derived again from the same request and hints rather than
+      // copied, so a search repeated after a profile edit reads the new one.
+      hints: previous?.hints ?? null,
+    },
   });
 
   await send(QUEUES.search, { userId: user.id, runId: run.id });

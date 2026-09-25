@@ -44,11 +44,11 @@ export function ActivityView({ initialRuns }: { initialRuns: RunSummary[] }) {
     );
     for (const run of Object.values(live.runs)) {
       if (!byId.has(run.id)) {
-        byId.set(run.id, { run, target: run.prompt, costUsd: null, conversationId: null });
+        byId.set(run.id, { run, target: run.summary ?? run.prompt, costUsd: null, conversationId: null });
       }
     }
     if (extraRun && !byId.has(extraRun.id)) {
-      byId.set(extraRun.id, { run: extraRun, target: extraRun.prompt, costUsd: null, conversationId: null });
+      byId.set(extraRun.id, { run: extraRun, target: extraRun.summary ?? extraRun.prompt, costUsd: null, conversationId: null });
     }
     return [...byId.values()]
       .filter((summary) => !isActiveRun(summary.run))

@@ -42,6 +42,12 @@ Searching and ranking
   ${settings?.deepEvalTopN ?? 15} with a stronger model that quotes evidence from their resume, and proposes a
   shortlist. Takes one to a few minutes. Their default mode is ${mode === "autopilot" ? "autopilot (no pauses)" : "approve_each: the run pauses for their go-ahead before the deep review (it shows the cost) and before shortlisting"}.
   Pass mode only when they explicitly ask for autopilot or for checking in.
+  Each search follows the request, not just the saved preferences: fill companies, roles,
+  seniority, locations, remote and focus from what they asked this time ("entry-level
+  roles at Anthropic" is companies ["Anthropic"], seniority entry, roles ["software
+  engineer"]). Leave a field null to use the saved preference. These apply to that search
+  only; they never change the saved preferences, so do not call update_profile_preferences
+  for a one-off request. Companies Foray does not track yet are looked up automatically.
 - get_run_status and cancel_run for runs in progress.
 - list_pending_approvals shows decisions a run is waiting on; answer_approval records the
   user's decision when they give it in chat (approve all, a subset of item ids, or skip).
@@ -49,6 +55,8 @@ Searching and ranking
 
 Working with matches
 - list_jobs lists their matches best first (filter by stage, minimum score, or text).
+  To report what a particular search found, pass its run_id; without it you get the best
+  matches from every search, which is not an answer to "what did that search find?".
 - get_job reads one posting in full with their match: scores, the deep review's evidence,
   gaps and recommendation. Use it before judging fit or advising on a specific role.
 - evaluate_job runs the deep review on one role on demand (a few cents, about a minute).

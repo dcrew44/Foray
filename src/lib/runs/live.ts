@@ -2,6 +2,7 @@ import { and, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { agentEvents, approvals, runs } from "@/lib/db/schema";
+import { describeBrief, parseBrief } from "@/lib/ranking/brief";
 import { workerStatus, type WorkerStatus } from "@/lib/system/heartbeat";
 
 /**
@@ -37,6 +38,8 @@ export type LiveRun = {
     | "cancelled";
   mode: "approve_each" | "autopilot";
   prompt: string | null;
+  /** For a search: what it is for, in one line, once the brief is known. */
+  summary: string | null;
   stats: Record<string, unknown>;
   output: Record<string, unknown> | null;
   error: string | null;
@@ -66,13 +69,21 @@ export type LiveSnapshot = {
 const RECENT_MS = 10 * 60 * 1000;
 
 export function toLiveRun(run: typeof runs.$inferSelect): LiveRun {
-  const input = (run.input ?? {}) as { prompt?: string | null };
+  const input = (run.input ?? {}) as {
+    prompt?: string | null;
+    brief?: unknown;
+    hints?: unknown;
+  };
   return {
     id: run.id,
     kind: run.kind,
     status: run.status,
     mode: run.mode,
     prompt: input.prompt ?? null,
+    summary:
+      run.kind === "search"
+        ? describeBrief(parseBrief(input.brief ?? input.hints))
+        : null,
     stats: (run.stats ?? {}) as Record<string, unknown>,
     output: (run.output ?? null) as Record<string, unknown> | null,
     error: run.error,

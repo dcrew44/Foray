@@ -18,6 +18,7 @@ import {
 import { factIds } from "@/lib/resume/schema";
 import { resumeToText } from "@/lib/resume/text";
 
+import { applyBrief, EMPTY_BRIEF, type SearchBrief } from "./brief";
 import { DeepEval } from "./schemas";
 
 /**
@@ -111,6 +112,8 @@ export type EvalCandidate = {
   /** `resumeToText` output — items carry their `[id]`. */
   resumeText: string;
   preferences: Preferences;
+  /** What the search that asked for this review is after, beyond the preferences. */
+  focus?: string | null;
   /** Every fact id in the resume. Citations outside this set are dropped. */
   factIds: ReadonlySet<string>;
 };
@@ -138,7 +141,7 @@ export function evalInstructions(candidate: EvalCandidate): string {
 
 <candidate>
 What they are looking for:
-${describePreferences(candidate.preferences)}
+${describePreferences(candidate.preferences)}${candidate.focus ? `\n- this search: ${candidate.focus}` : ""}
 
 Resume (each item's [id] is what fact_ids cite):
 ${candidate.resumeText}
@@ -315,6 +318,7 @@ export class NoResumeError extends Error {
  */
 export async function loadEvalCandidate(
   userId: string,
+  options: { brief?: SearchBrief | null } = {},
 ): Promise<EvalCandidate | null> {
   const [base, profile] = await Promise.all([
     loadBaseResume(userId),
@@ -326,9 +330,14 @@ export async function loadEvalCandidate(
     resumeId: base.id,
     resumeVersion: base.version,
     resumeText: resumeToText(base.resume),
-    preferences:
-      PreferencesSchema.safeParse(profile?.preferences).data ??
-      EMPTY_PREFERENCES,
+    // A search's brief applies here too: a review of an entry-level role
+    // found by an entry-level search must not mark it down as too junior
+    // because the saved preference says senior.
+    preferences: applyBrief(
+      PreferencesSchema.safeParse(profile?.preferences).data ?? EMPTY_PREFERENCES,
+      options.brief ?? EMPTY_BRIEF,
+    ),
+    focus: options.brief?.focus ?? null,
     factIds: new Set(factIds(base.resume)),
   };
 }

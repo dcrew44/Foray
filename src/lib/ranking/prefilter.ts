@@ -79,9 +79,11 @@ null, and the saved preference applies.
 
 Then the title terms, for the effective search: the brief where it says something, the
 saved preferences everywhere else.
-- title_include: the job titles this search would accept, as short lowercase phrases.
-  Include the obvious synonyms a company might use. Err wide: a later scoring pass
-  judges fit, and anything excluded here is never seen again.
+- title_include: the job titles this search would accept, as short lowercase phrases,
+  without a level word: "backend engineer", not "senior backend engineer" (many
+  companies never put the level in a title). Include the obvious synonyms and word
+  orders a company might use ("software engineer, backend"). Err wide: a later scoring
+  pass judges fit, and anything excluded here is never seen again.
   For an entry-level or new-grad search, also include the early-career titles roles in
   that discipline carry: new grad, junior, associate, early career, residency,
   apprenticeship and fellowship programs.
@@ -155,7 +157,7 @@ export async function deriveSearch(input: {
     brief,
     criteria: guardSeniority(
       {
-        title_include: value.title_include.map(escapeForRegex).filter(Boolean),
+        title_include: dedupe(value.title_include.map(withoutLevel).map(escapeForRegex)),
         title_exclude: value.title_exclude.map(escapeForRegex).filter(Boolean),
         keywords: value.keywords.filter(Boolean),
       },
@@ -252,6 +254,24 @@ export function guardSeniority(
     title_exclude: [...kept, ...senior.filter((term) => !kept.includes(term))],
     title_keep: earlyTitles,
   };
+}
+
+/**
+ * An include term without a leading level word: "senior backend engineer"
+ * becomes "backend engineer". Stripe, Ramp and many others never put "Senior"
+ * in a title, so a literal senior phrase found none of their roles. The level
+ * is judged by the exclusions and by scoring instead.
+ */
+export function withoutLevel(phrase: string): string {
+  return phrase
+    .trim()
+    // Not "lead": in "lead generation specialist" it is the job, not a level.
+    .replace(/^(?:(?:senior|sr\.?|staff|principal|junior|jr\.?|mid[- ]level|entry[- ]level)\s+)+/i, "")
+    .trim();
+}
+
+function dedupe(terms: string[]): string[] {
+  return [...new Set(terms.filter(Boolean))];
 }
 
 /** The model returns plain phrases; they still have to be safe in a regex. */
@@ -436,6 +456,33 @@ export function companyNamePattern(name: string): string | null {
  * work wants remote roles *and* roles in their metro, and asking for both
  * separately would exclude everything.
  */
+/** Bay Area place names as whole words, for Postgres (`\\y` is its word boundary). */
+export const BAY_AREA_PLACES = `\\y(${[
+  "san francisco",
+  "sf",
+  "bay area",
+  "silicon valley",
+  "oakland",
+  "berkeley",
+  "emeryville",
+  "san jose",
+  "palo alto",
+  "mountain view",
+  "menlo park",
+  "sunnyvale",
+  "santa clara",
+  "cupertino",
+  "redwood city",
+  "san mateo",
+  "foster city",
+  "burlingame",
+  "san bruno",
+  "san carlos",
+  "fremont",
+  "milpitas",
+  "los gatos",
+].join("|")})\\y`;
+
 function locationClause(preferences: Preferences): SQL | undefined {
   const wantsRemote =
     preferences.remote_pref === "remote" || preferences.remote_pref === "any";
@@ -456,6 +503,14 @@ function locationClause(preferences: Preferences): SQL | undefined {
         sql`, `,
       )})`,
     );
+  }
+  // The normalizer places one location per posting, and boards write several
+  // in one string ("Seattle, San Francisco, New York", "SEA, SF, NY",
+  // "San Francisco HQ"), which it leaves without a metro. Stripe and Plaid
+  // list most of their Bay Area roles that way, so the raw text is checked
+  // against the metro's places too.
+  if (metros.has("bay-area")) {
+    clauses.push(sql`${jobs.locations}::text ~* ${BAY_AREA_PLACES}`);
   }
 
   // Free-text fallback for locations outside the gazetteer.

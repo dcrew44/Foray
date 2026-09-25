@@ -83,6 +83,13 @@ These are the rules that must survive every later change.
     batch and its results come only from its own postings. (Before this, the request
     was stored "for the record": every search ran on the saved preferences, returned
     the same roles, and topped up its review with leftovers from earlier searches.)
+17. **Work started in a chat reports back in that chat.** When a run with a
+    `conversation_id` pauses for a decision, finishes or fails, the worker adds an
+    automatic update to that conversation and has the chat agent answer it
+    (`lib/chat/follow-up.ts`). The follow-up turn has read-only tools, waits for any reply
+    the user is still receiving, and skips news that is already stale (a decision
+    answered from the card, a cancelled run). (Before this, the agent went quiet after
+    starting a run, and the only sign of its result was the card changing.)
 
 ## Architecture
 
@@ -113,6 +120,11 @@ Browser ─▶ Next.js 16 (pages, /api/chat streaming, /api/live polling, upload
 - **Agents**: an AI SDK `ToolLoopAgent` drives chat. Search / rank / tailor / discovery
   are plain pg-boss pipelines with approval gates, not agent loops. Browser-driving agent
   loops arrive in Phase 2.
+- **Follow-ups**: `emit()` queues a `chat.follow_up` job for the moments a run reports
+  (`approval.requested`, `run.completed`, `run.failed`, `tailor.done`, `tailor.failed`)
+  when the run came from a chat. The job stores an automatic update (a user-role message
+  marked `run_update`, drawn as a divider) and the agent's reply, then emits
+  `chat.followup` so an open chat merges it in; the app toasts it anywhere else.
 - **Approval gate pattern** (the durable-workflow substitute reused by every later
   phase): a handler that reaches a gate writes an `approvals` row containing a
   `continuation` (queue + payload), emits `approval.requested`, sets the run to

@@ -17,7 +17,7 @@ See [DESIGN.md](DESIGN.md) for the settled decisions and architecture, and
 | Page | What it's for |
 |---|---|
 | **Home** | Status at a glance: decisions waiting on you, searches in flight, your best matches, and a box to ask Foray anything. New accounts get a three-step setup here. |
-| **Chat** | The agent. Ask for roles, have it explain a fit, move jobs on your board, start a deep review or a tailored resume. Background work appears as live cards. |
+| **Chat** | The agent. Ask for roles, have it explain a fit, move jobs on your board, start a deep review or a tailored resume. Background work appears as live cards, and the agent reports back in the chat when that work needs you or finishes. |
 | **Matches** | Your pipeline as a drag-and-drop board (Found → Shortlisted → Applied → Interviewing → Offer), or as a filterable list. |
 | **Match page** | Why a role fits: the deep review's evidence and gaps, the posting, a tailored resume with its change log and fact-check, and your notes. |
 | **Activity** | Every run and every step the agents took. |

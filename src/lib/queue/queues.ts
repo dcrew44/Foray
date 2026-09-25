@@ -27,6 +27,11 @@ export const QUEUES = {
   resumeTailor: "resume.tailor",
   /** Render a stored resume (base or tailored) to PDF. */
   resumeRender: "resume.render",
+  /**
+   * Have the chat agent report back in the conversation that started a run,
+   * when the run pauses for a decision, finishes or fails.
+   */
+  chatFollowUp: "chat.follow_up",
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -84,6 +89,13 @@ export type ResumeRenderPayload = {
   resumeId: string;
 };
 
+export type ChatFollowUpPayload = {
+  userId: string;
+  runId: string;
+  /** The `agent_events` row that marked the moment: the run paused, finished or failed. */
+  eventId: number;
+};
+
 export type QueuePayloads = {
   [QUEUES.ping]: PingPayload;
   [QUEUES.search]: SearchPayload;
@@ -94,4 +106,5 @@ export type QueuePayloads = {
   [QUEUES.resumeRender]: ResumeRenderPayload;
   [QUEUES.companyDiscover]: CompanyDiscoverPayload;
   [QUEUES.companyRefresh]: CompanyRefreshPayload;
+  [QUEUES.chatFollowUp]: ChatFollowUpPayload;
 };

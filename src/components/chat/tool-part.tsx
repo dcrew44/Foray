@@ -331,7 +331,9 @@ function PendingApprovals({ output }: { output: Obj }) {
   const stillPending = approvals.filter((approval) => ids.has(approval.id));
 
   if (listed.length === 0) return <ActivityLine label="Nothing is waiting on you." />;
-  if (stillPending.length === 0) return <ActivityLine label="Those decisions have been made." />;
+  // Answered since: the decision itself is the next line in the chat, and
+  // "those decisions have been made" above it only repeated it vaguely.
+  if (stillPending.length === 0) return null;
 
   return (
     <div className="space-y-3">

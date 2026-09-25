@@ -9,7 +9,15 @@ import {
 } from "ai";
 import { ArrowUp, CircleAlert, MessageSquarePlus, RotateCcw, Square } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 
 import {
   Conversation,
@@ -19,10 +27,11 @@ import {
 import { MessageResponse } from "@/components/ai-elements/message";
 import { Blaze } from "@/components/foray/primitives";
 import { PENDING_PROMPT_KEY } from "@/components/home/ask-box";
-import { requestLiveRefresh } from "@/components/live/live-provider";
+import { requestLiveRefresh, useLiveEvent, watchRuns } from "@/components/live/live-provider";
 import { announceConversationsChanged } from "@/components/shell/recent-chats";
 import { buttonVariants } from "@/components/ui/button";
 import type { ForayUIMessage } from "@/lib/agents/chat-agent";
+import { FOLLOW_UP_EVENT, FOLLOW_UP_KINDS } from "@/lib/chat/follow-up-kinds";
 import { cn } from "@/lib/utils";
 
 import { ToolPart, type ToolPartView } from "./tool-part";
@@ -55,7 +64,7 @@ export function Chat({
   const [text, setText] = useState("");
   const textarea = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, sendMessage, status, error, stop, regenerate, clearError } =
+  const { messages, setMessages, sendMessage, status, error, stop, regenerate, clearError } =
     useChat<ForayUIMessage>({
       id: chatId,
       messages: initialMessages,
@@ -80,6 +89,56 @@ export function Chat({
     });
 
   const busy = status === "submitted" || status === "streaming";
+
+  // --- The agent reporting back ---------------------------------------------
+  // A run this chat started pauses, finishes or fails; the worker has the
+  // agent write a follow-up into this conversation (lib/chat/follow-up.ts).
+  // Between the two, the chat says Foray is catching up, then loads the reply.
+  const runIds = useMemo(() => runIdsIn(messages), [messages]);
+  // This chat shows its runs' moments inline, so the app does not toast them.
+  const runKey = [...runIds].sort().join(",");
+  useEffect(() => watchRuns(runKey ? runKey.split(",") : []), [runKey]);
+  const [catchingUp, setCatchingUp] = useState(false);
+  const catchUpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reloadWhenIdle = useRef(false);
+
+  const reload = useCallback(async () => {
+    const response = await fetch(`/api/conversations/${chatId}`, { cache: "no-store" });
+    if (!response.ok) return;
+    const body = (await response.json()) as { messages: ForayUIMessage[] };
+    setMessages((local) => mergeMessages(body.messages, local));
+  }, [chatId, setMessages]);
+
+  useLiveEvent(
+    (event) => event.runId != null && FOLLOW_UP_KINDS.has(event.kind) && runIds.has(event.runId),
+    () => {
+      setCatchingUp(true);
+      // The worker always says when it is done or skipped; this only covers
+      // a worker that went away in between.
+      if (catchUpTimer.current) clearTimeout(catchUpTimer.current);
+      catchUpTimer.current = setTimeout(() => setCatchingUp(false), 90_000);
+    },
+  );
+
+  useLiveEvent([FOLLOW_UP_EVENT], (event) => {
+    const data = event.data as { conversationId?: string; messageId?: string } | null;
+    if (data?.conversationId !== chatId) return;
+    setCatchingUp(false);
+    if (!data.messageId) return;
+    // Mid-turn, the reply being streamed must finish first.
+    if (busy) reloadWhenIdle.current = true;
+    else void reload();
+  });
+
+  useEffect(() => {
+    if (busy || !reloadWhenIdle.current) return;
+    reloadWhenIdle.current = false;
+    void reload();
+  }, [busy, reload]);
+
+  useEffect(() => () => {
+    if (catchUpTimer.current) clearTimeout(catchUpTimer.current);
+  }, []);
 
   function send(prompt: string) {
     const trimmed = prompt.trim();
@@ -150,18 +209,22 @@ export function Chat({
       ) : (
         <Conversation className="min-h-0 flex-1">
           <ConversationContent className="mx-auto w-full max-w-[760px] gap-7 px-5 pt-8 pb-10">
-            {messages.map((message) =>
-              message.role === "user" ? (
+            {messages.map((message) => {
+              const update = runUpdateLabel(message);
+              if (update) return <RunUpdateDivider key={message.id} label={update} />;
+              return message.role === "user" ? (
                 <UserMessage key={message.id} message={message} />
               ) : (
                 <AssistantMessage key={message.id} message={message} />
-              ),
-            )}
+              );
+            })}
 
-            {thinking && (
+            {(thinking || (catchingUp && !busy)) && (
               <div className="text-muted-foreground flex items-center gap-2.5 text-[13.5px]">
                 <Blaze className="h-3.5 w-2 rounded-[2px]" live />
-                <span className="animate-pulse">Thinking…</span>
+                <span className="animate-pulse">
+                  {thinking ? "Thinking…" : "Foray is looking at the results…"}
+                </span>
               </div>
             )}
 
@@ -207,8 +270,55 @@ export function Chat({
   );
 }
 
+/** Runs this chat started: every tool output that carries a run id. */
+function runIdsIn(messages: ForayUIMessage[]): Set<string> {
+  const ids = new Set<string>();
+  for (const message of messages) {
+    if (message.role !== "assistant") continue;
+    for (const part of message.parts) {
+      if (!isStaticToolUIPart(part) || part.state !== "output-available") continue;
+      const runId = (part.output as { runId?: unknown } | undefined)?.runId;
+      if (typeof runId === "string") ids.add(runId);
+    }
+  }
+  return ids;
+}
+
+/**
+ * The stored conversation with anything this page holds that the server does
+ * not have yet — a reply that finished streaming a moment before its save
+ * landed. Ids are shared: the client picks user message ids and the server
+ * streams its own assistant ids down.
+ */
+function mergeMessages(server: ForayUIMessage[], local: ForayUIMessage[]): ForayUIMessage[] {
+  const known = new Set(server.map((message) => message.id));
+  return [...server, ...local.filter((message) => !known.has(message.id))];
+}
+
+/** The divider text for an automatic run update, or null for any other message. */
+function runUpdateLabel(message: ForayUIMessage): string | null {
+  const metadata = message.metadata as { kind?: unknown; label?: unknown } | undefined;
+  if (message.role !== "user" || metadata?.kind !== "run_update") return null;
+  return typeof metadata.label === "string" ? metadata.label : "Update";
+}
+
+/**
+ * Where the agent picked the conversation back up on its own. The update it
+ * answered was written by Foray, not the user, so it is a marker in the
+ * thread rather than a speech bubble.
+ */
+function RunUpdateDivider({ label }: { label: string }) {
+  return (
+    <div className="text-muted-foreground flex items-center gap-3 text-[12px]" role="note">
+      <span className="bg-border h-px flex-1" />
+      <span>{label}</span>
+      <span className="bg-border h-px flex-1" />
+    </div>
+  );
+}
+
 function firstUserText(messages: ForayUIMessage[]): string {
-  const first = messages.find((message) => message.role === "user");
+  const first = messages.find((message) => message.role === "user" && !runUpdateLabel(message));
   const part = first?.parts.find(isTextUIPart);
   return part?.text.slice(0, 80) ?? "New chat";
 }

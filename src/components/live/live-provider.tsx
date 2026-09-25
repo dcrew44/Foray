@@ -19,6 +19,8 @@ import type {
   LiveRun,
   LiveSnapshot,
 } from "@/lib/runs/live";
+import { announceConversationsChanged } from "@/components/shell/recent-chats";
+import { FOLLOW_UP_EVENT } from "@/lib/chat/follow-up-kinds";
 import type { WorkerStatus } from "@/lib/system/heartbeat";
 
 /**
@@ -124,7 +126,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       if (!initial) {
         for (const event of snapshot.events) {
           for (const listener of listeners.current) listener(event);
-          announce(event);
+          announce(event, (href) => router.push(href));
         }
       }
     } catch {
@@ -186,9 +188,43 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   return <LiveContext.Provider value={value}>{children}</LiveContext.Provider>;
 }
 
+/**
+ * Runs an open chat is showing inline. Their moments are not toasted: the
+ * card and the agent's follow-up are already in front of the user.
+ */
+const watchedRuns = new Map<string, number>();
+
+/** Marks runs as shown in the open chat; the returned function unmarks them. */
+export function watchRuns(ids: Iterable<string>): () => void {
+  const list = [...ids];
+  for (const id of list) watchedRuns.set(id, (watchedRuns.get(id) ?? 0) + 1);
+  return () => {
+    for (const id of list) {
+      const count = (watchedRuns.get(id) ?? 1) - 1;
+      if (count > 0) watchedRuns.set(id, count);
+      else watchedRuns.delete(id);
+    }
+  };
+}
+
 /** Toasts for the moments worth interrupting for, and nothing else. */
-function announce(event: LiveEvent) {
+function announce(event: LiveEvent, navigate: (href: string) => void) {
+  if (event.runId && watchedRuns.has(event.runId)) return;
   switch (event.kind) {
+    case FOLLOW_UP_EVENT: {
+      const data = event.data as { conversationId?: string; messageId?: string; label?: string } | null;
+      if (!data?.conversationId || !data.messageId) return;
+      // The sidebar's recent chats re-sort: this one just moved to the top.
+      announceConversationsChanged();
+      const href = `/chat/${data.conversationId}`;
+      // Someone reading that chat is already watching the reply arrive.
+      if (window.location.pathname === href) return;
+      toast(`Foray followed up in chat${data.label ? `: ${data.label.toLowerCase()}` : ""}.`, {
+        id: `event-${event.id}`,
+        action: { label: "Open chat", onClick: () => navigate(href) },
+      });
+      return;
+    }
     case "approval.requested":
       toast(event.message, {
         id: `approval-${event.approvalId ?? event.id}`,

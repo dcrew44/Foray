@@ -42,7 +42,15 @@ import { systemPrompt } from "./system-prompt";
  */
 export async function chatAgent(
   userId: string,
-  options: { conversationId?: string | null; userName?: string | null } = {},
+  options: {
+    conversationId?: string | null;
+    userName?: string | null;
+    /**
+     * A follow-up turn: the agent reporting back on a run, with no user
+     * message to answer. It may only read — see FOLLOW_UP_TOOLS.
+     */
+    followUp?: boolean;
+  } = {},
 ) {
   const [profile] = await db
     .select()
@@ -81,9 +89,22 @@ export async function chatAgent(
       evaluate_job: evaluateJob(userId, options.conversationId),
       tailor_resume: tailorResume(userId, options.conversationId),
     },
-    stopWhen: isStepCount(8),
+    // A follow-up reports and asks; it must not start, approve or change
+    // anything the user has not asked for in their own words.
+    ...(options.followUp ? { activeTools: [...FOLLOW_UP_TOOLS] } : {}),
+    stopWhen: isStepCount(options.followUp ? 4 : 8),
   });
 }
+
+/** What a follow-up turn may call: reads only. */
+const FOLLOW_UP_TOOLS = [
+  "get_profile_summary",
+  "get_resume",
+  "get_run_status",
+  "list_jobs",
+  "get_job",
+  "list_companies",
+] as const;
 
 /**
  * The UI message type for *this* agent, with its tool names and input/output

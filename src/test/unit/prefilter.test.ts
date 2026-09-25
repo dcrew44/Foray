@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BAY_AREA_PLACES,
   escapeForRegex,
   guardSeniority,
   titleMatches,
+  withoutLevel,
   type DerivedCriteria,
 } from "@/lib/ranking/prefilter";
 
@@ -140,5 +142,35 @@ describe("title terms for a junior search", () => {
   it("leaves other searches alone", () => {
     expect(guardSeniority(proposed, "senior", null)).toEqual(proposed);
     expect(guardSeniority(proposed, null, null)).toEqual(proposed);
+  });
+});
+
+describe("include terms without a level", () => {
+  it("drops a leading level word, since many companies never write one", () => {
+    expect(withoutLevel("senior backend engineer")).toBe("backend engineer");
+    expect(withoutLevel("Sr. Staff software engineer")).toBe("software engineer");
+    expect(withoutLevel("entry-level data analyst")).toBe("data analyst");
+    expect(withoutLevel("lead generation specialist")).toBe("lead generation specialist");
+    expect(withoutLevel("software engineer, backend")).toBe("software engineer, backend");
+  });
+});
+
+describe("Bay Area place names", () => {
+  // Postgres spells a word boundary \y; JavaScript spells it \b.
+  const bayArea = new RegExp(BAY_AREA_PLACES.replace(/\\y/g, "\\b"), "i");
+
+  it("finds the Bay Area in multi-city strings the normalizer leaves without a metro", () => {
+    expect(bayArea.test("Seattle, San Francisco, New York")).toBe(true);
+    expect(bayArea.test("SEA, SF, NY, Toronto")).toBe(true);
+    expect(bayArea.test("San Francisco HQ")).toBe(true);
+    expect(bayArea.test("US-Remote, Chicago, Seattle, San Francisco")).toBe(true);
+    expect(bayArea.test("Palo Alto, CA")).toBe(true);
+  });
+
+  it("does not match places elsewhere", () => {
+    expect(bayArea.test("New York City Office")).toBe(false);
+    expect(bayArea.test("Seattle, WA")).toBe(false);
+    expect(bayArea.test("Dublin")).toBe(false);
+    expect(bayArea.test("Sfax, Tunisia")).toBe(false);
   });
 });

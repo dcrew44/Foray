@@ -50,6 +50,9 @@ const POLICIES: Record<QueueName, QueuePolicy> = {
   [QUEUES.matchEvaluate]: { retryLimit: 0, expireInSeconds: 30 * MINUTE },
   [QUEUES.resumeTailor]: { retryLimit: 0, expireInSeconds: 30 * MINUTE },
   [QUEUES.resumeRender]: { retryLimit: 1, expireInSeconds: 10 * MINUTE },
+  // A follow-up that fails is skipped, not retried: by the time a retry ran,
+  // the news it would report could be stale.
+  [QUEUES.chatFollowUp]: { retryLimit: 0, expireInSeconds: 5 * MINUTE },
 };
 
 /**

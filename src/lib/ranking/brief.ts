@@ -133,6 +133,9 @@ const LEVEL: Record<z.infer<typeof Seniority>, string> = {
   staff_plus: "Staff-level and above",
 };
 
+/** A role that already names its level. */
+const LEVEL_WORD = /^(senior|sr\.?|staff|principal|lead|junior|jr\.?|entry|new[- ]grad|intern|mid)\b/i;
+
 const REMOTE: Record<z.infer<typeof RemotePreference>, string | null> = {
   remote: "remote only",
   hybrid: "hybrid",
@@ -150,9 +153,12 @@ export function describeBrief(brief: SearchBrief): string | null {
   if (!roles && !seniority && !locations && !remote && !companies) return null;
 
   const what = roles ? `${joinOr(roles)} roles` : "roles";
-  let text = seniority
-    ? `${LEVEL[seniority]} ${what}`
-    : what.charAt(0).toUpperCase() + what.slice(1);
+  // "Senior Backend Engineer roles", not "Senior Senior Backend Engineer roles".
+  const levelled = roles?.some((role) => LEVEL_WORD.test(role)) ?? false;
+  let text =
+    seniority && !levelled
+      ? `${LEVEL[seniority]} ${what}`
+      : what.charAt(0).toUpperCase() + what.slice(1);
 
   if (companies) text += ` at ${joinOr(companies)}`;
   if (locations) text += `, in ${joinOr(locations)}`;

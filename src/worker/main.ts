@@ -9,6 +9,7 @@ import { QUEUES, type QueueName, type QueuePayloads } from "@/lib/queue/queues";
 import { reapInterruptedRuns } from "@/lib/runs/runs";
 import { beat } from "@/lib/system/heartbeat";
 
+import { handleChatFollowUp } from "./handlers/chat";
 import {
   handleCompanyDiscover,
   handleCompanyRefresh,
@@ -60,6 +61,7 @@ const REGISTRATIONS: {
   [QUEUES.matchEvaluate]: { handler: handleMatchEvaluate, concurrency: heavy },
   [QUEUES.resumeTailor]: { handler: handleResumeTailor, concurrency: heavy },
   [QUEUES.resumeRender]: { handler: handleResumeRender, concurrency: 2 },
+  [QUEUES.chatFollowUp]: { handler: handleChatFollowUp, concurrency: 2 },
 };
 
 async function register(worker: PgBoss) {

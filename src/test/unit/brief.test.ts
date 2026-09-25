@@ -78,6 +78,10 @@ describe("the search brief", () => {
       "Roles at Stripe, Plaid or Ramp, remote only",
     );
     expect(describeBrief({ ...EMPTY_BRIEF, focus: "fintech only" })).toBeNull();
+    // A role that already names its level is not given a second one.
+    expect(
+      describeBrief({ ...EMPTY_BRIEF, seniority: "senior", roles: ["Senior Backend Engineer"] }),
+    ).toBe("Senior Backend Engineer roles");
   });
 
   it("treats the Home button's placeholder as no request", () => {

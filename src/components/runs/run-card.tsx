@@ -184,7 +184,7 @@ export function RunCard({
         <div className="text-muted-foreground flex shrink-0 items-center gap-2 text-[12px]">
           {run.kind === "search" && (
             <span className="bg-muted rounded-full px-2 py-0.5">
-              {run.mode === "autopilot" ? "Autopilot" : "Asks first"}
+              {run.mode === "autopilot" ? "Autopilot" : "Asks before spending"}
             </span>
           )}
           {elapsed && <span className="tabular">{elapsed}</span>}

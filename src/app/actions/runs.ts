@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import { getSettings, type AutonomyMode } from "@/lib/profile/settings";
 import { QUEUES } from "@/lib/queue/queues";
 import { send } from "@/lib/queue/send";
-import { createRun, requestCancel } from "@/lib/runs/runs";
+import { activeSearch, createRun, requestCancel } from "@/lib/runs/runs";
 import {
   assertCanSearch,
   PreferencesIncompleteError,
@@ -36,6 +36,17 @@ export async function startSearchAction(input: {
       };
     }
     throw error;
+  }
+
+  const inFlight = await activeSearch(user.id);
+  if (inFlight) {
+    return {
+      ok: false,
+      message:
+        inFlight.status === "awaiting_approval"
+          ? "A search is already waiting on your go-ahead. Answer it on Home first."
+          : "A search is already running. It will finish in a minute or two.",
+    };
   }
 
   const settings = await getSettings(user.id);

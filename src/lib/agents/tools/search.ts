@@ -14,7 +14,13 @@ import {
 import { getSettings } from "@/lib/profile/settings";
 import { QUEUES } from "@/lib/queue/queues";
 import { send } from "@/lib/queue/send";
-import { createRun, getRun, listRuns, requestCancel } from "@/lib/runs/runs";
+import {
+  activeSearch,
+  createRun,
+  getRun,
+  listRuns,
+  requestCancel,
+} from "@/lib/runs/runs";
 import {
   assertCanSearch,
   PreferencesIncompleteError,
@@ -62,6 +68,21 @@ export function startSearchRun(userId: string, conversationId?: string | null) {
           };
         }
         throw error;
+      }
+
+      const inFlight = await activeSearch(userId);
+      if (inFlight) {
+        // Returned with its id so the chat shows the live card for it.
+        return {
+          ok: true as const,
+          runId: inFlight.id,
+          mode: inFlight.mode,
+          alreadyRunning: true,
+          message:
+            inFlight.status === "awaiting_approval"
+              ? "A search is already waiting on the user's go-ahead; this is its card. Do not start another."
+              : "A search is already running; this is its card. Do not start another.",
+        };
       }
 
       const settings = await getSettings(userId);

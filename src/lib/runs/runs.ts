@@ -32,6 +32,27 @@ export async function getRun(userId: string, id: string): Promise<Run | null> {
   return run ?? null;
 }
 
+/**
+ * The user's search that is still in flight, if any. Two concurrent searches
+ * would score the same postings twice and race each other's approvals, so a
+ * new one is refused while this returns a run.
+ */
+export async function activeSearch(userId: string): Promise<Run | null> {
+  const [run] = await db
+    .select()
+    .from(runs)
+    .where(
+      and(
+        eq(runs.userId, userId),
+        eq(runs.kind, "search"),
+        inArray(runs.status, ["queued", "running", "awaiting_approval"]),
+      ),
+    )
+    .orderBy(desc(runs.createdAt))
+    .limit(1);
+  return run ?? null;
+}
+
 export async function listRuns(userId: string, limit = 20): Promise<Run[]> {
   return db
     .select()

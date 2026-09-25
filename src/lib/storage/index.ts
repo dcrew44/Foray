@@ -27,7 +27,7 @@ export interface Storage {
 
 // The fallback matters at `docker build` time: validation (and so the schema
 // default) is skipped there, and this line runs when Next collects routes.
-const root = resolve(env.STORAGE_DIR ?? "./data");
+const root = resolve(/*turbopackIgnore: true*/ env.STORAGE_DIR ?? "./data");
 
 /** Keys are user-scoped, so one user's files cannot collide with another's. */
 export function storageKey(
@@ -39,8 +39,13 @@ export function storageKey(
   return `${userId}/${kind}/${Date.now()}-${safe}`;
 }
 
+/*
+ * The `turbopackIgnore` markers below tell Next's output tracing that these
+ * paths are runtime data, not source. Without them it cannot tell where a
+ * dynamic path points and copies the entire project into the server bundle.
+ */
 function resolveWithin(path: string): string {
-  const full = resolve(join(root, path));
+  const full = resolve(/*turbopackIgnore: true*/ join(/*turbopackIgnore: true*/ root, path));
   // A key containing `..` must not be able to read outside the storage root.
   if (full !== root && !full.startsWith(root + "/")) {
     throw new Error(`Refusing to access a path outside the storage root: ${path}`);
@@ -51,17 +56,17 @@ function resolveWithin(path: string): string {
 export const localStorage: Storage = {
   async put(key, data) {
     const full = resolveWithin(key);
-    await mkdir(dirname(full), { recursive: true });
-    await writeFile(full, data);
+    await mkdir(/*turbopackIgnore: true*/ dirname(full), { recursive: true });
+    await writeFile(/*turbopackIgnore: true*/ full, data);
     return key;
   },
 
   async get(path) {
-    return readFile(resolveWithin(path));
+    return readFile(/*turbopackIgnore: true*/ resolveWithin(path));
   },
 
   async delete(path) {
-    await unlink(resolveWithin(path)).catch(() => undefined);
+    await unlink(/*turbopackIgnore: true*/ resolveWithin(path)).catch(() => undefined);
   },
 };
 

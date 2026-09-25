@@ -22,12 +22,23 @@ export async function listConversations(userId: string, limit = 50) {
 
 /** The conversation, or null if it does not exist *or* belongs to someone else. */
 export async function getConversation(userId: string, id: string) {
+  if (!UUID.test(id)) return null;
   const [row] = await db
     .select()
     .from(conversations)
     .where(and(eq(conversations.id, id), eq(conversations.userId, userId)))
     .limit(1);
   return row ?? null;
+}
+
+/** Deletes a conversation (messages cascade). False if it was not this user's. */
+export async function deleteConversation(userId: string, id: string) {
+  if (!UUID.test(id)) return false;
+  const rows = await db
+    .delete(conversations)
+    .where(and(eq(conversations.id, id), eq(conversations.userId, userId)))
+    .returning({ id: conversations.id });
+  return rows.length > 0;
 }
 
 export async function createConversation(userId: string, title?: string) {

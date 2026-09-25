@@ -1,4 +1,11 @@
-import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 /**
  * Third-party API request counters, by calendar month.
@@ -26,3 +33,18 @@ export const apiUsage = pgTable(
 );
 
 export type ApiUsage = typeof apiUsage.$inferSelect;
+
+/**
+ * Small process-level facts, keyed by name. Today: the worker's heartbeat,
+ * which is how the app tells a user their search is not running because the
+ * worker is not running, rather than letting a queued run sit silently.
+ */
+export const systemState = pgTable("system_state", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull().default({}),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export type SystemState = typeof systemState.$inferSelect;

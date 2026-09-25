@@ -2,7 +2,8 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import { getBaseResume } from "@/lib/db/queries/profile";
-import { ResumeSchema, type Resume } from "@/lib/resume/schema";
+import { ResumeSchema } from "@/lib/resume/schema";
+import { RESUME_SECTIONS, resumeToText } from "@/lib/resume/text";
 
 /**
  * Reading the user's actual resume.
@@ -17,108 +18,6 @@ import { ResumeSchema, type Resume } from "@/lib/resume/schema";
  * each changed bullet rests on, and the agent needs to be able to name them.
  */
 
-const SECTIONS = [
-  "basics",
-  "summary",
-  "work",
-  "education",
-  "projects",
-  "skills",
-] as const;
-
-/** Compact, readable rendering — a resume is prose, not a JSON blob. */
-function render(resume: Resume, sections: Set<string>): string {
-  const parts: string[] = [];
-
-  if (sections.has("basics")) {
-    const basics = resume.basics;
-    parts.push(
-      [
-        `Name: ${basics.name || "(unknown)"}`,
-        basics.headline && `Headline: ${basics.headline}`,
-        basics.location && `Location: ${basics.location}`,
-        basics.email && `Email: ${basics.email}`,
-        basics.links.length &&
-          `Links: ${basics.links.map((link) => `${link.label} ${link.url}`).join(", ")}`,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
-  }
-
-  if (sections.has("summary") && resume.summary) {
-    parts.push(`SUMMARY\n${resume.summary}`);
-  }
-
-  if (sections.has("work") && resume.work.length) {
-    parts.push(
-      "EXPERIENCE\n" +
-        resume.work
-          .map((role) =>
-            [
-              `[${role.id}] ${role.position} — ${role.company}` +
-                (role.location ? ` (${role.location})` : ""),
-              `  ${role.startDate ?? "?"} – ${role.endDate ?? "present"}` +
-                ` · source: ${role.source}`,
-              role.summary && `  ${role.summary}`,
-              ...role.highlights.map((highlight) => `  • ${highlight}`),
-            ]
-              .filter(Boolean)
-              .join("\n"),
-          )
-          .join("\n\n"),
-    );
-  }
-
-  if (sections.has("education") && resume.education.length) {
-    parts.push(
-      "EDUCATION\n" +
-        resume.education
-          .map(
-            (item) =>
-              `[${item.id}] ${item.studyType ?? ""} ${item.area ?? ""} — ${item.institution}` +
-              ` (${item.startDate ?? "?"} – ${item.endDate ?? "?"})` +
-              (item.score ? ` · ${item.score}` : ""),
-          )
-          .join("\n"),
-    );
-  }
-
-  if (sections.has("projects") && resume.projects.length) {
-    parts.push(
-      "PROJECTS\n" +
-        resume.projects
-          .map((project) =>
-            [
-              `[${project.id}] ${project.name}` +
-                (project.url ? ` — ${project.url}` : ""),
-              project.description && `  ${project.description}`,
-              ...project.highlights.map((highlight) => `  • ${highlight}`),
-            ]
-              .filter(Boolean)
-              .join("\n"),
-          )
-          .join("\n\n"),
-    );
-  }
-
-  if (sections.has("skills") && resume.skills.length) {
-    const grouped = new Map<string, string[]>();
-    for (const skill of resume.skills) {
-      const key = skill.category ?? "Other";
-      grouped.set(key, [...(grouped.get(key) ?? []), skill.name]);
-    }
-    parts.push(
-      "SKILLS\n" +
-        [...grouped]
-          .map(([category, names]) => `${category}: ${names.join(", ")}`)
-          .join("\n"),
-    );
-  }
-
-  return parts.join("\n\n");
-}
-
 export function getResume(userId: string) {
   return tool({
     description:
@@ -129,7 +28,7 @@ export function getResume(userId: string) {
       "reports how much is on file, not what it says.",
     inputSchema: z.object({
       sections: z
-        .array(z.enum(SECTIONS))
+        .array(z.enum(RESUME_SECTIONS))
         .nullable()
         .describe(
           "Limit to these sections. Null reads the whole resume, which is " +
@@ -154,14 +53,14 @@ export function getResume(userId: string) {
         };
       }
 
-      const wanted = new Set<string>(sections?.length ? sections : SECTIONS);
+      const wanted = sections?.length ? sections : RESUME_SECTIONS;
 
       return {
         ok: true,
         version: stored.version,
         // Rendered rather than raw JSON: the model reads this, and a resume is
         // prose. Ids are kept inline so it can cite specific facts.
-        resume: render(parsed.data, wanted),
+        resume: resumeToText(parsed.data, wanted),
       };
     },
   });

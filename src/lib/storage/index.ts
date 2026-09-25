@@ -25,7 +25,9 @@ export interface Storage {
   delete(path: string): Promise<void>;
 }
 
-const root = resolve(env.STORAGE_DIR);
+// The fallback matters at `docker build` time: validation (and so the schema
+// default) is skipped there, and this line runs when Next collects routes.
+const root = resolve(env.STORAGE_DIR ?? "./data");
 
 /** Keys are user-scoped, so one user's files cannot collide with another's. */
 export function storageKey(

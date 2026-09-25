@@ -68,7 +68,10 @@ async function write(input: {
       purpose: input.purpose,
       provider,
       model: rest.join(":"),
-      inputTokens: input.tokens.inputTokens,
+      // Tokens written into a provider's cache were still read in full; some
+      // providers report most of a prompt that way, which left this column
+      // near zero. The cost below prices the two separately either way.
+      inputTokens: input.tokens.inputTokens + (input.tokens.cacheWriteTokens ?? 0),
       outputTokens: input.tokens.outputTokens,
       cachedInputTokens: input.tokens.cachedInputTokens ?? 0,
       reasoningTokens: input.tokens.reasoningTokens ?? 0,

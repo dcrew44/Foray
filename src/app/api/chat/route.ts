@@ -58,7 +58,10 @@ export async function POST(request: Request) {
   // middleware, which reads the context back out of async-local storage.
   // Built before entering the context so the agent's own profile read is not
   // attributed as a model call.
-  const agent = await chatAgent(user.id);
+  const agent = await chatAgent(user.id, {
+    conversationId: conversation.id,
+    userName: user.name,
+  });
 
   return withLlmContext({ userId: user.id }, () =>
     createAgentUIStreamResponse({

@@ -10,13 +10,16 @@ import {
   InterviewStateSchema,
   PreferencesSchema,
 } from "@/lib/profile/interview";
+import { parseSettings } from "@/lib/profile/settings";
 
+import { answerApproval, listPendingApprovals } from "./tools/approvals";
 import {
   addCompany,
   discoverCompanies,
   listRegisteredCompanies,
 } from "./tools/companies";
 import { getProfileSummary } from "./tools/get-profile-summary";
+import { evaluateJob, moveJobStage } from "./tools/matches";
 import { getResume } from "./tools/resume";
 import {
   cancelRun,
@@ -25,6 +28,7 @@ import {
   listJobs,
   startSearchRun,
 } from "./tools/search";
+import { tailorResume } from "./tools/tailor";
 import { updateProfilePreferences } from "./tools/update-profile-preferences";
 import { systemPrompt } from "./system-prompt";
 
@@ -36,7 +40,10 @@ import { systemPrompt } from "./system-prompt";
  * inside a Next request, so a loop that will not terminate has to be bounded
  * rather than merely discouraged.
  */
-export async function chatAgent(userId: string) {
+export async function chatAgent(
+  userId: string,
+  options: { conversationId?: string | null; userName?: string | null } = {},
+) {
   const [profile] = await db
     .select()
     .from(profiles)
@@ -53,6 +60,8 @@ export async function chatAgent(userId: string) {
       interviewState:
         InterviewStateSchema.safeParse(profile?.interviewState).data ??
         EMPTY_INTERVIEW_STATE,
+      settings: profile ? parseSettings(profile.settings) : null,
+      userName: options.userName ?? null,
     }),
     tools: {
       get_profile_summary: getProfileSummary(userId),
@@ -61,11 +70,16 @@ export async function chatAgent(userId: string) {
       add_company: addCompany(userId),
       discover_companies: discoverCompanies(userId),
       list_companies: listRegisteredCompanies(),
-      start_search_run: startSearchRun(userId),
+      start_search_run: startSearchRun(userId, options.conversationId),
       get_run_status: getRunStatus(userId),
       cancel_run: cancelRun(userId),
       list_jobs: listJobs(userId),
-      get_job: getJob(),
+      get_job: getJob(userId),
+      list_pending_approvals: listPendingApprovals(userId),
+      answer_approval: answerApproval(userId),
+      move_job_stage: moveJobStage(userId),
+      evaluate_job: evaluateJob(userId, options.conversationId),
+      tailor_resume: tailorResume(userId, options.conversationId),
     },
     stopWhen: isStepCount(8),
   });

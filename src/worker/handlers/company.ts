@@ -48,7 +48,9 @@ const STALE_AFTER_MS = 2 * 60 * 60 * 1000;
 
 export async function handleCompanyRefresh(jobs: Job<CompanyRefreshPayload>[]) {
   for (const job of jobs) {
-    const { userId, runId, all } = job.data;
+    // The cron sends no payload at all, so `data` is null there rather than
+    // an empty object — destructuring it directly crashed every scheduled run.
+    const { userId, runId, all } = job.data ?? {};
 
     const targets = all
       ? await listCompanies({ status: "active" })

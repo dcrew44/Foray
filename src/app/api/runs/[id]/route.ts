@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { requireUser } from "@/lib/auth/session";
+import { toLiveRun } from "@/lib/runs/live";
 import { getRun } from "@/lib/runs/runs";
 
-/** What the run card polls while a run is in flight. */
+/** One run, in the same shape the live snapshot uses. */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -14,15 +15,7 @@ export async function GET(
   // Someone else's run is indistinguishable from one that does not exist.
   if (!run) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json({
-    id: run.id,
-    kind: run.kind,
-    status: run.status,
-    mode: run.mode,
-    stats: run.stats,
-    output: run.output,
-    error: run.error,
-    startedAt: run.startedAt,
-    finishedAt: run.finishedAt,
+  return NextResponse.json(toLiveRun(run), {
+    headers: { "Cache-Control": "no-store" },
   });
 }

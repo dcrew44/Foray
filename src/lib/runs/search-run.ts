@@ -4,9 +4,15 @@ import { refreshCompanies } from "@/lib/companies/refresh";
 import { registerBoardsFromApplyLinks } from "@/lib/companies/discovery";
 import { db } from "@/lib/db";
 import { staleCompanies } from "@/lib/db/queries/companies";
-import { jobMatches, jobs, runs, type Run } from "@/lib/db/schema";
+import { selectForDeepEval } from "@/lib/db/queries/matches";
+import { jobMatches, runs, type Run } from "@/lib/db/schema";
 import { getBaseResume, getProfile } from "@/lib/db/queries/profile";
-import { scoreMatches, scoreSummary } from "@/lib/ranking/fast-score";
+import {
+  costPhrase,
+  estimateEvalCostFor,
+  loadEvalCandidate,
+} from "@/lib/ranking/deep-eval";
+import { scoreMatches } from "@/lib/ranking/fast-score";
 import { ResumeSchema } from "@/lib/resume/schema";
 import {
   EMPTY_PREFERENCES,
@@ -16,11 +22,13 @@ import {
   EMPTY_INTERVIEW_STATE,
   type Preferences,
 } from "@/lib/profile/interview";
+import { getSettings, type Settings } from "@/lib/profile/settings";
 import {
   deriveCriteria,
   prefilterJobs,
   type DerivedCriteria,
 } from "@/lib/ranking/prefilter";
+import { QUEUES } from "@/lib/queue/queues";
 import { ingestJobs } from "@/lib/sources/ingest";
 import {
   JSearchDisabledError,
@@ -28,17 +36,26 @@ import {
   searchJSearch,
 } from "@/lib/sources/jsearch";
 
+import { requestApproval, type DeepEvalBatchPayload } from "./approvals";
+import { completeSearchRun, failRun } from "./evaluate-run";
 import { emit } from "./events";
-import { finishRun, isCancelled, mergeStats, startRun } from "./runs";
+import { isCancelled, mergeStats, setRunStatusIf } from "./runs";
 
 /**
- * One search run: refresh, aggregate, filter, record.
+ * One search run: refresh, aggregate, filter, record, score — then the gates.
  *
  * The shape that matters is that this is a *pipeline with checkpoints*, not an
  * agent loop. Each stage writes its result and emits an event before the next
  * begins, so a run that is cancelled or crashes halfway has still done — and
  * kept — everything up to that point. The user watching the activity feed sees
- * the same stages.
+ * the same stages, named in `stats.phase`: starting → refreshing →
+ * aggregating → filtering → scoring → awaiting_evaluation → evaluating →
+ * awaiting_shortlist → done.
+ *
+ * This handler ends at the first gate. Deep evaluation costs real money, so in
+ * `approve_each` the run pauses there and returns; the decision enqueues the
+ * continuation in evaluate-run.ts, which evaluates, raises the shortlist gate,
+ * and eventually completes the run. On autopilot the same gate approves itself.
  *
  * Cancellation is checked between stages rather than inside them: stopping
  * mid-write would leave matches half-recorded, and no stage here runs long
@@ -62,6 +79,12 @@ export type SearchRunInput = {
   /** Cached so a resumed run does not pay to derive them twice. */
   criteria?: DerivedCriteria;
   skipRefresh?: boolean;
+  /**
+   * The postings this run's prefilter chose. The continuations after the gates
+   * run long after this handler has returned, and this is what "this run's
+   * matches" means to them.
+   */
+  candidateJobIds?: string[];
 };
 
 export class PreferencesIncompleteError extends Error {
@@ -100,7 +123,12 @@ export async function executeSearchRun(run: Run): Promise<void> {
   const userId = run.userId;
   const input = (run.input ?? {}) as SearchRunInput;
 
-  await startRun(run.id);
+  // Conditional, so a cancel that landed while the job was queued stands.
+  const started = await setRunStatusIf(run.id, ["queued", "running"], "running", {
+    phase: "starting",
+  });
+  if (!started) return;
+
   await emit({
     userId,
     runId: run.id,
@@ -111,6 +139,7 @@ export async function executeSearchRun(run: Run): Promise<void> {
   });
 
   try {
+    const settings = await getSettings(userId);
     const preferences = await assertCanSearch(userId);
 
     // 1. Criteria — cached on the run so a resume does not pay twice.
@@ -118,10 +147,7 @@ export async function executeSearchRun(run: Run): Promise<void> {
       input.criteria ??
       (await deriveCriteria(preferences, { userId, runId: run.id }));
 
-    await db
-      .update(runs)
-      .set({ input: { ...input, criteria }, updatedAt: new Date() })
-      .where(eq(runs.id, run.id));
+    await saveInput(run.id, { criteria });
 
     await emit({
       userId,
@@ -134,6 +160,8 @@ export async function executeSearchRun(run: Run): Promise<void> {
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
     // 2. Refresh stale boards, so the search is over current postings.
+    await mergeStats(run.id, { phase: "refreshing" });
+
     if (!input.skipRefresh) {
       const stale = await staleCompanies(new Date(Date.now() - STALE_AFTER_MS));
       if (stale.length > 0) {
@@ -163,11 +191,13 @@ export async function executeSearchRun(run: Run): Promise<void> {
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
     // 3. The aggregator, for companies we do not already track.
+    await mergeStats(run.id, { phase: "aggregating" });
     await runAggregator(run, preferences, criteria);
 
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
     // 4. Narrow the mirror to what is worth scoring.
+    await mergeStats(run.id, { phase: "filtering" });
     const prefilter = await prefilterJobs({ userId, preferences, criteria });
 
     await mergeStats(run.id, {
@@ -185,8 +215,9 @@ export async function executeSearchRun(run: Run): Promise<void> {
       data: prefilter.funnel,
     });
 
-    // 5. Record them as matches. Scoring is Step 16's job.
+    // 5. Record them as matches, and remember which postings they were.
     const created = await upsertMatches(userId, prefilter.jobIds);
+    await saveInput(run.id, { candidateJobIds: prefilter.jobIds });
 
     await mergeStats(run.id, {
       matches: prefilter.jobIds.length,
@@ -196,6 +227,8 @@ export async function executeSearchRun(run: Run): Promise<void> {
     if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
     // 6. Score them. Cheap tier, one call per posting, triage not judgement.
+    await mergeStats(run.id, { phase: "scoring" });
+
     const baseResume = await getBaseResume(userId);
     const resume = baseResume
       ? (ResumeSchema.safeParse(baseResume.data).data ?? null)
@@ -213,6 +246,7 @@ export async function executeSearchRun(run: Run): Promise<void> {
       preferences,
       resume,
       jobIds: prefilter.jobIds,
+      threshold: settings.scoreThreshold,
       context: { userId, runId: run.id },
       shouldStop: () => isCancelled(run.id),
       onProgress: async (done, total) => {
@@ -227,46 +261,146 @@ export async function executeSearchRun(run: Run): Promise<void> {
       },
     });
 
-    const summary = await scoreSummary(userId);
-
     await mergeStats(run.id, {
       scored: scoring.scored,
       autoArchived: scoring.archived,
       scoringFailed: scoring.failed,
     });
 
-    await finishRun(run.id, {
-      status: "completed",
-      output: {
-        candidates: prefilter.jobIds.length,
-        newMatches: created,
-        scored: scoring.scored,
-        autoArchived: scoring.archived,
-        strong: summary.strong,
-      },
-    });
+    if (await isCancelled(run.id)) return void (await cancelled(run, userId));
 
     await emit({
       userId,
       runId: run.id,
-      kind: "run.completed",
+      kind: "scoring.done",
       message:
-        `Found ${prefilter.jobIds.length} roles, scored ${scoring.scored}. ` +
-        `${summary.strong} look strong, ${summary.good} are worth a look, ` +
-        `${scoring.archived} were archived as too weak.`,
+        prefilter.jobIds.length === 0
+          ? "Nothing to score."
+          : scoring.scored === 0 && scoring.failed === 0
+          ? "Nothing new to score: every one of these was scored before."
+          : `Scored ${scoring.scored} ${scoring.scored === 1 ? "role" : "roles"}` +
+            (scoring.archived > 0
+              ? `; ${scoring.archived} came in under ${settings.scoreThreshold} and ${scoring.archived === 1 ? "was" : "were"} archived.`
+              : ".") +
+            (scoring.failed > 0 ? ` ${scoring.failed} could not be scored.` : ""),
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
 
-    await finishRun(run.id, { status: "failed", error: message });
+    // 7. The first gate: which matches earn the strong model's time.
+    await gateDeepEvaluation(run, settings, prefilter.jobIds);
+  } catch (error) {
+    await failRun(run, error);
+  }
+}
+
+/**
+ * Picks the best unevaluated matches and asks before paying to evaluate them —
+ * or, on autopilot, approves that itself. Ends the run when there is nothing
+ * to evaluate, deep evaluation is turned off, or it cannot run at all.
+ *
+ * Exported for tests; the search run calls it once scoring is done.
+ */
+export async function gateDeepEvaluation(
+  run: Run,
+  settings: Settings,
+  candidateJobIds: string[],
+): Promise<void> {
+  const userId = run.userId;
+
+  if (settings.deepEvalTopN <= 0) {
+    await completeSearchRun(run);
+    return;
+  }
+
+  const selected = await selectForDeepEval(userId, {
+    minFastScore: settings.scoreThreshold,
+    limit: settings.deepEvalTopN,
+    preferJobIds: candidateJobIds,
+  });
+
+  if (selected.length === 0) {
+    await completeSearchRun(run);
+    return;
+  }
+
+  const candidate = await loadEvalCandidate(userId);
+  if (!candidate) {
     await emit({
       userId,
       runId: run.id,
-      kind: "run.failed",
-      level: "error",
-      message,
+      kind: "evaluation.skipped",
+      level: "warn",
+      message:
+        "Skipped the deep evaluation: there is no resume on file to judge against.",
     });
+    await completeSearchRun(run);
+    return;
   }
+
+  // The quote is priced from the prompts that would actually be sent.
+  const estimate = estimateEvalCostFor(
+    candidate,
+    selected.map((row) => row.descriptionChars),
+  );
+  if (estimate.model === "unconfigured") {
+    await emit({
+      userId,
+      runId: run.id,
+      kind: "evaluation.skipped",
+      level: "warn",
+      message:
+        "Skipped the deep evaluation: no model is configured for it (LLM_EVALUATE or LLM_DEFAULT).",
+    });
+    await completeSearchRun(run);
+    return;
+  }
+
+  const n = selected.length;
+  const cost = costPhrase(estimate.usd);
+  const priced = cost ? ` (${cost})` : "";
+  const earlier = selected.filter((row) => !row.preferred).length;
+
+  const notes = [
+    earlier > 0 &&
+      `${earlier === n ? "All" : earlier} of these ${earlier === 1 ? "comes" : "come"} from earlier searches and ${earlier === 1 ? "was" : "were"} never deep-evaluated.`,
+    estimate.usd == null &&
+      `${estimate.model} has no price on file, so there is no cost estimate.`,
+  ].filter((note): note is string => Boolean(note));
+
+  const payload: DeepEvalBatchPayload = {
+    items: selected.map((row) => ({
+      matchId: row.matchId,
+      jobId: row.jobId,
+      title: row.title,
+      company: row.company,
+      fastScore: row.fastScore,
+    })),
+    estimate,
+    note: notes.length ? notes.join(" ") : null,
+  };
+
+  const what = `${n} ${n === 1 ? "role" : "roles"}`;
+
+  await requestApproval({
+    userId,
+    runId: run.id,
+    kind: "deep_eval_batch",
+    title: `Deep-evaluate ${what}${priced}`,
+    payload,
+    mode: run.mode,
+    continuation: (approvalId) => ({
+      queue: QUEUES.searchEvaluate,
+      payload: { userId, runId: run.id, approvalId },
+    }),
+    stats:
+      run.mode === "autopilot"
+        ? { phase: "evaluating", toEvaluate: n }
+        : { phase: "awaiting_evaluation", toEvaluate: n },
+    messages: {
+      requested: `Waiting for your go-ahead to deep-evaluate ${what}${priced}.`,
+      auto: `Autopilot: deep-evaluating ${what}${priced}.`,
+    },
+    data: { count: n, estimate },
+  });
 }
 
 async function cancelled(run: Run, userId: string) {
@@ -277,6 +411,17 @@ async function cancelled(run: Run, userId: string) {
     level: "warn",
     message: "Search cancelled. Everything found so far was kept.",
   });
+}
+
+/** Merges into `runs.input`, so a later write does not drop an earlier one. */
+async function saveInput(runId: string, patch: Partial<SearchRunInput>) {
+  await db
+    .update(runs)
+    .set({
+      input: sql`${runs.input} || ${JSON.stringify(patch)}::jsonb`,
+      updatedAt: new Date(),
+    })
+    .where(eq(runs.id, runId));
 }
 
 /**
@@ -379,37 +524,4 @@ async function upsertMatches(
   }
 
   return created;
-}
-
-/** Matches with their job, for the chat tools and the jobs list. */
-export async function listMatches(
-  userId: string,
-  options: { limit?: number; stage?: (typeof jobMatches.stage.enumValues)[number] } = {},
-) {
-  const conditions = [eq(jobMatches.userId, userId)];
-  if (options.stage) conditions.push(eq(jobMatches.stage, options.stage));
-
-  return db
-    .select({
-      matchId: jobMatches.id,
-      stage: jobMatches.stage,
-      fastScore: jobMatches.fastScore,
-      deepScore: jobMatches.deepScore,
-      jobId: jobs.id,
-      title: jobs.title,
-      company: jobs.companyName,
-      locations: jobs.locations,
-      remote: jobs.remote,
-      url: jobs.url,
-      salaryMin: jobs.salaryMin,
-      salaryMax: jobs.salaryMax,
-      postedAt: jobs.postedAt,
-    })
-    .from(jobMatches)
-    .innerJoin(jobs, eq(jobs.id, jobMatches.jobId))
-    .where(and(...conditions))
-    .orderBy(
-      sql`${jobMatches.deepScore} desc nulls last, ${jobMatches.fastScore} desc nulls last, ${jobs.postedAt} desc nulls last`,
-    )
-    .limit(options.limit ?? 25);
 }

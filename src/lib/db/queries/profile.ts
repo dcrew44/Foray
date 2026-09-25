@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { documents, profiles, resumes } from "@/lib/db/schema";
-import type { Resume } from "@/lib/resume/schema";
+import { ResumeSchema, type Resume } from "@/lib/resume/schema";
 
 /**
  * Profile, document and resume reads/writes. `userId` first, always.
@@ -100,12 +100,49 @@ export async function saveBaseResume(input: {
   return row;
 }
 
-/** Replaces the profile's resume data — used by the editor. */
-export async function updateProfileData(userId: string, data: Resume) {
-  const [row] = await db
-    .update(profiles)
-    .set({ data, updatedAt: new Date() })
-    .where(eq(profiles.userId, userId))
-    .returning();
-  return row ?? null;
+/**
+ * The user's current base resume, parsed — the one set of facts scoring,
+ * evaluation, tailoring and the chat agent all read.
+ *
+ * There used to be two: the editor wrote `profiles.data` while everything
+ * downstream read `resumes(base)`, so a correction made in the editor was
+ * silently ignored by every model that judged the user. Edits now land here as
+ * a new version, and `profiles.data` is only a mirror of the latest one.
+ */
+export async function loadBaseResume(userId: string): Promise<{
+  id: string;
+  version: number;
+  resume: Resume;
+} | null> {
+  const row = await getBaseResume(userId);
+  if (!row) return null;
+  const parsed = ResumeSchema.safeParse(row.data);
+  if (!parsed.success) return null;
+  return { id: row.id, version: row.version, resume: parsed.data };
+}
+
+/**
+ * Saves the editor's resume as a new base version, unless nothing changed.
+ * Versioned rather than overwritten so a tailored resume's citations keep
+ * resolving against the version it was built from.
+ */
+export async function saveEditedResume(userId: string, resume: Resume) {
+  const current = await getBaseResume(userId);
+  if (current && sameJson(current.data, resume)) return current;
+  return saveBaseResume({ userId, resume });
+}
+
+function sameJson(a: unknown, b: unknown): boolean {
+  const stable = (value: unknown): string => {
+    if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
+    if (value && typeof value === "object") {
+      return `{${Object.entries(value as Record<string, unknown>)
+        .filter(([, v]) => v !== undefined && v !== null)
+        .sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0))
+        .map(([k, v]) => `${JSON.stringify(k)}:${stable(v)}`)
+        .join(",")}}`;
+    }
+    return JSON.stringify(value ?? null);
+  };
+  return stable(a) === stable(b);
 }

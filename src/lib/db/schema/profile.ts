@@ -46,6 +46,13 @@ export const profiles = pgTable(
     interviewState: jsonb("interview_state").notNull().default({}),
 
     /**
+     * How the agents behave for this user: default autonomy, the fast-score
+     * archive threshold, how many matches get a deep evaluation. See
+     * lib/profile/settings.ts for the shape and defaults.
+     */
+    settings: jsonb("settings").notNull().default({}),
+
+    /**
      * Reserved for the career-counselor roadmap: strengths, skill gaps,
      * base-resume advice aggregated across deep evals. Unused in Phase 1.
      */

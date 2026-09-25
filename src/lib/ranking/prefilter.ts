@@ -1,4 +1,14 @@
-import { and, eq, gte, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  notInArray,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
@@ -127,27 +137,68 @@ export async function prefilterJobs(input: {
   const title = titleClause(criteria);
   if (title) conditions.push(title);
 
-  // Anything the user has already dismissed stays dismissed.
-  const dismissed = db
-    .select({ jobId: jobMatches.jobId })
-    .from(jobMatches)
-    .where(
-      and(
-        eq(jobMatches.userId, userId),
-        inArray(jobMatches.stage, ["rejected", "archived"]),
-      ),
-    );
-
-  conditions.push(sql`${jobs.id} not in (${dismissed})`);
-
   // Aggregator duplicates of a posting we hold from its own board.
   conditions.push(isNull(jobs.canonicalJobId));
 
-  const rows = await db
-    .select({ id: jobs.id })
+  // One role, one match. A company posting the same role in four cities, or a
+  // recruiter reposting it under new ids, is one thing to the user — the
+  // search used to hand back four copies of it. Roles the user already has a
+  // match for are skipped here too (dismissed ones stay dismissed), except the
+  // very posting they matched, which may be re-selected harmlessly.
+  const known = await db
+    .select({ jobId: jobMatches.jobId, key: roleKey(jobs) })
+    .from(jobMatches)
+    .innerJoin(jobs, eq(jobs.id, jobMatches.jobId))
+    .where(eq(jobMatches.userId, userId));
+
+  const knownKeys = [...new Set(known.map((row) => row.key))];
+  const knownIds = known.map((row) => row.jobId);
+  const dismissedIds = new Set(
+    (
+      await db
+        .select({ jobId: jobMatches.jobId })
+        .from(jobMatches)
+        .where(
+          and(
+            eq(jobMatches.userId, userId),
+            inArray(jobMatches.stage, ["rejected", "archived"]),
+          ),
+        )
+    ).map((row) => row.jobId),
+  );
+
+  if (dismissedIds.size > 0) {
+    conditions.push(notInArray(jobs.id, [...dismissedIds]));
+  }
+  if (knownKeys.length > 0) {
+    // Drizzle renders an array as a parameter list, which is what `not in` takes.
+    const unseenRole = or(
+      sql`${roleKey(jobs)} not in ${knownKeys}`,
+      inArray(jobs.id, knownIds),
+    );
+    if (unseenRole) conditions.push(unseenRole);
+  }
+
+  // Within the survivors, keep the best copy of each role: the company's own
+  // board over the aggregator, then the most recent.
+  const deduped = db
+    .selectDistinctOn([roleKey(jobs)], {
+      id: jobs.id,
+      postedAt: jobs.postedAt,
+    })
     .from(jobs)
     .where(and(...conditions))
-    .orderBy(sql`${jobs.postedAt} desc nulls last`)
+    .orderBy(
+      roleKey(jobs),
+      sql`case when ${jobs.source} = 'jsearch' then 1 else 0 end`,
+      sql`${jobs.postedAt} desc nulls last`,
+    )
+    .as("deduped");
+
+  const rows = await db
+    .select({ id: deduped.id })
+    .from(deduped)
+    .orderBy(sql`${deduped.postedAt} desc nulls last`)
     .limit(limit);
 
   const [counts] = await db
@@ -262,4 +313,14 @@ export function titleMatches(
   if (!new RegExp(patterns.include, "i").test(title)) return false;
   if (!patterns.exclude) return true;
   return !new RegExp(patterns.exclude, "i").test(title);
+}
+
+/**
+ * What makes two postings "the same role" to a job seeker: the company and the
+ * title, normalized, regardless of location or source. Coarser than the
+ * ingest dedupe key on purpose — that one keeps locations apart because the
+ * mirror should, but a person does not want the same role four times.
+ */
+export function roleKey(table: typeof jobs) {
+  return sql<string>`lower(regexp_replace(${table.companyName}, '[^a-zA-Z0-9]+', '', 'g')) || '|' || btrim(lower(regexp_replace(${table.title}, '[^a-zA-Z0-9+#]+', ' ', 'g')))`;
 }

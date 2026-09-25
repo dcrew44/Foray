@@ -15,6 +15,7 @@
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "auth:generate": "better-auth generate --config src/lib/auth/index.ts",
+    "auth:set-password": "tsx scripts/set-password.ts",
     "dev:worker": "tsx watch src/worker/main.ts",
     "dev:all": "concurrently -n next,worker -c cyan,magenta \"pnpm dev\" \"pnpm dev:worker\"",
     "test": "vitest run",

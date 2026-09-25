@@ -13,6 +13,7 @@ Working notes for Foray. Read [DESIGN.md](DESIGN.md) for *why*; this file is *ho
 | `pnpm db:up` / `db:down` | Postgres 18 in Docker (`docker compose up -d db`) / stop it |
 | `pnpm db:generate` / `db:migrate` / `db:studio` | Drizzle migrations and studio |
 | `pnpm auth:generate` | regenerate Better Auth tables into the Drizzle schema |
+| `pnpm auth:set-password <email>` | set a forgotten password at a hidden prompt (no mail transport yet) |
 | `pnpm seed:companies` | load `src/lib/companies/seed.json` into `companies` |
 | `pnpm fetch:board` / `verify:boards` | print what an adapter makes of one board / check that board slugs are real (neither touches the database) |
 | `pnpm test` / `test:watch` / `typecheck` / `lint` | Vitest, `tsc --noEmit`, ESLint |

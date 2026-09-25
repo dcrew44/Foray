@@ -71,7 +71,11 @@ export async function upsertCompany(input: NewCompany): Promise<Company> {
         name: input.name,
         domain: input.domain ?? existing.domain,
         careersUrls: input.careersUrls ?? existing.careersUrls,
-        tags: input.tags ?? existing.tags,
+        // Merged, never replaced: discovery re-registering a company it
+        // already knows sends no tags, and must not erase the ones it has.
+        tags: input.tags?.length
+          ? [...new Set([...existing.tags, ...input.tags])]
+          : existing.tags,
         // A company that was marked invalid and now verifies is active again.
         status: input.status ?? existing.status,
         needsBrowser: input.needsBrowser ?? existing.needsBrowser,

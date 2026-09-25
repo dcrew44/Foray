@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { refreshCompanies } from "@/lib/companies/refresh";
+import { refreshCompanies, staleCutoff } from "@/lib/companies/refresh";
 import { registerBoardsFromApplyLinks } from "@/lib/companies/discovery";
 import { db } from "@/lib/db";
 import { staleCompanies } from "@/lib/db/queries/companies";
@@ -61,9 +61,6 @@ import { isCancelled, mergeStats, setRunStatusIf } from "./runs";
  * mid-write would leave matches half-recorded, and no stage here runs long
  * enough for that to feel unresponsive.
  */
-
-/** Boards not fetched within this window are refreshed before searching. */
-const STALE_AFTER_MS = 2 * 60 * 60 * 1000;
 
 /**
  * Aggregator pages per run. Each is one request against a 200/month budget, so
@@ -163,7 +160,7 @@ export async function executeSearchRun(run: Run): Promise<void> {
     await mergeStats(run.id, { phase: "refreshing" });
 
     if (!input.skipRefresh) {
-      const stale = await staleCompanies(new Date(Date.now() - STALE_AFTER_MS));
+      const stale = await staleCompanies(staleCutoff());
       if (stale.length > 0) {
         await emit({
           userId,

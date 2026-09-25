@@ -1,7 +1,7 @@
 import type { Job } from "pg-boss";
 
 import { discoverCompany } from "@/lib/companies/discovery";
-import { refreshCompanies } from "@/lib/companies/refresh";
+import { refreshCompanies, staleCutoff } from "@/lib/companies/refresh";
 import { listCompanies, staleCompanies } from "@/lib/db/queries/companies";
 import { emit } from "@/lib/runs/events";
 import type {
@@ -43,9 +43,6 @@ export async function handleCompanyDiscover(
   }
 }
 
-/** Boards older than this are refetched. */
-const STALE_AFTER_MS = 2 * 60 * 60 * 1000;
-
 export async function handleCompanyRefresh(jobs: Job<CompanyRefreshPayload>[]) {
   for (const job of jobs) {
     // The cron sends no payload at all, so `data` is null there rather than
@@ -54,7 +51,7 @@ export async function handleCompanyRefresh(jobs: Job<CompanyRefreshPayload>[]) {
 
     const targets = all
       ? await listCompanies({ status: "active" })
-      : await staleCompanies(new Date(Date.now() - STALE_AFTER_MS));
+      : await staleCompanies(staleCutoff());
 
     if (targets.length === 0) {
       console.log("[worker] company.refresh: nothing stale");

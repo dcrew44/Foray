@@ -1,12 +1,17 @@
 import { asc, count, eq } from "drizzle-orm";
+import type { Metadata } from "next";
 
-import {
-  CompanyTable,
-  type CompanyRow,
-} from "@/components/companies/company-table";
+import { toCompanyRow } from "@/components/companies/company-row";
+import { CompanyTable } from "@/components/companies/company-table";
+import { RefreshStaleButton } from "@/components/companies/refresh-stale-button";
+import { PageBody, PageHeader } from "@/components/foray/primitives";
+import { RefreshOn } from "@/components/live/refresh-on";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { companies, jobs } from "@/lib/db/schema";
+import { plural } from "@/lib/format";
+
+export const metadata: Metadata = { title: "Companies" };
 
 /**
  * The registry: which companies Foray watches, and whether their boards
@@ -25,59 +30,36 @@ export default async function CompaniesPage() {
    * jobs.id and failed at the database. Two small queries merged here are
    * clearer and stay type-safe.
    */
-  const [rows, counts, [{ total = 0 } = {}]] = await Promise.all([
+  const [rows, counts] = await Promise.all([
+    db.select().from(companies).orderBy(asc(companies.name)).limit(2000),
     db
-      .select()
-      .from(companies)
-      .orderBy(asc(companies.status), asc(companies.name))
-      .limit(500),
-    db
-      .select({
-        companyId: jobs.companyId,
-        activeJobs: count(jobs.id),
-      })
+      .select({ companyId: jobs.companyId, activeJobs: count(jobs.id) })
       .from(jobs)
       .where(eq(jobs.isActive, true))
       .groupBy(jobs.companyId),
-    db
-      .select({ total: count(jobs.id) })
-      .from(jobs)
-      .where(eq(jobs.isActive, true)),
   ]);
 
-  const jobsByCompany = new Map(
-    counts.map((row) => [row.companyId, row.activeJobs]),
-  );
-
-  const data: CompanyRow[] = rows.map((row) => ({
-    slug: row.slug,
-    name: row.name,
-    sourceType: row.sourceType,
-    atsSlug: row.atsSlug,
-    status: row.status,
-    tags: row.tags,
-    lastFetchStatus: row.lastFetchStatus,
-    lastFetchJobCount: row.lastFetchJobCount,
-    discoveredVia: row.discoveredVia,
-    lastFetchedAt: row.lastFetchedAt?.toISOString() ?? null,
-    activeJobs: jobsByCompany.get(row.id) ?? 0,
-  }));
+  const jobsByCompany = new Map(counts.map((row) => [row.companyId, row.activeJobs]));
+  const data = rows.map((row) => toCompanyRow(row, jobsByCompany.get(row.id) ?? 0));
 
   const active = rows.filter((row) => row.status === "active").length;
+  const onBoards = data.reduce((sum, row) => sum + row.activeJobs, 0);
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-8 p-8">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
-        <p className="text-muted-foreground text-sm">
-          {active} active {active === 1 ? "board" : "boards"} ·{" "}
-          {total.toLocaleString()} open{" "}
-          {total === 1 ? "posting" : "postings"} in the mirror. Boards refresh
-          every six hours; postings that disappear are kept and marked closed.
-        </p>
+    <PageBody>
+      <RefreshOn kinds={["company.refresh.done", "company.discovered"]} />
+      <PageHeader
+        actions={<RefreshStaleButton />}
+        description={
+          rows.length === 0
+            ? "The companies whose job boards Foray reads. Every search starts from these boards, then looks wider."
+            : `${plural(active, "active board")} with ${plural(onBoards, "open posting")} between them. Foray refreshes them every six hours and keeps postings that disappear, marked closed.`
+        }
+        title="Companies"
+      />
+      <div className="mt-8">
+        <CompanyTable companies={data} />
       </div>
-
-      <CompanyTable companies={data} />
-    </main>
+    </PageBody>
   );
 }

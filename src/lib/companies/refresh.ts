@@ -16,6 +16,17 @@ import { BoardNotFoundError } from "@/lib/sources/types";
  * transient failure just records the failure and leaves the company active.
  */
 
+/**
+ * A board fetched longer ago than this is refreshed before a search and by
+ * the six-hourly cron. One definition, read by the worker, the search run
+ * and the "Refresh stale boards" button alike.
+ */
+export const BOARD_STALE_AFTER_MS = 2 * 60 * 60 * 1000;
+
+export function staleCutoff(now: number = Date.now()): Date {
+  return new Date(now - BOARD_STALE_AFTER_MS);
+}
+
 export type RefreshOutcome = {
   company: string;
   status: "ok" | "not-found" | "unsupported" | "error";

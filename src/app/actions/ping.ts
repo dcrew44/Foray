@@ -9,7 +9,7 @@ export async function pingWorker(): Promise<{ jobId: string | null }> {
   const user = await requireUser();
   const jobId = await send(QUEUES.ping, {
     userId: user.id,
-    note: "Ping from the activity feed.",
+    note: "The worker answered a test job from Settings.",
   });
   return { jobId };
 }

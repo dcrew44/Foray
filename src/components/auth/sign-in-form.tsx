@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { signIn, signUp } from "@/lib/auth/client";
 
 type Mode = "sign-in" | "sign-up";
@@ -31,63 +32,91 @@ export function SignInForm({
 
     const result =
       mode === "sign-up"
-        ? await signUp.email({ name: name || email, email, password })
+        ? await signUp.email({ name: name || email.split("@")[0]!, email, password })
         : await signIn.email({ email, password });
 
-    setPending(false);
-
     if (result.error) {
-      setError(result.error.message ?? "Something went wrong.");
+      setPending(false);
+      setError(
+        result.error.message ??
+          (mode === "sign-up"
+            ? "That account could not be created."
+            : "That email and password do not match an account."),
+      );
       return;
     }
 
-    router.push(next);
+    // A brand-new account starts at onboarding, not an empty dashboard.
+    router.push(mode === "sign-up" ? "/home" : next);
     router.refresh();
   }
 
   return (
-    <div className="space-y-6">
-      <form className="space-y-3" onSubmit={onSubmit}>
+    <div className="space-y-7">
+      <div className="space-y-2">
+        <h1 className="text-display text-[30px] leading-tight">
+          {mode === "sign-in" ? "Welcome back" : "Start your search"}
+        </h1>
+        <p className="text-muted-foreground text-[14.5px]">
+          {mode === "sign-in"
+            ? "Sign in to see what your agents found."
+            : "Create an account, upload your resume, and Foray takes it from there."}
+        </p>
+      </div>
+
+      <form className="space-y-4" onSubmit={onSubmit}>
         {mode === "sign-up" && (
-          <Input
-            aria-label="Name"
-            autoComplete="name"
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name"
-            value={name}
-          />
+          <div className="space-y-1.5">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              autoComplete="name"
+              className="h-10"
+              id="name"
+              onChange={(e) => setName(e.target.value)}
+              value={name}
+            />
+          </div>
         )}
-        <Input
-          aria-label="Email"
-          autoComplete="email"
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          required
-          type="email"
-          value={email}
-        />
-        <Input
-          aria-label="Password"
-          autoComplete={
-            mode === "sign-up" ? "new-password" : "current-password"
-          }
-          minLength={8}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          required
-          type="password"
-          value={password}
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            autoComplete="email"
+            className="h-10"
+            id="email"
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            type="email"
+            value={email}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+            className="h-10"
+            id="password"
+            minLength={8}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            type="password"
+            value={password}
+          />
+          {mode === "sign-up" && (
+            <p className="text-muted-foreground text-[12.5px]">At least 8 characters.</p>
+          )}
+        </div>
 
         {error && (
-          <p className="text-destructive text-sm" role="alert">
+          <p className="text-destructive text-[13px]" role="alert">
             {error}
           </p>
         )}
 
-        <Button className="w-full" disabled={pending} type="submit">
+        <Button className="h-10 w-full text-[14px]" disabled={pending} type="submit">
           {pending
-            ? "Working…"
+            ? mode === "sign-up"
+              ? "Creating your account…"
+              : "Signing in…"
             : mode === "sign-up"
               ? "Create account"
               : "Sign in"}
@@ -96,7 +125,7 @@ export function SignInForm({
 
       {googleEnabled && (
         <Button
-          className="w-full"
+          className="h-10 w-full"
           onClick={() => signIn.social({ provider: "google", callbackURL: next })}
           type="button"
           variant="outline"
@@ -105,18 +134,19 @@ export function SignInForm({
         </Button>
       )}
 
-      <button
-        className="text-muted-foreground hover:text-foreground w-full text-center text-sm underline-offset-4 hover:underline"
-        onClick={() => {
-          setMode(mode === "sign-in" ? "sign-up" : "sign-in");
-          setError(null);
-        }}
-        type="button"
-      >
-        {mode === "sign-in"
-          ? "No account yet? Create one"
-          : "Already have an account? Sign in"}
-      </button>
+      <p className="text-muted-foreground text-[13.5px]">
+        {mode === "sign-in" ? "New to Foray? " : "Already have an account? "}
+        <button
+          className="text-primary font-medium underline-offset-4 hover:underline"
+          onClick={() => {
+            setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+            setError(null);
+          }}
+          type="button"
+        >
+          {mode === "sign-in" ? "Create an account" : "Sign in"}
+        </button>
+      </p>
     </div>
   );
 }

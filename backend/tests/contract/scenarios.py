@@ -12,9 +12,9 @@ error text the client should see (`error_text`, `None` when there is none).
 
 from __future__ import annotations
 
-import importlib
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any
 
 from pydantic_ai import Agent, UsageLimits
@@ -33,6 +33,7 @@ from apps.chat.uistream import (
     frame,
 )
 from apps.core.errors import UserFacingError
+from apps.llm.budget import BudgetExceeded
 
 TEXT = 'Here is the answer: Zoë’s café ✓ "quoted"\n</script> & done.'
 JOBS = {
@@ -238,20 +239,14 @@ def scripted_agent(first: Step, then: Step | None = None) -> Agent[None, str]:
     return agent
 
 
-def budget_exceeded(message: str = BUDGET_TEXT) -> Exception:
-    """`llm.budget.BudgetExceeded` once step 3B has landed; a stand-in with the same
-    `user_message` attribute (§8.6) until then."""
-    try:
-        cls = importlib.import_module("apps.llm.budget").BudgetExceeded
-    except ImportError, AttributeError:
-        return _StandInBudgetExceeded(message)
-    return cls(user_message=message)  # §8.6; a TypeError here means the real class changed
-
-
-class _StandInBudgetExceeded(Exception):
-    def __init__(self, user_message: str) -> None:
-        super().__init__(user_message)
-        self.user_message = user_message
+def budget_exceeded(budget: Decimal = Decimal(90)) -> Exception:
+    """The real `llm.budget.BudgetExceeded` for a spent budget (§8.6). Step 3B's constructor
+    takes the budget and writes the sentence itself; at the default $90 it must read
+    `BUDGET_TEXT`, so a change to either fails here loudly."""
+    exc = BudgetExceeded(budget)
+    if budget == Decimal(90) and exc.user_message != BUDGET_TEXT:
+        raise AssertionError(f"BudgetExceeded now reads {exc.user_message!r}")
+    return exc
 
 
 async def play(

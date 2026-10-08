@@ -35,7 +35,9 @@ CAMEL = re.compile(r"^[a-z][a-zA-Z0-9]*$")
 
 # Component names whose keys are snake_case on purpose (§2.1: preferences and evaluations keep
 # today's spelling). Each entry needs a reason.
-SNAKE_CASE_COMPONENTS: dict[str, str] = {}
+SNAKE_CASE_COMPONENTS: dict[str, str] = {
+    "Preferences": "§2.1: preferences keep today's snake_case keys",
+}
 
 
 def _mounts() -> list[tuple[str, Any]]:

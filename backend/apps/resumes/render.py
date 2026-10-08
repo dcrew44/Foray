@@ -1,0 +1,391 @@
+"""HTML in, PDF out, with headless Chromium (design §11.6; replaces `src/worker/pdf.ts` and
+`renderStoredResume`). Worker only: the API never loads a browser.
+
+**Browser.** Playwright's async API drives the same playwright-core driver as the TS worker, so
+PDFs match byte for byte except for their dates. One Chromium per worker process (per event
+loop: Playwright objects are bound to the loop that made them), launched lazily with every
+signal handler off, because the worker command owns shutdown. Channel: `PDF_BROWSER_CHANNEL`,
+else the bundled browser, else `channel="chrome"` on a dev machine without bundled browsers.
+
+**Per render** a fresh context with JavaScript off and every request aborted, so even markup
+that slipped past escaping could not fetch a URL or run while the PDF is made; `set_content`,
+then `pdf(format="Letter", print_background=True, prefer_css_page_size=True)` (the template's
+own `@page` rule owns layout); a 30 s timeout; one relaunch if the browser went away.
+
+**Fitting.** Render normally; if that runs past a page, render compactly and keep the compact
+one when it has fewer pages. It changes type size and spacing only, never content: a resume
+that spills three lines onto a second page looks careless in a way a slightly smaller font does
+not. Page counts come from PDFium (under its lock).
+
+**Dedupe by `render_hash`** = sha256(normal-density HTML + "|" + `RENDER_VERSION`). Both are
+known before any render, and the compact variant is a function of the same resume, so one key
+covers whichever density the fitting picks. An existing `resume_pdf` document with the same
+`(user, render_hash)` is reused with no render at all. Bump `RENDER_VERSION` whenever the
+template, the fitting rule or the PDF options change. Rendering never touches any document's
+`text_extracted`.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import contextlib
+import hashlib
+import logging
+import re
+import uuid
+from dataclasses import dataclass
+
+from django.conf import settings
+from django.db import IntegrityError, transaction
+from django.utils import timezone
+from playwright.async_api import Browser, Playwright, Route, async_playwright
+from playwright.async_api import Error as PlaywrightError
+
+from apps.core.db import db
+from apps.core.storage import sha256_hex, storage, storage_key
+from apps.resumes.models import Document, DocumentKind
+from apps.resumes.models import Resume as ResumeRow
+from apps.resumes.parse.pdf import PdfReadError, count_pages
+from apps.resumes.schema import Resume
+from apps.resumes.template import Density, render_resume_html
+
+__all__ = [
+    "RENDER_TIMEOUT_MS",
+    "RENDER_VERSION",
+    "FittedPdf",
+    "RenderError",
+    "RenderResult",
+    "RenderedPdf",
+    "close_browser",
+    "pdf_filename",
+    "render_fitted",
+    "render_hash",
+    "render_pdf",
+    "render_resume",
+]
+
+log = logging.getLogger(__name__)
+
+# Bump whenever the template, the fitting rule or the PDF options change: it is part of the key
+# a rendered PDF is reused by.
+RENDER_VERSION = "1"
+RENDER_TIMEOUT_MS = 30_000
+
+PDF_MIME = "application/pdf"
+
+
+class RenderError(Exception):
+    """A resume that cannot be rendered. The message is shown to the user."""
+
+
+@dataclass(frozen=True, slots=True)
+class RenderedPdf:
+    pdf: bytes
+    pages: int
+
+
+@dataclass(frozen=True, slots=True)
+class FittedPdf:
+    pdf: bytes
+    pages: int
+    density: Density
+
+
+@dataclass(frozen=True, slots=True)
+class RenderResult:
+    document_id: uuid.UUID
+    pages: int
+    density: Density | None  # None when an earlier render was reused
+    reused: bool
+
+
+# --- The browser ----------------------------------------------------------------------------------
+
+
+class _Chromium:
+    """One lazily launched browser for the running event loop."""
+
+    def __init__(self) -> None:
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._playwright: Playwright | None = None
+        self._browser: Browser | None = None
+        self._lock: asyncio.Lock | None = None
+
+    def _for_this_loop(self) -> asyncio.Lock:
+        loop = asyncio.get_running_loop()
+        if self._loop is not loop:
+            # A browser started on another loop cannot be used from this one (tests run one
+            # loop per test; the worker runs one for its lifetime).
+            self._loop, self._playwright, self._browser = loop, None, None
+            self._lock = asyncio.Lock()
+        assert self._lock is not None
+        return self._lock
+
+    async def browser(self) -> Browser:
+        async with self._for_this_loop():
+            if self._browser is not None and self._browser.is_connected():
+                return self._browser
+            await self._close_unlocked()
+            self._playwright = await async_playwright().start()
+            self._browser = await _launch(self._playwright)
+            return self._browser
+
+    async def close(self) -> None:
+        async with self._for_this_loop():
+            await self._close_unlocked()
+
+    async def _close_unlocked(self) -> None:
+        browser, playwright = self._browser, self._playwright
+        self._browser, self._playwright = None, None
+        if browser is not None:
+            with contextlib.suppress(Exception):
+                await browser.close()
+        if playwright is not None:
+            with contextlib.suppress(Exception):
+                await playwright.stop()
+
+
+_CHROMIUM = _Chromium()
+
+_MISSING_EXECUTABLE = re.compile(
+    r"Executable doesn't exist|executable doesn't exist|Failed to launch.*ENOENT", re.IGNORECASE
+)
+_BROWSER_GONE = re.compile(
+    r"has been closed|Target closed|browser has disconnected|Browser closed|crashed",
+    re.IGNORECASE,
+)
+
+
+async def _launch(playwright: Playwright) -> Browser:
+    """`PDF_BROWSER_CHANNEL` when set; otherwise the bundled Chromium (what the production image
+    ships), falling back to the locally installed Chrome when no bundled browser is
+    downloaded (a dev machine)."""
+
+    async def launch(channel: str | None) -> Browser:
+        # The worker owns shutdown: Playwright's own handlers would close the browser the moment
+        # a signal arrives, in the middle of the worker draining its in-flight jobs.
+        return await playwright.chromium.launch(
+            channel=channel,
+            headless=True,
+            handle_sigint=False,
+            handle_sigterm=False,
+            handle_sighup=False,
+        )
+
+    channel = (settings.ENV.pdf_browser_channel or "").strip()
+    if channel:
+        return await launch(channel)
+    try:
+        return await launch(None)
+    except PlaywrightError as error:
+        if not _MISSING_EXECUTABLE.search(str(error)):
+            raise
+        return await launch("chrome")
+
+
+async def close_browser() -> None:
+    """Closes this loop's browser (the worker calls it on shutdown; tests after rendering)."""
+    await _CHROMIUM.close()
+
+
+async def _refuse(route: Route, *_: object) -> None:
+    """A resume page loads nothing: every request is aborted."""
+    await route.abort()
+
+
+async def _render_once(html: str) -> bytes:
+    browser = await _CHROMIUM.browser()
+    context = await browser.new_context(java_script_enabled=False)
+    try:
+        await context.route("**/*", _refuse)
+        page = await context.new_page()
+        page.set_default_timeout(RENDER_TIMEOUT_MS)
+        await page.set_content(html, wait_until="load")
+        return await page.pdf(format="Letter", print_background=True, prefer_css_page_size=True)
+    finally:
+        with contextlib.suppress(Exception):
+            await context.close()
+
+
+async def render_pdf(html: str) -> RenderedPdf:
+    """Renders a complete HTML document to a Letter PDF, relaunching the browser once if it
+    went away under us (a crash, an OOM kill, closed elsewhere)."""
+    try:
+        pdf = await _render_once(html)
+    except PlaywrightError as error:
+        if not _BROWSER_GONE.search(str(error)):
+            raise
+        log.warning("render: the browser went away mid-render; relaunching once")
+        await _CHROMIUM.close()
+        pdf = await _render_once(html)
+    return RenderedPdf(pdf=pdf, pages=await asyncio.to_thread(count_pages, pdf))
+
+
+async def render_fitted(resume: Resume) -> FittedPdf:
+    """Normal density, or compact when that saves a page."""
+    normal = await render_pdf(render_resume_html(resume))
+    if normal.pages > 1:
+        compact = await render_pdf(render_resume_html(resume, density="compact"))
+        if compact.pages < normal.pages:
+            return FittedPdf(pdf=compact.pdf, pages=compact.pages, density="compact")
+    return FittedPdf(pdf=normal.pdf, pages=normal.pages, density="normal")
+
+
+def render_hash(resume: Resume) -> str:
+    """The key a rendered PDF is reused by: sha256(normal-density HTML | RENDER_VERSION)."""
+    return _hash_html(render_resume_html(resume))
+
+
+def _hash_html(html_normal: str) -> str:
+    return hashlib.sha256(f"{html_normal}|{RENDER_VERSION}".encode()).hexdigest()
+
+
+_UNSAFE_FILENAME = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
+_SPACES = re.compile(r"\s+")
+
+
+def pdf_filename(resume: Resume, company: str | None = None) -> str:
+    """The download name: "Dana Reyes - Resume.pdf", or "Dana Reyes - Resume - Stripe.pdf" for a
+    tailored one, so several downloads do not all arrive as the same "Resume.pdf"."""
+
+    def safe(value: str | None) -> str:
+        return _SPACES.sub(" ", _UNSAFE_FILENAME.sub("", value or "")).strip()
+
+    name, target = safe(resume.basics.name), safe(company)
+    base = f"{name} - Resume" if name else "Resume"
+    return f"{base} - {target}.pdf" if target else f"{base}.pdf"
+
+
+# --- A stored resume to a stored PDF --------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class _Loaded:
+    resume: Resume
+    company: str | None
+
+
+def _load(user_id: str, resume_id: uuid.UUID | str) -> _Loaded:
+    row = (
+        ResumeRow.objects.for_user(user_id)
+        .select_related("match__job")
+        .filter(id=resume_id)
+        .first()
+    )
+    if row is None:
+        raise RenderError("That resume no longer exists.")
+    resume = Resume.read(row.data)
+    if resume is None:
+        raise RenderError("The stored resume could not be read.")
+    # A tailored resume is named for the company it was written for.
+    company = row.match.job.company_name if row.kind == "tailored" and row.match else None
+    return _Loaded(resume=resume, company=company)
+
+
+def _find_rendered(user_id: str, key: str) -> Document | None:
+    return Document.objects.for_user(user_id).filter(render_hash=key).first()
+
+
+def _point_at(user_id: str, resume_id: uuid.UUID | str, document_id: uuid.UUID) -> None:
+    ResumeRow.objects.for_user(user_id).filter(id=resume_id).update(
+        rendered_document_id=document_id, updated_at=timezone.now()
+    )
+
+
+def _record(
+    user_id: str,
+    resume_id: uuid.UUID | str,
+    *,
+    key: str,
+    filename: str,
+    path: str,
+    pdf: bytes,
+) -> tuple[Document, bool]:
+    """Stores the document row and points the resume at it, in one transaction. Returns the
+    document and whether it is the one just written (False: another render of the same resume
+    got there first, and its document is used instead)."""
+    try:
+        with transaction.atomic():
+            document = Document.objects.create_for(
+                user_id,
+                kind=DocumentKind.RESUME_PDF,
+                filename=filename,
+                mime=PDF_MIME,
+                size_bytes=len(pdf),
+                storage_path=path,
+                sha256=sha256_hex(pdf),
+                render_hash=key,
+            )
+            _point_at(user_id, resume_id, document.id)
+            return document, True
+    except IntegrityError:
+        existing = _find_rendered(user_id, key)
+        if existing is None:
+            raise
+        _point_at(user_id, resume_id, existing.id)
+        return existing, False
+
+
+def _repair(user_id: str, document_id: uuid.UUID, *, path: str, pdf: bytes) -> None:
+    """Points a document whose file went missing at a fresh render of the same HTML."""
+    Document.objects.for_user(user_id).filter(id=document_id).update(
+        storage_path=path, size_bytes=len(pdf), sha256=sha256_hex(pdf)
+    )
+
+
+def _read_stored(path: str) -> bytes | None:
+    try:
+        with storage().open(path) as handle:
+            return handle.read()
+    except FileNotFoundError:
+        return None
+
+
+async def render_resume(user_id: str, resume_id: uuid.UUID | str) -> RenderResult:
+    """Renders a stored resume (base or tailored) to PDF, stores it as a `resume_pdf` document
+    and points `resumes.rendered_document` at it, unless a document with the same render hash
+    exists: then that one is reused and nothing is rendered."""
+    loaded = await db(_load, user_id, resume_id)
+    key = _hash_html(render_resume_html(loaded.resume))
+
+    existing = await db(_find_rendered, user_id, key)
+    if existing is not None:
+        stored = await asyncio.to_thread(_read_stored, existing.storage_path)
+        if stored is not None:
+            try:
+                pages = await asyncio.to_thread(count_pages, stored)
+            except PdfReadError:
+                pages = None
+            if pages is not None:
+                await db(_point_at, user_id, resume_id, existing.id)
+                return RenderResult(document_id=existing.id, pages=pages, density=None, reused=True)
+
+    fitted = await render_fitted(loaded.resume)
+    filename = pdf_filename(loaded.resume, loaded.company)
+    path = storage_key(user_id, DocumentKind.RESUME_PDF.value, filename)
+    await asyncio.to_thread(storage().put, path, fitted.pdf)
+
+    if existing is not None:  # its file was missing or unreadable: repair it in place
+        try:
+            await db(_repair, user_id, existing.id, path=path, pdf=fitted.pdf)
+            await db(_point_at, user_id, resume_id, existing.id)
+        except BaseException:
+            await asyncio.to_thread(storage().delete, path)
+            raise
+        return RenderResult(
+            document_id=existing.id, pages=fitted.pages, density=fitted.density, reused=False
+        )
+
+    try:
+        document, written = await db(
+            _record, user_id, resume_id, key=key, filename=filename, path=path, pdf=fitted.pdf
+        )
+    except BaseException:
+        await asyncio.to_thread(storage().delete, path)  # no orphan file
+        raise
+    if not written:
+        await asyncio.to_thread(storage().delete, path)
+        return RenderResult(document_id=document.id, pages=fitted.pages, density=None, reused=True)
+    return RenderResult(
+        document_id=document.id, pages=fitted.pages, density=fitted.density, reused=False
+    )

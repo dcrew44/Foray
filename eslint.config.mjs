@@ -13,7 +13,30 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Django backend: Python, linted by ruff. Its .venv holds vendored JavaScript.
+    "backend/**",
   ]),
+
+  // --- Server-only API helper ----------------------------------------------
+  // src/lib/api/server.ts reads cookies and headers and redirects; it runs only
+  // in server components. A "use client" module must call Django through
+  // src/lib/api/client.ts instead. `no-restricted-imports` cannot see the
+  // directive, so this matches it in the syntax tree: a "use client" prologue,
+  // then any import, re-export or dynamic import of lib/api/server.
+  {
+    files: ["src/**/*.{ts,tsx,js,jsx,mjs}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Program:has(> ExpressionStatement[directive='use client']) :matches(ImportDeclaration, ExportNamedDeclaration, ExportAllDeclaration, ImportExpression)[source.value=/(^|\\/)lib\\/api\\/server(\\.ts)?$/]",
+          message:
+            "A \"use client\" module must not import src/lib/api/server.ts (server components only). Call Django through src/lib/api/client.ts.",
+        },
+      ],
+    },
+  },
 
   // --- Architecture boundaries (see DESIGN.md "Invariants") -----------------
   // Next and the worker are two entry points over one shared library. Neither

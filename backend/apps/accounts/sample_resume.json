@@ -1,0 +1,119 @@
+{
+  "basics": {
+    "name": "Avery Quinn",
+    "headline": "Backend software engineer",
+    "email": "avery.quinn@example.test",
+    "phone": null,
+    "location": "Oakland, CA",
+    "links": [
+      {
+        "id": "171e286e-4531-4ae2-8ed9-2321a46709a6",
+        "source": "resume",
+        "label": "Portfolio",
+        "url": "https://example.com/avery-quinn"
+      }
+    ]
+  },
+  "summary": "Backend engineer with six years of experience building payment and data services in Python and Go. I like small teams, clear ownership and code that is easy to delete.",
+  "work": [
+    {
+      "id": "3a0619d9-9b8e-48bf-9654-0343f777ff30",
+      "source": "resume",
+      "company": "Lumen Ledger",
+      "position": "Senior Software Engineer",
+      "location": "San Francisco, CA",
+      "startDate": "March 2023",
+      "endDate": "Present",
+      "summary": "Payments platform team of eight.",
+      "highlights": [
+        "Led the move of card settlement from nightly batches to a streaming pipeline, cutting settlement delay from 24 hours to 15 minutes.",
+        "Designed an idempotency layer for the payouts API that ended duplicate transfers.",
+        "Mentored three engineers through their first on-call rotations."
+      ]
+    },
+    {
+      "id": "d84a4aa2-42c8-4f9d-8a69-aeafe57027b6",
+      "source": "resume",
+      "company": "Harbor Analytics",
+      "position": "Software Engineer",
+      "location": "Oakland, CA",
+      "startDate": "June 2020",
+      "endDate": "February 2023",
+      "summary": null,
+      "highlights": [
+        "Built the ingestion service that loads 40 million events a day into PostgreSQL and BigQuery.",
+        "Cut the reporting API's p95 latency from 1.2 s to 180 ms with query rewrites and caching.",
+        "Wrote the team's first load tests and ran them in CI."
+      ]
+    },
+    {
+      "id": "3afcf22c-0f97-4d82-8319-3e5f381c962e",
+      "source": "resume",
+      "company": "Fernwood Labs",
+      "position": "Software Engineering Intern",
+      "location": "Berkeley, CA",
+      "startDate": "May 2019",
+      "endDate": "August 2019",
+      "summary": null,
+      "highlights": [
+        "Added full-text search to an internal documentation site using PostgreSQL."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "ea0095b0-8a85-464f-8faa-198ab53d17df",
+      "source": "resume",
+      "institution": "University of California, Berkeley",
+      "area": "Computer Science",
+      "studyType": "B.A.",
+      "startDate": "2016",
+      "endDate": "2020",
+      "score": null,
+      "highlights": [
+        "Teaching assistant for the databases course."
+      ]
+    },
+    {
+      "id": "3803cae9-8bc4-447b-801c-d6ce39cbb4f3",
+      "source": "resume",
+      "institution": "Laney College",
+      "area": "Mathematics",
+      "studyType": "Coursework",
+      "startDate": "2015",
+      "endDate": "2016",
+      "score": null,
+      "highlights": []
+    }
+  ],
+  "projects": [
+    {
+      "id": "54bcb928-2410-4d91-971b-8273479ac1cf",
+      "source": "resume",
+      "name": "tidepool",
+      "description": "An open-source rate limiter for Python services backed by PostgreSQL.",
+      "url": "https://example.com/tidepool",
+      "startDate": "2022",
+      "endDate": null,
+      "highlights": [
+        "Used in production by two companies."
+      ]
+    }
+  ],
+  "skills": [
+    {"id": "d4cbcba0-49bd-47ff-9cef-e06b42e69286", "source": "resume", "name": "Python", "category": "Languages"},
+    {"id": "995ff313-b963-416a-9221-e8ddb77edc11", "source": "resume", "name": "Go", "category": "Languages"},
+    {"id": "c379ce09-567f-49f5-98ca-fd477a5568b5", "source": "resume", "name": "SQL", "category": "Languages"},
+    {"id": "86232df5-5ed8-4de3-928d-4cf0e8e5ce13", "source": "resume", "name": "TypeScript", "category": "Languages"},
+    {"id": "5391b8b4-d220-4235-be1d-a3054b9109ad", "source": "resume", "name": "PostgreSQL", "category": "Data"},
+    {"id": "ddfe3162-05b5-4c0d-9983-b49129897325", "source": "resume", "name": "BigQuery", "category": "Data"},
+    {"id": "4079666e-c5b6-4989-baf6-ebdf7fd84059", "source": "resume", "name": "Kafka", "category": "Data"},
+    {"id": "4ce31272-0170-4100-87bb-cabf0042f927", "source": "resume", "name": "Redis", "category": "Data"},
+    {"id": "8439ca68-dff8-4be4-8bef-7f7992644285", "source": "resume", "name": "Django", "category": "Frameworks"},
+    {"id": "45264e1b-eea1-4f8d-bc47-2d2139472db9", "source": "resume", "name": "FastAPI", "category": "Frameworks"},
+    {"id": "58b07d9f-e458-4c63-bbb1-21abd414140f", "source": "resume", "name": "Docker", "category": "Infrastructure"},
+    {"id": "10c140e8-7ba2-4d35-8435-633b32169187", "source": "resume", "name": "Kubernetes", "category": "Infrastructure"},
+    {"id": "a76dfcf4-b2fc-4f54-9b26-a4601c16d72a", "source": "resume", "name": "AWS", "category": "Infrastructure"},
+    {"id": "eae1d227-6015-41c9-8801-a3ace948e56c", "source": "resume", "name": "Terraform", "category": "Infrastructure"}
+  ]
+}

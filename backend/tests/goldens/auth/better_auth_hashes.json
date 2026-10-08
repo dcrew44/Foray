@@ -1,0 +1,14 @@
+[
+  {
+    "label": "ascii",
+    "password": "correct horse battery staple 42!",
+    "nfkc": "correct horse battery staple 42!",
+    "hash": "13093e06275a9b711ba4a11f9b113d69:cfc907b23b01ebd2c9ae94bbaa97c3fbe280aab7c00ac555eb6a3b96c1c3e1ae56a9aa63aa41bd48b1bc26798319c820c00adbc6ff5a71d90653473de0f51c16"
+  },
+  {
+    "label": "non_ascii",
+    "password": "Ｐａｓｓ ﬁxé² Zoë — пароль 🔐",
+    "nfkc": "Pass fixé2 Zoë — пароль 🔐",
+    "hash": "0b97004ef9d2a4248fe71f5528d2c428:a3e4227ca2f8117fdcf2b838956554c22f62eb8e6c562b541550c7d75eae5cf8c87b6ddc9fd2497624f47077c31361dc644e8c7e3dc04526cff97149c990a8d8"
+  }
+]

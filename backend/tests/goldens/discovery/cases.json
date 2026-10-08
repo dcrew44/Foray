@@ -1,0 +1,132 @@
+{
+  "careersPages": [
+    {
+      "fixture": "careers-pages/retool.html",
+      "baseUrl": "https://retool.com/careers",
+      "findAtsLinks": [],
+      "hasUnsupportedAts": false,
+      "findCareersLinks": [
+        "https://retool.com/careers",
+        "https://retool.com/careers/director-business-operations--business-operations--san-francisco-united-states",
+        "https://retool.com/careers/data-scientist--data-science-analytics--san-francisco-united-states",
+        "https://retool.com/careers/ux-research-manager--design--san-francisco-united-states",
+        "https://retool.com/careers/staff-copywriter--design--united-states-remote"
+      ]
+    },
+    {
+      "fixture": "careers-pages/crusoe.html",
+      "baseUrl": "https://www.crusoe.ai/about/careers",
+      "findAtsLinks": [
+        {
+          "source": "ashby",
+          "slug": "crusoe"
+        }
+      ],
+      "hasUnsupportedAts": false,
+      "findCareersLinks": [
+        "https://www.crusoe.ai/about/careers",
+        "https://www.crusoe.ai/about/careers/culture",
+        "https://www.crusoe.ai/about/careers/early-careers"
+      ]
+    }
+  ],
+  "normalizeDomain": [
+    {
+      "input": "Stripe.com",
+      "output": "stripe.com"
+    },
+    {
+      "input": "https://www.stripe.com/jobs",
+      "output": "stripe.com"
+    },
+    {
+      "input": "http://linear.app/",
+      "output": "linear.app"
+    },
+    {
+      "input": "linear",
+      "output": "linear"
+    },
+    {
+      "input": "",
+      "output": null
+    },
+    {
+      "input": "  ANTHROPIC.COM ",
+      "output": "anthropic.com"
+    },
+    {
+      "input": "boards.greenhouse.io/anthropic",
+      "output": "boards.greenhouse.io"
+    }
+  ],
+  "slugCandidates": [
+    {
+      "input": "Stripe",
+      "output": [
+        "stripe",
+        "stripeinc",
+        "stripehq",
+        "stripejobs",
+        "stripecareers"
+      ]
+    },
+    {
+      "input": "Ben & Jerry's",
+      "output": [
+        "benandjerrys",
+        "ben-and-jerrys",
+        "ben",
+        "benandjerrysinc",
+        "benandjerryshq",
+        "benandjerrysjobs",
+        "benandjerryscareers"
+      ]
+    },
+    {
+      "input": "Scale AI, Inc.",
+      "output": [
+        "scaleai",
+        "scale-ai",
+        "scale",
+        "scaleaiinc",
+        "scaleaihq",
+        "scaleaijobs",
+        "scaleaicareers"
+      ]
+    },
+    {
+      "input": "Café Numérique",
+      "output": [
+        "cafnumrique",
+        "caf-num-rique",
+        "caf",
+        "cafnumriqueinc",
+        "cafnumriquehq",
+        "cafnumriquejobs",
+        "cafnumriquecareers"
+      ]
+    },
+    {
+      "input": "A",
+      "output": [
+        "ainc",
+        "ahq",
+        "ajobs",
+        "acareers"
+      ]
+    },
+    {
+      "input": "Notion Labs Corp.",
+      "output": [
+        "notionlabs",
+        "notion-labs",
+        "notion",
+        "notionlabsinc",
+        "notionlabshq",
+        "notionlabsjobs",
+        "notionlabscareers"
+      ]
+    }
+  ]
+}

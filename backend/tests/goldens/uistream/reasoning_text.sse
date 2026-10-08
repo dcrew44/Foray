@@ -1,0 +1,22 @@
+data: {"type":"start","messageId":"asst_reasoning_text"}
+
+data: {"type":"start-step"}
+
+data: {"type":"reasoning-start","id":"r1"}
+
+data: {"type":"reasoning-delta","id":"r1","delta":"Thinking..."}
+
+data: {"type":"reasoning-end","id":"r1"}
+
+data: {"type":"text-start","id":"t1"}
+
+data: {"type":"text-delta","id":"t1","delta":"Done thinking."}
+
+data: {"type":"text-end","id":"t1"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+

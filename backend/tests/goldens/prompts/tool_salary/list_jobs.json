@@ -1,0 +1,436 @@
+{
+  "builder": "tool_salary",
+  "case": "list_jobs",
+  "cases": [
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 150000,
+        "salaryMax": 200000,
+        "salaryCurrency": "USD",
+        "salaryPeriod": "year"
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "$150k–200k",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 150000,
+        "salaryMax": null,
+        "salaryCurrency": "USD",
+        "salaryPeriod": "year"
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "$150k",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": null,
+        "salaryMax": 200000,
+        "salaryCurrency": null,
+        "salaryPeriod": null
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "$200k",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 150000,
+        "salaryMax": 150000,
+        "salaryCurrency": "USD",
+        "salaryPeriod": "year"
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "$150k",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 55,
+        "salaryMax": 70,
+        "salaryCurrency": "USD",
+        "salaryPeriod": "hour"
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "$55–70/hour",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 124.128,
+        "salaryMax": null,
+        "salaryCurrency": null,
+        "salaryPeriod": null
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "$124",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 999.5,
+        "salaryMax": 1500.4,
+        "salaryCurrency": "GBP",
+        "salaryPeriod": "month"
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "GBP 1000–2k/month",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 90000,
+        "salaryMax": 120000,
+        "salaryCurrency": "EUR",
+        "salaryPeriod": "year"
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": "EUR 90k–120k",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": 0,
+        "salaryMax": 0,
+        "salaryCurrency": "USD",
+        "salaryPeriod": "year"
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": null,
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    },
+    {
+      "input": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1",
+        "salaryMin": null,
+        "salaryMax": null,
+        "salaryCurrency": null,
+        "salaryPeriod": null
+      },
+      "output": {
+        "matchId": "m-1",
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer",
+        "company": "Acme",
+        "locations": [
+          "San Francisco, CA"
+        ],
+        "remote": "hybrid",
+        "stage": "found",
+        "score": 82,
+        "fastScore": 70,
+        "deepScore": 82,
+        "recommendation": "apply",
+        "headline": "Strong backend overlap",
+        "salary": null,
+        "postedAt": "2026-10-01T18:00:00.000Z",
+        "url": "https://example.com/jobs/1"
+      }
+    }
+  ]
+}

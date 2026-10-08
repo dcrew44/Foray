@@ -1,0 +1,179 @@
+{
+  "cleanDescription": [
+    {
+      "input": null,
+      "output": {
+        "text": "",
+        "removed": []
+      }
+    },
+    {
+      "input": "",
+      "output": {
+        "text": "",
+        "removed": []
+      }
+    },
+    {
+      "input": "Just plain text.",
+      "output": {
+        "text": "Just plain text.",
+        "removed": []
+      }
+    },
+    {
+      "input": "&lt;p&gt;We are hiring an engineer.&lt;/p&gt;",
+      "output": {
+        "text": "We are hiring an engineer.",
+        "removed": []
+      }
+    },
+    {
+      "input": "<p>Ben &amp; Jerry&rsquo;s</p>",
+      "output": {
+        "text": "Ben & Jerry’s",
+        "removed": []
+      }
+    },
+    {
+      "input": "<ul><li>First thing</li><li>Second thing</li></ul>",
+      "output": {
+        "text": "• First thing\n\n• Second thing",
+        "removed": []
+      }
+    },
+    {
+      "input": "<div><script>alert(1)</script><style>p{}</style><p>Kept</p></div>",
+      "output": {
+        "text": "Kept",
+        "removed": []
+      }
+    },
+    {
+      "input": "<p>One</p>\r\n<p>Two&nbsp;&nbsp;spaces</p><br/><br/><br/><p>Three &#8212; &#x2014; &hellip;</p>",
+      "output": {
+        "text": "One\n\nTwo spaces\n\nThree — — …",
+        "removed": []
+      }
+    },
+    {
+      "input": "Unknown &entity; and &#xZZ; stay; &AMP; decodes",
+      "output": {
+        "text": "Unknown &entity; and &#xZZ; stay; & decodes",
+        "removed": []
+      }
+    },
+    {
+      "input": "We are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nAcme Corp is an equal opportunity employer and does not discriminate.",
+      "output": {
+        "text": "We are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.",
+        "removed": [
+          "equal opportunity"
+        ]
+      }
+    },
+    {
+      "input": "Responsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nE-Verify is used by this employer.\n\nIf you need an accommodation, contact us.",
+      "output": {
+        "text": "Responsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.",
+        "removed": [
+          "E-Verify",
+          "accommodation"
+        ]
+      }
+    },
+    {
+      "input": "We are an equal opportunity employer and you will own that programme.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\n",
+      "output": {
+        "text": "We are an equal opportunity employer and you will own that programme.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.",
+        "removed": []
+      }
+    },
+    {
+      "input": "<p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>• We do not accept unsolicited resumes from agencies.</p><p>California applicants: see our privacy notice.</p><p>Pay transparency: the range is $150,000–$200,000.</p><p>Pursuant to the San Francisco Fair Chance Ordinance, we consider all applicants.</p>",
+      "output": {
+        "text": "Build things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\n• We do not accept unsolicited resumes from agencies.",
+        "removed": [
+          "privacy notice",
+          "pay transparency",
+          "fair chance / criminal history"
+        ]
+      }
+    },
+    {
+      "input": "Café — naïve façade 🚀\n\n\n\nsecond paragraph\t\twith  tabs",
+      "output": {
+        "text": "Café — naïve façade 🚀\n\nsecond paragraph\t\twith  tabs",
+        "removed": []
+      }
+    }
+  ],
+  "htmlToText": [
+    {
+      "input": "",
+      "output": ""
+    },
+    {
+      "input": "Just plain text.",
+      "output": "Just plain text."
+    },
+    {
+      "input": "&lt;p&gt;We are hiring an engineer.&lt;/p&gt;",
+      "output": "<p>We are hiring an engineer.</p>"
+    },
+    {
+      "input": "<p>Ben &amp; Jerry&rsquo;s</p>",
+      "output": "Ben & Jerry’s"
+    },
+    {
+      "input": "<ul><li>First thing</li><li>Second thing</li></ul>",
+      "output": "• First thing\n\n• Second thing"
+    },
+    {
+      "input": "<div><script>alert(1)</script><style>p{}</style><p>Kept</p></div>",
+      "output": "Kept"
+    },
+    {
+      "input": "<p>One</p>\r\n<p>Two&nbsp;&nbsp;spaces</p><br/><br/><br/><p>Three &#8212; &#x2014; &hellip;</p>",
+      "output": "One\n\nTwo spaces\n\nThree — — …"
+    },
+    {
+      "input": "Unknown &entity; and &#xZZ; stay; &AMP; decodes",
+      "output": "Unknown &entity; and &#xZZ; stay; & decodes"
+    },
+    {
+      "input": "We are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nAcme Corp is an equal opportunity employer and does not discriminate.",
+      "output": "We are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nWe are hiring.\n\nAcme Corp is an equal opportunity employer and does not discriminate."
+    },
+    {
+      "input": "Responsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nE-Verify is used by this employer.\n\nIf you need an accommodation, contact us.",
+      "output": "Responsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nResponsibilities include shipping code.\n\nE-Verify is used by this employer.\n\nIf you need an accommodation, contact us."
+    },
+    {
+      "input": "We are an equal opportunity employer and you will own that programme.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\n",
+      "output": "We are an equal opportunity employer and you will own that programme.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features.\n\nYou will ship features."
+    },
+    {
+      "input": "<p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>Build things.</p><p>• We do not accept unsolicited resumes from agencies.</p><p>California applicants: see our privacy notice.</p><p>Pay transparency: the range is $150,000–$200,000.</p><p>Pursuant to the San Francisco Fair Chance Ordinance, we consider all applicants.</p>",
+      "output": "Build things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\nBuild things.\n\n• We do not accept unsolicited resumes from agencies.\n\nCalifornia applicants: see our privacy notice.\n\nPay transparency: the range is $150,000–$200,000.\n\nPursuant to the San Francisco Fair Chance Ordinance, we consider all applicants."
+    },
+    {
+      "input": "Café — naïve façade 🚀\n\n\n\nsecond paragraph\t\twith  tabs",
+      "output": "Café — naïve façade 🚀\n\nsecond paragraph with tabs"
+    }
+  ],
+  "decodeEntities": [
+    {
+      "input": "&amp;&lt;&gt;&quot;&apos;&nbsp;&ndash;&mdash;&rsquo;&lsquo;&ldquo;&rdquo;&hellip;&bull;&middot;",
+      "output": "&<>\"' –—’‘“”…•·"
+    },
+    {
+      "input": "&#65;&#x42;&#X43;&#128512;&#x1F600;",
+      "output": "ABC😀😀"
+    },
+    {
+      "input": "&unknown; &#; &#x; &AMP; &Lt;",
+      "output": "&unknown; &#; &#x; & <"
+    }
+  ]
+}

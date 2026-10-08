@@ -1,0 +1,47 @@
+[
+  {
+    "html": "<a href=\"/careers/swe\">Software Engineer</a>",
+    "baseUrl": null,
+    "output": "[Software Engineer](/careers/swe)"
+  },
+  {
+    "html": "<a href=\"/careers/swe\">SWE</a>",
+    "baseUrl": "https://acme.com/careers",
+    "output": "[SWE](https://acme.com/careers/swe)"
+  },
+  {
+    "html": "<a href=\"#top\">Back to top</a><a href=\"mailto:jobs@acme.com\">Email us</a>",
+    "baseUrl": "https://acme.com",
+    "output": "[Back to top](https://acme.com/#top) Email us"
+  },
+  {
+    "html": "<a href=\"javascript:void(0)\">Open</a>",
+    "baseUrl": "https://acme.com",
+    "output": "Open"
+  },
+  {
+    "html": "<a href=\"/x\"><span>Staff</span> <b>Engineer</b></a>",
+    "baseUrl": null,
+    "output": "[Staff Engineer](/x)"
+  },
+  {
+    "html": "<a href=\"/x\"><img src=\"y.png\"></a>",
+    "baseUrl": null,
+    "output": ""
+  },
+  {
+    "html": "<a href='jobs/1?ref=a&amp;b=c'>Job &amp; more</a>",
+    "baseUrl": "https://acme.com/careers/",
+    "output": "[Job & more](https://acme.com/careers/jobs/1?ref=a&b=c)"
+  },
+  {
+    "html": "<a class=\"x\" href=\"http://[bad\">Broken</a>",
+    "baseUrl": "https://acme.com",
+    "output": "[Broken](http://[bad)"
+  },
+  {
+    "html": "<p>Before <a href=\"https://other.example/x\">Other</a> after</p><ul><li><a href=\"/a\">A</a></li></ul>",
+    "baseUrl": "https://acme.com",
+    "output": "Before [Other](https://other.example/x) after\n\n• [A](https://acme.com/a)"
+  }
+]

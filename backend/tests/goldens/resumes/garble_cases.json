@@ -1,0 +1,157 @@
+[
+  {
+    "input": {
+      "text": "",
+      "pageCount": 1
+    },
+    "output": {
+      "garbled": true,
+      "reasons": [
+        "only 0 characters per page — likely a scan or an image-only PDF"
+      ],
+      "metrics": {
+        "chars": 0,
+        "charsPerPage": 0,
+        "spaceRatio": 0,
+        "alphaRatio": 0,
+        "replacementRatio": 0,
+        "singleCharWordRatio": 0
+      }
+    }
+  },
+  {
+    "input": {
+      "text": "Short.",
+      "pageCount": 2
+    },
+    "output": {
+      "garbled": true,
+      "reasons": [
+        "only 3 characters per page — likely a scan or an image-only PDF",
+        "word spacing lost (0.000 of characters are whitespace)"
+      ],
+      "metrics": {
+        "chars": 6,
+        "charsPerPage": 3,
+        "spaceRatio": 0,
+        "alphaRatio": 0.8333333333333334,
+        "replacementRatio": 0,
+        "singleCharWordRatio": 0
+      }
+    }
+  },
+  {
+    "input": {
+      "text": "S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  S U M M A R Y  I L O N A  B E R G Q U I S T  ",
+      "pageCount": 1
+    },
+    "output": {
+      "garbled": true,
+      "reasons": [
+        "text is letter-spaced (100% single-character words)"
+      ],
+      "metrics": {
+        "chars": 900,
+        "charsPerPage": 900,
+        "spaceRatio": 0.5333333333333333,
+        "alphaRatio": 1,
+        "replacementRatio": 0,
+        "singleCharWordRatio": 1
+      }
+    }
+  },
+  {
+    "input": {
+      "text": "ExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystemsExperiencedsoftwareengineerwithtenyearsofbuildingsystems",
+      "pageCount": 1
+    },
+    "output": {
+      "garbled": true,
+      "reasons": [
+        "word spacing lost (0.000 of characters are whitespace)"
+      ],
+      "metrics": {
+        "chars": 560,
+        "charsPerPage": 560,
+        "spaceRatio": 0,
+        "alphaRatio": 1,
+        "replacementRatio": 0,
+        "singleCharWordRatio": 0
+      }
+    }
+  },
+  {
+    "input": {
+      "text": "Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. Normal words in a sentence. �����",
+      "pageCount": 1
+    },
+    "output": {
+      "garbled": false,
+      "reasons": [],
+      "metrics": {
+        "chars": 565,
+        "charsPerPage": 565,
+        "spaceRatio": 0.17699115044247787,
+        "alphaRatio": 0.946236559139785,
+        "replacementRatio": 0.008849557522123894,
+        "singleCharWordRatio": 0.19801980198019803
+      }
+    }
+  },
+  {
+    "input": {
+      "text": "1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 ",
+      "pageCount": 1
+    },
+    "output": {
+      "garbled": true,
+      "reasons": [
+        "mostly non-letters (0.00 alphabetic)"
+      ],
+      "metrics": {
+        "chars": 1000,
+        "charsPerPage": 1000,
+        "spaceRatio": 0.2,
+        "alphaRatio": 0,
+        "replacementRatio": 0,
+        "singleCharWordRatio": 0
+      }
+    }
+  },
+  {
+    "input": {
+      "text": "A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. A perfectly ordinary resume line with words. ",
+      "pageCount": 1
+    },
+    "output": {
+      "garbled": false,
+      "reasons": [],
+      "metrics": {
+        "chars": 1350,
+        "charsPerPage": 1350,
+        "spaceRatio": 0.15555555555555556,
+        "alphaRatio": 0.9736842105263158,
+        "replacementRatio": 0,
+        "singleCharWordRatio": 0.14285714285714285
+      }
+    }
+  },
+  {
+    "input": {
+      "text": "Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. Ingénieur logiciel à Montréal, spécialisé en systèmes répartis. ",
+      "pageCount": 0
+    },
+    "output": {
+      "garbled": false,
+      "reasons": [],
+      "metrics": {
+        "chars": 1280,
+        "charsPerPage": 1280,
+        "spaceRatio": 0.125,
+        "alphaRatio": 0.9642857142857143,
+        "replacementRatio": 0,
+        "singleCharWordRatio": 0.125
+      }
+    }
+  }
+]

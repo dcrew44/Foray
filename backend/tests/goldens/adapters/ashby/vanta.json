@@ -1,0 +1,152 @@
+{
+  "fixture": "ashby/vanta.json",
+  "request": "https://api.ashbyhq.com/posting-api/job-board/vanta?includeCompensation=true",
+  "companySlug": "vanta",
+  "jobs": [
+    {
+      "id": "ashby:vanta:dbd4e02c-0c6c-4031-a658-f57e88ec9943",
+      "source": "ashby",
+      "externalId": "dbd4e02c-0c6c-4031-a658-f57e88ec9943",
+      "companySlug": "vanta",
+      "companyName": "vanta",
+      "title": "Senior Software Engineer, Developer Experience ",
+      "locations": [
+        "Remote U.S.",
+        "Remote - Canada"
+      ],
+      "locationNorm": {
+        "raw": "Remote U.S.",
+        "city": "Remote U.S.",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "remote",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": 224000,
+        "max": 263000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "descriptionText": "At Vanta, our mission is to help businesses earn and prove trust. We believe that security should be monitored and verified continuously, and we empower companies to practice better security and prove it with ease. Vanta has a kind and talented team, and while some have prior security experience, many have been successful at Vanta without it.\n\nVanta’s Developer Experience team builds the tools engineers use every day to bring ideas to production rapidly and reliably. You’ll empower other Vanta engineers to leverage cutting-edge technologies and best practices to make Vanta more performant and scalable on a platform level. Example projects include modernizing our CI/CD pipelines, introducing new test frameworks, launching AI-powered dev tools, and scaling developer environments to support a growing engineering team.\n\nThis team has a wide breadth of impact across all of product engineering. The work we do compounds in value by making it easier for engineers to diagnose and solve bugs, streamline workflows, and ship value to our customers quickly and safely.\n\nVanta engineers design and develop new product functionality and infrastructure leveraging modern frameworks and tooling, including TypeScript, React, Node.js, MongoDB, Github Actions, and various AWS services such as Fargate and ECS.\n\nVanta has a kind and talented team, and while some have prior security experience, many have been successful at Vanta without it. We’d love for you to join us!\n\nYou will:\n\n•\nSet direction for critical dev infrastructure, enabling us to stay ahead of continued rapid growth\n\n•\nDesign and build CI and build systems that ensure Vanta engineers can develop and ship robust products quickly and confidently\n\n•\nImprove the efficiency and reliability of our deployment workflows, including tools for hotfixes, rollbacks, and incident mitigation\n\n•\nLead development of tools that accelerate feedback loops — from typechecking and linting to running tests and deploying changes\n\n•\nBuild and maintain scalable development environments, test infrastructure, and core dev tooling\n\n•\nIntroduce and scale AI-enhanced developer tools that help engineers move faster, write better code, and reduce toil\n\n•\nWork with talented and kind engineers to make a significant impact on our customer base, enabling them to improve their security and prove it\n\n•\nContribute to building Vanta’s engineering culture as we grow\n\nHow to be successful in this role:\n\n•\nYou’ve played technical leadership roles on DevEx or platform teams\n\n•\nYou have experience with build systems, CI/CD, and scaling developer workflows in fast-growing environments\n\n•\nYou care deeply about performance, reliability, and usability, especially in tools used daily by engineers\n\n•\nYou’re thoughtful about trade-offs and have good product sense when building internal tools\n\nWhat you can expect as a Vanta'n:\n\n•\nIndustry-Competitive Salary and Equity\n\n•\n100% covered Medical, Dental, and Vision Benefits with Dependents Coverage\n\n•\n16 Weeks Paid Parental Leave for All New Parents (Moms, Dads, Adoptive, Foster)\n\n•\nHealth & Wellness Stipend\n\n•\nRemote Workspace Stipend\n\n•\n401(k) Matching Plan\n\n•\nFlexible Work Hours and Location\n\n•\nOpen & Encouraged PTO Policy\n\n•\n11 Company Paid Holidays\n\n•\nFree Memberships to Online Wellness Platforms (One Medical, Ginger, Headspace, and more!)\n\n•\nVirtual Team Building Activities, Lunch and Learns, and other Company-Wide Events\n\n•\nOffices in SF and NYC with Hubs of Vantans forming across the US, including but not limited to, Seattle, Austin, Indianapolis, LA, Boston, and more!\n\nAt Vanta, we are committed to hiring diverse talent of different backgrounds and as such, it is important to us to provide an inclusive work environment for all. We do not discriminate on the basis of race, gender identity, age, religion, sexual orientation, veteran or disability status, or any other protected class. As an equal opportunity employer, we encourage and welcome people of all backgrounds to apply.\n\nAbout Vanta\n\nWe started in 2018, in the wake of several high-profile data breaches. Online security was only becoming more important, but we knew firsthand how hard it could be for fast-growing companies to invest the time and manpower it takes to build a solid security foundation. Vanta was inspired by a vision to restore trust in internet businesses by enabling companies to improve and prove their security. From our early days automating security monitoring for compliance standards like SOC 2, HIPAA and ISO 27001 to creating the world's leading Trust Management Platform, our vision remains unchanged.\n\nNow more than ever, making security continuous—not just a point-in-time check— is essential. Thousands of companies rely on Vanta to build, maintain and demonstrate their trust— all in a way that's real-time and transparent.\n\nReferral Instructions\n\nIf you are being referred for the role, please contact that person to apply on your behalf.",
+      "url": "https://jobs.ashbyhq.com/vanta/dbd4e02c-0c6c-4031-a658-f57e88ec9943",
+      "applyUrl": "https://jobs.ashbyhq.com/vanta/dbd4e02c-0c6c-4031-a658-f57e88ec9943/application",
+      "postedAt": "2026-03-17T18:17:38.753Z",
+      "contentHash": "1f20d9ffeb702639f6f3d146595c027356327e88",
+      "dedupeKey": "3561e3f889d017d6850d708eba77174730e5df3a",
+      "descriptionRaw": {
+        "sha256": "6bfbd7396d62828dc95d3806233a1c0d1700c39921a3dc591df1f469ed53e7c2",
+        "utf8Bytes": 7343
+      }
+    },
+    {
+      "id": "ashby:vanta:cf4358d4-1f34-40cc-b5b4-31a2e001136f",
+      "source": "ashby",
+      "externalId": "cf4358d4-1f34-40cc-b5b4-31a2e001136f",
+      "companySlug": "vanta",
+      "companyName": "vanta",
+      "title": "Sales Development Representative, Inbound",
+      "locations": [
+        "San Francisco, CA"
+      ],
+      "locationNorm": {
+        "raw": "San Francisco, CA",
+        "city": "San Francisco",
+        "region": "CA",
+        "country": "US",
+        "metro": "bay-area"
+      },
+      "remote": "onsite",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "At Vanta, our mission is to help businesses earn and prove trust. We believe that security should be monitored and verified continuously, and we empower companies to practice better security and prove it with ease. Vanta has a kind and talented team, and while some have prior security experience, many have been successful at Vanta without it.\n\nBeing an SDR at Vanta is, first and foremost, about hitting targets and driving revenue. But beyond that, it’s about joining a community that is deeply committed to your success and career growth. We believe that the future of our sales organization lies with our SDRs, which is why we place a strong emphasis on enablement and career advancement. You’ll receive the training, support, and mentorship you need to excel, with a clear path to advance within our sales team.\n\nThis role is hybrid in office in San Francisco 3 days per week.\n\nVanta is in a period of rapid growth, consistently outpacing our targets while maintaining stellar NPS scores. It’s an incredibly exciting time to join our team. As a Vantan, you’ll be part of a talented group of professionals who are passionate about making an impact. Join us, and you’ll not only help shape the future of internet security but also build a rewarding career in a company that truly values and invests in its people.\n\nIf this sounds like you, and you're excited to join a growing team, we'd love to hear from you.\n\nWhat you’ll do as a Inbound Sales Development Representative at Vanta:\n\n•\nRaise awareness and generate interest for Vanta through cold calling, emails, and social outreach to prospective customers\n\n•\nManage your own book of accounts and set the strategy for effective book management\n\n•\nDevelop a deep understanding of Vanta’s value proposition and products to effectively communicate their benefits to prospects.\n\n•\nMaster the use of tools like Salesforce, ZoomInfo, Outreach, LinkedIn Sales Navigator, and 6Sense to identify and prioritize strategic accounts that support our move upmarket.\n\n•\nOrganize and implement a multi channel prospecting approach, maximizing your outreach efforts by developing and utilizing sequences in Outreach.\n\n•\nSchedule meetings on account executives calendars and ensure all activities are accurately logged for tracking and follow up.\n\nHow to be successful in this role:\n\n•\nHave an enthusiasm for Cold Calling: Cold calling is at the heart of this role. Your excitement for picking up the phone and engaging with potential customers will set you apart.\n\n•\nBe relentless in your Work Ethic: Meeting or exceeding the daily activity minimums of 120 activities requires a strong work ethic. You’ll need to be self-motivated and disciplined, constantly pushing yourself to stay productive and focused.\n\n•\nBe Adaptable and Problem Solve: Every day will bring new challenges, and your ability to adapt and think on your feet is crucial. Whether it’s refining your approach to a tough prospect or finding creative solutions to get in front of decision makers, your problem solving skills will be key.\n\n•\nBe Strategic: Managing your book of accounts requires a strategic mindset. Success comes from not just hitting numbers but also knowing which accounts to prioritize and how to tailor your approach to each one.\n\n•\nTake a Multichannel Approach: Success in this role also involves mastering the tools and processes for multichannel prospecting. You’ll need to be organized, efficient, and creative in developing sequences that maximize your outreach efforts across all channels.\n\nWhat you can expect as a Vantan:\n\n•\nIndustry-competitive compensation\n\n•\n100% covered medical, dental, and vision benefits with dependents coverage\n\n•\n16 weeks fully-paid parental Leave for all new parents\n\n•\nHealth & wellness and remote workplace stipends\n\n•\nFamily planning benefits\n\n•\n401(k) matching\n\n•\nFlexible work hours and location\n\n•\nOpen PTO policy\n\n•\n11 paid holidays in the US\n\n•\nOffices in SF, NYC, Dublin, and Sydney\n\nTo provide greater transparency to candidates, we share base pay ranges for all US-based job postings regardless of state. We set standard base pay ranges for all roles based on function, level, and country location, benchmarked against similar-stage growth companies. Final offer amounts are determined by multiple factors and may vary based on candidate location, skills, depth of work experience, and relevant licenses/credentials.\n\n#LI-SF\n\nAt Vanta, we are committed to hiring diverse talent of different backgrounds and as such, it is important to us to provide an inclusive work environment for all. We do not discriminate on the basis of race, gender identity, age, religion, sexual orientation, veteran or disability status, or any other protected class. As an equal opportunity employer, we encourage and welcome people of all backgrounds to apply.\n\nAbout Vanta\n\nWe started in 2018, in the wake of several high-profile data breaches. Online security was only becoming more important, but we knew firsthand how hard it could be for fast-growing companies to invest the time and manpower it takes to build a solid security foundation. Vanta was inspired by a vision to restore trust in internet businesses by enabling companies to improve and prove their security. From our early days automating security monitoring for compliance standards like SOC 2, HIPAA and ISO 27001 to creating the world's leading Trust Management Platform, our vision remains unchanged.\n\nNow more than ever, making security continuous—not just a point-in-time check— is essential. Thousands of companies rely on Vanta to build, maintain and demonstrate their trust— all in a way that's real-time and transparent.\n\nReferral Instructions\n\nIf you are being referred for the role, please contact that person to apply on your behalf.",
+      "url": "https://jobs.ashbyhq.com/vanta/cf4358d4-1f34-40cc-b5b4-31a2e001136f",
+      "applyUrl": "https://jobs.ashbyhq.com/vanta/cf4358d4-1f34-40cc-b5b4-31a2e001136f/application",
+      "postedAt": "2026-07-17T20:18:58.727Z",
+      "contentHash": "7a1fd08bfeea8193ae557f447795976339ae2cd0",
+      "dedupeKey": "8576ceecb21101d4cedec35a4b366223c2eba602",
+      "descriptionRaw": {
+        "sha256": "6734bec970a3e261801f711b177f2f42da1af9d0161a27b5b3e2115bd93d5253",
+        "utf8Bytes": 7855
+      }
+    },
+    {
+      "id": "ashby:vanta:7e8b02ec-cf23-41de-87c7-3910459f34a2",
+      "source": "ashby",
+      "externalId": "7e8b02ec-cf23-41de-87c7-3910459f34a2",
+      "companySlug": "vanta",
+      "companyName": "vanta",
+      "title": "Account Executive, Early Stage - EMEA",
+      "locations": [
+        "Dublin, Ireland"
+      ],
+      "locationNorm": {
+        "raw": "Dublin, Ireland",
+        "city": "Dublin",
+        "region": "Ireland",
+        "country": null,
+        "metro": null
+      },
+      "remote": "hybrid",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "At Vanta, our mission is to help businesses earn and prove trust. We believe that security should be monitored and verified continuously, and we empower companies to practice better security and prove it with ease. Vanta has a kind and talented team, and while some have prior security experience, many have been successful at Vanta without it.\n\nVanta is growing fast—we’re profitable, consistently exceeding our growth targets, and maintaining exceptionally strong NPS scores along the way. Our momentum is driven by a clear mission: to secure the internet and help startups scale with trust. As the category leader in compliance and security automation, we’re capturing market share rapidly, and our Sales team is at the forefront of that charge.\n\nTo support this continued growth, we’re expanding our Early Stage Sales team. We’re looking for high-energy, customer-focused Account Executives who thrive in high-volume, fast-paced environments and are motivated by the challenge of turning velocity into results. In this role, you’ll take full ownership of the sales cycle—from first touch to close—and play a critical role in positioning Vanta as the go-to solution for early-stage companies navigating security and compliance for the first time.\n\nThis is a highly transactional, new business role where success comes from running a tight, repeatable process and maintaining a high daily output.\n\nIf you love the energy of working with startups, are driven to outperform targets, and want to make a tangible impact in a rapidly scaling business, we’d love to hear from you.\n\nThis role will be based in our Dublin office with an office-centric hybrid schedule. The standard in-office days are Tuesday, Wednesday, and Thursday.\n\nWhat you’ll do as an Account Executive, Early Stage - EMEA at Vanta:\n\n•\nIdentify high-potential business verticals to develop and execute outbound strategies to engage them with Vanta.\n\n•\nManage the entire sales cycle, from initial contact to contract negotiation and closing, with a focus on speed and efficiency, aiming to close deals within a 30-day timeframe.\n\n•\nTurn our inbound demand into closed-won business quickly and consistently, working across a large number of prospects\n\n•\nOperate in a fast-paced, transactional sales environment, running a high number of discovery calls and managing a broad pipeline of opportunities simultaneously.\n\n•\nContinuously optimize your sales workflow to maintain high activity levels, improve conversion, and deliver repeatable results.\n\n•\nDefine and communicate the value of Vanta to prospects, including tailoring sales materials and demos to resonate with early-stage startup buyers\n\n•\nSurface product feedback and trends from prospects to inform go-to-market and product development strategies.\n\nHow to be successful in this role:\n\n•\nHave 12+ months in a closing and quota-carrying role, while consistently exceeding monthly and quarterly sales targets\n\n•\nExperience in B2B SaaS, ideally focused on SMB or early-stage startups, where short deal cycles and high activity are the norm\n\n•\nThrive in high-velocity sales environments and are energized by repetition, fast decision-making, and a transactional approach to deal flow\n\n•\nBe highly empathetic to customers, with a proven track record of long-term customer retention.\n\n•\nPossess the technical competency to understand Vanta’s software and build great relationships with highly technical prospects.\n\n•\nHave stellar problem-solving chops, and an enthusiasm for making a large impact early on at a start-up.\n\n•\nYou’re intrinsically motivated, proactive, and resourceful—comfortable taking initiative without needing direction\n\n•\nOpen to using AI to amplify their skills and strengthen their work - demonstrating curiosity, a willingness to learn, and sound judgment in applying AI responsibly to improve efficiency and impact\n\nWhat you can expect as a Vanta'n in Ireland:\n\n•\nIndustry-competitive salary and equity\n\n•\nComprehensive medical, dental, and vision coverage, with 100% of employee-only benefit premiums covered for most medical plans\n\n•\n16 weeks fully-paid Parental Leave for all new parents\n\n•\nHealth & wellness stipend\n\n•\nRemote workspace, internet, and cellphone stipend\n\n•\nCommuter benefits for team members who report to the SF and NYC office\n\n•\nFamily planning benefits\n\n•\nMatching 401(k) contribution with immediate vesting\n\n•\nFlexible PTO policy, plus 80 hours of Sick Time\n\n•\n11 company-paid holidays\n\n•\nVirtual team building activities, lunch and learns, and other company-wide events!\n\n•\nOffices in SF, NYC, London, Dublin, Tel Aviv, and Sydney\n\n#LI-hybrid\n\nAt Vanta, we are committed to hiring diverse talent of different backgrounds and as such, it is important to us to provide an inclusive work environment for all. We do not discriminate on the basis of race, gender identity, age, religion, sexual orientation, veteran or disability status, or any other protected class. As an equal opportunity employer, we encourage and welcome people of all backgrounds to apply.\n\nAbout Vanta\n\nWe started in 2018, in the wake of several high-profile data breaches. Online security was only becoming more important, but we knew firsthand how hard it could be for fast-growing companies to invest the time and manpower it takes to build a solid security foundation. Vanta was inspired by a vision to restore trust in internet businesses by enabling companies to improve and prove their security. From our early days automating security monitoring for compliance standards like SOC 2, HIPAA and ISO 27001 to creating the world's leading Trust Management Platform, our vision remains unchanged.\n\nNow more than ever, making security continuous—not just a point-in-time check— is essential. Thousands of companies rely on Vanta to build, maintain and demonstrate their trust— all in a way that's real-time and transparent.\n\nReferral Instructions\n\nIf you are being referred for the role, please contact that person to apply on your behalf.",
+      "url": "https://jobs.ashbyhq.com/vanta/7e8b02ec-cf23-41de-87c7-3910459f34a2",
+      "applyUrl": "https://jobs.ashbyhq.com/vanta/7e8b02ec-cf23-41de-87c7-3910459f34a2/application",
+      "postedAt": "2026-06-25T09:59:57.840Z",
+      "contentHash": "e73ab59c9650e565733a50c29757373f1717a878",
+      "dedupeKey": "93bafbc8f426a731ae327bbd5cc48a1c0f1e83c2",
+      "descriptionRaw": {
+        "sha256": "09b4d9a2742a1b64c27f140007a0876067c6dd7b17221e2b24bbdb6c76db90c6",
+        "utf8Bytes": 8297
+      }
+    },
+    {
+      "id": "ashby:vanta:1513e1ac-5dca-4acb-a99d-8b5461115651",
+      "source": "ashby",
+      "externalId": "1513e1ac-5dca-4acb-a99d-8b5461115651",
+      "companySlug": "vanta",
+      "companyName": "vanta",
+      "title": "Senior Fullstack Software Engineer, GRC",
+      "locations": [
+        "Remote U.S."
+      ],
+      "locationNorm": {
+        "raw": "Remote U.S.",
+        "city": "Remote U.S.",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "remote",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": 195000,
+        "max": 229000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "descriptionText": "At Vanta, our mission is to help businesses earn and prove trust. We believe that security should be monitored and verified continuously, and we empower companies to practice better security and prove it with ease. Vanta has a kind and talented team, and while some have prior security experience, many have been successful at Vanta without it.\n\nOur Senior Software Engineers lead and mentor engineers, delivering high-value products for our customers and infrastructure that enables our business to scale.\n\nVanta’s team and technology surface are growing quickly, and it’s essential that we invest in the right abstractions and systems to enable us to scale with our business. As a Senior Software Engineer, you’ll be responsible for setting technical direction to enable our product and infrastructure to scale with our business, driving complex projects across our technical stack, and mentoring our talented engineering team. Your past experience will be leveraged to enable and accelerate Vanta’s growth.\n\nOur business has found incredible product-market fit and has monetized effectively since the day we signed our first customer. We’re growing at a blistering pace, which presents career-defining opportunities for engineers to accelerate their growth and to contribute to a rapidly-scaling company.\n\nVisit our Vanta Engineering Blog to learn more about what our team is working on!\n\nThe GRC (Governance, Risk and Compliance) organization is the primary org responsible for developing and maintaining Vanta's core product offerings. These teams are at the heart of Vanta moving upmarket to support enterprise customers and build products that enable our customers’ existing security and compliance programs to integrate seamlessly with Vanta, giving them invaluable insights and recommendations to continue to operate, mature and evolve their programs.\n\nWhat you’ll do as a Senior Software Engineer at Vanta:\n\n•\nLead complex projects with multiple stakeholders and engineers to deliver significant impact to our business\n\n•\nSet direction for critical technical surface areas, enabling us to stay ahead of continued rapid growth\n\n•\nDesign, develop, and own new product functionality and/or infrastructure leveraging modern frameworks and tooling (TypeScript, React, Node.js)\n\n•\nWork with talented and kind engineers to make a significant impact on our customer base, enabling them to improve their security and prove it\n\n•\nContribute to building Vanta’s engineering culture as we grow\n\nHow to be successful in this role:\n\n•\nHave at least 5 years of industry experience\n\n•\nHave played technical leadership roles for teams or complex projects\n\n•\nHave previous startup experience, or worked in an environment that prioritizes a bias for action\n\n•\nHave previous experience working on greenfield projects\n\n•\nHave an interest in learning about security or prior experience in the space\n\nWhat you can expect as a US-based Vanta'n:\n\n•\nIndustry-competitive salary and equity\n\n•\nComprehensive medical, dental, and vision coverage, with 100% of employee-only benefit premiums covered for most medical plans\n\n•\n16 weeks paid Parental Leave for all new parents\n\n•\nHealth & wellness stipend\n\n•\nRemote workspace, internet, and cellphone stipend\n\n•\nCommuter benefits for team members who report to the SF and NYC office\n\n•\nFamily planning benefits\n\n•\nMatching 401(k) contribution with immediate vesting\n\n•\nFlexible PTO policy, plus 80 hours of Sick Time\n\n•\n11 company-paid holidays\n\n•\nVirtual team building activities, lunch and learns, and other company-wide events!\n\n•\nOffices in SF, NYC, London, Dublin, Tel Aviv, and Sydney\n\nTo provide greater transparency to candidates, we share base pay ranges for all US-based job postings regardless of state. We set standard base pay ranges for all roles based on function, level, and country location, benchmarked against similar-stage growth companies. Final offer amounts are determined by multiple factors and may vary based on candidate location, skills, depth of work experience, and relevant licenses/credentials.\n\n#LI-Remote\n\nAt Vanta, we are committed to hiring diverse talent of different backgrounds and as such, it is important to us to provide an inclusive work environment for all. We do not discriminate on the basis of race, gender identity, age, religion, sexual orientation, veteran or disability status, or any other protected class. As an equal opportunity employer, we encourage and welcome people of all backgrounds to apply.\n\nAbout Vanta\n\nWe started in 2018, in the wake of several high-profile data breaches. Online security was only becoming more important, but we knew firsthand how hard it could be for fast-growing companies to invest the time and manpower it takes to build a solid security foundation. Vanta was inspired by a vision to restore trust in internet businesses by enabling companies to improve and prove their security. From our early days automating security monitoring for compliance standards like SOC 2, HIPAA and ISO 27001 to creating the world's leading Trust Management Platform, our vision remains unchanged.\n\nNow more than ever, making security continuous—not just a point-in-time check— is essential. Thousands of companies rely on Vanta to build, maintain and demonstrate their trust— all in a way that's real-time and transparent.\n\nReferral Instructions\n\nIf you are being referred for the role, please contact that person to apply on your behalf.",
+      "url": "https://jobs.ashbyhq.com/vanta/1513e1ac-5dca-4acb-a99d-8b5461115651",
+      "applyUrl": "https://jobs.ashbyhq.com/vanta/1513e1ac-5dca-4acb-a99d-8b5461115651/application",
+      "postedAt": "2025-03-13T22:25:56.507Z",
+      "contentHash": "bb4f9f84248a01a3e952016bd1b1ca5e6a139fab",
+      "dedupeKey": "88daa82f20acd4e302579e0ada7fd4eadc19a644",
+      "descriptionRaw": {
+        "sha256": "508dd9c35eb5c98c0d0aa187ad1f12adb94d1c6e3f01223ffcd79d64a46d4e08",
+        "utf8Bytes": 7789
+      }
+    }
+  ]
+}

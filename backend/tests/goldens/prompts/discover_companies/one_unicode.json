@@ -1,0 +1,10 @@
+{
+  "builder": "discover_companies",
+  "case": "one_unicode",
+  "input": {
+    "description": "Fintechs in Zürich — “Series B” or later",
+    "count": 1
+  },
+  "instructions": "You name real companies matching a description. Only companies you are confident actually exist. No descriptions of what they might be called — exact names as they are commonly written.",
+  "prompt": "Name up to 1 companies matching: Fintechs in Zürich — “Series B” or later"
+}

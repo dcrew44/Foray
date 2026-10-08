@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dana Reyes — Resume</title>
+<style>
+@page { size: Letter; margin: 0.5in 0.6in; }
+
+:root {
+  --ink: #1b211e;
+  --body: #2b312e;
+  --muted: #5f6964;
+  --faint: #9aa8a1;
+  --rule: #b9cbc2;
+  --accent: #1E5C45;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--body);
+  font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  hyphens: manual;
+  overflow-wrap: break-word;
+}
+
+/* Sizes live in variables so the compact density is a handful of overrides
+   rather than a second stylesheet. */
+.page {
+  --size: 10pt;
+  --small: 9.25pt;
+  --leading: 1.3;
+  --name: 22pt;
+  --gap-masthead: 10pt;
+  --gap-section: 10pt;
+  --gap-heading: 5pt;
+  --gap-entry: 7pt;
+  --gap-bullet: 1.5pt;
+  font-size: var(--size);
+  line-height: var(--leading);
+}
+
+.page.compact {
+  --size: 9.5pt;
+  --small: 8.75pt;
+  --leading: 1.26;
+  --name: 20pt;
+  --gap-masthead: 8pt;
+  --gap-section: 8pt;
+  --gap-heading: 4pt;
+  --gap-entry: 5pt;
+  --gap-bullet: 1pt;
+}
+
+p, h1, h2, ul { margin: 0; }
+
+a { color: inherit; text-decoration: none; }
+
+.masthead + .section { margin-top: var(--gap-masthead); }
+
+.name {
+  color: var(--ink);
+  font-size: var(--name);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.headline {
+  margin-top: 2pt;
+  font-size: calc(var(--size) + 1pt);
+}
+
+.contact {
+  color: var(--muted);
+  font-size: var(--small);
+}
+.name + .contact, .headline + .contact { margin-top: 4pt; }
+.contact + .contact { margin-top: 1pt; }
+
+.sep { color: var(--rule); }
+.contact .sep { color: var(--faint); }
+
+.section { margin-top: var(--gap-section); }
+
+.section > h2 {
+  color: var(--accent);
+  font-size: 8.75pt;
+  font-weight: 700;
+  /* Tracking above ~0.1em makes PDF text extraction read "S U M M A R Y",
+     and a parser that cannot find the section headings cannot parse the
+     resume. */
+  letter-spacing: 0.07em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  padding-bottom: 2.5pt;
+  margin-bottom: var(--gap-heading);
+  border-bottom: 0.6pt solid var(--rule);
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.entry, .skills, .summary {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.entry + .entry { margin-top: var(--gap-entry); }
+
+.entry-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12pt;
+}
+
+.entry-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+}
+
+.role { font-weight: 700; color: var(--ink); }
+.where { color: var(--muted); }
+
+.dates {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: var(--small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.entry-summary { margin-top: 1pt; }
+
+.bullets {
+  margin-top: 2pt;
+  padding-left: 11pt;
+  list-style: none;
+}
+
+.bullets > li + li { margin-top: var(--gap-bullet); }
+
+/* The bullet is a real glyph, so extracted text still shows where one bullet
+   ends and the next begins, and it stays in normal flow: anything positioned
+   is painted after the rest of the page, which puts every bullet at the end
+   of the PDF's text layer — the order an ATS reads it in. */
+.bullets > li::before {
+  content: "\2022";
+  display: inline-block;
+  width: 9pt;
+  margin-left: -9pt;
+  color: var(--accent);
+}
+
+.skills-row + .skills-row { margin-top: var(--gap-bullet); }
+.skills-label { color: var(--ink); font-weight: 700; }
+
+@media screen {
+  html { background: #e8ece9; }
+  body { background: transparent; }
+  .page {
+    width: 8.5in;
+    min-height: 11in;
+    margin: 24px auto;
+    padding: 0.5in 0.6in;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(20, 30, 25, 0.08), 0 8px 28px rgba(20, 30, 25, 0.10);
+  }
+}
+
+@media screen and (max-width: 8.75in) {
+  html { background: #ffffff; }
+  .page {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 28px 24px;
+    box-shadow: none;
+  }
+}
+
+@media print {
+  html, body { background: #ffffff; }
+  .page { width: auto; margin: 0; padding: 0; box-shadow: none; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+<header class="masthead">
+<h1 class="name">Dana Reyes</h1>
+<p class="headline">Backend engineer</p>
+<p class="contact">Sacramento, CA<span class="sep" aria-hidden="true"> · </span><a href="mailto:dana@example.com">dana@example.com</a><span class="sep" aria-hidden="true"> · </span><a href="tel:55501342087">(555) 0134-2087</a><span class="sep" aria-hidden="true"> · </span><a href="https://github.com/dana">github.com/dana</a><span class="sep" aria-hidden="true"> · </span><a href="https://www.linkedin.com/in/dana/">linkedin.com/in/dana</a></p>
+</header>
+<section class="section" aria-labelledby="h-summary">
+<h2 id="h-summary">Summary</h2>
+<p class="summary">Backend-leaning engineer who likes boring, reliable systems.</p>
+</section>
+<section class="section" aria-labelledby="h-experience">
+<h2 id="h-experience">Experience</h2>
+<article class="entry">
+<div class="entry-head"><p class="entry-title"><strong class="role">Software Engineer II</strong><span class="sep" aria-hidden="true"> · </span>Kestrel Logistics Group<span class="sep" aria-hidden="true"> · </span><span class="where">Sacramento, CA</span></p><p class="dates">March 2023 – Present</p></div><p class="entry-summary">Owns the shipment-tracking API.</p><ul class="bullets"><li>Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.</li><li>Rebuilt the ingestion service in Go; it now handles 2.3M events a day.</li><li>Mentored two interns through their first production launches.</li></ul>
+</article>
+<article class="entry">
+<div class="entry-head"><p class="entry-title"><strong class="role">Software Engineer</strong><span class="sep" aria-hidden="true"> · </span>Café Numérique<span class="sep" aria-hidden="true"> · </span><span class="where">Montréal, QC</span></p><p class="dates">June 2021 – February 2023</p></div><ul class="bullets"><li>Built the PostgreSQL schema for the loyalty programme.</li><li>Wrote the Python ETL that feeds the finance dashboards.</li></ul>
+</article>
+</section>
+<section class="section" aria-labelledby="h-projects">
+<h2 id="h-projects">Projects</h2>
+<article class="entry">
+<div class="entry-head"><p class="entry-title"><strong class="role">Tideline</strong><span class="sep" aria-hidden="true"> · </span><span class="where"><a href="https://github.com/dana/tideline">github.com/dana/tideline</a></span></p><p class="dates">2022</p></div><p class="entry-summary">A CLI for tide forecasts.</p><ul class="bullets"><li>Used by 1,200 sailors.</li></ul>
+</article>
+</section>
+<section class="section" aria-labelledby="h-education">
+<h2 id="h-education">Education</h2>
+<article class="entry">
+<div class="entry-head"><p class="entry-title"><strong class="role">B.S. in Computer Science</strong><span class="sep" aria-hidden="true"> · </span>Bellwater State University<span class="sep" aria-hidden="true"> · </span><span class="where">3.7 GPA</span></p><p class="dates">2017 – 2021</p></div><ul class="bullets"><li>Dean’s list, 2019–2021</li></ul>
+</article>
+</section>
+<section class="section" aria-labelledby="h-skills">
+<h2 id="h-skills">Skills</h2>
+<div class="skills"><p class="skills-row"><span class="skills-label">Languages:</span> TypeScript, Go, Python</p><p class="skills-row"><span class="skills-label">Data:</span> PostgreSQL, Redis</p><p class="skills-row"><span class="skills-label">Other:</span> Docker</p></div>
+</section>
+</main>
+</body>
+</html>

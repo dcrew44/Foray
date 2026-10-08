@@ -1,0 +1,15 @@
+{
+  "fixture": "lever/_not-found.txt",
+  "request": "https://api.lever.co/v0/postings/foray-no-such-company-xyz123?mode=json",
+  "response": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":false,\"error\":\"Document not found\"}"
+  },
+  "outcome": {
+    "error": {
+      "name": "BoardNotFoundError",
+      "message": "No lever board for slug \"foray-no-such-company-xyz123\""
+    }
+  }
+}

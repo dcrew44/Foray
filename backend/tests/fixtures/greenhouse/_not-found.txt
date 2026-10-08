@@ -1,0 +1,15 @@
+GET https://boards-api.greenhouse.io/v1/boards/foray-no-such-company-xyz123/jobs?content=true
+User-Agent: Foray/0.1 (job search agent; local development)
+
+HTTP/2 404
+content-type: application/json
+content-length: 38
+
+{"status":404,"error":"Job not found"}
+
+Notes:
+- Unknown board slug => HTTP 404 with a JSON error body. Note the message says
+  "Job not found" even though the board (not a job) is what is missing.
+- An existing-but-empty board is NOT this: it returns HTTP 200 with
+  {"jobs": [], "meta": {"total": 0}}.
+- Detect "board does not exist" by status code 404, not by an empty jobs array.

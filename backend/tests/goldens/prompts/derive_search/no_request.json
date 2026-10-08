@@ -1,0 +1,26 @@
+{
+  "builder": "derive_search",
+  "case": "no_request",
+  "input": {
+    "preferences": {
+      "target_roles": [
+        "Software engineer"
+      ],
+      "seniority": "entry",
+      "locations": [
+        "Zürich",
+        "München"
+      ],
+      "remote_pref": "any",
+      "salary_floor": null,
+      "work_auth": "EU citizen",
+      "start_date": null,
+      "must_haves": null,
+      "dealbreakers": null
+    },
+    "request": null,
+    "hints": null
+  },
+  "instructions": "You turn a job search request into a brief and title-matching terms for a database query.\n\nThe person has saved preferences for what they generally want. A request may ask for\nsomething narrower or different for this one search, and the request wins wherever it\nsays something.\n\nFirst, the brief: only what the request itself states. Anything it does not mention is\nnull, and the saved preference applies.\n- roles: the kinds of role asked for, as short titles (\"software engineer\", \"data\n  analyst\"). \"Developer positions\" is roles. Null if the request names none.\n- seniority: intern, new_grad, entry, mid, senior or staff_plus when the request states\n  a level. \"Entry-level\", \"junior\", \"early career\", \"most junior-friendly\" and \"least\n  experience\" are entry; \"new grad\" or \"university grad\" is new_grad. Null otherwise.\n- locations: places the request names. Null otherwise.\n- remote: remote, hybrid, onsite or any, only when the request says so.\n- companies: company names the request limits the search to (\"at Anthropic\",\n  \"Stripe or Plaid\"), as written. Null otherwise.\n- focus: anything else in the request that should shape the ranking (\"lowest\n  experience requirements first\", \"fintech only\"), in one short sentence. Null if none.\n\nThen the title terms, for the effective search: the brief where it says something, the\nsaved preferences everywhere else.\n- title_include: the job titles this search would accept, as short lowercase phrases,\n  without a level word: \"backend engineer\", not \"senior backend engineer\" (many\n  companies never put the level in a title). Include the obvious synonyms and word\n  orders a company might use (\"software engineer, backend\"). Err wide: a later scoring\n  pass judges fit, and anything excluded here is never seen again.\n  For an entry-level or new-grad search, also include the early-career titles roles in\n  that discipline carry: new grad, junior, associate, early career, residency,\n  apprenticeship and fellowship programs.\n- title_exclude: titles that are clearly wrong for this search: the wrong discipline,\n  or a seniority it did not ask for. For an entry-level or new-grad search, exclude\n  senior, staff, principal, lead, manager and director titles, and never exclude\n  early-career titles. For a senior search, exclude intern and new-grad titles. Never\n  exclude something merely adjacent.\n- keywords: technologies and domain words a good match's description would contain.\n  Used for ranking, not filtering.\n\nReturn lowercase plain phrases for the title terms, not regex syntax.",
+  "prompt": "Saved preferences:\n{\n  \"target_roles\": [\n    \"Software engineer\"\n  ],\n  \"seniority\": \"entry\",\n  \"locations\": [\n    \"Zürich\",\n    \"München\"\n  ],\n  \"remote_pref\": \"any\",\n  \"salary_floor\": null,\n  \"work_auth\": \"EU citizen\",\n  \"start_date\": null,\n  \"must_haves\": null,\n  \"dealbreakers\": null\n}\n\nThis search request: none. Search with the saved preferences; every brief field is null."
+}

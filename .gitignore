@@ -19,6 +19,9 @@ build/
 
 # runtime data (uploads, rendered PDFs) — see STORAGE_DIR
 data/
+# the Django store and the migration backups (STORAGE_DIR, BACKUP_DIR)
+/storage/
+/backups/
 
 # test output
 coverage/

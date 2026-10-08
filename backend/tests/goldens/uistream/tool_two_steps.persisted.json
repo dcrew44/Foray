@@ -1,0 +1,42 @@
+{
+  "id": "asst_tool_two_steps",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Let me look.",
+      "state": "done"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_1",
+      "state": "output-available",
+      "input": {
+        "limit": 2
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "One match: Backend Engineer at Café Numérique.",
+      "state": "done"
+    }
+  ]
+}

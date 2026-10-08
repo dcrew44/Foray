@@ -1,0 +1,17 @@
+GET https://api.ashbyhq.com/posting-api/job-board/foray-no-such-company-xyz123?includeCompensation=true
+User-Agent: Foray/0.1 (job search agent; local development)
+
+HTTP/2 404
+content-type: text/plain; charset=utf-8
+content-length: 9
+
+Not Found
+
+Notes:
+- Unknown job-board slug => HTTP 404 with a PLAIN TEXT body, not JSON.
+  Parsing the body as JSON will throw; branch on the status code first.
+- An existing-but-empty board returns HTTP 200 with a normal JSON envelope:
+  {"jobs":[],"apiVersion":"1"}   (observed for slug "deel").
+  Note apiVersion is the STRING "1" in that empty response, whereas populated
+  boards (linear, posthog, vanta, openai) return the NUMBER 1. Type it loosely.
+- Detect "board does not exist" by status 404, not by an empty jobs array.

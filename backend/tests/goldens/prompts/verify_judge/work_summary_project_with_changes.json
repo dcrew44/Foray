@@ -1,0 +1,276 @@
+{
+  "builder": "verify_judge",
+  "case": "work_summary_project_with_changes",
+  "input": {
+    "base": {
+      "basics": {
+        "name": "Dana Reyes",
+        "headline": "Backend engineer",
+        "email": "dana@example.com",
+        "phone": "(555) 0134-2087",
+        "location": "Sacramento, CA",
+        "links": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "source": "resume",
+            "label": "GitHub",
+            "url": "github.com/dana"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "source": "resume",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/dana/"
+          }
+        ]
+      },
+      "summary": "Backend-leaning engineer who likes boring, reliable systems.",
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "source": "resume",
+          "company": "Kestrel Logistics Group",
+          "position": "Software Engineer II",
+          "location": "Sacramento, CA",
+          "startDate": "March 2023",
+          "endDate": "Present",
+          "summary": "Owns the shipment-tracking API.",
+          "highlights": [
+            "Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.",
+            "Rebuilt the ingestion service in Go; it now handles 2.3M events a day.",
+            "Mentored two interns through their first production launches."
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "source": "resume",
+          "company": "Café Numérique",
+          "position": "Software Engineer",
+          "location": "Montréal, QC",
+          "startDate": "June 2021",
+          "endDate": "February 2023",
+          "highlights": [
+            "Built the PostgreSQL schema for the loyalty programme.",
+            "Wrote the Python ETL that feeds the finance dashboards."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "source": "resume",
+          "institution": "Bellwater State University",
+          "area": "Computer Science",
+          "studyType": "B.S.",
+          "startDate": "2017",
+          "endDate": "2021",
+          "score": "3.7 GPA",
+          "highlights": [
+            "Dean’s list, 2019–2021"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "source": "resume",
+          "name": "Tideline",
+          "description": "A CLI for tide forecasts.",
+          "url": "github.com/dana/tideline",
+          "startDate": "2022",
+          "highlights": [
+            "Used by 1,200 sailors."
+          ]
+        }
+      ],
+      "skills": [
+        {
+          "id": "00000000-0000-4000-8000-000000000041",
+          "source": "resume",
+          "name": "TypeScript",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000042",
+          "source": "resume",
+          "name": "Go",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000043",
+          "source": "resume",
+          "name": "PostgreSQL",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000044",
+          "source": "resume",
+          "name": "Redis",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000045",
+          "source": "resume",
+          "name": "Python",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000046",
+          "source": "resume",
+          "name": "Docker"
+        }
+      ]
+    },
+    "tailored": {
+      "basics": {
+        "name": "Dana Reyes",
+        "headline": "Backend engineer",
+        "email": "dana@example.com",
+        "phone": "(555) 0134-2087",
+        "location": "Sacramento, CA",
+        "links": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "source": "resume",
+            "label": "GitHub",
+            "url": "github.com/dana"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "source": "resume",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/dana/"
+          }
+        ]
+      },
+      "summary": "Backend engineer who builds reliable systems in Go and PostgreSQL.",
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "source": "resume",
+          "company": "Kestrel Logistics Group",
+          "position": "Software Engineer II",
+          "location": "Sacramento, CA",
+          "startDate": "March 2023",
+          "endDate": "Present",
+          "summary": "Owns the shipment-tracking API.",
+          "highlights": [
+            "Moved hot reads to a Redis cache, cutting p95 latency from 840 ms to 190 ms.",
+            "Rebuilt the ingestion service in Go; it now handles 2.3M events a day.",
+            "Guided two interns through their first production launches."
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "source": "resume",
+          "company": "Café Numérique",
+          "position": "Software Engineer",
+          "location": "Montréal, QC",
+          "startDate": "June 2021",
+          "endDate": "February 2023",
+          "highlights": [
+            "Designed the PostgreSQL schema behind the loyalty programme.",
+            "Wrote the Python ETL that feeds the finance dashboards."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "source": "resume",
+          "institution": "Bellwater State University",
+          "area": "Computer Science",
+          "studyType": "B.S.",
+          "startDate": "2017",
+          "endDate": "2021",
+          "score": "3.7 GPA",
+          "highlights": [
+            "Dean’s list, 2019–2021"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "source": "resume",
+          "name": "Tideline",
+          "description": "A command-line tool for tide forecasts.",
+          "url": "github.com/dana/tideline",
+          "startDate": "2022",
+          "highlights": [
+            "Used by 1,200 sailors."
+          ]
+        }
+      ],
+      "skills": [
+        {
+          "id": "00000000-0000-4000-8000-000000000041",
+          "source": "resume",
+          "name": "TypeScript",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000042",
+          "source": "resume",
+          "name": "Go",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000043",
+          "source": "resume",
+          "name": "PostgreSQL",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000044",
+          "source": "resume",
+          "name": "Redis",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000045",
+          "source": "resume",
+          "name": "Python",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000046",
+          "source": "resume",
+          "name": "Docker"
+        }
+      ]
+    },
+    "changes": [
+      {
+        "section": "work",
+        "item_id": "00000000-0000-4000-8000-000000000011",
+        "before": "Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.",
+        "after": "Moved hot reads to a Redis cache, cutting p95 latency from 840 ms to 190 ms.",
+        "reason": "Lead with the outcome.",
+        "evidence_fact_ids": [
+          "00000000-0000-4000-8000-000000000011"
+        ]
+      },
+      {
+        "section": "work",
+        "item_id": "00000000-0000-4000-8000-000000000011",
+        "before": "Mentored two interns through their first production launches.",
+        "after": "Guided two interns through their first production launches.",
+        "reason": "Plainer verb.",
+        "evidence_fact_ids": [
+          "00000000-0000-4000-8000-000000000011"
+        ]
+      },
+      {
+        "section": "summary",
+        "item_id": null,
+        "before": "Backend-leaning engineer who likes boring, reliable systems.",
+        "after": "Backend engineer who builds reliable systems in Go and PostgreSQL.",
+        "reason": "Name the stack.",
+        "evidence_fact_ids": []
+      }
+    ]
+  },
+  "instructions": "You audit a tailored resume line by line against the candidate's original resume. The original is the only source of truth about the candidate.\n\nFor each claim, decide whether the ORIGINAL ITEM it belongs to supports it. For summary claims, the whole original resume is the evidence.\n\nSupported: every fact in the claim is stated in, or directly and unambiguously implied by, the evidence. Rewording, shortening, reordering, merging facts from the same item, and an equivalent term (\"Postgres\" for \"PostgreSQL\", \"built\" for \"implemented\") are all fine.\n\nUnsupported, if the claim has any of these:\n- a tool, technology, language, framework, method, domain or skill the evidence does not mention for this item;\n- a number, metric, percentage, team size, duration, scale or date the evidence does not state — including numbers computed from the evidence (\"840 ms to 190 ms\" is not \"77% faster\");\n- an outcome, impact, customer or scope the evidence does not state;\n- more ownership or seniority than the evidence shows (\"contributed to\" is not \"led\", \"helped\" is not \"owned\", \"worked with\" is not \"managed\");\n- a fact that comes from a different item of the resume.\n\nBe strict: when unsure, it is unsupported. The candidate will send this resume to employers under their own name.\n\nreason: for an unsupported claim, one short sentence naming exactly what is not supported, e.g. \"The original does not mention Kubernetes.\" For a supported claim, null.\nReturn one verdict for every claim id.\n\n<original_resume>\nName: Dana Reyes\nHeadline: Backend engineer\nLocation: Sacramento, CA\nEmail: dana@example.com\nLinks: GitHub github.com/dana, LinkedIn https://www.linkedin.com/in/dana/\n\nSUMMARY\nBackend-leaning engineer who likes boring, reliable systems.\n\nEXPERIENCE\n[00000000-0000-4000-8000-000000000011] Software Engineer II — Kestrel Logistics Group (Sacramento, CA)\n  March 2023 – Present · source: resume\n  Owns the shipment-tracking API.\n  • Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.\n  • Rebuilt the ingestion service in Go; it now handles 2.3M events a day.\n  • Mentored two interns through their first production launches.\n\n[00000000-0000-4000-8000-000000000012] Software Engineer — Café Numérique (Montréal, QC)\n  June 2021 – February 2023 · source: resume\n  • Built the PostgreSQL schema for the loyalty programme.\n  • Wrote the Python ETL that feeds the finance dashboards.\n\nEDUCATION\n[00000000-0000-4000-8000-000000000021] B.S. Computer Science — Bellwater State University (2017 – 2021) · 3.7 GPA\n\nPROJECTS\n[00000000-0000-4000-8000-000000000031] Tideline — github.com/dana/tideline\n  A CLI for tide forecasts.\n  • Used by 1,200 sailors.\n\nSKILLS\nLanguages: TypeScript, Go, Python\nData: PostgreSQL, Redis\nOther: Docker\n</original_resume>",
+  "prompt": "Check these claims.\n\n<item section=\"summary\">\n<original>\n(the whole original resume, above)\n</original>\n<claim id=\"c1\">\nBackend engineer who builds reliable systems in Go and PostgreSQL.\n<rewritten_from>Backend-leaning engineer who likes boring, reliable systems.</rewritten_from>\n</claim>\n</item>\n\n<item section=\"work\" id=\"00000000-0000-4000-8000-000000000011\">\n<original>\nSoftware Engineer II — Kestrel Logistics Group (Sacramento, CA)\nMarch 2023 – Present\nOwns the shipment-tracking API.\n• Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.\n• Rebuilt the ingestion service in Go; it now handles 2.3M events a day.\n• Mentored two interns through their first production launches.\n</original>\n<claim id=\"c2\">\nMoved hot reads to a Redis cache, cutting p95 latency from 840 ms to 190 ms.\n<rewritten_from>Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.</rewritten_from>\n</claim>\n<claim id=\"c3\">\nGuided two interns through their first production launches.\n<rewritten_from>Mentored two interns through their first production launches.</rewritten_from>\n</claim>\n</item>\n\n<item section=\"work\" id=\"00000000-0000-4000-8000-000000000012\">\n<original>\nSoftware Engineer — Café Numérique (Montréal, QC)\nJune 2021 – February 2023\n• Built the PostgreSQL schema for the loyalty programme.\n• Wrote the Python ETL that feeds the finance dashboards.\n</original>\n<claim id=\"c4\">\nDesigned the PostgreSQL schema behind the loyalty programme.\n</claim>\n</item>\n\n<item section=\"projects\" id=\"00000000-0000-4000-8000-000000000031\">\n<original>\nTideline — github.com/dana/tideline\nA CLI for tide forecasts.\n• Used by 1,200 sailors.\n</original>\n<claim id=\"c5\">\nA command-line tool for tide forecasts.\n</claim>\n</item>"
+}

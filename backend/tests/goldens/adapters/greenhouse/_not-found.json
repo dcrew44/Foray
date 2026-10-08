@@ -1,0 +1,15 @@
+{
+  "fixture": "greenhouse/_not-found.txt",
+  "request": "https://boards-api.greenhouse.io/v1/boards/foray-no-such-company-xyz123/jobs?content=true",
+  "response": {
+    "status": 404,
+    "contentType": "application/json",
+    "body": "{\"status\":404,\"error\":\"Job not found\"}"
+  },
+  "outcome": {
+    "error": {
+      "name": "BoardNotFoundError",
+      "message": "No greenhouse board for slug \"foray-no-such-company-xyz123\""
+    }
+  }
+}

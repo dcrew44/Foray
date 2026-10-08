@@ -1,0 +1,70 @@
+data: {"type":"start","messageId":"asst_step_cap"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_1","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_1","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_2","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_2","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_3","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_3","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_4","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_4","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_5","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_5","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_6","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_6","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_7","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_7","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_8","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_8","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"tool-calls"}
+
+data: [DONE]
+

@@ -1,0 +1,28 @@
+data: {"type":"start","messageId":"asst_invalid_tool_input"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-start","toolCallId":"call_1","toolName":"list_jobs"}
+
+data: {"type":"tool-input-delta","toolCallId":"call_1","inputTextDelta":"{\"limit\":\"two\"}"}
+
+data: {"type":"tool-input-error","toolCallId":"call_1","toolName":"list_jobs","input":{"limit":"two"},"errorText":"An error occurred."}
+
+data: {"type":"tool-output-error","toolCallId":"call_1","errorText":"An error occurred."}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"t2"}
+
+data: {"type":"text-delta","id":"t2","delta":"Retrying was not needed."}
+
+data: {"type":"text-end","id":"t2"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+

@@ -1,0 +1,14 @@
+{
+  "id": "asst_text",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Here is the answer: Zoë’s café ✓ \"quoted\"\n</script> & done.",
+      "state": "done"
+    }
+  ]
+}

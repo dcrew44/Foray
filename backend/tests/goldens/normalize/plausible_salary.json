@@ -1,0 +1,74 @@
+[
+  {
+    "input": {
+      "min": 150,
+      "max": 200,
+      "currency": "USD",
+      "period": "year"
+    },
+    "output": false
+  },
+  {
+    "input": {
+      "min": 150000,
+      "max": 200000,
+      "currency": "USD",
+      "period": "year"
+    },
+    "output": true
+  },
+  {
+    "input": {
+      "min": 25,
+      "max": 40,
+      "currency": "CAD",
+      "period": "hour"
+    },
+    "output": true
+  },
+  {
+    "input": {
+      "min": 25,
+      "max": 40,
+      "currency": "CAD",
+      "period": "year"
+    },
+    "output": false
+  },
+  {
+    "input": {
+      "min": 200000,
+      "max": 150000,
+      "currency": "USD",
+      "period": "year"
+    },
+    "output": false
+  },
+  {
+    "input": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    },
+    "output": false
+  },
+  {
+    "input": {
+      "min": 600,
+      "max": 9000,
+      "currency": null,
+      "period": "month"
+    },
+    "output": true
+  },
+  {
+    "input": {
+      "min": 20000,
+      "max": 30000,
+      "currency": null,
+      "period": null
+    },
+    "output": true
+  }
+]

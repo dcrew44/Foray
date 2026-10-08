@@ -1,0 +1,293 @@
+[
+  {
+    "name": "base",
+    "resume": {
+      "basics": {
+        "name": "Dana Reyes",
+        "headline": "Backend engineer",
+        "email": "dana@example.com",
+        "phone": "(555) 0134-2087",
+        "location": "Sacramento, CA",
+        "links": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "source": "resume",
+            "label": "GitHub",
+            "url": "github.com/dana"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "source": "resume",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/dana/"
+          }
+        ]
+      },
+      "summary": "Backend-leaning engineer who likes boring, reliable systems.",
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "source": "resume",
+          "company": "Kestrel Logistics Group",
+          "position": "Software Engineer II",
+          "location": "Sacramento, CA",
+          "startDate": "March 2023",
+          "endDate": "Present",
+          "summary": "Owns the shipment-tracking API.",
+          "highlights": [
+            "Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.",
+            "Rebuilt the ingestion service in Go; it now handles 2.3M events a day.",
+            "Mentored two interns through their first production launches."
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "source": "resume",
+          "company": "Café Numérique",
+          "position": "Software Engineer",
+          "location": "Montréal, QC",
+          "startDate": "June 2021",
+          "endDate": "February 2023",
+          "highlights": [
+            "Built the PostgreSQL schema for the loyalty programme.",
+            "Wrote the Python ETL that feeds the finance dashboards."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "source": "resume",
+          "institution": "Bellwater State University",
+          "area": "Computer Science",
+          "studyType": "B.S.",
+          "startDate": "2017",
+          "endDate": "2021",
+          "score": "3.7 GPA",
+          "highlights": [
+            "Dean’s list, 2019–2021"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "source": "resume",
+          "name": "Tideline",
+          "description": "A CLI for tide forecasts.",
+          "url": "github.com/dana/tideline",
+          "startDate": "2022",
+          "highlights": [
+            "Used by 1,200 sailors."
+          ]
+        }
+      ],
+      "skills": [
+        {
+          "id": "00000000-0000-4000-8000-000000000041",
+          "source": "resume",
+          "name": "TypeScript",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000042",
+          "source": "resume",
+          "name": "Go",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000043",
+          "source": "resume",
+          "name": "PostgreSQL",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000044",
+          "source": "resume",
+          "name": "Redis",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000045",
+          "source": "resume",
+          "name": "Python",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000046",
+          "source": "resume",
+          "name": "Docker"
+        }
+      ]
+    },
+    "sections": null,
+    "output": "Name: Dana Reyes\nHeadline: Backend engineer\nLocation: Sacramento, CA\nEmail: dana@example.com\nLinks: GitHub github.com/dana, LinkedIn https://www.linkedin.com/in/dana/\n\nSUMMARY\nBackend-leaning engineer who likes boring, reliable systems.\n\nEXPERIENCE\n[00000000-0000-4000-8000-000000000011] Software Engineer II — Kestrel Logistics Group (Sacramento, CA)\n  March 2023 – Present · source: resume\n  Owns the shipment-tracking API.\n  • Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.\n  • Rebuilt the ingestion service in Go; it now handles 2.3M events a day.\n  • Mentored two interns through their first production launches.\n\n[00000000-0000-4000-8000-000000000012] Software Engineer — Café Numérique (Montréal, QC)\n  June 2021 – February 2023 · source: resume\n  • Built the PostgreSQL schema for the loyalty programme.\n  • Wrote the Python ETL that feeds the finance dashboards.\n\nEDUCATION\n[00000000-0000-4000-8000-000000000021] B.S. Computer Science — Bellwater State University (2017 – 2021) · 3.7 GPA\n\nPROJECTS\n[00000000-0000-4000-8000-000000000031] Tideline — github.com/dana/tideline\n  A CLI for tide forecasts.\n  • Used by 1,200 sailors.\n\nSKILLS\nLanguages: TypeScript, Go, Python\nData: PostgreSQL, Redis\nOther: Docker"
+  },
+  {
+    "name": "base_work_and_skills",
+    "resume": {
+      "basics": {
+        "name": "Dana Reyes",
+        "headline": "Backend engineer",
+        "email": "dana@example.com",
+        "phone": "(555) 0134-2087",
+        "location": "Sacramento, CA",
+        "links": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "source": "resume",
+            "label": "GitHub",
+            "url": "github.com/dana"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "source": "resume",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/dana/"
+          }
+        ]
+      },
+      "summary": "Backend-leaning engineer who likes boring, reliable systems.",
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "source": "resume",
+          "company": "Kestrel Logistics Group",
+          "position": "Software Engineer II",
+          "location": "Sacramento, CA",
+          "startDate": "March 2023",
+          "endDate": "Present",
+          "summary": "Owns the shipment-tracking API.",
+          "highlights": [
+            "Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.",
+            "Rebuilt the ingestion service in Go; it now handles 2.3M events a day.",
+            "Mentored two interns through their first production launches."
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "source": "resume",
+          "company": "Café Numérique",
+          "position": "Software Engineer",
+          "location": "Montréal, QC",
+          "startDate": "June 2021",
+          "endDate": "February 2023",
+          "highlights": [
+            "Built the PostgreSQL schema for the loyalty programme.",
+            "Wrote the Python ETL that feeds the finance dashboards."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "source": "resume",
+          "institution": "Bellwater State University",
+          "area": "Computer Science",
+          "studyType": "B.S.",
+          "startDate": "2017",
+          "endDate": "2021",
+          "score": "3.7 GPA",
+          "highlights": [
+            "Dean’s list, 2019–2021"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "source": "resume",
+          "name": "Tideline",
+          "description": "A CLI for tide forecasts.",
+          "url": "github.com/dana/tideline",
+          "startDate": "2022",
+          "highlights": [
+            "Used by 1,200 sailors."
+          ]
+        }
+      ],
+      "skills": [
+        {
+          "id": "00000000-0000-4000-8000-000000000041",
+          "source": "resume",
+          "name": "TypeScript",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000042",
+          "source": "resume",
+          "name": "Go",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000043",
+          "source": "resume",
+          "name": "PostgreSQL",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000044",
+          "source": "resume",
+          "name": "Redis",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000045",
+          "source": "resume",
+          "name": "Python",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000046",
+          "source": "resume",
+          "name": "Docker"
+        }
+      ]
+    },
+    "sections": [
+      "work",
+      "skills"
+    ],
+    "output": "EXPERIENCE\n[00000000-0000-4000-8000-000000000011] Software Engineer II — Kestrel Logistics Group (Sacramento, CA)\n  March 2023 – Present · source: resume\n  Owns the shipment-tracking API.\n  • Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.\n  • Rebuilt the ingestion service in Go; it now handles 2.3M events a day.\n  • Mentored two interns through their first production launches.\n\n[00000000-0000-4000-8000-000000000012] Software Engineer — Café Numérique (Montréal, QC)\n  June 2021 – February 2023 · source: resume\n  • Built the PostgreSQL schema for the loyalty programme.\n  • Wrote the Python ETL that feeds the finance dashboards.\n\nSKILLS\nLanguages: TypeScript, Go, Python\nData: PostgreSQL, Redis\nOther: Docker"
+  },
+  {
+    "name": "sparse",
+    "resume": {
+      "basics": {
+        "name": "Zoë Ñúñez",
+        "links": []
+      },
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000051",
+          "source": "resume",
+          "company": "Ålesund Fiskeri AS",
+          "position": "Data analyst",
+          "startDate": null,
+          "endDate": null,
+          "highlights": []
+        }
+      ],
+      "education": [],
+      "projects": [],
+      "skills": []
+    },
+    "sections": null,
+    "output": "Name: Zoë Ñúñez\n\nEXPERIENCE\n[00000000-0000-4000-8000-000000000051] Data analyst — Ålesund Fiskeri AS\n  ? – present · source: resume"
+  },
+  {
+    "name": "empty",
+    "resume": {
+      "basics": {
+        "name": "",
+        "links": []
+      },
+      "work": [],
+      "education": [],
+      "projects": [],
+      "skills": []
+    },
+    "sections": null,
+    "output": "Name: (unknown)"
+  }
+]

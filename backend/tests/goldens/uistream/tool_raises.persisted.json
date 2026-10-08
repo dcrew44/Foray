@@ -1,0 +1,26 @@
+{
+  "id": "asst_tool_raises",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-get_job",
+      "toolCallId": "call_1",
+      "state": "output-error",
+      "input": {
+        "id": "raise"
+      },
+      "errorText": "An error occurred."
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "That did not work.",
+      "state": "done"
+    }
+  ]
+}

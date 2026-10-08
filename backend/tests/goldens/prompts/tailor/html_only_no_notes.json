@@ -1,0 +1,38 @@
+{
+  "builder": "tailor",
+  "case": "html_only_no_notes",
+  "input": {
+    "base": {
+      "basics": {
+        "name": "Zoë Ñúñez",
+        "links": []
+      },
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000051",
+          "source": "resume",
+          "company": "Ålesund Fiskeri AS",
+          "position": "Data analyst",
+          "startDate": null,
+          "endDate": null,
+          "highlights": []
+        }
+      ],
+      "education": [],
+      "projects": [],
+      "skills": []
+    },
+    "job": {
+      "title": "Analyste — données",
+      "companyName": "Café Numérique",
+      "locations": [],
+      "remote": "unknown",
+      "descriptionText": "   ",
+      "descriptionRaw": "&lt;p&gt;Données &amp; SQL&lt;/p&gt;<ul><li>Tableaux</li></ul>"
+    },
+    "match": null,
+    "preferences": null
+  },
+  "instructions": "You tailor a candidate's resume to one job posting. You are an editor, not an author: every statement on the tailored resume must already be true on the original resume below.\n\nWhat you should do — a tailored resume that reads exactly like the original has not been tailored:\n- Select. Keep the roles, projects, bullets and skills that matter most for this posting. Drop weak or irrelevant bullets rather than padding. Keep the most recent role and every education entry.\n- Reorder bullets within each role, and reorder projects and skills, so the most relevant to this posting come first. Keep roles and education in their original order.\n- Rephrase bullets so each leads with what this posting cares about — the outcome, the kind of system, or the technology it asks for — using the posting's vocabulary only where it means exactly the same thing as the original (\"Postgres\" for \"PostgreSQL\" is fine; \"Kubernetes\" for \"Docker\" is not; \"APIs\" for \"services\" is not). Rewording that only moves emphasis is exactly the job; a bullet that already fits well can stay as it is.\n- Rewrite the summary for this posting, using only facts stated somewhere in the resume. Do not name the target company.\n\nEvery rewritten line is checked against the original item it sits under, and anything unsupported is reverted, so a rewrite that adds a fact gains nothing.\n\nWhat you must never do:\n- Add an employer, job title, date, degree, school, certification, skill, tool, technology, metric or number that is not in the original. That includes numbers computed from existing ones: \"from 840 ms to 190 ms\" must not become \"77% faster\" or \"4x faster\".\n- Move a fact between items. A bullet may only use facts from the role, project or education entry it sits under.\n- Claim more ownership, scope or seniority than the original shows: \"contributed to\" does not become \"led\", \"helped build\" does not become \"architected\".\n- Claim anything listed under Gaps — those are things the candidate does not have.\n\nCopy exactly, character for character, from the Exact fields block:\n- the id of every item you keep;\n- company, position, location, startDate and endDate for roles; institution, area, studyType, score, startDate and endDate for education; name, url, startDate and endDate for projects — null where the block has null;\n- skill names, exactly as listed. Return a subset of them, most relevant to this posting first.\nKeep an education entry's highlights and a role's summary as they are unless rewording one makes it more relevant; the same rules apply.\n\nLength: the tailored resume should fit on one page. Roughly: at most 4–5 bullets for the most relevant role, 2–3 for older or less relevant roles, 1–3 for a project, and a summary of two or three sentences. Shorter and sharper beats complete.\n\nchanges: one entry per edit — each rewritten bullet (before = the original bullet, after = your version), each dropped bullet or item (after = null), the summary rewrite, and one entry describing the skills selection (section \"skills\", item_id null). reason says in a few words why the edit helps for this posting. evidence_fact_ids lists the [id]s of the original items the new text rests on. Do not log items you left untouched.\n\n<resume>\nName: Zoë Ñúñez\n\nEXPERIENCE\n[00000000-0000-4000-8000-000000000051] Data analyst — Ålesund Fiskeri AS\n  ? – present · source: resume\n</resume>\n\n<exact_fields>\n{\n \"work\": [\n  {\n   \"id\": \"00000000-0000-4000-8000-000000000051\",\n   \"company\": \"Ålesund Fiskeri AS\",\n   \"position\": \"Data analyst\",\n   \"location\": null,\n   \"startDate\": null,\n   \"endDate\": null\n  }\n ],\n \"education\": [],\n \"projects\": [],\n \"skills\": []\n}\n</exact_fields>",
+  "prompt": "Tailor the resume for this posting.\n\n<posting>\nTitle: Analyste — données\nCompany: Café Numérique\nLocation: unstated (unknown)\n\n<p>Données & SQL</p>\n\n• Tableaux\n</posting>"
+}

@@ -1,0 +1,43 @@
+{
+  "builder": "fast_score",
+  "case": "no_salary_empty_resume",
+  "input": {
+    "resume": {
+      "basics": {
+        "name": "",
+        "links": []
+      },
+      "work": [],
+      "education": [],
+      "projects": [],
+      "skills": []
+    },
+    "preferences": {
+      "target_roles": null,
+      "seniority": null,
+      "locations": null,
+      "remote_pref": null,
+      "salary_floor": null,
+      "work_auth": null,
+      "start_date": null,
+      "must_haves": null,
+      "dealbreakers": null
+    },
+    "focus": "",
+    "posting": {
+      "id": "web:acme:4",
+      "title": "SRE",
+      "company_name": "Acme",
+      "locations": [
+        "Remote"
+      ],
+      "remote": "remote",
+      "salary_min": null,
+      "salary_max": null,
+      "description_text": ""
+    },
+    "note": "posting salaries are the strings Postgres returns for numeric columns"
+  },
+  "instructions": "You triage job postings for one candidate. Score 0–100.\n\nThe scale, which is not a feeling:\n- 85–100: squarely what they asked for. Right level, right domain, right\n  location, and their background is a direct match.\n- 70–84: a good fit with a gap they could close, or a slightly different domain.\n- 55–69: plausible. Adjacent domain, or the level is a little off, or the\n  posting is vague enough that it might be right.\n- 30–54: probably wrong — wrong level, wrong discipline, or a hard requirement\n  they do not meet.\n- 0–29: clearly not this person.\n\nRules:\n- Judge against what the posting actually says. If it does not state something,\n  that is not a miss — it is unknown.\n- hard_requirement_misses is only for requirements the posting states and the\n  candidate demonstrably does not meet. A \"nice to have\" is never a miss, and\n  neither is a technology they have not listed.\n- seniority is the posting's level, not the candidate's.\n- fit_reasons: at most three, short, concrete. No restating the job title.\n- Be decisive. A middling score for everything is useless triage.\n\n<candidate>\nWants: {\"target_roles\":null,\"seniority\":null,\"locations\":null,\"remote_pref\":null,\"salary_floor\":null,\"work_auth\":null,\"start_date\":null,\"must_haves\":null,\"dealbreakers\":null}\n\nExperience:\n(none on file)\n\nEducation:\n(none on file)\n\nSkills: (none on file)\n</candidate>",
+  "prompt": "<posting>\nTitle: SRE\nCompany: Acme\nLocation: Remote (remote)\nPay: unstated\n\n\n</posting>"
+}

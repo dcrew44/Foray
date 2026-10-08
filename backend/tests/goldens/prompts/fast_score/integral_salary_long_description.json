@@ -1,0 +1,167 @@
+{
+  "builder": "fast_score",
+  "case": "integral_salary_long_description",
+  "input": {
+    "resume": {
+      "basics": {
+        "name": "Dana Reyes",
+        "headline": "Backend engineer",
+        "email": "dana@example.com",
+        "phone": "(555) 0134-2087",
+        "location": "Sacramento, CA",
+        "links": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "source": "resume",
+            "label": "GitHub",
+            "url": "github.com/dana"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "source": "resume",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/dana/"
+          }
+        ]
+      },
+      "summary": "Backend-leaning engineer who likes boring, reliable systems.",
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "source": "resume",
+          "company": "Kestrel Logistics Group",
+          "position": "Software Engineer II",
+          "location": "Sacramento, CA",
+          "startDate": "March 2023",
+          "endDate": "Present",
+          "summary": "Owns the shipment-tracking API.",
+          "highlights": [
+            "Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.",
+            "Rebuilt the ingestion service in Go; it now handles 2.3M events a day.",
+            "Mentored two interns through their first production launches."
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "source": "resume",
+          "company": "Café Numérique",
+          "position": "Software Engineer",
+          "location": "Montréal, QC",
+          "startDate": "June 2021",
+          "endDate": "February 2023",
+          "highlights": [
+            "Built the PostgreSQL schema for the loyalty programme.",
+            "Wrote the Python ETL that feeds the finance dashboards."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "source": "resume",
+          "institution": "Bellwater State University",
+          "area": "Computer Science",
+          "studyType": "B.S.",
+          "startDate": "2017",
+          "endDate": "2021",
+          "score": "3.7 GPA",
+          "highlights": [
+            "Dean’s list, 2019–2021"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "source": "resume",
+          "name": "Tideline",
+          "description": "A CLI for tide forecasts.",
+          "url": "github.com/dana/tideline",
+          "startDate": "2022",
+          "highlights": [
+            "Used by 1,200 sailors."
+          ]
+        }
+      ],
+      "skills": [
+        {
+          "id": "00000000-0000-4000-8000-000000000041",
+          "source": "resume",
+          "name": "TypeScript",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000042",
+          "source": "resume",
+          "name": "Go",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000043",
+          "source": "resume",
+          "name": "PostgreSQL",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000044",
+          "source": "resume",
+          "name": "Redis",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000045",
+          "source": "resume",
+          "name": "Python",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000046",
+          "source": "resume",
+          "name": "Docker"
+        }
+      ]
+    },
+    "preferences": {
+      "target_roles": [
+        "Backend engineer",
+        "Platform engineer"
+      ],
+      "seniority": "mid",
+      "locations": [
+        "San Francisco Bay Area",
+        "Remote (US)"
+      ],
+      "remote_pref": "hybrid",
+      "salary_floor": {
+        "amount": 150000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "work_auth": "US citizen, no sponsorship needed",
+      "start_date": "January 2027",
+      "must_haves": [
+        "Go or Python"
+      ],
+      "dealbreakers": [
+        "On-call more than one week in four"
+      ]
+    },
+    "focus": "Prefer teams that own infrastructure",
+    "posting": {
+      "id": "greenhouse:acme:1",
+      "title": "Backend Engineer — Café Platform",
+      "company_name": "Acme Café",
+      "locations": [
+        "San Francisco, CA",
+        "Remote (US)"
+      ],
+      "remote": "hybrid",
+      "salary_min": "150000",
+      "salary_max": "200000",
+      "description_text": "Paragraph 1: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 2: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 3: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 4: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 5: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 6: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 7: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 8: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 9: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 10: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 11: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 12: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 13: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 14: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 15: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 16: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 17: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 18: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 19: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 20: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 21: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 22: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 23: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 24: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 25: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 26: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 27: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 28: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 29: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 30: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 31: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 32: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 33: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 34: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 35: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 36: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 37: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 38: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 39: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 40: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 41: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 42: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 43: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 44: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 45: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 46: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 47: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 48: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 49: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 50: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 51: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 52: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 53: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 54: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 55: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 56: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 57: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 58: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 59: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 60: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 61: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 62: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 63: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 64: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 65: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 66: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 67: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 68: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 69: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 70: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 71: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 72: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 73: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 74: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 75: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 76: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 77: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 78: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 79: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 80: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 81: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 82: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 83: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 84: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 85: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 86: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 87: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 88: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 89: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 90: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 91: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 92: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 93: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 94: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 95: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 96: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 97: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 98: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 99: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 100: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 101: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 102: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 103: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 104: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 105: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 106: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 107: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 108: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 109: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 110: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 111: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 112: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 113: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 114: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 115: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 116: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 117: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 118: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 119: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 120: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 121: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 122: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 123: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 124: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 125: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 126: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 127: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 128: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 129: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 130: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 131: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 132: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 133: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 134: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 135: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 136: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 137: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 138: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 139: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 140: you will build and run services in Go and PostgreSQL — café-grade reliability."
+    },
+    "note": "posting salaries are the strings Postgres returns for numeric columns"
+  },
+  "instructions": "You triage job postings for one candidate. Score 0–100.\n\nThe scale, which is not a feeling:\n- 85–100: squarely what they asked for. Right level, right domain, right\n  location, and their background is a direct match.\n- 70–84: a good fit with a gap they could close, or a slightly different domain.\n- 55–69: plausible. Adjacent domain, or the level is a little off, or the\n  posting is vague enough that it might be right.\n- 30–54: probably wrong — wrong level, wrong discipline, or a hard requirement\n  they do not meet.\n- 0–29: clearly not this person.\n\nRules:\n- Judge against what the posting actually says. If it does not state something,\n  that is not a miss — it is unknown.\n- hard_requirement_misses is only for requirements the posting states and the\n  candidate demonstrably does not meet. A \"nice to have\" is never a miss, and\n  neither is a technology they have not listed.\n- seniority is the posting's level, not the candidate's.\n- fit_reasons: at most three, short, concrete. No restating the job title.\n- Be decisive. A middling score for everything is useless triage.\n\n<candidate>\nWants: {\"target_roles\":[\"Backend engineer\",\"Platform engineer\"],\"seniority\":\"mid\",\"locations\":[\"San Francisco Bay Area\",\"Remote (US)\"],\"remote_pref\":\"hybrid\",\"salary_floor\":{\"amount\":150000,\"currency\":\"USD\",\"period\":\"year\"},\"work_auth\":\"US citizen, no sponsorship needed\",\"start_date\":\"January 2027\",\"must_haves\":[\"Go or Python\"],\"dealbreakers\":[\"On-call more than one week in four\"]}\nThis search: Prefer teams that own infrastructure\n\nExperience:\n- Software Engineer II at Kestrel Logistics Group (March 2023–Present)\n  Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.\n  Rebuilt the ingestion service in Go; it now handles 2.3M events a day.\n  Mentored two interns through their first production launches.\n- Software Engineer at Café Numérique (June 2021–February 2023)\n  Built the PostgreSQL schema for the loyalty programme.\n  Wrote the Python ETL that feeds the finance dashboards.\n\nEducation:\n- B.S. Computer Science at Bellwater State University (2021)\n\nSkills: TypeScript, Go, PostgreSQL, Redis, Python, Docker\n</candidate>",
+  "prompt": "<posting>\nTitle: Backend Engineer — Café Platform\nCompany: Acme Café\nLocation: San Francisco, CA | Remote (US) (hybrid)\nPay: 150000–200000\n\nParagraph 1: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 2: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 3: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 4: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 5: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 6: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 7: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 8: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 9: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 10: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 11: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 12: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 13: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 14: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 15: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 16: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 17: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 18: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 19: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 20: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 21: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 22: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 23: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 24: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 25: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 26: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 27: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 28: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 29: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 30: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 31: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 32: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 33: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 34: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 35: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 36: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 37: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 38: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 39: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 40: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 41: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 42: you will build and run services in Go and PostgreSQL — café-grade reliability.\n\nParagraph 43: you will build and run services in Go and Postg\n</posting>"
+}

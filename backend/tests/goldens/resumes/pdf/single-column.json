@@ -1,0 +1,18 @@
+{
+  "fixture": "resumes/single-column.pdf",
+  "sha256": "04939c7f470b17e40dd0a88320cf01c289ceee7064648f67436f8b69f2d7b88a",
+  "text": "Dana Whitlock Reyes\nSacramento, CA | (555) 0134-2087 | dana.w.reyes@example.com\ngithub.com/dwreyes-dev | linkedin.com/in/danawreyes | danareyes.example.dev\nSUMMARY\nBackend-leaning full-stack engineer with four years of experience building and operating Node.js\nand Python services in production. Comfortable owning a feature from schema design through\nrollout and on-call. Particular interest in data pipelines, observability, and making slow systems\nmeasurably faster.\nEXPERIENCE\nSoftware Engineer II March 2023 – Present\nKestrel Logistics Group — Sacramento, CA\nRebuilt the shipment-tracking ingestion service in TypeScript on Node.js, cutting median event\nprocessing latency from 840 ms to 190 ms and reducing dropped events by 94%.\nDesigned the partitioning and retention strategy for a 40-million-row PostgreSQL events table,\nwhich held query times under 200 ms as volume tripled over eighteen months.\nIntroduced contract tests between the dispatch API and three internal consumers, removing the\nclass of breakage that had caused six production incidents in 2022.\nMentored two junior engineers through their first on-call rotations and wrote the runbooks the\nteam still uses for ingestion paging alerts.\nSoftware Engineer I July 2021 – February 2023\nNorthgate Analytics — Remote\nBuilt the customer-facing reporting API (Python, FastAPI, PostgreSQL) used by roughly 1,200\ndaily active accounts at time of departure.\nCut the nightly aggregation job from 3 hours 10 minutes to 26 minutes by replacing row-by-row\nprocessing with set-based SQL and a materialized rollup table.\nAdded structured logging and tracing across eight services, which brought median incident\ndiagnosis time down from about 45 minutes to under 12.\nSoftware Engineering Intern May 2020 – August 2020\nWillowmere Civic Tech — Sacramento, CA\nImplemented an accessible address-lookup component used across four public benefit forms.\nWrote the first automated test suite for the intake application, reaching 71% line coverage.\nEDUCATION\nB.S. Computer Science 2017 – 2021\nBellwater State University — Bellwater, CA\nMinor in Statistics. GPA 3.6. Teaching assistant for Data Structures, three semesters.\nSKILLS\nLanguages: TypeScript, JavaScript, Python, SQL, Go (working knowledge), Bash\nFrameworks: Node.js, React, Next.js, FastAPI, Express, Vitest, pytest\nData: PostgreSQL, Redis, Kafka, dbt, Snowflake\nInfrastructure: Docker, Terraform, AWS (ECS, RDS, S3, Lambda), GitHub Actions, Grafana,\nOpenTelemetry\nPROJECTS\nTideline — github.com/dwreyes-dev/tideline\nAn open-source CLI that replays PostgreSQL write-ahead log segments into a local test database\nso engineers can reproduce production data shapes without copying customer data. Roughly 900\nstars; used in the CI pipeline at two companies that have written in.\nSlowhand — github.com/dwreyes-dev/slowhand\nA small profiling wrapper for Node.js HTTP handlers that attributes latency to individual awaits.\nWritten up on my blog at danareyes.example.dev/slowhand.",
+  "pageCount": 2,
+  "garble": {
+    "garbled": false,
+    "reasons": [],
+    "metrics": {
+      "chars": 2979,
+      "charsPerPage": 1489.5,
+      "spaceRatio": 0.1379657603222558,
+      "alphaRatio": 0.918613707165109,
+      "replacementRatio": 0,
+      "singleCharWordRatio": 0.050970873786407765
+    }
+  }
+}

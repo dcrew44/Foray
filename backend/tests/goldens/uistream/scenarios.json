@@ -1,0 +1,1572 @@
+{
+  "note": "Each scenario ran through ToolLoopAgent + createAgentUIStreamResponse as src/app/api/chat/route.ts calls it, with a scripted MockLanguageModelV4. Tools: list_jobs, get_job (id 'raise' throws, 'undefined'/'null' return those), tailor_resume.",
+  "ai": "7.0.106",
+  "scenarios": [
+    {
+      "name": "text",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_text",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t1"
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "Here is "
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "the answer: Zoë’s café ✓ \"quoted\"\n"
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "</script> & done."
+          },
+          {
+            "type": "text-end",
+            "id": "t1"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "stop"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "text.sse",
+      "persisted": "text.persisted.json"
+    },
+    {
+      "name": "reasoning_text",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_reasoning_text",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "reasoning-start",
+            "id": "r1"
+          },
+          {
+            "type": "reasoning-delta",
+            "id": "r1",
+            "delta": "Thinking..."
+          },
+          {
+            "type": "reasoning-end",
+            "id": "r1"
+          },
+          {
+            "type": "text-start",
+            "id": "t1"
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "Done thinking."
+          },
+          {
+            "type": "text-end",
+            "id": "t1"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "stop"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "reasoning_text.sse",
+      "persisted": "reasoning_text.persisted.json"
+    },
+    {
+      "name": "tool_two_steps",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_tool_two_steps",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t1"
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "Let me "
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "look."
+          },
+          {
+            "type": "text-end",
+            "id": "t1"
+          },
+          {
+            "type": "tool-input-start",
+            "id": "call_1",
+            "toolName": "list_jobs"
+          },
+          {
+            "type": "tool-input-delta",
+            "id": "call_1",
+            "delta": "{\"limit\":2}"
+          },
+          {
+            "type": "tool-input-end",
+            "id": "call_1"
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":2}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "One match: Backend Engineer at Café Numérique."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "tool_two_steps.sse",
+      "persisted": "tool_two_steps.persisted.json"
+    },
+    {
+      "name": "tool_parallel",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_tool_parallel",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "get_job",
+            "input": "{\"id\":\"greenhouse:acme:1\"}"
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_2",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "Both are in."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "tool_parallel.sse",
+      "persisted": "tool_parallel.persisted.json"
+    },
+    {
+      "name": "tool_returns_undefined",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_tool_returns_undefined",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "get_job",
+            "input": "{\"id\":\"undefined\"}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "It returned nothing."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "tool_returns_undefined.sse",
+      "persisted": "tool_returns_undefined.persisted.json"
+    },
+    {
+      "name": "tool_returns_null",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_tool_returns_null",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "get_job",
+            "input": "{\"id\":\"null\"}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "It returned null."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "tool_returns_null.sse",
+      "persisted": "tool_returns_null.persisted.json"
+    },
+    {
+      "name": "tool_raises",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_tool_raises",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "get_job",
+            "input": "{\"id\":\"raise\"}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "That did not work."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "tool_raises.sse",
+      "persisted": "tool_raises.persisted.json"
+    },
+    {
+      "name": "invalid_tool_input",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_invalid_tool_input",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-input-start",
+            "id": "call_1",
+            "toolName": "list_jobs"
+          },
+          {
+            "type": "tool-input-delta",
+            "id": "call_1",
+            "delta": "{\"limit\":\"two\"}"
+          },
+          {
+            "type": "tool-input-end",
+            "id": "call_1"
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":\"two\"}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "Retrying was not needed."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "invalid_tool_input.sse",
+      "persisted": "invalid_tool_input.persisted.json"
+    },
+    {
+      "name": "unknown_tool",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_unknown_tool",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "no_such_tool",
+            "input": "{}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "Never mind."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "unknown_tool.sse",
+      "persisted": "unknown_tool.persisted.json"
+    },
+    {
+      "name": "step_cap",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_step_cap",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_2",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_3",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_4",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_5",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_6",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_7",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_8",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":1}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "step_cap.sse",
+      "persisted": "step_cap.persisted.json"
+    },
+    {
+      "name": "stream_error",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_stream_error",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t1"
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "Partial "
+          },
+          {
+            "type": "text-end",
+            "id": "t1"
+          },
+          {
+            "type": "error",
+            "error": {}
+          }
+        ]
+      ],
+      "sse": "stream_error.sse",
+      "persisted": "stream_error.persisted.json"
+    },
+    {
+      "name": "length_finish",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "Find me something good — café hours welcome."
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_length_finish",
+      "stopWhen": "isStepCount(8)",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t1"
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "Cut off mid"
+          },
+          {
+            "type": "text-end",
+            "id": "t1"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "length",
+              "raw": "max_tokens"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "length_finish.sse",
+      "persisted": "length_finish.persisted.json"
+    },
+    {
+      "name": "approval_turn1",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "tailor my resume for j1"
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_turn1",
+      "toolApproval": {
+        "tailor_resume": "user-approval"
+      },
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "reasoning-start",
+            "id": "r1"
+          },
+          {
+            "type": "reasoning-delta",
+            "id": "r1",
+            "delta": "Thinking..."
+          },
+          {
+            "type": "reasoning-end",
+            "id": "r1"
+          },
+          {
+            "type": "text-start",
+            "id": "t1"
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "Let me "
+          },
+          {
+            "type": "text-delta",
+            "id": "t1",
+            "delta": "look."
+          },
+          {
+            "type": "text-end",
+            "id": "t1"
+          },
+          {
+            "type": "tool-input-start",
+            "id": "call_1",
+            "toolName": "list_jobs"
+          },
+          {
+            "type": "tool-input-delta",
+            "id": "call_1",
+            "delta": "{\"limit\":2}"
+          },
+          {
+            "type": "tool-input-end",
+            "id": "call_1"
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_1",
+            "toolName": "list_jobs",
+            "input": "{\"limit\":2}"
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call_2",
+            "toolName": "tailor_resume",
+            "input": "{\"jobId\":\"j1\"}"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "tool-calls",
+              "raw": "tool_use"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "approval_turn1.sse",
+      "persisted": "approval_turn1.persisted.json"
+    },
+    {
+      "name": "approval_turn2",
+      "uiMessages": [
+        {
+          "id": "u1",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "text": "tailor my resume for j1"
+            }
+          ]
+        },
+        {
+          "id": "asst_turn1",
+          "role": "assistant",
+          "parts": [
+            {
+              "type": "step-start"
+            },
+            {
+              "type": "reasoning",
+              "id": "r1",
+              "text": "Thinking...",
+              "state": "done"
+            },
+            {
+              "type": "text",
+              "text": "Let me look.",
+              "state": "done"
+            },
+            {
+              "type": "tool-list_jobs",
+              "toolCallId": "call_1",
+              "state": "output-available",
+              "input": {
+                "limit": 2
+              },
+              "output": {
+                "count": 1,
+                "jobs": [
+                  {
+                    "matchId": "m-1",
+                    "jobId": "greenhouse:acme:1",
+                    "title": "Backend Engineer",
+                    "company": "Café Numérique",
+                    "salary": "$150k–200k"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "tool-tailor_resume",
+              "toolCallId": "call_2",
+              "state": "approval-responded",
+              "input": {
+                "jobId": "j1"
+              },
+              "approval": {
+                "id": "aitxt-T7p0KtChjoqXR90hhkm8Bfqq",
+                "approved": true
+              }
+            }
+          ]
+        }
+      ],
+      "replyId": "asst_turn2",
+      "toolApproval": {
+        "tailor_resume": "user-approval"
+      },
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/event-stream",
+        "x-accel-buffering": "no",
+        "x-conversation-id": "conv_1",
+        "x-vercel-ai-ui-message-stream": "v1"
+      },
+      "modelSteps": [
+        [
+          {
+            "type": "stream-start",
+            "warnings": []
+          },
+          {
+            "type": "text-start",
+            "id": "t2"
+          },
+          {
+            "type": "text-delta",
+            "id": "t2",
+            "delta": "Started your tailored resume."
+          },
+          {
+            "type": "text-end",
+            "id": "t2"
+          },
+          {
+            "type": "finish",
+            "finishReason": {
+              "unified": "stop",
+              "raw": "end_turn"
+            },
+            "usage": {
+              "inputTokens": {
+                "total": 10,
+                "noCache": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0
+              },
+              "outputTokens": {
+                "total": 5,
+                "text": 5,
+                "reasoning": 0
+              }
+            }
+          }
+        ]
+      ],
+      "sse": "approval_turn2.sse",
+      "persisted": "approval_turn2.persisted.json"
+    }
+  ]
+}

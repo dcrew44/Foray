@@ -1,0 +1,179 @@
+{
+  "builder": "deep_eval",
+  "case": "integral_range_with_brief",
+  "input": {
+    "resume": {
+      "basics": {
+        "name": "Dana Reyes",
+        "headline": "Backend engineer",
+        "email": "dana@example.com",
+        "phone": "(555) 0134-2087",
+        "location": "Sacramento, CA",
+        "links": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "source": "resume",
+            "label": "GitHub",
+            "url": "github.com/dana"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "source": "resume",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/dana/"
+          }
+        ]
+      },
+      "summary": "Backend-leaning engineer who likes boring, reliable systems.",
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "source": "resume",
+          "company": "Kestrel Logistics Group",
+          "position": "Software Engineer II",
+          "location": "Sacramento, CA",
+          "startDate": "March 2023",
+          "endDate": "Present",
+          "summary": "Owns the shipment-tracking API.",
+          "highlights": [
+            "Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.",
+            "Rebuilt the ingestion service in Go; it now handles 2.3M events a day.",
+            "Mentored two interns through their first production launches."
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "source": "resume",
+          "company": "Café Numérique",
+          "position": "Software Engineer",
+          "location": "Montréal, QC",
+          "startDate": "June 2021",
+          "endDate": "February 2023",
+          "highlights": [
+            "Built the PostgreSQL schema for the loyalty programme.",
+            "Wrote the Python ETL that feeds the finance dashboards."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "source": "resume",
+          "institution": "Bellwater State University",
+          "area": "Computer Science",
+          "studyType": "B.S.",
+          "startDate": "2017",
+          "endDate": "2021",
+          "score": "3.7 GPA",
+          "highlights": [
+            "Dean’s list, 2019–2021"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "source": "resume",
+          "name": "Tideline",
+          "description": "A CLI for tide forecasts.",
+          "url": "github.com/dana/tideline",
+          "startDate": "2022",
+          "highlights": [
+            "Used by 1,200 sailors."
+          ]
+        }
+      ],
+      "skills": [
+        {
+          "id": "00000000-0000-4000-8000-000000000041",
+          "source": "resume",
+          "name": "TypeScript",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000042",
+          "source": "resume",
+          "name": "Go",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000043",
+          "source": "resume",
+          "name": "PostgreSQL",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000044",
+          "source": "resume",
+          "name": "Redis",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000045",
+          "source": "resume",
+          "name": "Python",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000046",
+          "source": "resume",
+          "name": "Docker"
+        }
+      ]
+    },
+    "preferences": {
+      "target_roles": [
+        "Backend engineer",
+        "Platform engineer"
+      ],
+      "seniority": "mid",
+      "locations": [
+        "San Francisco Bay Area",
+        "Remote (US)"
+      ],
+      "remote_pref": "hybrid",
+      "salary_floor": {
+        "amount": 150000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "work_auth": "US citizen, no sponsorship needed",
+      "start_date": "January 2027",
+      "must_haves": [
+        "Go or Python"
+      ],
+      "dealbreakers": [
+        "On-call more than one week in four"
+      ]
+    },
+    "brief": {
+      "roles": null,
+      "seniority": "entry",
+      "locations": null,
+      "remote": null,
+      "companies": [
+        "Anthropic"
+      ],
+      "focus": "Research infrastructure"
+    },
+    "posting": {
+      "title": "Software Engineer, Research Data Platform",
+      "company": "Anthropic",
+      "locations": [
+        "San Francisco, CA",
+        "New York City, NY"
+      ],
+      "remote": "hybrid",
+      "employmentType": "Full-time",
+      "salaryMin": "150000",
+      "salaryMax": "200000",
+      "salaryCurrency": "USD",
+      "salaryPeriod": "year",
+      "postedAt": "2026-10-01T18:00:00.000Z",
+      "description": "Build the data platform that research runs on. Go, Python, PostgreSQL."
+    },
+    "now": "2026-10-05T03:30:00.000Z"
+  },
+  "instructions": "You evaluate one job posting for one candidate, in depth. Your verdict decides whether they spend an application on it, so be specific, honest and decisive.\n\nScore 0–100 on this scale, which is not a feeling:\n- 85–100 (strong): squarely what they asked for, and the resume shows direct\n  evidence for the posting's core requirements.\n- 70–84 (apply): a real fit. Most core requirements are met with evidence; the\n  gaps are learnable or minor.\n- 50–69 (maybe): plausible but uncertain — an adjacent domain, a level that is\n  somewhat off, or a posting too vague to judge.\n- 0–49 (skip): not worth an application — a disqualifying gap, the wrong level\n  or discipline, or one of their dealbreakers.\nThe recommendation is the band's label and always agrees with the score.\n\nRequirements and evidence:\n- matched_requirements: requirements the posting actually states (required or\n  preferred), each with the resume evidence that meets it. Quote or closely\n  paraphrase the resume; never credit experience the resume does not show.\n  fact_ids are the bracketed ids of the resume items the evidence comes from,\n  copied exactly — only ids that appear in the resume. strength is \"strong\"\n  when the evidence meets the requirement outright, \"partial\" when it is\n  adjacent or smaller in scale.\n- gaps: stated requirements the resume does not show. \"disqualifying\" only for\n  a hard requirement they clearly fail (a degree, a clearance, work\n  authorisation, years of experience far beyond theirs) or a conflict with one\n  of their dealbreakers; everything else is \"learnable\". note says why, in one\n  sentence.\n- If the posting does not state something, it is unknown, not a miss. A\n  technology absent from the resume is a gap only if the posting requires it.\n- Any disqualifying gap means skip — or maybe, if you are unsure it is truly\n  required.\n\nFit:\n- seniority_fit: the candidate against the posting's level. \"under\" when it\n  asks for more experience than they have, \"over\" when they are overqualified,\n  \"unclear\" when the posting does not say.\n- location_fit: the posting's location and remote policy against theirs.\n  \"partial\" for, say, hybrid when they want remote, or a nearby metro.\n  \"unclear\" when the posting does not say.\n- salary_fit: the posting's pay against their salary floor — \"above\",\n  \"within\" (the floor falls inside the range) or \"below\". \"unstated\" when the\n  posting gives no pay or they gave no floor.\n\nWriting — the candidate reads this themselves, on the job's page:\n- Write summary, gap notes, risk_flags and talking_points in the second\n  person, speaking to the candidate: \"You have just over five years of\n  backend work…\", \"Lead with your ingestion-service rebuild…\". Never refer to\n  them by name or as \"the candidate\", \"they\" or \"he/she\". evidence is the\n  exception: keep it a close quote or paraphrase of the resume.\n- summary: two or three plain sentences on why this role fits them or does\n  not. Specific; no generic praise, no restating the title.\n- risk_flags: concrete things worth knowing before applying (a relocation\n  requirement, contract-to-hire, heavy on-call, a posting open for months).\n  Empty when there are none.\n- talking_points: three to five things to emphasise when applying, each tied\n  to a specific resume item and to what this posting asks for.\n- Resume ids belong in fact_ids and nowhere else. Every other field is read by\n  a person: never write an id, or a bracketed reference to one, in summary,\n  requirement, evidence, gap, note, risk_flags or talking_points.\n\n<candidate>\nWhat they are looking for:\n- target_roles: [\"Backend engineer\",\"Platform engineer\"]\n- seniority: \"entry\"\n- locations: [\"San Francisco Bay Area\",\"Remote (US)\"]\n- remote_pref: \"hybrid\"\n- work_auth: \"US citizen, no sponsorship needed\"\n- salary_floor: {\"amount\":150000,\"currency\":\"USD\",\"period\":\"year\"}\n- start_date: \"January 2027\"\n- must_haves: [\"Go or Python\"]\n- dealbreakers: [\"On-call more than one week in four\"]\n- this search: Research infrastructure\n\nResume (each item's [id] is what fact_ids cite):\nName: Dana Reyes\nHeadline: Backend engineer\nLocation: Sacramento, CA\nEmail: dana@example.com\nLinks: GitHub github.com/dana, LinkedIn https://www.linkedin.com/in/dana/\n\nSUMMARY\nBackend-leaning engineer who likes boring, reliable systems.\n\nEXPERIENCE\n[00000000-0000-4000-8000-000000000011] Software Engineer II — Kestrel Logistics Group (Sacramento, CA)\n  March 2023 – Present · source: resume\n  Owns the shipment-tracking API.\n  • Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.\n  • Rebuilt the ingestion service in Go; it now handles 2.3M events a day.\n  • Mentored two interns through their first production launches.\n\n[00000000-0000-4000-8000-000000000012] Software Engineer — Café Numérique (Montréal, QC)\n  June 2021 – February 2023 · source: resume\n  • Built the PostgreSQL schema for the loyalty programme.\n  • Wrote the Python ETL that feeds the finance dashboards.\n\nEDUCATION\n[00000000-0000-4000-8000-000000000021] B.S. Computer Science — Bellwater State University (2017 – 2021) · 3.7 GPA\n\nPROJECTS\n[00000000-0000-4000-8000-000000000031] Tideline — github.com/dana/tideline\n  A CLI for tide forecasts.\n  • Used by 1,200 sailors.\n\nSKILLS\nLanguages: TypeScript, Go, Python\nData: PostgreSQL, Redis\nOther: Docker\n</candidate>",
+  "prompt": "<posting>\nTitle: Software Engineer, Research Data Platform\nCompany: Anthropic\nLocation: San Francisco, CA | New York City, NY (hybrid)\nEmployment type: Full-time\nPay: 150,000–200,000 USD per year\nPosted: 2026-10-01 (3 days ago)\nToday: 2026-10-05\n\nBuild the data platform that research runs on. Go, Python, PostgreSQL.\n</posting>"
+}

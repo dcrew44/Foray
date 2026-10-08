@@ -1,0 +1,10 @@
+{
+  "builder": "discover_companies",
+  "case": "five",
+  "input": {
+    "description": "AI infrastructure startups in SF hiring new grads",
+    "count": 5
+  },
+  "instructions": "You name real companies matching a description. Only companies you are confident actually exist. No descriptions of what they might be called — exact names as they are commonly written.",
+  "prompt": "Name up to 5 companies matching: AI infrastructure startups in SF hiring new grads"
+}

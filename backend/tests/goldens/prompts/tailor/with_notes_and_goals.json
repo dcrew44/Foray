@@ -1,0 +1,209 @@
+{
+  "builder": "tailor",
+  "case": "with_notes_and_goals",
+  "input": {
+    "base": {
+      "basics": {
+        "name": "Dana Reyes",
+        "headline": "Backend engineer",
+        "email": "dana@example.com",
+        "phone": "(555) 0134-2087",
+        "location": "Sacramento, CA",
+        "links": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "source": "resume",
+            "label": "GitHub",
+            "url": "github.com/dana"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "source": "resume",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/dana/"
+          }
+        ]
+      },
+      "summary": "Backend-leaning engineer who likes boring, reliable systems.",
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "source": "resume",
+          "company": "Kestrel Logistics Group",
+          "position": "Software Engineer II",
+          "location": "Sacramento, CA",
+          "startDate": "March 2023",
+          "endDate": "Present",
+          "summary": "Owns the shipment-tracking API.",
+          "highlights": [
+            "Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.",
+            "Rebuilt the ingestion service in Go; it now handles 2.3M events a day.",
+            "Mentored two interns through their first production launches."
+          ]
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000012",
+          "source": "resume",
+          "company": "Café Numérique",
+          "position": "Software Engineer",
+          "location": "Montréal, QC",
+          "startDate": "June 2021",
+          "endDate": "February 2023",
+          "highlights": [
+            "Built the PostgreSQL schema for the loyalty programme.",
+            "Wrote the Python ETL that feeds the finance dashboards."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "source": "resume",
+          "institution": "Bellwater State University",
+          "area": "Computer Science",
+          "studyType": "B.S.",
+          "startDate": "2017",
+          "endDate": "2021",
+          "score": "3.7 GPA",
+          "highlights": [
+            "Dean’s list, 2019–2021"
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "source": "resume",
+          "name": "Tideline",
+          "description": "A CLI for tide forecasts.",
+          "url": "github.com/dana/tideline",
+          "startDate": "2022",
+          "highlights": [
+            "Used by 1,200 sailors."
+          ]
+        }
+      ],
+      "skills": [
+        {
+          "id": "00000000-0000-4000-8000-000000000041",
+          "source": "resume",
+          "name": "TypeScript",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000042",
+          "source": "resume",
+          "name": "Go",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000043",
+          "source": "resume",
+          "name": "PostgreSQL",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000044",
+          "source": "resume",
+          "name": "Redis",
+          "category": "Data"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000045",
+          "source": "resume",
+          "name": "Python",
+          "category": "Languages"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000046",
+          "source": "resume",
+          "name": "Docker"
+        }
+      ]
+    },
+    "job": {
+      "title": "Backend Engineer",
+      "companyName": "Stripe",
+      "locations": [
+        "San Francisco, CA",
+        "Seattle, WA"
+      ],
+      "remote": "hybrid",
+      "descriptionText": "We need Go and PostgreSQL. Kubernetes a plus.",
+      "descriptionRaw": "<p>ignored</p>"
+    },
+    "match": {
+      "deepEval": {
+        "score": 84,
+        "recommendation": "apply",
+        "summary": "You have the backend depth this role wants.",
+        "matched_requirements": [
+          {
+            "requirement": "Go services in production",
+            "evidence": "Rebuilt the ingestion service in Go",
+            "fact_ids": [
+              "00000000-0000-4000-8000-000000000011"
+            ],
+            "strength": "strong"
+          },
+          {
+            "requirement": "PostgreSQL",
+            "evidence": "Built the PostgreSQL schema",
+            "fact_ids": [
+              "00000000-0000-4000-8000-000000000012"
+            ],
+            "strength": "partial"
+          },
+          "A plain-string requirement from an older shape"
+        ],
+        "gaps": [
+          {
+            "gap": "Kubernetes",
+            "severity": "learnable",
+            "note": "Not on the resume."
+          },
+          "On-call leadership"
+        ],
+        "talking_points": [
+          "Lead with the 840 ms → 190 ms latency work.",
+          "Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point end"
+        ],
+        "risk_flags": []
+      },
+      "fastEval": {
+        "score": 80,
+        "hard_requirement_misses": [
+          "Kubernetes",
+          "5+ years of Rust"
+        ]
+      }
+    },
+    "preferences": {
+      "target_roles": [
+        "Backend engineer",
+        "Platform engineer"
+      ],
+      "seniority": "mid",
+      "locations": [
+        "San Francisco Bay Area",
+        "Remote (US)"
+      ],
+      "remote_pref": "hybrid",
+      "salary_floor": {
+        "amount": 150000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "work_auth": "US citizen, no sponsorship needed",
+      "start_date": "January 2027",
+      "must_haves": [
+        "Go or Python"
+      ],
+      "dealbreakers": [
+        "On-call more than one week in four"
+      ]
+    }
+  },
+  "instructions": "You tailor a candidate's resume to one job posting. You are an editor, not an author: every statement on the tailored resume must already be true on the original resume below.\n\nWhat you should do — a tailored resume that reads exactly like the original has not been tailored:\n- Select. Keep the roles, projects, bullets and skills that matter most for this posting. Drop weak or irrelevant bullets rather than padding. Keep the most recent role and every education entry.\n- Reorder bullets within each role, and reorder projects and skills, so the most relevant to this posting come first. Keep roles and education in their original order.\n- Rephrase bullets so each leads with what this posting cares about — the outcome, the kind of system, or the technology it asks for — using the posting's vocabulary only where it means exactly the same thing as the original (\"Postgres\" for \"PostgreSQL\" is fine; \"Kubernetes\" for \"Docker\" is not; \"APIs\" for \"services\" is not). Rewording that only moves emphasis is exactly the job; a bullet that already fits well can stay as it is.\n- Rewrite the summary for this posting, using only facts stated somewhere in the resume. Do not name the target company.\n\nEvery rewritten line is checked against the original item it sits under, and anything unsupported is reverted, so a rewrite that adds a fact gains nothing.\n\nWhat you must never do:\n- Add an employer, job title, date, degree, school, certification, skill, tool, technology, metric or number that is not in the original. That includes numbers computed from existing ones: \"from 840 ms to 190 ms\" must not become \"77% faster\" or \"4x faster\".\n- Move a fact between items. A bullet may only use facts from the role, project or education entry it sits under.\n- Claim more ownership, scope or seniority than the original shows: \"contributed to\" does not become \"led\", \"helped build\" does not become \"architected\".\n- Claim anything listed under Gaps — those are things the candidate does not have.\n\nCopy exactly, character for character, from the Exact fields block:\n- the id of every item you keep;\n- company, position, location, startDate and endDate for roles; institution, area, studyType, score, startDate and endDate for education; name, url, startDate and endDate for projects — null where the block has null;\n- skill names, exactly as listed. Return a subset of them, most relevant to this posting first.\nKeep an education entry's highlights and a role's summary as they are unless rewording one makes it more relevant; the same rules apply.\n\nLength: the tailored resume should fit on one page. Roughly: at most 4–5 bullets for the most relevant role, 2–3 for older or less relevant roles, 1–3 for a project, and a summary of two or three sentences. Shorter and sharper beats complete.\n\nchanges: one entry per edit — each rewritten bullet (before = the original bullet, after = your version), each dropped bullet or item (after = null), the summary rewrite, and one entry describing the skills selection (section \"skills\", item_id null). reason says in a few words why the edit helps for this posting. evidence_fact_ids lists the [id]s of the original items the new text rests on. Do not log items you left untouched.\n\n<resume>\nName: Dana Reyes\nHeadline: Backend engineer\nLocation: Sacramento, CA\nEmail: dana@example.com\nLinks: GitHub github.com/dana, LinkedIn https://www.linkedin.com/in/dana/\n\nSUMMARY\nBackend-leaning engineer who likes boring, reliable systems.\n\nEXPERIENCE\n[00000000-0000-4000-8000-000000000011] Software Engineer II — Kestrel Logistics Group (Sacramento, CA)\n  March 2023 – Present · source: resume\n  Owns the shipment-tracking API.\n  • Cut p95 latency from 840 ms to 190 ms by moving hot reads to a Redis cache.\n  • Rebuilt the ingestion service in Go; it now handles 2.3M events a day.\n  • Mentored two interns through their first production launches.\n\n[00000000-0000-4000-8000-000000000012] Software Engineer — Café Numérique (Montréal, QC)\n  June 2021 – February 2023 · source: resume\n  • Built the PostgreSQL schema for the loyalty programme.\n  • Wrote the Python ETL that feeds the finance dashboards.\n\nEDUCATION\n[00000000-0000-4000-8000-000000000021] B.S. Computer Science — Bellwater State University (2017 – 2021) · 3.7 GPA\n\nPROJECTS\n[00000000-0000-4000-8000-000000000031] Tideline — github.com/dana/tideline\n  A CLI for tide forecasts.\n  • Used by 1,200 sailors.\n\nSKILLS\nLanguages: TypeScript, Go, Python\nData: PostgreSQL, Redis\nOther: Docker\n</resume>\n\n<exact_fields>\n{\n \"work\": [\n  {\n   \"id\": \"00000000-0000-4000-8000-000000000011\",\n   \"company\": \"Kestrel Logistics Group\",\n   \"position\": \"Software Engineer II\",\n   \"location\": \"Sacramento, CA\",\n   \"startDate\": \"March 2023\",\n   \"endDate\": \"Present\"\n  },\n  {\n   \"id\": \"00000000-0000-4000-8000-000000000012\",\n   \"company\": \"Café Numérique\",\n   \"position\": \"Software Engineer\",\n   \"location\": \"Montréal, QC\",\n   \"startDate\": \"June 2021\",\n   \"endDate\": \"February 2023\"\n  }\n ],\n \"education\": [\n  {\n   \"id\": \"00000000-0000-4000-8000-000000000021\",\n   \"institution\": \"Bellwater State University\",\n   \"area\": \"Computer Science\",\n   \"studyType\": \"B.S.\",\n   \"score\": \"3.7 GPA\",\n   \"startDate\": \"2017\",\n   \"endDate\": \"2021\",\n   \"highlights\": [\n    \"Dean’s list, 2019–2021\"\n   ]\n  }\n ],\n \"projects\": [\n  {\n   \"id\": \"00000000-0000-4000-8000-000000000031\",\n   \"name\": \"Tideline\",\n   \"url\": \"github.com/dana/tideline\",\n   \"startDate\": \"2022\",\n   \"endDate\": null\n  }\n ],\n \"skills\": [\n  \"TypeScript\",\n  \"Go\",\n  \"PostgreSQL\",\n  \"Redis\",\n  \"Python\",\n  \"Docker\"\n ]\n}\n</exact_fields>",
+  "prompt": "Tailor the resume for this posting.\n\n<posting>\nTitle: Backend Engineer\nCompany: Stripe\nLocation: San Francisco, CA | Seattle, WA (hybrid)\n\nWe need Go and PostgreSQL. Kubernetes a plus.\n</posting>\n\n<evaluation>\nWhat the posting asks for that the candidate has:\n- Go services in production — shown by: Rebuilt the ingestion service in Go\n- PostgreSQL — shown by: Built the PostgreSQL schema\n- A plain-string requirement from an older shape\n\nWorth emphasising:\n- Lead with the 840 ms → 190 ms latency work.\n- Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long point Very long…\n\nGaps — the candidate does NOT have these; never claim or imply them:\n- Kubernetes (Not on the resume.)\n- On-call leadership\n- Kubernetes\n- 5+ years of Rust\n</evaluation>\n\n<candidate_goals>\nTarget roles: Backend engineer, Platform engineer\nSeniority: mid\n</candidate_goals>"
+}

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ilona Bergquist-Mahoney — Curriculum Vitae</title>
+<style>
+  /* Approximates a LaTeX (article/moderncv) export: serif body, tight leading,
+     small margins, ruled section headings, and a text layer full of the
+     typographic characters that break naive extraction. */
+  @page { size: Letter; margin: 0.62in 0.72in; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+    font-size: 10pt;
+    line-height: 1.18;
+    color: #000;
+    margin: 0;
+    text-align: justify;
+    hyphens: auto;
+    /* force the ff / fi / ffi ligatures into the text layer */
+    font-variant-ligatures: common-ligatures discretionary-ligatures;
+    font-feature-settings: "liga" 1, "clig" 1, "dlig" 1;
+    -webkit-font-feature-settings: "liga" 1, "clig" 1, "dlig" 1;
+  }
+  header { text-align: center; margin-bottom: 9px; }
+  h1 {
+    font-size: 16pt;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin: 0 0 3px 0;
+  }
+  .contact {
+    font-size: 8.8pt;
+    line-height: 1.3;
+  }
+  h2 {
+    font-size: 9.6pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 11px 0 3px 0;
+    border-bottom: 0.6pt solid #000;
+    padding-bottom: 1.5px;
+  }
+  p { margin: 0 0 4px 0; }
+  .entry { margin-bottom: 7px; }
+  .entry-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .what { font-weight: 700; font-size: 10pt; }
+  .when { font-style: italic; font-size: 9pt; white-space: nowrap; }
+  .where { font-style: italic; font-size: 9.4pt; margin-bottom: 1px; }
+  ul { margin: 1px 0 0 0; padding-left: 13px; list-style: none; }
+  li { margin-bottom: 1.5px; text-indent: -11px; padding-left: 11px; }
+  .inline-list { font-size: 9.6pt; }
+  .inline-list .lbl { font-variant: small-caps; font-weight: 700; letter-spacing: 0.04em; }
+  .rule { border: 0; border-top: 0.6pt solid #000; margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Ilona Bergquist-Mahoney</h1>
+  <div class="contact">
+    Ostmark, Minnesota&nbsp;&middot;&nbsp;(555)&nbsp;0198&ndash;3376&nbsp;&middot;&nbsp;i.bergquist.mahoney@example.com<br>
+    github.com/ibergquist&nbsp;&middot;&nbsp;bergquist.example.dev&nbsp;&middot;&nbsp;orcid.org/0000-0002-1825-0097
+  </div>
+</header>
+
+<h2>Summary</h2>
+<p>Research-adjacent software engineer — three years building numerical and data-intensive
+systems, with a background in applied mathematics. Prior work spans simulation tooling,
+scientific workflow orchestration, and the unglamorous plumbing that makes an efficient
+pipeline stay efficient once it meets real data. Interested in roles where correctness
+matters more than velocity; comfortable reading a paper and shipping the thing it describes.</p>
+
+<h2>Experience</h2>
+
+<div class="entry">
+  <div class="entry-head">
+    <span class="what">Software Engineer, Simulation Tools</span>
+    <span class="when">Sept. 2023 – present</span>
+  </div>
+  <div class="where">Cairnwell Robotics Laboratory — Ostmark, MN</div>
+  <ul>
+    <li>• Rewrote the contact-solver inner loop in C++17 with explicit SIMD intrinsics, giving a
+      3.4× speed-up on the standard benchmark suite and cutting an overnight batch from
+      9 h 20 m to 2 h 45 m.</li>
+    <li>• Built “Ferryman”, the workflow scheduler that now runs every nightly regression —
+      about 1,100 jobs — across a 48-node cluster; job failure rate fell from 7.2% to 0.9%.</li>
+    <li>• Authored the team’s numerical-stability test harness after a floating-point regression
+      shipped undetected; it has caught eleven such regressions since.</li>
+    <li>• Maintain the Python bindings (pybind11) used by the research staff, including the
+      affiliate group at Ostmark University.</li>
+  </ul>
+</div>
+
+<div class="entry">
+  <div class="entry-head">
+    <span class="what">Data Engineer</span>
+    <span class="when">June 2022 – Aug. 2023</span>
+  </div>
+  <div class="where">Halcyon Data Laboratory — Remote</div>
+  <ul>
+    <li>• Designed the ingestion workflow for a 12 TB instrument archive; the incremental loader
+      reduced the full-refresh window from 31 hours to roughly 70 minutes.</li>
+    <li>• Replaced a hand-rolled scheduler with Airflow and wrote the migration guide — 60-odd
+      DAGs moved with no data loss and a single half-day of downtime.</li>
+    <li>• Cut cloud storage cost by 42% (≈ $18,400/yr) through Parquet conversion, column pruning,
+      and a tiered retention policy the team had been putting off since 2020.</li>
+  </ul>
+</div>
+
+<div class="entry">
+  <div class="entry-head">
+    <span class="what">Research Assistant, Numerical Methods Group</span>
+    <span class="when">Jan. 2021 – May 2022</span>
+  </div>
+  <div class="where">Ostmark University, Dept. of Applied Mathematics</div>
+  <ul>
+    <li>• Implemented and validated an adaptive quadrature scheme in Julia; results appear in
+      Bergquist-Mahoney &amp; Sandoval, “Adaptive Quadrature for Stiff Kernels”, <em>Journal of
+      Computational Practice</em> 14(2), 2022, pp. 211–229.</li>
+    <li>• Ran the group’s reproducibility audit — every figure in three papers regenerated from
+      source in a single make target.</li>
+  </ul>
+</div>
+
+<h2>Education</h2>
+<div class="entry">
+  <div class="entry-head">
+    <span class="what">M.S. Applied Mathematics</span>
+    <span class="when">2020 – 2022</span>
+  </div>
+  <div class="where">Ostmark University — Ostmark, MN</div>
+  <p>Thesis: “Sti&#xFB00;ness-Aware Step Control for Coupled Systems”. Advisor: Prof. R. Sandoval.</p>
+</div>
+<div class="entry">
+  <div class="entry-head">
+    <span class="what">B.A. Mathematics &amp; Computer Science</span>
+    <span class="when">2016 – 2020</span>
+  </div>
+  <div class="where">Havering College — Havering, WI</div>
+  <p>Magna cum laude &middot; Putnam competition team, 2018–2019 &middot; GPA 3.83/4.00</p>
+</div>
+
+<h2>Technical Skills</h2>
+<div class="inline-list">
+  <p><span class="lbl">Languages —</span> C++17/20, Python, Julia, Rust (intermediate), SQL, Fortran (legacy maintenance), LaTeX</p>
+  <p><span class="lbl">Scientific —</span> NumPy, SciPy, Eigen, pybind11, OpenMP, MPI, CUDA (basic), BLAS/LAPACK</p>
+  <p><span class="lbl">Data &amp; workflow —</span> Apache Airflow, Parquet, DuckDB, PostgreSQL, dbt, Snakemake</p>
+  <p><span class="lbl">Tooling —</span> CMake, Git, Docker, Slurm, GitHub Actions, perf, Valgrind, Google Benchmark</p>
+</div>
+
+<h2>Selected Projects</h2>
+<div class="entry">
+  <div class="entry-head">
+    <span class="what">quadfellow — adaptive quadrature library</span>
+    <span class="when">2022 – present</span>
+  </div>
+  <div class="where">github.com/ibergquist/quadfellow</div>
+  <p>A header-only C++ library implementing the sti&#xFB00;ness-aware scheme from my thesis, with a
+  thin Python wrapper. Used by two university groups and one a&#xFB03;liate lab; 430 stars. The
+  documentation — written in a literate style — doubles as the reproducibility appendix for the
+  2022 paper.</p>
+</div>
+<div class="entry">
+  <div class="entry-head">
+    <span class="what">plainmake — a reproducible-figures toolchain</span>
+    <span class="when">2021 – 2023</span>
+  </div>
+  <div class="where">bergquist.example.dev/plainmake</div>
+  <p>A small tool that turns a paper’s figure scripts into a single, cached, e&#xFB03;cient build
+  graph, so “make figures” regenerates every plot from raw data in one step — or fails loudly.</p>
+</div>
+
+</body>
+</html>

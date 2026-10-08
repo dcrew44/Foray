@@ -1,0 +1,67 @@
+[project]
+name = "foray-backend"
+version = "0.2.0"
+description = "Foray's Django backend: the API, the worker and the legacy import"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+  "django==6.1.1",
+  "django-ninja==1.7.1",
+  "pydantic~=2.13.5",
+  "pydantic-settings~=2.15.0",
+  "psycopg[binary,pool]~=3.3.6",
+  "dj-database-url~=3.1.2",
+  "asgiref~=3.12.1",
+  "uvicorn[standard]~=0.54.0",
+  "procrastinate[django]~=3.10.0",
+  "pydantic-ai-slim[openai,anthropic,google,ui]==2.54.0",  # exact: releases ship several times a week
+  "httpx2~=2.13.1",
+  "pypdfium2~=5.14.0",
+  "mammoth==1.13.0",
+  "ada-url~=4.0.0",
+  "playwright==1.63.0",
+  "python-dotenv~=1.1",
+  "regex",
+  "watchfiles",
+]
+
+[dependency-groups]
+dev = ["pytest>=9", "pytest-django>=4.14", "pytest-asyncio", "ruff", "pyright", "django-types"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "foray.settings_test"
+pythonpath = ["."]
+testpaths = ["tests"]
+# --reuse-db keeps the test database between runs (migrate still applies new migrations);
+# pass --create-db to rebuild it. importlib mode lets two lanes both have tests/<app>/test_x.py.
+addopts = ["--reuse-db", "--import-mode=importlib", "-ra"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+  "contract: runs the Node UI-stream contract script (needs node)",
+  "slow: needs Chromium or real time",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = ["apps/*/migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "DJ", "ASYNC"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "foray", "tests"]
+
+[tool.pyright]
+pythonVersion = "3.14"
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+include = ["foray", "apps", "tests", "manage.py"]
+exclude = ["**/migrations", "**/__pycache__", ".venv", "tests/fixtures", "tests/goldens"]
+# Django's declarative class attributes (Meta, objects, REQUIRED_FIELDS, overridden fields such
+# as User.password) redefine base-class symbols by design; django-types flags every one.
+reportIncompatibleVariableOverride = false

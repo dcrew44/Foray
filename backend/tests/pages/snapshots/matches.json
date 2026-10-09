@@ -1,0 +1,73 @@
+{
+  "counts": {
+    "applied": "number",
+    "archived": "number",
+    "found": "number",
+    "interviewing": "number",
+    "offer": "number",
+    "rejected": "number",
+    "shortlisted": "number"
+  },
+  "matches": [
+    {
+      "applyUrl": "string",
+      "company": "string",
+      "createdAt": "string",
+      "deepScore": "number",
+      "fastScore": "number",
+      "headline": "string",
+      "isActive": "boolean",
+      "jobId": "string",
+      "locations": [
+        "string"
+      ],
+      "matchId": "string",
+      "postedAt": "string",
+      "recommendation": "string",
+      "remote": "string",
+      "salaryCurrency": "string",
+      "salaryMax": "number",
+      "salaryMin": "number",
+      "salaryPeriod": "string",
+      "score": "number",
+      "stage": "string",
+      "stageChangedAt": "string",
+      "tailoredResumeId": "string",
+      "title": "string",
+      "url": "string",
+      "userRating": "null"
+    },
+    {
+      "applyUrl": "null",
+      "company": "string",
+      "createdAt": "string",
+      "deepScore": "null",
+      "fastScore": "number",
+      "headline": "string",
+      "isActive": "boolean",
+      "jobId": "string",
+      "locations": [
+        "string"
+      ],
+      "matchId": "string",
+      "postedAt": "string",
+      "recommendation": "null",
+      "remote": "string",
+      "salaryCurrency": "null",
+      "salaryMax": "null",
+      "salaryMin": "null",
+      "salaryPeriod": "null",
+      "score": "number",
+      "stage": "string",
+      "stageChangedAt": "string",
+      "tailoredResumeId": "null",
+      "title": "string",
+      "url": "string",
+      "userRating": "null"
+    }
+  ],
+  "ready": "boolean",
+  "showClosed": "boolean",
+  "stage": "null",
+  "view": "string"
+}

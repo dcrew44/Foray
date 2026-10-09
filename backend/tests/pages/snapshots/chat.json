@@ -1,0 +1,9 @@
+{
+  "suggestions": [
+    {
+      "prefill": "boolean",
+      "prompt": "string",
+      "title": "string"
+    }
+  ]
+}

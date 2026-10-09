@@ -37,6 +37,16 @@ CAMEL = re.compile(r"^[a-z][a-zA-Z0-9]*$")
 # today's spelling). Each entry needs a reason.
 SNAKE_CASE_COMPONENTS: dict[str, str] = {
     "Preferences": "§2.1: preferences keep today's snake_case keys",
+    "FastScore": "§2.1: evaluations keep today's snake_case keys (the match page embeds them)",
+    "DeepEval": "§2.1: evaluations keep today's snake_case keys (the match page embeds them)",
+    "MatchedRequirement": "§2.1: part of DeepEval",
+    "EvalGap": "§2.1: part of DeepEval",
+}
+
+# Response keys whose *values* are one of the components above, so their own keys stay
+# snake_case: the page endpoints embed the stored preferences (§5.3).
+SNAKE_CASE_VALUES: dict[str, str] = {
+    "preferences": "a `Preferences` (Home's onboarding state, the profile page)",
 }
 
 
@@ -57,6 +67,8 @@ def _camel_keys(value: Any, where: str) -> list[str]:
         for key, inner in value.items():
             if not CAMEL.match(str(key)):
                 bad.append(f"{where}.{key}")
+            if key in SNAKE_CASE_VALUES:
+                continue
             bad.extend(_camel_keys(inner, f"{where}.{key}"))
     elif isinstance(value, list):
         for index, inner in enumerate(value):
@@ -224,7 +236,10 @@ def test_not_signed_in_is_401_json() -> None:
     assert json.loads(response.content) == {"ok": False, "message": "Not signed in."}
 
 
-def test_chat_stub_answers_503() -> None:
+def test_chat_view_refuses_in_plain_text() -> None:
+    # Step 6 replaced the 503 stub: the chat view answers `useChat` in plain text, and a body with
+    # no chat id is unreadable (deviations/step-6.md §4, §5).
     response = Client().post("/api/chat", data="{}", content_type="application/json")
-    assert response.status_code == 503
-    assert response.content == b"Chat is not built yet."
+    assert response.status_code == 400
+    assert response["Content-Type"].startswith("text/plain")
+    assert response.content == b"That request could not be read."

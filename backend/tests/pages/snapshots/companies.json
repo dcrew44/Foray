@@ -1,0 +1,22 @@
+{
+  "active": "number",
+  "companies": [
+    {
+      "activeJobs": "number",
+      "atsSlug": "string",
+      "careersUrl": "null",
+      "discoveredVia": "string",
+      "domain": "null",
+      "lastFetchJobCount": "null",
+      "lastFetchStatus": "null",
+      "lastFetchedAt": "null",
+      "name": "string",
+      "needsBrowser": "boolean",
+      "slug": "string",
+      "sourceType": "string",
+      "status": "string",
+      "tags": []
+    }
+  ],
+  "openPostings": "number"
+}

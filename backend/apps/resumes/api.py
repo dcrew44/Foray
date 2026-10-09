@@ -139,9 +139,11 @@ _UPLOAD_BODY: dict[str, Any] = {
 
 
 def _file_response(content_type: str, description: str) -> dict[str, Any]:
+    # An int key, as ninja keys its own responses: ninja deep-merges `openapi_extra` into the
+    # operation, and a "200" string would sit beside ninja's 200 as a duplicate JSON key.
     return {
         "responses": {
-            "200": {
+            200: {
                 "description": description,
                 "content": {content_type: {"schema": {"type": "string", "format": "binary"}}},
             }

@@ -1,0 +1,67 @@
+{
+  "aggregator": {
+    "budget": "number",
+    "enabled": "boolean",
+    "used": "number"
+  },
+  "byDay": [
+    {
+      "day": "string",
+      "usd": "number"
+    }
+  ],
+  "byModel": [
+    {
+      "avgLatencyMs": "number",
+      "calls": "number",
+      "failures": "number",
+      "model": "string",
+      "provider": "string",
+      "usd": "number"
+    }
+  ],
+  "byPurpose": [
+    {
+      "calls": "number",
+      "purpose": "string",
+      "usd": "number"
+    }
+  ],
+  "monthStart": "string",
+  "providers": {
+    "present": [
+      "string"
+    ]
+  },
+  "purposes": [
+    {
+      "error": "null",
+      "purpose": "string",
+      "rate": {
+        "input": "number",
+        "output": "number"
+      },
+      "reasoning": "string",
+      "ref": "string"
+    }
+  ],
+  "review": {
+    "model": "string",
+    "perItemUsd": "number"
+  },
+  "settings": {
+    "deepEvalTopN": "number",
+    "defaultMode": "string",
+    "scoreThreshold": "number"
+  },
+  "spend": {
+    "calls": "number",
+    "inputTokens": "number",
+    "outputTokens": "number",
+    "usd": "number"
+  },
+  "user": {
+    "email": "string",
+    "name": "string"
+  }
+}

@@ -511,8 +511,9 @@ def test_sliding_session_rules(signed_in: Any, api: Api) -> None:
 
     # /api/chat never slides: its request thread must not touch the database.
     _set_session(key, seen=None, expire_in=timedelta(days=6))
+    # A form-encoded {} is not a readable chat request (step-6.md §4).
     chat = client.post("/api/chat", {})
-    assert chat.status_code == 503
+    assert chat.status_code == 400
     assert session_cookie(chat) is None
     assert _stamp(key) is None
 

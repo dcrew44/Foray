@@ -32,6 +32,7 @@ const STEP_LABEL: Record<string, string> = {
   "slug-guess": "Guessed board names",
   search: "Web search",
   "search-ats-link": "Board found by web search",
+  "search-skip": "Search result about something else",
   "careers-page-fallback": "Careers page with no known board",
 };
 

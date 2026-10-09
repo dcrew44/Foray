@@ -617,7 +617,10 @@ def _one_message(name: str, outcome: RefreshOutcome) -> str:
 async def _complete_refresh(
     run: Run, summary: RefreshSummary, message: str, *, level: str = Level.INFO
 ) -> None:
-    done = _Event(EventKind.COMPANY_REFRESH_DONE, message, summary.done_data(), level)
+    # `run.completed` carries the same sentence at `level`; the counts event stays out of the
+    # feeds (debug), or every refresh would show its sentence twice there. The companies page
+    # still re-reads on it: `/api/live` serves every level.
+    done = _Event(EventKind.COMPANY_REFRESH_DONE, message, summary.done_data(), Level.DEBUG)
     await db(
         _finish, run.id, run.user_id, summary.output(message), message, level=level, before=done
     )

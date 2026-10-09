@@ -138,6 +138,8 @@ function describe(run: LiveRun, workerOnline: boolean): string {
       if (total === 1) return "Reading the posting in full against your resume";
       return total ? `Reading ${done} of ${total} postings in full` : "Reading postings in full";
     }
+    case "shortlisting":
+      return "Shortlisting the roles worth applying to";
     case "tailoring":
       return "Rewriting your resume for this role";
     case "verifying":

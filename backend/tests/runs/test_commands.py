@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from apps.core.storage import storage
 from apps.legacy.models import ImportRecord
+from apps.llm.models import LlmCall
 from apps.runs import events, lifecycle
 from apps.runs.management.commands import acceptance_checks
 from apps.runs.management.commands import worker as worker_command
@@ -150,6 +151,38 @@ def test_acceptance_checks_report_each_broken_invariant() -> None:
     assert str(stale_chat.id) in failed
     assert "unattributed" in failed
     assert out.count("FAIL") == 6  # everything but the heartbeat and the budget
+
+
+@pytest.mark.django_db
+def test_acceptance_checks_tell_a_deleted_chat_from_a_missing_link() -> None:
+    """Deleting a chat nulls its ledger rows' `conversation_id` (acceptance item 13 deletes one
+    before item 16 runs these checks): those rows are not unattributed. A chat row with no link
+    while another chat of the user was open still fails (deviations/step-10.md)."""
+    user = make_user()
+    _healthy(user)
+    gone = make_conversation(user)
+    turn = make_llm_call(user, purpose="chat", conversation=gone)
+    follow_up = make_llm_call(user, purpose="chat", conversation=gone, run=make_run(user))
+    sql(
+        "UPDATE conversations SET created_at = now() - interval '1 hour', "
+        "updated_at = now() - interval '50 minutes' WHERE id = %s",
+        [str(gone.id)],
+    )
+    sql(
+        "UPDATE llm_calls SET created_at = now() - interval '55 minutes' WHERE id IN (%s, %s)",
+        [str(turn.id), str(follow_up.id)],
+    )
+    gone.delete()  # the ledger keeps both rows, with conversation_id NULL
+    assert {row.conversation_id for row in LlmCall.objects.for_user(user.pk)} >= {None}
+    code, out, _ = _call("acceptance_checks")
+    assert code == 0, out
+    assert "all attributed (1 row(s) of deleted chats)" in out
+
+    make_llm_call(user, purpose="chat")  # now, while the _healthy chat is open: a real miss
+    code, out, _ = _call("acceptance_checks")
+    assert code == 1
+    failed = [line for line in out.splitlines() if line.startswith("FAIL")]
+    assert len(failed) == 1 and "1 unattributed ledger row(s)" in failed[0]
 
 
 @pytest.mark.django_db

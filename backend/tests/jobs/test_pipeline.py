@@ -609,7 +609,7 @@ def test_refreshing_one_company_completes_with_integer_counts(web: Web) -> None:
     }
     assert all(type(value) is int for key, value in output_of(run).items() if key != "message")
     done, completed = run_events(run)
-    assert (done.kind, done.message) == ("company.refresh.done", message)
+    assert (done.kind, done.level, done.message) == ("company.refresh.done", "debug", message)
     assert done.data == {"boards": 1, "ok": 1, "notFound": 0, "errored": 0}
     assert (completed.kind, completed.level, completed.message) == (
         "run.completed",
@@ -645,8 +645,9 @@ def test_a_refresh_that_fails_completes_with_the_problem(web: Web, no_backoff: l
     assert (flaky.output["ok"], flaky.output["errored"]) == (0, 1)
     assert Company.objects.get(slug="flaky").status == "active"
     for run in (gone, flaky):
+        # The counts event is debug, so the feeds show the sentence once (deviations/step-10.md).
         assert [(e.kind, e.level) for e in run_events(run)] == [
-            ("company.refresh.done", "warn"),
+            ("company.refresh.done", "debug"),
             ("run.completed", "warn"),
         ]
 
@@ -676,7 +677,7 @@ def test_a_company_gone_before_its_refresh_runs_completes_with_a_warning(web: We
     assert [(e.kind, e.level, e.message, e.data) for e in run_events(run)] == [
         (
             "company.refresh.done",
-            "warn",
+            "debug",
             message,
             {"boards": 0, "ok": 0, "notFound": 0, "errored": 0},
         ),

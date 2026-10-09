@@ -16,6 +16,9 @@ same boundary).
 4. The newest worker heartbeat is under 45 s old.
 5. Every ledger row with a user is attributed: chat rows carry `conversation_id`, every other
    purpose (pipelines, follow-ups' runs) carries `run_id`. System rows (no user) are exempt.
+   Deleting a chat sets its rows' `conversation_id` to NULL (acceptance item 13 deletes one), so
+   a chat row with neither link fails only when one of the user's chats that still exist was
+   open at that moment; the others are counted as rows of deleted chats.
 6. Month-to-date spend is below `LLM_MONTHLY_BUDGET_USD`.
 7. Every `documents.storage_path` exists in `STORAGE_DIR` with a matching sha256.
 8. No conversation has `turn_started_at` older than 200 s.
@@ -147,18 +150,43 @@ def check_heartbeat() -> Check:
     return Check("the worker is alive", seconds < 45, f"newest heartbeat {seconds:.0f} s ago")
 
 
+# A chat turn's ledger rows fall between its chat's `created_at` and `updated_at` (bumped at every
+# turn start and finish); the slack covers the two clocks those columns are written with.
+CHAT_OPEN_SLACK = timedelta(seconds=2)
+
+
 def check_attribution(since: datetime | None) -> Check:
     params: list[Any] = [since] if since else []
-    window = "created_at >= %s" if since else "true"
-    rows = _rows(
-        f"""SELECT id FROM llm_calls
-             WHERE {window} AND user_id IS NOT NULL
-               AND ((purpose = 'chat' AND conversation_id IS NULL)
-                    OR (purpose <> 'chat' AND run_id IS NULL))""",
+    window = "l.created_at >= %s" if since else "true"
+    # A pipeline row (any purpose but chat) needs its run.
+    unattributed = _rows(
+        f"""SELECT l.id FROM llm_calls l
+             WHERE {window} AND l.user_id IS NOT NULL
+               AND l.purpose <> 'chat' AND l.run_id IS NULL""",
         params,
     )
-    detail = f"{len(rows)} unattributed ledger row(s): {_ids(rows)}" if rows else "all attributed"
-    return Check("every user's model call is attributed", not rows, detail)
+    # A chat row needs its chat (a follow-up's row has its run too). One with neither link is a
+    # miss when a chat of the user that still exists was open then; otherwise its chat was
+    # deleted since, which sets the link to NULL.
+    chat_rows = _rows(
+        f"""SELECT l.id,
+                   EXISTS (SELECT 1 FROM conversations c
+                            WHERE c.user_id = l.user_id
+                              AND l.created_at BETWEEN c.created_at - %s AND c.updated_at + %s)
+              FROM llm_calls l
+             WHERE {window} AND l.user_id IS NOT NULL
+               AND l.purpose = 'chat' AND l.conversation_id IS NULL AND l.run_id IS NULL""",
+        [CHAT_OPEN_SLACK, CHAT_OPEN_SLACK, *params],
+    )
+    unattributed += [row for row in chat_rows if row[1]]
+    deleted = len(chat_rows) - len([row for row in chat_rows if row[1]])
+    extra = f" ({deleted} row(s) of deleted chats)" if deleted else ""
+    detail = (
+        f"{len(unattributed)} unattributed ledger row(s): {_ids(unattributed)}{extra}"
+        if unattributed
+        else f"all attributed{extra}"
+    )
+    return Check("every user's model call is attributed", not unattributed, detail)
 
 
 def check_budget() -> Check:

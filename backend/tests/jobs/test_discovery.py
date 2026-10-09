@@ -383,6 +383,65 @@ async def test_search_finds_a_careers_page(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 @pytestmark_db
+async def test_search_results_about_something_else_are_skipped(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A made-up name gets loose search results (acceptance item 9: `notarealcompany12345`
+    found a notary's careers page and a careers site of another company). Pages that are not
+    about the company are neither registered nor followed to the board they link."""
+    monkeypatch.setattr(settings.ENV, "search_api_key", SecretStr("brave-test"))
+    pages = {
+        "https://notarealcompany.hire.trakstar.com/": "<h1>Careers at Not A Real Company</h1>",
+        "https://www.notaries.com/articles/notary-career-paths/": "<p>Notary careers</p>",
+        "https://www.notarycam.com/careers/": (
+            '<a href="https://jobs.ashbyhq.com/notarycam">Open roles</a>'
+        ),
+    }
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        if request.url.host == "api.search.brave.com":
+            return httpx2.Response(200, json={"web": {"results": [{"url": url} for url in pages]}})
+        if str(request.url) in pages:
+            return html(pages[str(request.url)])
+        assert "ashbyhq" not in str(request.url), "a stranger's board was probed"
+        return httpx2.Response(404, text="Not Found")
+
+    async with mock_client(handler) as client:
+        result = await discover_company(client, "notarealcompany12345")
+    assert result.registered is None
+    assert result.careers_urls == []
+    assert [step["step"] for step in result.trail] == [
+        "slug-guess",
+        "search",
+        "search-skip",
+        "search-skip",
+        "search-skip",
+    ]
+    assert [step["detail"] for step in result.trail[2:]] == list(pages)
+    assert await Company.objects.acount() == 0
+
+
+@pytestmark_db
+async def test_a_search_result_that_names_the_company_is_used(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings.ENV, "search_api_key", SecretStr("brave-test"))
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        if request.url.host == "api.search.brave.com":
+            return httpx2.Response(200, json={"web": {"results": [{"url": "https://hire.io/q"}]}})
+        if str(request.url) == "https://hire.io/q":
+            return html("<h1>Work at  QUIET   lantern &amp; co</h1>")
+        return httpx2.Response(404, text="Not Found")
+
+    async with mock_client(handler) as client:
+        result = await discover_company(client, "Quiet Lantern & Co")
+    assert [step["step"] for step in result.trail][-1] == "careers-page-fallback"
+    assert result.registered is not None
+    assert result.registered.careers_urls == ["https://hire.io/q"]
+
+
+@pytestmark_db
 async def test_nothing_found_is_not_registered() -> None:
     async with mock_client(routes({})) as client:
         result = await discover_company(client, "Nobody At All")

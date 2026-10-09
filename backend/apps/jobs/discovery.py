@@ -8,6 +8,10 @@ a miss is explicable:
     pasted ATS link -> careers paths -> homepage -> slug guesses -> Brave search
     -> careers-page fallback
 
+A web search answers loosely, so a search result is used only when it is about the company: its
+address holds the name's slug, or its page names the company. Otherwise a made-up name would be
+registered with strangers' careers pages, or with a board their page links to.
+
 Every fetch goes through the guarded client (§10.1): a URL a user typed that points inside the
 network is refused, and the refusal is recorded in the trail as "That address is not reachable
 from Foray."
@@ -15,6 +19,7 @@ from Foray."
 
 from __future__ import annotations
 
+import html
 import logging
 import re
 from collections.abc import Sequence
@@ -217,6 +222,20 @@ async def search_for_careers_page(client: HttpClient, name: str) -> list[str]:
     return [result["url"] for result in results if isinstance(result, dict) and result.get("url")]
 
 
+def is_about(name: str, url: str, page: str) -> bool:
+    """Whether a web search result is about the company `name`: its address holds one of the
+    name's first slug guesses (the joined name, or a guess of four letters or more), or its page
+    names the company, case and spacing aside."""
+    candidates = slug_candidates(name)[:3]
+    # The joined name always; a shorter first word ("the", "box") would match too much.
+    keys = [slug for index, slug in enumerate(candidates) if index == 0 or len(slug) >= 4]
+    address = url.lower()
+    if any(key in address for key in keys):
+        return True
+    wanted = " ".join(name.lower().split())
+    return bool(wanted) and wanted in " ".join(html.unescape(page).lower().split())
+
+
 async def discover_company(
     client: HttpClient,
     name_or_url: str,
@@ -346,6 +365,9 @@ async def discover_company(
         for url in results[:SEARCH_RESULTS_TRIED]:
             page = await run.fetch(url)
             if page is None:
+                continue
+            if not is_about(name, url, page):
+                run.step("search-skip", url)
                 continue
             careers_urls.append(url)
             for link in find_ats_links(page):

@@ -7,6 +7,8 @@ user prompt, and plays one short plan per kind of request:
 | The prompt | The plan |
 |---|---|
 | a notice, `[Automatic update about run <id>, …` | `get_run_status`, then two sentences |
+| "set up" (Home's "Answer in chat") | `get_profile_summary`, then the interview's question |
+| labelled answers, `Roles: …; Level: …` | `update_profile_preferences`, then a sentence |
 | "find" / "search" | `start_search_run`, then a sentence |
 | "yes" / "approve" | `list_pending_approvals`, `answer_approval` (the first), a sentence |
 | "matches" / "jobs" | `list_jobs` with every argument null, then a sentence |
@@ -17,6 +19,13 @@ user prompt, and plays one short plan per kind of request:
 A wanted tool that is not offered (a read-only follow-up, the step cap) degrades to text, never
 to a call of an unknown tool. A structured request on the `chat` purpose (`discover_companies`'
 name proposal) is left to the schema-driven default.
+
+The interview plans let the onboarding flow run on fakes (acceptance item 2): "set up" comes
+before "search" because Home's opener ("Let's set up my job search…") contains both. Answers are
+read only in the labelled form `<label>: <value>`, separated by `;` or new lines, with list
+values separated by commas: `Roles: Software Engineer, Backend Engineer; Level: entry;
+Locations: San Francisco Bay Area; Remote: hybrid; Work authorisation: US citizen`. A value the
+schema does not accept (a level that is not one of the options) is left out, never guessed.
 """
 
 from __future__ import annotations
@@ -39,6 +48,8 @@ from pydantic_ai.models.function import AgentInfo
 from apps.llm import fake
 
 NOTICE = re.compile(r"^\[Automatic update about run ([^,\]\s]+)")
+INTERVIEW = re.compile(r"\bset\s+up\b", re.IGNORECASE)
+ANSWER = re.compile(r"^\s*([A-Za-z][A-Za-z -]*?)\s*:\s*(.+?)\s*$")
 SEARCH = re.compile(r"\b(find|search)\b", re.IGNORECASE)
 APPROVE = re.compile(r"\b(yes|approve)\b", re.IGNORECASE)
 JOBS = re.compile(r"\b(matches|jobs)\b", re.IGNORECASE)
@@ -54,6 +65,79 @@ LIST_JOBS_ARGS: dict[str, Any] = {
 }
 JOBS_LISTED = "Here are your matches."
 FALLBACK = "This is a fake reply from Foray's test model. Nothing was sent to a provider."
+INTERVIEW_QUESTION = (
+    "Let's set up your search. Tell me the roles you want, your level, where you want to work, "
+    "whether you want remote, hybrid or on-site work, and your work authorisation."
+)
+
+# `<label>: <value>` → (preference field, how the value is read). Labels are lowercased with
+# their spaces and hyphens collapsed.
+type Reader = Callable[[str], Any]
+
+
+def _words(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _choice(options: tuple[str, ...]) -> Reader:
+    def read(value: str) -> str | None:
+        key = re.sub(r"[\s-]+", "_", value.strip().lower())
+        key = {"entry_level": "entry", "on_site": "onsite", "in_office": "onsite"}.get(key, key)
+        return key if key in options else None
+
+    return read
+
+
+SENIORITY = ("intern", "new_grad", "entry", "mid", "senior", "staff_plus")
+REMOTE = ("remote", "hybrid", "onsite", "any")
+ANSWER_FIELDS: dict[str, tuple[str, Reader]] = {
+    "roles": ("target_roles", _words),
+    "target roles": ("target_roles", _words),
+    "level": ("seniority", _choice(SENIORITY)),
+    "seniority": ("seniority", _choice(SENIORITY)),
+    "locations": ("locations", _words),
+    "location": ("locations", _words),
+    "remote": ("remote_pref", _choice(REMOTE)),
+    "work authorisation": ("work_auth", str.strip),
+    "work authorization": ("work_auth", str.strip),
+    "work auth": ("work_auth", str.strip),
+    "start date": ("start_date", str.strip),
+    "must haves": ("must_haves", _words),
+    "dealbreakers": ("dealbreakers", _words),
+}
+PREFERENCE_ARGS: tuple[str, ...] = (
+    "target_roles",
+    "seniority",
+    "locations",
+    "remote_pref",
+    "salary_floor",
+    "work_auth",
+    "start_date",
+    "must_haves",
+    "dealbreakers",
+    "declined_slots",
+)
+
+
+def read_answers(prompt: str) -> dict[str, Any] | None:
+    """The `update_profile_preferences` arguments a labelled answer gives, or None when the
+    prompt has no recognised `<label>: <value>`."""
+    found: dict[str, Any] = {}
+    for line in re.split(r"[;\n]", prompt):
+        matched = ANSWER.match(line)
+        if not matched:
+            continue
+        label = re.sub(r"[\s-]+", " ", matched.group(1).strip().lower())
+        if label not in ANSWER_FIELDS:
+            continue
+        field, read = ANSWER_FIELDS[label]
+        value = read(matched.group(2))
+        if value:
+            found[field] = value
+    if not found:
+        return None
+    return {name: found.get(name) for name in PREFERENCE_ARGS}
+
 
 type Done = dict[str, Any]  # tool name -> what it returned, this turn
 type Args = Callable[[Done], dict[str, Any] | None]  # None: nothing to call it with
@@ -111,6 +195,23 @@ def _plan(prompt: str) -> Plan:
             return f"{first} Tell me what you would like to do next."
 
         return Plan((("get_run_status", lambda done: {"run_id": run_id}),), report)
+
+    if INTERVIEW.search(prompt):
+        return Plan((("get_profile_summary", lambda done: {}),), lambda done: INTERVIEW_QUESTION)
+
+    answers = read_answers(prompt)
+    if answers is not None:
+
+        def saved(done: Done) -> str:
+            result = done.get("update_profile_preferences")
+            if _get(result, "ok") is False:
+                return str(_get(result, "message") or "Those answers could not be saved.")
+            blocking = _get(result, "blockingSearch")
+            if isinstance(blocking, list) and blocking:
+                return f"Saved. Foray still needs your {', '.join(map(str, blocking)).lower()}."
+            return "Saved. Foray has what it needs to search."
+
+        return Plan((("update_profile_preferences", lambda done: dict(answers)),), saved)
 
     if SEARCH.search(prompt):
         search_args = {

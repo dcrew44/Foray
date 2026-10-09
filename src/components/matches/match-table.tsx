@@ -156,7 +156,7 @@ export function MatchTable({
               <tr>
                 <th className="w-16 py-2.5 pl-4 font-medium">Fit</th>
                 <th className="py-2.5 pr-4 font-medium">Role</th>
-                <th className="hidden w-[210px] py-2.5 pr-4 font-medium lg:table-cell">Location</th>
+                <th className="hidden w-[210px] py-2.5 pr-4 font-medium xl:table-cell">Location</th>
                 <th className="hidden w-[128px] py-2.5 pr-4 font-medium md:table-cell">Pay</th>
                 <th className="w-[148px] py-2.5 pr-4 font-medium">Stage</th>
                 <th className="hidden w-[92px] py-2.5 pr-4 text-right font-medium sm:table-cell">Posted</th>
@@ -177,7 +177,7 @@ export function MatchTable({
                       </span>
                     </Link>
                   </td>
-                  <td className="text-muted-foreground hidden truncate py-2.5 pr-4 lg:table-cell">
+                  <td className="text-muted-foreground hidden truncate py-2.5 pr-4 xl:table-cell">
                     {formatLocation(match.locations, match.remote)}
                   </td>
                   <td className="tabular hidden py-2.5 pr-4 whitespace-nowrap md:table-cell">

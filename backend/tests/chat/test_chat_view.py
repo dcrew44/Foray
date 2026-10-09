@@ -54,6 +54,7 @@ from pydantic_ai.toolsets import FunctionToolset
 
 from apps.accounts.models import User
 from apps.chat import agent as chat_agent
+from apps.chat import fakes as chat_fakes
 from apps.chat import views
 from apps.chat.agent import ChatDeps
 from apps.chat.models import Conversation, Message
@@ -566,6 +567,54 @@ def test_the_chat_fake_lists_matches(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     ]
     assert reply["parts"][-1]["text"] == "Here are your matches."
     assert contract(tmp_path, "fake_list_jobs", sent, reply)["matches"] is True
+
+
+def test_the_chat_fake_runs_the_interview(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """On fakes, Home's "Answer in chat" opener asks the interview's question (it is not read as
+    a search), and labelled answers are saved through the real `update_profile_preferences`
+    (acceptance item 2, deviations/step-10.md)."""
+    fake_models(monkeypatch, {"chat": fake.fake_model("chat")})
+    user = make_user()
+    User.objects.filter(pk=user.pk).update(preferences={}, interview_state={})
+    opener = uuid.uuid4()
+    sent = run(turn_for(user, opener, "Let's set up my job search. Ask me what you need to know."))
+    assert sent.status == 200 and sent.error_texts == []
+    [call] = [c for c in sent.chunks if c["type"] == "tool-input-available"]
+    assert call["toolName"] == "get_profile_summary"
+    assert reply_of(opener)["parts"][-1]["text"] == chat_fakes.INTERVIEW_QUESTION
+    assert not Run.objects.for_user(user.pk).exists()
+
+    answers = uuid.uuid4()
+    sent = run(
+        turn_for(
+            user,
+            answers,
+            "Roles: Software Engineer, Backend Engineer; Level: entry level\n"
+            "Locations: San Francisco Bay Area; Remote: hybrid; Work authorisation: US citizen",
+        )
+    )
+    assert sent.status == 200 and sent.error_texts == []
+    [call] = [c for c in sent.chunks if c["type"] == "tool-input-available"]
+    assert call["toolName"] == "update_profile_preferences"
+    assert {k: v for k, v in call["input"].items() if v is not None} == {
+        "target_roles": ["Software Engineer", "Backend Engineer"],
+        "seniority": "entry",
+        "locations": ["San Francisco Bay Area"],
+        "remote_pref": "hybrid",
+        "work_auth": "US citizen",
+    }
+    output = next(c for c in sent.chunks if c["type"] == "tool-output-available")["output"]
+    assert output["ok"] is True and output["blockingSearch"] == []
+    stored = User.objects.get(pk=user.pk).preferences
+    assert stored["target_roles"] == ["Software Engineer", "Backend Engineer"]
+    assert stored["seniority"] == "entry" and stored["remote_pref"] == "hybrid"
+    reply = reply_of(answers)
+    assert reply["parts"][-1]["text"] == "Saved. Foray has what it needs to search."
+    assert contract(tmp_path, "fake_interview", sent, reply)["matches"] is True
+
+    # A level that is not one of the options is left out, never guessed.
+    assert chat_fakes.read_answers("Level: wizard") is None
+    assert chat_fakes.read_answers("Find entry-level roles") is None
 
 
 def test_the_step_cap_ends_in_text(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

@@ -105,3 +105,22 @@ def test_run_deferred_runs_committed_jobs() -> None:
             "GROUP BY status"
         )
         assert cursor.fetchall() == [("succeeded", 2)]
+
+
+def test_a_delay_is_measured_from_the_database_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`schedule_in` counts from the database's clock, the one `fetch_job` compares
+    `scheduled_at` with, however far Python's clock has drifted (deviations/step-8E.md §7)."""
+    from datetime import timedelta
+
+    from procrastinate import utils as procrastinate_utils
+
+    real = procrastinate_utils.utcnow
+    monkeypatch.setattr(procrastinate_utils, "utcnow", lambda: real() - timedelta(minutes=5))
+    job_id = defer_in_tx(noop, schedule_in={"seconds": 4})
+    with connections["default"].cursor() as cursor:
+        cursor.execute(
+            "SELECT scheduled_at - clock_timestamp() FROM procrastinate_jobs WHERE id = %s",
+            [job_id],
+        )
+        [(wait,)] = cursor.fetchall()
+    assert timedelta(seconds=3) < wait <= timedelta(seconds=4)

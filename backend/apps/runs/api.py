@@ -36,12 +36,15 @@ from apps.runs import tasks as run_tasks
 from apps.runs.catalogue import (
     ApprovalKind,
     ApprovalStatus,
+    CompanyAddOutput,
     DecidedVia,
     EventKind,
+    ImportOutput,
     Level,
     Mode,
     RunKind,
     RunStatus,
+    WorkerPingData,
 )
 from apps.runs.live import LiveEvent, LiveRun, LiveSnapshot
 from apps.runs.models import Run
@@ -67,6 +70,10 @@ PING_NOTE = "The worker answered a test job from Settings."
 for _type in (EventKind, RunKind, RunStatus, Mode, ApprovalKind, ApprovalStatus, DecidedVia, Level):
     register_schema(_type)
 register_schema(LiveSnapshot)
+# Run outputs and event data the frontend reads (`LiveRun.output` and `LiveEvent.data` are open
+# objects): the import's `usedVision`, the add's `registered`/`company`/`trail`, the ping's pid.
+for _model in (ImportOutput, CompanyAddOutput, WorkerPingData):
+    register_schema(_model)
 
 
 def _user_id(request: HttpRequest) -> str:

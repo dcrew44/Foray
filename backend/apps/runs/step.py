@@ -20,7 +20,8 @@ procrastinate task that:
 `CancelledError` (a worker shutdown, or Stop through `lifecycle.cancel`) is never caught: the job
 ends aborted, and the reaper fails the run after a shutdown (after a Stop it is already
 cancelled). A retry-1 task (`resume.render`) re-raises while attempts remain, so procrastinate
-retries the same job and the run stays `running` (bug #50).
+retries the same job and the run stays `running` (bug #50). Every retry here is immediate and
+due by the database's clock (`ImmediateRetry`).
 
 `TASKS` is the design's task table: every task's lane and timeout. `acceptance_checks` reads the
 timeouts, `task_for()` reads the lanes, and `tests/runs/test_tasks.py` checks that every
@@ -34,9 +35,12 @@ import logging
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, cast
+from datetime import UTC, datetime
+from typing import Any, Final, cast
 
 from procrastinate import JobContext, RetryStrategy
+from procrastinate.jobs import Job
+from procrastinate.retry import RetryDecision
 from procrastinate.tasks import Task
 
 from apps.core.db import db
@@ -54,6 +58,7 @@ __all__ = [
     "LANES",
     "SYSTEM",
     "TASKS",
+    "ImmediateRetry",
     "defer_step",
     "run_lock",
     "run_step",
@@ -121,6 +126,34 @@ def run_lock(run_id: Id) -> str:
     return f"run:{run_id}"
 
 
+# Earlier than any clock's "now": a retry scheduled here is due at once, by the database's clock.
+RETRY_DUE_NOW: Final = datetime(1970, 1, 1, tzinfo=UTC)
+
+
+class ImmediateRetry(RetryStrategy):
+    """procrastinate's `RetryStrategy` with no wait, whose retry is due by the database's clock.
+
+    procrastinate stamps a retry's `scheduled_at` with Python's `utcnow()`, and its `fetch_job`
+    compares that with the database's `now()`. When this process's clock runs ahead of the
+    database's (the Docker VM's clock falls behind the Mac's after a sleep), an immediate retry
+    sat in the database's future for the length of the skew: a worker draining the queue missed
+    it, and the run stayed `running` until the retry fell due. A retry with no wait is scheduled
+    at the epoch instead, which is in the past by any clock, so the database alone decides.
+    With a wait configured, procrastinate's own decision stands (it has no other clock to use).
+    """
+
+    def get_retry_decision(self, *, exception: BaseException, job: Job) -> RetryDecision | None:
+        decision = super().get_retry_decision(exception=exception, job=job)
+        if decision is None or self.wait or self.linear_wait or self.exponential_wait:
+            return decision
+        return RetryDecision(retry_at=RETRY_DUE_NOW)
+
+
+def immediate_retry(attempts: int) -> ImmediateRetry | bool:
+    """A task's `retry=`: False for no retry (R11), else `attempts` immediate retries."""
+    return ImmediateRetry(max_attempts=attempts) if attempts else False
+
+
 def shutdown_only_retry() -> RetryStrategy:
     """`chat.follow_up`'s strategy (§7.7): retried once after a worker shutdown aborted it
     (procrastinate hands the `CancelledError` to the strategy), never after an ordinary failure.
@@ -128,7 +161,7 @@ def shutdown_only_retry() -> RetryStrategy:
     requested."""
     # The annotation says `type[Exception]`; the worker passes any BaseException through.
     exceptions = cast(set[type[Exception]], {asyncio.CancelledError})
-    return RetryStrategy(max_attempts=1, retry_exceptions=exceptions)
+    return ImmediateRetry(max_attempts=1, retry_exceptions=exceptions)
 
 
 async def _missing_task(**kwargs: Any) -> None:
@@ -193,7 +226,7 @@ def run_step(name: str, *, queue: str, timeout_s: int, retry: int = 0) -> Callab
         raise ValueError(f"{queue!r} is not a lane")
 
     def deco(step: Step) -> AnyTask:
-        @app.task(name=name, queue=queue, retry=retry, pass_context=True)
+        @app.task(name=name, queue=queue, retry=immediate_retry(retry), pass_context=True)
         async def task(context: JobContext, run_id: str, **kwargs: Any) -> None:
             run = await db(lifecycle.claim, run_id)
             if run is None:

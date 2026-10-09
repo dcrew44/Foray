@@ -239,15 +239,17 @@ def snapshot(user_id: str, since: int) -> LiveSnapshot:
     else:
         events = list(Event.objects.for_user(user_id).order_by("-id")[:FIRST_PAGE])
         events.reverse()
+    # Each timestamp is compared with the clock that wrote it (deviations/step-8E.md §7): a run
+    # finishes with `updated_at = now()` in SQL, and an approval's `expires_at` is set in Python.
     runs = (
         Run.objects.for_user(user_id)
-        .filter(Q(status__in=ACTIVE) | Q(updated_at__gt=timezone.now() - RECENT))
+        .filter(Q(status__in=ACTIVE) | Q(updated_at__gt=Now() - RECENT))
         .order_by("-created_at")[:RUNS_LIMIT]
     )
     approvals = (
         Approval.objects.for_user(user_id)
         .filter(status=ApprovalStatus.PENDING, run__status=RunStatus.AWAITING_APPROVAL)
-        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=Now()))
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
         .order_by("-created_at")[:APPROVALS_LIMIT]
     )
     return LiveSnapshot(

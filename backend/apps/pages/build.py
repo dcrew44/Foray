@@ -17,7 +17,8 @@ from decimal import Decimal
 from typing import Any, cast
 
 from django.db.models import Avg, Count, F, Q, Sum
-from django.db.models.functions import Now, TruncDate
+from django.db.models.functions import TruncDate
+from django.utils import timezone
 
 from apps.accounts.api import SettingsOut
 from apps.accounts.models import User
@@ -222,7 +223,8 @@ def _waiting(user_id: str) -> HomeWaiting:
     approvals = (
         Approval.objects.for_user(user_id)
         .filter(status=ApprovalStatus.PENDING)
-        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=Now()))
+        # `expires_at` is written with Python's clock, so it is compared with it (step-8E.md §7).
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
         .count()
     )
     running = Run.objects.for_user(user_id).filter(status__in=ACTIVE_RUN_STATUSES).count()

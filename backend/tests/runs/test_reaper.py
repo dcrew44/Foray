@@ -9,10 +9,8 @@ reaper out.
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
 
 import pytest
-from django.utils import timezone
 
 from apps.core.queue import app, defer_in_tx
 from apps.runs import lifecycle, reaper
@@ -219,4 +217,6 @@ def test_lifecycle_fail_is_what_the_reaper_uses() -> None:
     assert reaper.reap_runs().interrupted == 1
     assert lifecycle.fail(run.id, "again") is False  # already failed: conditional
     finished_at = refresh(run).finished_at
-    assert finished_at is not None and finished_at <= timezone.now() + timedelta(seconds=1)
+    # `lifecycle.fail` writes `finished_at = now()` in SQL: compare with the database's clock.
+    [(database_now,)] = support.sql("SELECT clock_timestamp()")
+    assert finished_at is not None and finished_at <= database_now

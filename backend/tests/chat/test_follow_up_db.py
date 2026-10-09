@@ -264,8 +264,11 @@ def test_a_follow_up_re_defers_itself_while_a_turn_streams(
     run_deferred(["interactive"])
     [later] = deferred("chat.follow_up")
     assert later.queueing_lock == f"follow-up:{event.id}" and later.args == {"event_id": event.id}
-    [(scheduled_at,)] = sql("SELECT scheduled_at FROM procrastinate_jobs WHERE id = %s", [later.id])
-    assert scheduled_at > timezone.now()
+    # 4 s from now by the database's clock, the one `fetch_job` reads (deviations/step-8E.md §7).
+    [(wait,)] = sql(
+        "SELECT scheduled_at - clock_timestamp() FROM procrastinate_jobs WHERE id = %s", [later.id]
+    )
+    assert timedelta(0) < wait <= timedelta(seconds=follow_up.REDEFER_S)
     assert messages_of(conversation) == []
 
 

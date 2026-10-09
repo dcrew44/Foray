@@ -43,7 +43,6 @@ import time
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 from django.db import connection, transaction
@@ -53,19 +52,18 @@ from apps.core.db import db
 from apps.core.errors import ApiError, UserFacingError
 from apps.core.http import HttpClient
 from apps.core.jsonio import js_locale
-from apps.core.router import ApiModel
 from apps.jobs import refresh as refresh_module
 from apps.jobs.discovery import DiscoveryResult, discover_company
 from apps.jobs.models import (
     Company,
     CompanyStatus,
     DiscoveredVia,
-    FetchStatus,
     Job,
     SourceType,
 )
 from apps.jobs.refresh import RefreshOutcome, refresh_companies, refresh_company, stale_cutoff
 from apps.jobs.registry import get_company_by_slug, set_company_status, stale_companies
+from apps.jobs.schemas import CompanyRow
 from apps.jobs.sources.js import IA, JS_WS, js_trim
 from apps.jobs.sources.types import js_iso
 from apps.runs import events, lifecycle
@@ -172,25 +170,6 @@ def join_names(names: Sequence[str]) -> str:
 
 
 # --- the companies page's row --------------------------------------------------------------------
-
-
-class CompanyRow(ApiModel):
-    """One company as the companies page shows it (`company-row.ts`'s `CompanyRow`)."""
-
-    slug: str
-    name: str
-    domain: str | None
-    source_type: SourceType
-    ats_slug: str | None
-    careers_url: str | None  # the first careers page, for companies read without an ATS API
-    status: CompanyStatus
-    needs_browser: bool
-    tags: list[str]
-    last_fetched_at: datetime | None
-    last_fetch_status: FetchStatus | None
-    last_fetch_job_count: int | None
-    discovered_via: DiscoveredVia
-    active_jobs: int  # open postings in the mirror right now
 
 
 def company_row(company: Company, active_jobs: int) -> dict[str, Any]:

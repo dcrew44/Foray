@@ -26,12 +26,15 @@ from ninja.errors import AuthenticationError
 from ninja.testing import TestClient
 
 from apps.accounts.models import User
+from apps.chat.tools import INPUT_MODELS, SalaryFloorInput
 from apps.core import errors, openapi
 from apps.core.errors import ApiError, messages
 from apps.core.router import ApiModel, router
 from foray.api import api
 
 CAMEL = re.compile(r"^[a-z][a-zA-Z0-9]*$")
+
+TOOL_ARGUMENTS = "§7.2: tool arguments keep today's snake_case names"
 
 # Component names whose keys are snake_case on purpose (§2.1: preferences and evaluations keep
 # today's spelling). Each entry needs a reason.
@@ -41,6 +44,24 @@ SNAKE_CASE_COMPONENTS: dict[str, str] = {
     "DeepEval": "§2.1: evaluations keep today's snake_case keys (the match page embeds them)",
     "MatchedRequirement": "§2.1: part of DeepEval",
     "EvalGap": "§2.1: part of DeepEval",
+    # The chat tools' inputs (`apps.chat.tools.INPUT_MODELS`, registered by `chat.api`).
+    "GetProfileSummaryInput": TOOL_ARGUMENTS,
+    "GetResumeInput": TOOL_ARGUMENTS,
+    "UpdateProfilePreferencesInput": TOOL_ARGUMENTS,
+    "SalaryFloorInput": TOOL_ARGUMENTS,
+    "AddCompanyInput": TOOL_ARGUMENTS,
+    "DiscoverCompaniesInput": TOOL_ARGUMENTS,
+    "ListCompaniesInput": TOOL_ARGUMENTS,
+    "StartSearchRunInput": TOOL_ARGUMENTS,
+    "GetRunStatusInput": TOOL_ARGUMENTS,
+    "CancelRunInput": TOOL_ARGUMENTS,
+    "ListJobsInput": TOOL_ARGUMENTS,
+    "GetJobInput": TOOL_ARGUMENTS,
+    "ListPendingApprovalsInput": TOOL_ARGUMENTS,
+    "AnswerApprovalInput": TOOL_ARGUMENTS,
+    "MoveJobStageInput": TOOL_ARGUMENTS,
+    "EvaluateJobInput": TOOL_ARGUMENTS,
+    "TailorResumeInput": TOOL_ARGUMENTS,
 }
 
 # Response keys whose *values* are one of the components above, so their own keys stay
@@ -148,6 +169,22 @@ def test_camel_case_response_and_schema(probe_client: TestClient, tmp_path: Path
             continue
         for prop in component.get("properties", {}):
             assert CAMEL.match(prop), f"component {name} has the snake_case property {prop}"
+
+
+def test_chat_tool_inputs_are_exported_with_their_argument_names(tmp_path: Path) -> None:
+    """§5.4, §6.6: `chat-types.ts` names every tool's input from the schema, and each keeps the
+    snake_case arguments the model sends (§7.2)."""
+    out = tmp_path / "openapi.json"
+    call_command("export_openapi_schema", api="foray.api.api", output=str(out))
+    components = json.loads(out.read_text())["components"]["schemas"]
+    inputs = [*dict.fromkeys(INPUT_MODELS.values()), SalaryFloorInput]
+    assert {model.__name__ for model in inputs} == {
+        name for name, reason in SNAKE_CASE_COMPONENTS.items() if reason == TOOL_ARGUMENTS
+    }
+    for model in inputs:
+        component = components[model.__name__]
+        assert set(component.get("properties", {})) == set(model.model_fields), model.__name__
+        assert component["additionalProperties"] is False, model.__name__
 
 
 def test_export_includes_registered_schemas(

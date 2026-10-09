@@ -9,6 +9,7 @@ user prompt, and plays one short plan per kind of request:
 | a notice, `[Automatic update about run <id>, …` | `get_run_status`, then two sentences |
 | "find" / "search" | `start_search_run`, then a sentence |
 | "yes" / "approve" | `list_pending_approvals`, `answer_approval` (the first), a sentence |
+| "matches" / "jobs" | `list_jobs` with every argument null, then a sentence |
 | "resume" | `get_resume`, then a sentence |
 | "add <name>" | `add_company`, then a sentence |
 | anything else | a short text reply |
@@ -40,9 +41,18 @@ from apps.llm import fake
 NOTICE = re.compile(r"^\[Automatic update about run ([^,\]\s]+)")
 SEARCH = re.compile(r"\b(find|search)\b", re.IGNORECASE)
 APPROVE = re.compile(r"\b(yes|approve)\b", re.IGNORECASE)
+JOBS = re.compile(r"\b(matches|jobs)\b", re.IGNORECASE)
 RESUME = re.compile(r"\bresume\b", re.IGNORECASE)
 ADD = re.compile(r"\badd\s+(.+)", re.IGNORECASE | re.DOTALL)
 
+LIST_JOBS_ARGS: dict[str, Any] = {
+    "run_id": None,
+    "limit": None,
+    "stage": None,
+    "min_score": None,
+    "query": None,
+}
+JOBS_LISTED = "Here are your matches."
 FALLBACK = "This is a fake reply from Foray's test model. Nothing was sent to a provider."
 
 type Done = dict[str, Any]  # tool name -> what it returned, this turn
@@ -138,6 +148,16 @@ def _plan(prompt: str) -> Plan:
         return Plan(
             (("list_pending_approvals", lambda done: {}), ("answer_approval", answer)), answered
         )
+
+    if JOBS.search(prompt):
+
+        def listed(done: Done) -> str:
+            result = done.get("list_jobs")
+            if _get(result, "ok") is False:
+                return str(_get(result, "message") or "I could not list your matches.")
+            return JOBS_LISTED
+
+        return Plan((("list_jobs", lambda done: dict(LIST_JOBS_ARGS)),), listed)
 
     if RESUME.search(prompt):
 

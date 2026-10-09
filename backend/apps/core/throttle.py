@@ -30,8 +30,8 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db import connection
+from django.db.models.functions import Now
 from django.http import HttpRequest
-from django.utils import timezone
 
 from apps.core.errors import ApiError
 from apps.core.models import RateLimit
@@ -115,6 +115,7 @@ def client_key(request: HttpRequest) -> str:
 
 
 def prune(older_than: timedelta = timedelta(days=1)) -> int:
-    """Delete counters whose window started more than `older_than` ago. Returns how many."""
-    deleted, _ = RateLimit.objects.filter(window_start__lt=timezone.now() - older_than).delete()
+    """Delete counters whose window started more than `older_than` ago, by the database's clock
+    (the one `date_bin(..., now(), ...)` started them with). Returns how many."""
+    deleted, _ = RateLimit.objects.filter(window_start__lt=Now() - older_than).delete()
     return deleted

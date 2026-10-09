@@ -9,6 +9,7 @@ import { requestLiveRefresh, runToastId } from "@/components/live/live-provider"
 import { RunCard } from "@/components/runs/run-card";
 import { Spinner } from "@/components/ui/spinner";
 import { api, call } from "@/lib/api/client";
+import type { ImportOutput } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 import { useRunOutcome } from "./run-outcome";
@@ -49,7 +50,7 @@ export function ResumeDropzone({
       // Nothing was saved, so there is nothing to refresh; the card says it was stopped.
       setStopped(event.runId ?? null);
     } else if (event.kind === "run.completed") {
-      const output = event.data as { usedVision?: boolean } | null;
+      const output = event.data as ImportOutput | null;
       toast.success(event.message, {
         id,
         description: output?.usedVision

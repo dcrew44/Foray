@@ -28,7 +28,7 @@ from apps.core import throttle
 from apps.core.db import db
 from apps.core.queue import app
 from apps.runs import approvals, events, reaper
-from apps.runs.catalogue import EventKind
+from apps.runs.catalogue import EventKind, WorkerPingData
 from apps.runs.step import SYSTEM, TASKS
 
 log = logging.getLogger("foray.worker")
@@ -44,15 +44,17 @@ def _timeout(name: str) -> int:
 @app.task(name="worker.ping", queue=SYSTEM, pass_context=True)
 async def worker_ping(context: JobContext, user_id: str, note: str | None = None) -> None:
     """Answer a test job from Settings through the same feed every run uses."""
+    job_id = context.job.id
+    assert job_id is not None  # a job a worker fetched has its row
     async with asyncio.timeout(_timeout("worker.ping")):
         await db(
             events.emit,
             user_id,
             EventKind.WORKER_PING,
             note or PING_DEFAULT,
-            data={"jobId": context.job.id, "workerPid": os.getpid()},
+            data=WorkerPingData(job_id=job_id, worker_pid=os.getpid()).dump(),
         )
-    log.info("answered ping job %s", context.job.id)
+    log.info("answered ping job %s", job_id)
 
 
 @app.task(name="maintenance.reap", queue=SYSTEM)

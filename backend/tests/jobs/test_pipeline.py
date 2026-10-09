@@ -260,6 +260,9 @@ def test_add_registers_the_board_refreshes_it_and_completes_with_its_row(web: We
         "activeJobs": open_roles,
     }
     assert row["lastFetchedAt"].endswith("Z")
+    # The output's row is the companies page's, `toISOString()` included (`CompanyAddOutput`
+    # types it as `CompanyRow`; step-8E.md §2).
+    assert row == pipeline.company_row(company, open_roles)
     assert (company.added_by_id, company.discovered_via) == (user.pk, "user")
     # Verified once by discovery, then fetched whole by the follow-on refresh.
     assert web.fetched.count(ashby.board_url("linear")) == 2

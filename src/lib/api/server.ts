@@ -3,6 +3,8 @@ import "server-only";
 import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
+import type { components } from "./schema";
+
 /**
  * Server components read Django through here (design §6.1): one GET per page, as the visitor.
  *
@@ -23,11 +25,8 @@ const ORIGIN = process.env.DJANGO_ORIGIN ?? "http://127.0.0.1:8000";
 
 type Opts = { onUnauthorized?: "redirect" | "null" };
 
-/**
- * `GET /api/me` (§4.4). Written by hand until the accounts router has the operation; step 8A can
- * switch it to the generated schema.
- */
-export type Me = { id: string; name: string; email: string; signupOpen: boolean };
+/** `GET /api/me` (§4.4): `{id, name, email, signupOpen}`. */
+export type Me = components["schemas"]["MeOut"];
 
 export async function django<T>(path: string, opts: { onUnauthorized: "null" }): Promise<T | null>;
 export async function django<T>(path: string, opts?: Opts): Promise<T>;

@@ -19,7 +19,8 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -709,6 +710,23 @@ def test_settings_page_counts_only_this_users_month() -> None:
     make_llm_call(other, purpose="chat")
     body = page(graph, "settings")
     assert body["spend"]["calls"] == 3
+
+
+def test_home_page_counts_only_this_users_month() -> None:
+    """Home's spend line is the signed-in user's ledger rows of this UTC month: not the cron's
+    (no user), not another user's, not last month's (§5.3)."""
+    graph = full_graph()
+    make_llm_call(None, purpose="score", cost_usd=Decimal("1.5"))  # the cron's: no user
+    other = make_user()
+    make_llm_call(other, purpose="chat", cost_usd=Decimal("2.5"))
+    make_llm_call(
+        graph.user,
+        purpose="chat",
+        cost_usd=Decimal("4"),
+        created_at=build.month_start() - timedelta(seconds=1),  # last month
+    )
+    body = page(graph, "home")
+    assert body["spend"] == {"usd": pytest.approx(0.225), "calls": 3}
 
 
 def test_new_company_jobs_do_not_leak_into_matches() -> None:

@@ -12,7 +12,8 @@ Deleting a chat leaves its runs with `conversation = NULL` (a pending follow-up 
 Messages are the stored AI SDK `UIMessage`s, exactly what the client renders (§7.4); `metadata` is
 present only when the row has one. A malformed, unknown or another user's id is the same 404.
 
-The chat tools' output models are registered here for the generated TypeScript (§5.4, §6.6).
+The chat tools' input and output models are registered here for the generated TypeScript (§5.4,
+§6.6). The inputs keep today's snake_case argument names (§7.2), so `chat-types.ts` names both.
 """
 
 from __future__ import annotations
@@ -26,7 +27,7 @@ from pydantic import Field
 
 from apps.accounts.models import User
 from apps.chat.models import Conversation
-from apps.chat.tools import OUTPUT_MODELS
+from apps.chat.tools import INPUT_MODELS, OUTPUT_MODELS, SalaryFloorInput
 from apps.chat.views import load_history
 from apps.core.errors import ApiError, messages
 from apps.core.openapi import register_schema
@@ -40,7 +41,7 @@ LIST_LIMIT = 30
 UNTITLED = "Untitled chat"
 NO_SUCH_CHAT = "That chat does not exist."
 
-for _model in dict.fromkeys(OUTPUT_MODELS.values()):
+for _model in dict.fromkeys([*INPUT_MODELS.values(), SalaryFloorInput, *OUTPUT_MODELS.values()]):
     register_schema(_model)
 
 

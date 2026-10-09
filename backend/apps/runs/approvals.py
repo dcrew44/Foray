@@ -380,7 +380,7 @@ def decide(user_id: str, approval_id: Id, decision: Mapping[str, Any], via: str)
 
 _LOCK_LAPSED = """
 SELECT a.id, r.id FROM approvals a JOIN runs r ON r.id = a.run_id
- WHERE a.id = %s AND a.status = 'pending' AND a.expires_at <= now()
+ WHERE a.id = %s AND a.status = 'pending' AND a.expires_at <= %s
  FOR UPDATE OF a, r SKIP LOCKED
 """
 
@@ -388,10 +388,14 @@ SELECT a.id, r.id FROM approvals a JOIN runs r ON r.id = a.run_id
 def expire_lapsed(limit: int = 500) -> int:
     """The periodic `approvals.expire` (§9.3): every pending approval past its 7 days lapses in
     its own transaction (`FOR UPDATE … SKIP LOCKED`, so a row someone is deciding right now is
-    left for the next minute). An expiry is a "no" that lets the run finish. Returns how many."""
+    left for the next minute). An expiry is a "no" that lets the run finish. Returns how many.
+
+    `expires_at` is written with Python's clock (`request_approval`), so it is compared with
+    Python's clock everywhere, never with the database's `now()` (deviations/step-8E.md §7)."""
+    now = timezone.now()
     candidates = list(
         Approval.objects.unscoped("approvals.expire: every user's lapsed approvals")
-        .filter(status=ApprovalStatus.PENDING, expires_at__lte=timezone.now())
+        .filter(status=ApprovalStatus.PENDING, expires_at__lte=now)
         .order_by("expires_at")
         .values_list("id", flat=True)[:limit]
     )
@@ -399,7 +403,7 @@ def expire_lapsed(limit: int = 500) -> int:
     for approval_id in candidates:
         with transaction.atomic():
             with connection.cursor() as cursor:
-                cursor.execute(_LOCK_LAPSED, [str(approval_id)])
+                cursor.execute(_LOCK_LAPSED, [str(approval_id), now])
                 row = cursor.fetchone()
             if row is None:
                 continue
@@ -417,6 +421,6 @@ def list_pending(user_id: str) -> list[Approval]:
     return list(
         Approval.objects.for_user(user_id)
         .filter(status=ApprovalStatus.PENDING, run__status=RunStatus.AWAITING_APPROVAL)
-        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=Now()))
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
         .order_by("-created_at")
     )

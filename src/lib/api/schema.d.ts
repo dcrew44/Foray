@@ -1946,6 +1946,204 @@ export interface components {
         SlotId: "target_roles" | "seniority" | "locations" | "remote_pref" | "salary_floor" | "work_auth" | "start_date" | "constraints";
         /** @enum {string} */
         PreferenceField: "target_roles" | "seniority" | "locations" | "remote_pref" | "salary_floor" | "work_auth" | "start_date" | "must_haves" | "dealbreakers";
+        /** GetProfileSummaryInput */
+        GetProfileSummaryInput: Record<string, never>;
+        /** GetResumeInput */
+        GetResumeInput: {
+            /**
+             * Sections
+             * @description Limit to these sections. Null reads the whole resume, which is usually what you want.
+             */
+            sections: ("basics" | "summary" | "work" | "education" | "projects" | "skills")[] | null;
+        };
+        /** SalaryFloorInput */
+        SalaryFloorInput: {
+            /** Amount */
+            amount: number;
+            /** Currency */
+            currency: string;
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "year" | "hour";
+        };
+        /** UpdateProfilePreferencesInput */
+        UpdateProfilePreferencesInput: {
+            /** Target Roles */
+            target_roles: string[] | null;
+            /** Seniority */
+            seniority: ("intern" | "new_grad" | "entry" | "mid" | "senior" | "staff_plus") | null;
+            /** Locations */
+            locations: string[] | null;
+            /** Remote Pref */
+            remote_pref: ("remote" | "hybrid" | "onsite" | "any") | null;
+            salary_floor: components["schemas"]["SalaryFloorInput"] | null;
+            /** Work Auth */
+            work_auth: string | null;
+            /** Start Date */
+            start_date: string | null;
+            /** Must Haves */
+            must_haves: string[] | null;
+            /** Dealbreakers */
+            dealbreakers: string[] | null;
+            /** Declined Slots */
+            declined_slots: ("target_roles" | "seniority" | "locations" | "remote_pref" | "salary_floor" | "work_auth" | "start_date" | "constraints")[] | null;
+        };
+        /** AddCompanyInput */
+        AddCompanyInput: {
+            /**
+             * Name Or Url
+             * @description A company name ("Stripe"), a domain, or a job-board URL.
+             */
+            name_or_url: string;
+        };
+        /** DiscoverCompaniesInput */
+        DiscoverCompaniesInput: {
+            /** Description */
+            description: string;
+            /**
+             * Count
+             * @description How many companies to look for. Keep it modest.
+             */
+            count: number;
+        };
+        /** ListCompaniesInput */
+        ListCompaniesInput: {
+            /** Limit */
+            limit: number | null;
+        };
+        /** StartSearchRunInput */
+        StartSearchRunInput: {
+            /**
+             * Prompt
+             * @description What the user asked for, in their own words.
+             */
+            prompt: string;
+            /**
+             * Companies
+             * @description Companies to limit the search to, when the user names any ("at Anthropic"). Unknown companies are looked up and added automatically.
+             */
+            companies: string[] | null;
+            /**
+             * Roles
+             * @description Kinds of role for this search, as short titles ("software engineer").
+             */
+            roles: string[] | null;
+            /**
+             * Seniority
+             * @description Level for this search when the user states one. "Entry-level", "junior" or "most entry-level" is entry.
+             */
+            seniority: ("intern" | "new_grad" | "entry" | "mid" | "senior" | "staff_plus") | null;
+            /**
+             * Locations
+             * @description Places for this search, when the user names any.
+             */
+            locations: string[] | null;
+            /**
+             * Remote
+             * @description Remote preference for this search, only when the user states one.
+             */
+            remote: ("remote" | "hybrid" | "onsite" | "any") | null;
+            /**
+             * Focus
+             * @description Anything else about this search that should shape the ranking, in one sentence ("lowest experience requirements first").
+             */
+            focus: string | null;
+            /**
+             * Mode
+             * @description approve_each pauses before deep evaluation and before shortlisting; autopilot does both without asking. Null uses the user's default from settings — only set it when they say which they want.
+             */
+            mode: ("approve_each" | "autopilot") | null;
+        };
+        /** GetRunStatusInput */
+        GetRunStatusInput: {
+            /** Run Id */
+            run_id: string | null;
+        };
+        /** CancelRunInput */
+        CancelRunInput: {
+            /** Run Id */
+            run_id: string;
+        };
+        /** ListJobsInput */
+        ListJobsInput: {
+            /**
+             * Run Id
+             * @description Only the roles this search run found.
+             */
+            run_id: string | null;
+            /** Limit */
+            limit: number | null;
+            /** Stage */
+            stage: ("found" | "shortlisted" | "applied" | "interviewing" | "offer" | "rejected" | "archived") | null;
+            /** Min Score */
+            min_score: number | null;
+            /**
+             * Query
+             * @description Text to match in title or company.
+             */
+            query: string | null;
+        };
+        /** GetJobInput */
+        GetJobInput: {
+            /**
+             * Id
+             * @description A matchId or jobId.
+             */
+            id: string;
+        };
+        /** ListPendingApprovalsInput */
+        ListPendingApprovalsInput: Record<string, never>;
+        /** AnswerApprovalInput */
+        AnswerApprovalInput: {
+            /**
+             * Approval Id
+             * @description The approval's id.
+             */
+            approval_id: string;
+            /** Approve */
+            approve: boolean;
+            /**
+             * Item Ids
+             * @description With approve=true: only these items. Null means every item. Ignored when declining.
+             */
+            item_ids: string[] | null;
+        };
+        /** MoveJobStageInput */
+        MoveJobStageInput: {
+            /**
+             * Id
+             * @description A matchId or jobId.
+             */
+            id: string;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "found" | "shortlisted" | "applied" | "interviewing" | "offer" | "rejected" | "archived";
+            /**
+             * Note
+             * @description A short note to add to the role's notes (e.g. who they spoke to), or null.
+             */
+            note: string | null;
+        };
+        /** EvaluateJobInput */
+        EvaluateJobInput: {
+            /**
+             * Id
+             * @description A matchId or jobId.
+             */
+            id: string;
+        };
+        /** TailorResumeInput */
+        TailorResumeInput: {
+            /**
+             * Id
+             * @description A matchId or jobId.
+             */
+            id: string;
+        };
         /** ResumeCounts */
         ResumeCounts: {
             /** Work */
@@ -2397,6 +2595,65 @@ export interface components {
          * @enum {string}
          */
         DecidedVia: "ui" | "chat" | "autopilot" | "expiry";
+        /** GarbleReport */
+        GarbleReport: {
+            /** Garbled */
+            garbled: boolean;
+            /** Reasons */
+            reasons: string[];
+            /** Metrics */
+            metrics?: {
+                [key: string]: number;
+            };
+        };
+        /** ImportCounts */
+        ImportCounts: {
+            /** Work */
+            work: number;
+            /** Education */
+            education: number;
+            /** Skills */
+            skills: number;
+            /** Projects */
+            projects: number;
+        };
+        /** ImportOutput */
+        ImportOutput: {
+            /** Documentid */
+            documentId: string;
+            /** Resumeid */
+            resumeId: string;
+            /** Usedvision */
+            usedVision: boolean;
+            garble: components["schemas"]["GarbleReport"];
+            counts: components["schemas"]["ImportCounts"];
+        };
+        /** DiscoveryStep */
+        DiscoveryStep: {
+            /** Step */
+            step: string;
+            /** Detail */
+            detail: string;
+        };
+        /** CompanyAddOutput */
+        CompanyAddOutput: {
+            /** Registered */
+            registered: boolean;
+            /** Existed */
+            existed: boolean;
+            company: components["schemas"]["CompanyRow"] | null;
+            /** Trail */
+            trail: components["schemas"]["DiscoveryStep"][];
+            /** Message */
+            message: string;
+        };
+        /** WorkerPingData */
+        WorkerPingData: {
+            /** Jobid */
+            jobId: number;
+            /** Workerpid */
+            workerPid: number;
+        };
     };
     responses: never;
     parameters: never;

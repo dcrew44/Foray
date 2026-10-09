@@ -8,6 +8,7 @@ import { requestLiveRefresh, useLive, useLiveEvent } from "@/components/live/liv
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { api, call } from "@/lib/api/client";
+import type { WorkerPingData } from "@/lib/api/types";
 import { formatDuration, timeAgo } from "@/lib/format";
 
 /**
@@ -23,9 +24,6 @@ type Probe =
   | { state: "silent" }
   | { state: "failed"; message: string };
 
-/** `worker.ping`'s data: the job it answered and the process that ran it. */
-type PingAnswer = { jobId?: number; workerPid?: number } | null;
-
 /** How long to wait for the answer before saying there was none. */
 const PATIENCE_MS = 20_000;
 
@@ -36,7 +34,7 @@ export function WorkerPanel() {
   const [probe, setProbe] = useState<Probe>({ state: "idle" });
 
   useLiveEvent(["worker.ping"], (event) => {
-    const answer = event.data as PingAnswer;
+    const answer = event.data as WorkerPingData | null;
     setProbe((current) => {
       if (current.state !== "waiting") return current;
       // Another tab's test job is not this one's answer. Before the job id is known (the

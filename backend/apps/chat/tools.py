@@ -73,6 +73,7 @@ __all__ = [
     "FOLLOW_UP_TOOLS",
     "INPUT_MODELS",
     "OUTPUT_MODELS",
+    "SalaryFloorInput",
     "TOOL_NAMES",
     "UNTRUSTED_JOB",
     "chat_tool",

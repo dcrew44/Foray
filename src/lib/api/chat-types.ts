@@ -9,9 +9,9 @@ import type { components } from "./schema";
  * here describe both a streamed reply and `GET /api/conversations/{id}`. Types only: no runtime
  * code, so client and server components may both import this module.
  *
- * Tool **outputs** come from the schema (`backend/apps/chat/tools.py` `OUTPUT_MODELS`). Tool
- * **inputs** are written by hand below until step 8E registers the input models for OpenAPI
- * (deviations/step-8D.md §1).
+ * Tool inputs and outputs both come from the schema (`backend/apps/chat/tools.py` `INPUT_MODELS`
+ * and `OUTPUT_MODELS`, registered by `chat/api.py`). Inputs keep today's snake_case argument
+ * names, every field required and null meaning absent (§7.2).
  */
 
 type S = components["schemas"];
@@ -35,74 +35,6 @@ export type ForayMessageMetadata =
   | { kind: "run_update"; runId: string; eventId: number; label: string }
   | { kind: "follow_up"; runId: string; eventId: number };
 
-// --- tool inputs (hand-written; replace with S["…Input"] once 8E registers them) ---------------
-//
-// TODO(8E): these mirror the input models in `backend/apps/chat/tools.py` (today's snake_case
-// argument names; every field required, null meaning absent). Once `chat/api.py` registers
-// `INPUT_MODELS` and the types are regenerated, each becomes `S["<Name>Input"]`.
-
-type Section = "basics" | "summary" | "work" | "education" | "projects" | "skills";
-
-/** `GetProfileSummaryInput`, `ListPendingApprovalsInput`: no arguments. */
-export type NoInput = Record<string, never>;
-
-export type GetResumeInput = { sections: Section[] | null };
-
-export type SalaryFloorInput = { amount: number; currency: string; period: "year" | "hour" };
-
-export type UpdateProfilePreferencesInput = {
-  target_roles: string[] | null;
-  seniority: S["Seniority"] | null;
-  locations: string[] | null;
-  remote_pref: S["RemotePreference"] | null;
-  salary_floor: SalaryFloorInput | null;
-  work_auth: string | null;
-  start_date: string | null;
-  must_haves: string[] | null;
-  dealbreakers: string[] | null;
-  declined_slots: S["SlotId"][] | null;
-};
-
-export type AddCompanyInput = { name_or_url: string };
-
-export type DiscoverCompaniesInput = { description: string; count: number };
-
-export type ListCompaniesInput = { limit: number | null };
-
-export type StartSearchRunInput = {
-  prompt: string;
-  companies: string[] | null;
-  roles: string[] | null;
-  seniority: S["Seniority"] | null;
-  locations: string[] | null;
-  remote: S["RemotePreference"] | null;
-  focus: string | null;
-  mode: S["AutonomyMode"] | null;
-};
-
-export type GetRunStatusInput = { run_id: string | null };
-
-export type CancelRunInput = { run_id: string };
-
-export type ListJobsInput = {
-  run_id: string | null;
-  limit: number | null;
-  stage: S["Stage"] | null;
-  min_score: number | null;
-  query: string | null;
-};
-
-/** `get_job`, `evaluate_job`, `tailor_resume`: a match id or a job id. */
-export type JobIdInput = { id: string };
-
-export type AnswerApprovalInput = {
-  approval_id: string;
-  approve: boolean;
-  item_ids: string[] | null;
-};
-
-export type MoveJobStageInput = { id: string; stage: S["Stage"]; note: string | null };
-
 // --- the tools -----------------------------------------------------------------------------------
 
 /**
@@ -116,22 +48,22 @@ type T<I, O> = { input: I; output: O | ToolFailure };
 
 /** The 16 chat tools (§7.2), by name. */
 export type ForayTools = {
-  get_profile_summary: T<NoInput, S["GetProfileSummaryOutput"]>;
-  get_resume: T<GetResumeInput, S["GetResumeOutput"]>;
-  update_profile_preferences: T<UpdateProfilePreferencesInput, S["UpdateProfilePreferencesOutput"]>;
-  add_company: T<AddCompanyInput, S["RunStartedToolOutput"]>;
-  discover_companies: T<DiscoverCompaniesInput, S["DiscoverCompaniesOutput"]>;
-  list_companies: T<ListCompaniesInput, S["ListCompaniesOutput"]>;
-  start_search_run: T<StartSearchRunInput, S["StartSearchRunOutput"]>;
-  get_run_status: T<GetRunStatusInput, S["GetRunStatusOutput"]>;
-  cancel_run: T<CancelRunInput, S["CancelRunOutput"]>;
-  list_jobs: T<ListJobsInput, S["ListJobsOutput"]>;
-  get_job: T<JobIdInput, S["GetJobOutput"]>;
-  list_pending_approvals: T<NoInput, S["ListPendingApprovalsOutput"]>;
-  answer_approval: T<AnswerApprovalInput, S["AnswerApprovalOutput"]>;
-  move_job_stage: T<MoveJobStageInput, S["MoveJobStageOutput"]>;
-  evaluate_job: T<JobIdInput, S["MatchRunOutput"]>;
-  tailor_resume: T<JobIdInput, S["MatchRunOutput"]>;
+  get_profile_summary: T<S["GetProfileSummaryInput"], S["GetProfileSummaryOutput"]>;
+  get_resume: T<S["GetResumeInput"], S["GetResumeOutput"]>;
+  update_profile_preferences: T<S["UpdateProfilePreferencesInput"], S["UpdateProfilePreferencesOutput"]>;
+  add_company: T<S["AddCompanyInput"], S["RunStartedToolOutput"]>;
+  discover_companies: T<S["DiscoverCompaniesInput"], S["DiscoverCompaniesOutput"]>;
+  list_companies: T<S["ListCompaniesInput"], S["ListCompaniesOutput"]>;
+  start_search_run: T<S["StartSearchRunInput"], S["StartSearchRunOutput"]>;
+  get_run_status: T<S["GetRunStatusInput"], S["GetRunStatusOutput"]>;
+  cancel_run: T<S["CancelRunInput"], S["CancelRunOutput"]>;
+  list_jobs: T<S["ListJobsInput"], S["ListJobsOutput"]>;
+  get_job: T<S["GetJobInput"], S["GetJobOutput"]>;
+  list_pending_approvals: T<S["ListPendingApprovalsInput"], S["ListPendingApprovalsOutput"]>;
+  answer_approval: T<S["AnswerApprovalInput"], S["AnswerApprovalOutput"]>;
+  move_job_stage: T<S["MoveJobStageInput"], S["MoveJobStageOutput"]>;
+  evaluate_job: T<S["EvaluateJobInput"], S["MatchRunOutput"]>;
+  tailor_resume: T<S["TailorResumeInput"], S["MatchRunOutput"]>;
 };
 
 export type ForayToolName = keyof ForayTools;

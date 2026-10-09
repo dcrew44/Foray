@@ -31,10 +31,13 @@ export type Preferences = S["Preferences"];
 export type Slot = S["Slot"];
 export type Settings = S["Settings"];
 
-/**
- * One thing company discovery tried, in order: `{step: "domain", detail: "linear.app"}`. It
- * lives in a `company_discovery` run's `output.trail`, and run output is an open object in the
- * schema (`LiveRun.output`), so this one is written by hand from `DiscoveryStep` in
- * `backend/apps/runs/catalogue.py`.
- */
-export type DiscoveryStep = { step: string; detail: string };
+// Run outputs and event data. `LiveRun.output` and `LiveEvent.data` are open objects; these are
+// the shapes the components that started a run read from its ending event.
+/** A `profile_import` run's output: the dropzone reads `usedVision`. */
+export type ImportOutput = S["ImportOutput"];
+/** A `company_discovery` run's output for one query: `registered`, the row, and the trail. */
+export type CompanyAddOutput = S["CompanyAddOutput"];
+/** One thing company discovery tried, in order: `{step: "domain", detail: "linear.app"}`. */
+export type DiscoveryStep = S["DiscoveryStep"];
+/** `worker.ping`'s data: the job that answered Settings' Test, and the worker's pid. */
+export type WorkerPingData = S["WorkerPingData"];

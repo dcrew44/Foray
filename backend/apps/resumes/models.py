@@ -47,7 +47,9 @@ class Document(UserOwned):
     size_bytes = models.IntegerField()
     storage_path = models.TextField()  # key under STORAGE_DIR: <user_id>/<kind>/<ms>-<name>
     sha256 = models.CharField(max_length=64)
-    # resume_pdf only: sha256(html_normal | RENDER_VERSION) (§11.6).
+    # resume_pdf only: sha256(html_normal | RENDER_VERSION) for a base resume (§11.6), and
+    # sha256(html_normal | RENDER_VERSION | "<Name> - Resume - <Company>.pdf") for a tailored one,
+    # so it downloads under its own name even when its HTML equals the base's (step-H1.md §10).
     render_hash = models.CharField(max_length=64, null=True)  # noqa: DJ001
     text_extracted = models.TextField(null=True)  # noqa: DJ001 (the file's text, before any model)
     created_at = models.DateTimeField(default=timezone.now)

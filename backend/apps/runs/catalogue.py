@@ -41,6 +41,7 @@ from django.db import models
 from pydantic import Field
 
 from apps.core.choices import CAMEL, DefaultedJsonModel, JsNumber, JsonModel
+from apps.jobs.schemas import CompanyRow
 
 # --- Enums ---------------------------------------------------------------------------------------
 
@@ -480,7 +481,7 @@ class CompanyAddOutput(JsonModel):
 
     registered: bool
     existed: bool
-    company: dict[str, Any] | None  # the companies page's `CompanyRow`
+    company: CompanyRow | None  # the companies page's row
     trail: list[DiscoveryStep]  # what was tried, in order
     message: str
 
@@ -505,6 +506,17 @@ class CompanyRefreshOutput(JsonModel):
     inserted: int
     closed: int
     message: str
+
+
+# --- events.data ---------------------------------------------------------------------------------
+
+
+class WorkerPingData(JsonModel):
+    # `worker.ping`: the job that answered Settings' Test, and the worker process's pid.
+    model_config = CAMEL
+
+    job_id: int
+    worker_pid: int
 
 
 INPUT_MODELS: dict[str, type[JsonModel]] = {

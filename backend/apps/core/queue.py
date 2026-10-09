@@ -10,13 +10,19 @@ it refers to exist.
 
 `tests/test_register.py` bans `.defer(`, `.defer_async(` and `defer_job` everywhere else. Async
 callers use `await db(defer_in_tx, task, ...)`.
+
+A delay (`schedule_in`) is measured from the database's clock, the one `fetch_job` reads.
+procrastinate would add it to Python's `utcnow()`, and the two clocks drift apart in development
+(the Docker VM's clock falls behind the Mac's after a sleep): a 4 s wait then took 4 s plus the
+skew, or none at all when the database's clock ran ahead.
 """
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Any
 
-from django.db import transaction
+from django.db import connection, transaction
 from procrastinate import manager
 from procrastinate.contrib.django import app
 from procrastinate.contrib.django.django_connector import DjangoConnector
@@ -40,10 +46,20 @@ def defer_in_tx(
     """Sync. Writes the job on the calling thread's Django connection, inside the caller's
     transaction if there is one. Raises `AlreadyEnqueued` without poisoning that transaction.
     """
+    schedule_at = None if schedule_in is None else _database_clock() + timedelta(**schedule_in)
     job = task.configure(
-        lock=lock, queueing_lock=queueing_lock, schedule_in=schedule_in
+        lock=lock, queueing_lock=queueing_lock, schedule_at=schedule_at
     ).make_new_job(**kwargs)
     with transaction.atomic():  # a savepoint inside a caller's transaction
         job_id = TX_JOBS.defer_job(job).id
     assert job_id is not None
     return job_id
+
+
+def _database_clock() -> datetime:
+    """The database's current time (not the transaction's start), on Django's connection."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT clock_timestamp()")
+        row = cursor.fetchone()
+    assert row is not None
+    return row[0]

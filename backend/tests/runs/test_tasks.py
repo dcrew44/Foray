@@ -16,12 +16,14 @@ from __future__ import annotations
 import asyncio
 import time
 from datetime import timedelta
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 from django.conf import settings
 from django.contrib.sessions.models import Session
 from django.utils import timezone
+from procrastinate import utils as procrastinate_utils
 from procrastinate.periodic import PeriodicDeferrer, PeriodicRegistry
 from procrastinate.retry import RetryStrategy
 
@@ -145,6 +147,44 @@ def test_retry_one_step_fails_the_run_after_its_last_attempt() -> None:
     run = refresh(run)
     assert (run.status, run.error) == ("failed", "Could not render the PDF: attempt 1 failed")
     assert event_kinds(run.id) == ["run.failed"]
+
+
+def _python_clock_ahead(monkeypatch: pytest.MonkeyPatch, by: timedelta) -> None:
+    """This process's clock runs `by` ahead of the database's, as procrastinate reads it (the
+    Docker VM's clock falls behind the Mac's after a sleep)."""
+    real = procrastinate_utils.utcnow
+    monkeypatch.setattr(procrastinate_utils, "utcnow", lambda: real() + by)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_an_immediate_retry_is_due_by_the_database_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A retry-1 step whose first attempt fails is retried in the same drain even when Python's
+    clock runs minutes ahead of the database's: its retry is due at the epoch, not at Python's
+    `utcnow()`, which `fetch_job` would compare with the database's `now()` (step-8E.md §7)."""
+    _python_clock_ahead(monkeypatch, timedelta(minutes=5))
+    user = make_user()
+    run, _ = lifecycle.start_run(
+        user.pk,
+        "resume_render",
+        input={"resumeId": "r", "prompt": "Render"},
+        dedupe_key="render:skew",
+        task=support.retry_step,
+    )
+    run_deferred(["interactive"])
+    assert refresh(run).status == "completed"
+    [job] = jobs(lock=f"run:{run.id}")
+    assert (job["status"], job["attempts"]) == ("succeeded", 2)
+
+    for strategy in (step.ImmediateRetry(max_attempts=1), step.shutdown_only_retry()):
+        decision = strategy.get_retry_decision(
+            exception=asyncio.CancelledError(), job=cast(Any, SimpleNamespace(attempts=0))
+        )
+        assert decision is not None and decision.retry_at == step.RETRY_DUE_NOW
+    waiting = step.ImmediateRetry(max_attempts=1, wait=3)  # a wait keeps procrastinate's own
+    decision = waiting.get_retry_decision(
+        exception=ValueError(), job=cast(Any, SimpleNamespace(attempts=0))
+    )
+    assert decision is not None and decision.retry_at != step.RETRY_DUE_NOW
 
 
 @pytest.mark.django_db(transaction=True)

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { api, call } from "@/lib/api/client";
-import type { CompanyRow, DiscoveryStep } from "@/lib/api/types";
+import type { CompanyAddOutput, CompanyRow, DiscoveryStep } from "@/lib/api/types";
 
 /**
  * Adding a company by name, website or board link. Discovery checks the
@@ -35,15 +35,6 @@ const STEP_LABEL: Record<string, string> = {
   "careers-page-fallback": "Careers page with no known board",
 };
 
-/** A finished discovery's `output` (`CompanyAddOutput` in `apps/runs/catalogue.py`). */
-type AddOutput = {
-  registered?: boolean;
-  existed?: boolean;
-  company?: CompanyRow | null;
-  trail?: DiscoveryStep[];
-  message?: string;
-} | null;
-
 export function AddCompany({ onAdded }: { onAdded: (company: CompanyRow) => void }) {
   const [value, setValue] = useState("");
   const [posting, setPosting] = useState(false);
@@ -60,7 +51,7 @@ export function AddCompany({ onAdded }: { onAdded: (company: CompanyRow) => void
       // The form is free again; the card says the search was stopped.
       setStopped(event.runId ?? null);
     } else if (event.kind === "run.completed") {
-      const output = event.data as AddOutput;
+      const output = event.data as CompanyAddOutput | null;
       if (output?.registered && output.company) {
         toast.success(event.message, { id });
         setValue("");

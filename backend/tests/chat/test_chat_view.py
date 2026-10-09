@@ -23,6 +23,7 @@ rebuilds equals the row the view saved.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import uuid
 from collections.abc import AsyncIterator, Callable
@@ -537,6 +538,36 @@ def test_text_and_a_real_tool(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
     assert len(rows) == 2 and {row.conversation_id for row in rows} == {chat_id}
 
 
+def test_the_chat_fake_lists_matches(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """`LLM_FAKE`'s chat model (apps/chat/fakes.py) answers "Show me my matches" with the real
+    `list_jobs`, every argument null, then one sentence (step-8D.md §2), so the chat's
+    `list_jobs` card can be checked on fakes."""
+    fake_models(monkeypatch, {"chat": fake.fake_model("chat")})
+    user = make_user()
+    first = make_match(user, fast_score=88)
+    second = make_match(user, stage="shortlisted", fast_score=71)
+    chat_id = uuid.uuid4()
+    sent = run(turn_for(user, chat_id, "Show me my matches"))
+    assert sent.status == 200 and sent.error_texts == []
+    [call] = [c for c in sent.chunks if c["type"] == "tool-input-available"]
+    assert (call["toolName"], call["input"]) == (
+        "list_jobs",
+        {"run_id": None, "limit": None, "stage": None, "min_score": None, "query": None},
+    )
+    output = next(c for c in sent.chunks if c["type"] == "tool-output-available")["output"]
+    assert output["count"] == 2
+    assert {job["matchId"] for job in output["jobs"]} == {str(first.id), str(second.id)}
+    reply = reply_of(chat_id)
+    assert [p["type"] for p in reply["parts"]] == [
+        "step-start",
+        "tool-list_jobs",
+        "step-start",
+        "text",
+    ]
+    assert reply["parts"][-1]["text"] == "Here are your matches."
+    assert contract(tmp_path, "fake_list_jobs", sent, reply)["matches"] is True
+
+
 def test_the_step_cap_ends_in_text(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """A tool-greedy model: tools are offered on 7 requests and hidden on the 8th, so the turn
     ends in text, with no error (`StepCap` + `request_limit=8`)."""
@@ -907,6 +938,13 @@ def test_only_text_parts_are_kept_and_metadata_is_dropped(monkeypatch: pytest.Mo
 
 
 # --- R13 -----------------------------------------------------------------------------------------
+#
+# These run through `foray.asgi.application`, the way uvicorn drives it, not the test client.
+# Django's `ASGIHandler` gives every request its own `ThreadSensitiveContext`, so a request's
+# thread-sensitive work (sync middleware, a sync view, `sync_to_async`) runs on that request's own
+# thread with that thread's own connection, exactly as in production. `AsyncClient` does not: all
+# its requests share one thread, and so one connection, which hides a connection pinned to a
+# request for the life of its stream (deviations/step-8E.md §3).
 
 
 def _checked_out() -> int:
@@ -918,40 +956,150 @@ def _checked_out() -> int:
     return stats["pool_size"] - stats["pool_available"]
 
 
+def _session_cookie(user: User) -> str:
+    """A signed-in session, made on the test's own thread before any request runs."""
+    from django.conf import settings
+    from django.test import Client
+
+    client = Client()
+    client.force_login(user)
+    return f"{settings.SESSION_COOKIE_NAME}={client.cookies[settings.SESSION_COOKIE_NAME].value}"
+
+
+class AsgiCall:
+    """One request through the real ASGI application, in its own task, as uvicorn runs it.
+    The response arrives message by message, so a stream can be held open."""
+
+    def __init__(self, method: str, path: str, *, cookie: str, body: bytes = b"") -> None:
+        headers = [
+            (b"host", b"localhost:8000"),
+            (b"origin", ORIGIN.encode()),
+            (b"cookie", cookie.encode()),
+            (b"content-type", b"application/json"),
+            (b"content-length", str(len(body)).encode()),
+        ]
+        self._scope: dict[str, Any] = {
+            "type": "http",
+            "asgi": {"version": "3.0", "spec_version": "2.3"},
+            "http_version": "1.1",
+            "method": method,
+            "scheme": "http",
+            "path": path,
+            "raw_path": path.encode(),
+            "query_string": b"",
+            "root_path": "",
+            "headers": headers,
+            "client": ("127.0.0.1", 50000),
+            "server": ("127.0.0.1", 8000),
+        }
+        self._body = body
+        self._requested = False
+        self._gone = asyncio.Event()
+        self._messages: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+        self.task = asyncio.create_task(self._run())
+
+    async def _receive(self) -> dict[str, Any]:
+        if not self._requested:
+            self._requested = True
+            return {"type": "http.request", "body": self._body, "more_body": False}
+        await self._gone.wait()  # the client stays connected until the test is done with it
+        return {"type": "http.disconnect"}
+
+    async def _send(self, message: dict[str, Any]) -> None:
+        await self._messages.put(message)
+
+    async def _run(self) -> None:
+        from foray.asgi import application  # imported here: the test database exists by now
+
+        try:
+            await application(self._scope, self._receive, self._send)
+        except Exception as error:  # uvicorn would log it; the test reads it
+            await self._messages.put({"type": "test.error", "error": error})
+
+    async def _next(self) -> dict[str, Any]:
+        message = await self._messages.get()
+        if message["type"] == "test.error":
+            raise message["error"]
+        return message
+
+    async def start(self) -> int:
+        message = await self._next()
+        assert message["type"] == "http.response.start", message
+        return message["status"]
+
+    async def chunks(self) -> AsyncIterator[bytes]:
+        while True:
+            message = await self._next()
+            if message.get("body"):
+                yield message["body"]
+            if not message.get("more_body", False):
+                return
+
+    async def text(self) -> str:
+        return b"".join([chunk async for chunk in self.chunks()]).decode()
+
+    async def close(self) -> None:
+        self._gone.set()
+        if not self.task.done():
+            self.task.cancel()
+        with contextlib.suppress(asyncio.CancelledError, Exception):
+            await self.task
+
+
+def chat_call(cookie: str, chat_id: uuid.UUID | str, text: str = "Hello") -> AsgiCall:
+    body = json.dumps({"id": str(chat_id), "message": message(text)}).encode()
+    return AsgiCall("POST", "/api/chat", cookie=cookie, body=body)
+
+
+async def asgi_turn(cookie: str, chat_id: uuid.UUID | str) -> str:
+    call = chat_call(cookie, chat_id)
+    try:
+        assert await asyncio.wait_for(call.start(), 15) == 200
+        return await asyncio.wait_for(call.text(), 15)
+    finally:
+        await call.close()
+
+
 def test_stream_errors_leak_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
-    """An exception raised inside the response body, 20 times, leaves the pool as it was: the
-    request's connection was released before streaming, and every query of the stream went
-    through `db()` (R13)."""
+    """An exception raised inside the response body, 20 times, leaves the pool as it was before
+    the first turn: the request's connection was released before streaming, and every query of
+    the stream went through `db()`, which hands its connection back (R13). Through the real ASGI
+    handler a raising body never reaches `response.close()`, so a connection the request thread
+    held would never go back; and a thread that keeps its connection keeps it for good."""
     from apps.core.db import db
 
     install(monkeypatch, says("ok"))
     user = make_user()
+    cookie = _session_cookie(user)
 
     def boom(turn: Any, message: Any) -> None:
         raise RuntimeError("the checkpoint failed")
 
-    async def scenario() -> tuple[int, int, int]:
-        client = await signed_in(user)
-        await send(client, uuid.uuid4())  # warm up: the pool and this client's session exist
-        before = await db(_checked_out)
+    async def scenario() -> tuple[int, int, int, int]:
+        before = await db(_checked_out)  # before any request: the test thread's and this call's
+        assert (await asgi_turn(cookie, uuid.uuid4())).endswith("data: [DONE]\n\n")
+        after_one = await db(_checked_out)
         monkeypatch.setattr(views, "checkpoint_reply", boom)
         failures = 0
         for _ in range(20):
             with pytest.raises(RuntimeError, match="the checkpoint failed"):
-                await send(client, uuid.uuid4())
+                await asgi_turn(cookie, uuid.uuid4())
             failures += 1
-        return before, await db(_checked_out), failures
+        return before, after_one, await db(_checked_out), failures
 
-    before, after, failures = run(scenario())
+    before, after_one, after, failures = run(scenario())
     assert failures == 20
-    assert after == before
+    assert after_one == before, "a good turn kept a connection"
+    assert after == before, "failed turns kept connections"
     # Each failed turn still saved what it had and cleared its marker.
     assert not Conversation.objects.unscoped("tests").filter(turn_started_at__isnull=False).exists()
 
 
 def test_live_answers_while_streams_open(monkeypatch: pytest.MonkeyPatch) -> None:
-    """With the pool and the `db()` executor both at 2, `/api/live` answers while 4 chat streams
-    are open: an open stream holds no connection between its `db()` calls (R13)."""
+    """With the pool and the `db()` executor both at 2, `/api/live` answers while 4 chat streams,
+    started together, are open: an open stream holds no connection between its `db()` calls, and
+    its request thread holds none at all (R13). Each request has its own thread here, as under
+    uvicorn, so a connection pinned to a stream's request would exhaust the pool of 2."""
     from concurrent.futures import ThreadPoolExecutor
 
     from django.db import connection, connections
@@ -967,43 +1115,42 @@ def test_live_answers_while_streams_open(monkeypatch: pytest.MonkeyPatch) -> Non
 
     install(monkeypatch, stream)
     user = make_user()
+    cookie = _session_cookie(user)
     # The pool is per process and outlives the test: resize it here and put it back in
-    # `finally`, before the test's own teardown flushes the database through it.
+    # `finally`, before the test's own teardown flushes the database through it. A short pool
+    # timeout makes a pinned connection fail the test in seconds rather than hang it.
     options = connections["default"].settings_dict["OPTIONS"]["pool"]
     original_options = dict(options)
     original_executor = db_module.DB_EXECUTOR
     connection.close()
     cast(Any, connections["default"]).close_pool()
-    options.update(max_size=2, min_size=1)
+    options.update(max_size=2, min_size=1, timeout=3)
     small = ThreadPoolExecutor(max_workers=2, thread_name_prefix="db")
     db_module.DB_EXECUTOR = small
 
-    async def scenario() -> tuple[int, dict[str, Any], list[str]]:
-        client = await signed_in(user)
-        responses: list[Any] = []
-        for _ in range(4):
-            response = await client.post(
-                "/api/chat",
-                data=json.dumps({"id": str(uuid.uuid4()), "message": message()}),
-                content_type="application/json",
-                headers={"Origin": ORIGIN},
-            )
-            responses.append(response)
-        iterators = [response.streaming_content.__aiter__() for response in responses]
-        firsts = []
-        for iterator in iterators:  # every stream is open and its model is waiting
-            while b'"text-delta"' not in (chunk := await anext(iterator)):
-                pass
-            firsts.append(chunk)
-        live = await asyncio.wait_for(client.get("/api/live"), 8)
-        release.set()
-        tails = []
-        for iterator in iterators:
-            tails.append(b"".join([chunk async for chunk in iterator]).decode())
-        return live.status_code, live.json(), tails
+    async def scenario() -> tuple[list[int], int, dict[str, Any], list[str]]:
+        calls = [chat_call(cookie, uuid.uuid4()) for _ in range(4)]  # all at once
+        live: AsgiCall | None = None
+        try:
+            statuses = [await asyncio.wait_for(call.start(), 15) for call in calls]
+            assert statuses == [200] * 4, statuses
+            streams = [call.chunks() for call in calls]
+            for chunks in streams:  # every stream is open and its model is waiting
+                while b'"text-delta"' not in await asyncio.wait_for(anext(chunks), 15):
+                    pass
+            live = AsgiCall("GET", "/api/live", cookie=cookie)
+            live_status = await asyncio.wait_for(live.start(), 8)
+            live_body = json.loads(await asyncio.wait_for(live.text(), 8))
+            release.set()
+            tails = [b"".join([chunk async for chunk in chunks]).decode() for chunks in streams]
+            return statuses, live_status, live_body, tails
+        finally:
+            release.set()
+            for call in [*calls, *([live] if live else [])]:
+                await call.close()
 
     try:
-        status, body, tails = run(scenario())
+        statuses, live_status, body, tails = run(scenario())
     finally:
         db_module.DB_EXECUTOR = original_executor
         small.shutdown(wait=True)
@@ -1011,7 +1158,8 @@ def test_live_answers_while_streams_open(monkeypatch: pytest.MonkeyPatch) -> Non
         cast(Any, connections["default"]).close_pool()
         options.clear()
         options.update(original_options)
-    assert status == 200 and "events" in body
+    assert statuses == [200] * 4
+    assert live_status == 200 and "events" in body
     assert all(tail.endswith("data: [DONE]\n\n") for tail in tails)
 
 

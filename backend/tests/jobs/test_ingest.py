@@ -7,7 +7,7 @@ import dataclasses
 from datetime import UTC, datetime
 
 import pytest
-from django.utils import timezone
+from django.db import connection
 
 from apps.jobs.ingest import BATCH_SIZE, IngestResult, ingest_jobs
 from apps.jobs.models import Company, Job
@@ -210,4 +210,8 @@ def test_last_seen_moves_forward_on_an_unchanged_fetch(company: Company) -> None
     job = Job.objects.get(id="greenhouse:acme:0")
     assert job.last_seen_at > long_ago
     assert job.fetched_at > long_ago
-    assert job.last_seen_at <= timezone.now()
+    # `now()` in SQL wrote it, so it is compared with the database's clock (step-8E.md §7).
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT clock_timestamp()")
+        [(database_now,)] = cursor.fetchall()
+    assert job.last_seen_at <= database_now

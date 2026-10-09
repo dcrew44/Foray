@@ -5215,6 +5215,688 @@
         ],
         "type": "string"
       },
+      "GetProfileSummaryInput": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "GetProfileSummaryInput",
+        "type": "object"
+      },
+      "GetResumeInput": {
+        "additionalProperties": false,
+        "properties": {
+          "sections": {
+            "anyOf": [
+              {
+                "items": {
+                  "enum": [
+                    "basics",
+                    "summary",
+                    "work",
+                    "education",
+                    "projects",
+                    "skills"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Limit to these sections. Null reads the whole resume, which is usually what you want.",
+            "title": "Sections"
+          }
+        },
+        "required": [
+          "sections"
+        ],
+        "title": "GetResumeInput",
+        "type": "object"
+      },
+      "SalaryFloorInput": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "period": {
+            "enum": [
+              "year",
+              "hour"
+            ],
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "period"
+        ],
+        "title": "SalaryFloorInput",
+        "type": "object"
+      },
+      "UpdateProfilePreferencesInput": {
+        "additionalProperties": false,
+        "properties": {
+          "target_roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Roles"
+          },
+          "seniority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "intern",
+                  "new_grad",
+                  "entry",
+                  "mid",
+                  "senior",
+                  "staff_plus"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seniority"
+          },
+          "locations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locations"
+          },
+          "remote_pref": {
+            "anyOf": [
+              {
+                "enum": [
+                  "remote",
+                  "hybrid",
+                  "onsite",
+                  "any"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Pref"
+          },
+          "salary_floor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SalaryFloorInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "work_auth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Auth"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "must_haves": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Must Haves"
+          },
+          "dealbreakers": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dealbreakers"
+          },
+          "declined_slots": {
+            "anyOf": [
+              {
+                "items": {
+                  "enum": [
+                    "target_roles",
+                    "seniority",
+                    "locations",
+                    "remote_pref",
+                    "salary_floor",
+                    "work_auth",
+                    "start_date",
+                    "constraints"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declined Slots"
+          }
+        },
+        "required": [
+          "target_roles",
+          "seniority",
+          "locations",
+          "remote_pref",
+          "salary_floor",
+          "work_auth",
+          "start_date",
+          "must_haves",
+          "dealbreakers",
+          "declined_slots"
+        ],
+        "title": "UpdateProfilePreferencesInput",
+        "type": "object"
+      },
+      "AddCompanyInput": {
+        "additionalProperties": false,
+        "properties": {
+          "name_or_url": {
+            "description": "A company name (\"Stripe\"), a domain, or a job-board URL.",
+            "title": "Name Or Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name_or_url"
+        ],
+        "title": "AddCompanyInput",
+        "type": "object"
+      },
+      "DiscoverCompaniesInput": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "count": {
+            "description": "How many companies to look for. Keep it modest.",
+            "maximum": 25,
+            "minimum": 1,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "description",
+          "count"
+        ],
+        "title": "DiscoverCompaniesInput",
+        "type": "object"
+      },
+      "ListCompaniesInput": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "anyOf": [
+              {
+                "maximum": 50,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          }
+        },
+        "required": [
+          "limit"
+        ],
+        "title": "ListCompaniesInput",
+        "type": "object"
+      },
+      "StartSearchRunInput": {
+        "additionalProperties": false,
+        "properties": {
+          "prompt": {
+            "description": "What the user asked for, in their own words.",
+            "title": "Prompt",
+            "type": "string"
+          },
+          "companies": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Companies to limit the search to, when the user names any (\"at Anthropic\"). Unknown companies are looked up and added automatically.",
+            "title": "Companies"
+          },
+          "roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Kinds of role for this search, as short titles (\"software engineer\").",
+            "title": "Roles"
+          },
+          "seniority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "intern",
+                  "new_grad",
+                  "entry",
+                  "mid",
+                  "senior",
+                  "staff_plus"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Level for this search when the user states one. \"Entry-level\", \"junior\" or \"most entry-level\" is entry.",
+            "title": "Seniority"
+          },
+          "locations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Places for this search, when the user names any.",
+            "title": "Locations"
+          },
+          "remote": {
+            "anyOf": [
+              {
+                "enum": [
+                  "remote",
+                  "hybrid",
+                  "onsite",
+                  "any"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Remote preference for this search, only when the user states one.",
+            "title": "Remote"
+          },
+          "focus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Anything else about this search that should shape the ranking, in one sentence (\"lowest experience requirements first\").",
+            "title": "Focus"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "approve_each",
+                  "autopilot"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "approve_each pauses before deep evaluation and before shortlisting; autopilot does both without asking. Null uses the user's default from settings — only set it when they say which they want.",
+            "title": "Mode"
+          }
+        },
+        "required": [
+          "prompt",
+          "companies",
+          "roles",
+          "seniority",
+          "locations",
+          "remote",
+          "focus",
+          "mode"
+        ],
+        "title": "StartSearchRunInput",
+        "type": "object"
+      },
+      "GetRunStatusInput": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "GetRunStatusInput",
+        "type": "object"
+      },
+      "CancelRunInput": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "CancelRunInput",
+        "type": "object"
+      },
+      "ListJobsInput": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only the roles this search run found.",
+            "title": "Run Id"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "maximum": 50,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "found",
+                  "shortlisted",
+                  "applied",
+                  "interviewing",
+                  "offer",
+                  "rejected",
+                  "archived"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "min_score": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Score"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Text to match in title or company.",
+            "title": "Query"
+          }
+        },
+        "required": [
+          "run_id",
+          "limit",
+          "stage",
+          "min_score",
+          "query"
+        ],
+        "title": "ListJobsInput",
+        "type": "object"
+      },
+      "GetJobInput": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "A matchId or jobId.",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "GetJobInput",
+        "type": "object"
+      },
+      "ListPendingApprovalsInput": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "ListPendingApprovalsInput",
+        "type": "object"
+      },
+      "AnswerApprovalInput": {
+        "additionalProperties": false,
+        "properties": {
+          "approval_id": {
+            "description": "The approval's id.",
+            "title": "Approval Id",
+            "type": "string"
+          },
+          "approve": {
+            "title": "Approve",
+            "type": "boolean"
+          },
+          "item_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "With approve=true: only these items. Null means every item. Ignored when declining.",
+            "title": "Item Ids"
+          }
+        },
+        "required": [
+          "approval_id",
+          "approve",
+          "item_ids"
+        ],
+        "title": "AnswerApprovalInput",
+        "type": "object"
+      },
+      "MoveJobStageInput": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "A matchId or jobId.",
+            "title": "Id",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "found",
+              "shortlisted",
+              "applied",
+              "interviewing",
+              "offer",
+              "rejected",
+              "archived"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A short note to add to the role's notes (e.g. who they spoke to), or null.",
+            "title": "Note"
+          }
+        },
+        "required": [
+          "id",
+          "stage",
+          "note"
+        ],
+        "title": "MoveJobStageInput",
+        "type": "object"
+      },
+      "EvaluateJobInput": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "A matchId or jobId.",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "EvaluateJobInput",
+        "type": "object"
+      },
+      "TailorResumeInput": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "A matchId or jobId.",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "TailorResumeInput",
+        "type": "object"
+      },
       "ResumeCounts": {
         "additionalProperties": false,
         "properties": {
@@ -6521,6 +7203,178 @@
         ],
         "title": "DecidedVia",
         "type": "string"
+      },
+      "GarbleReport": {
+        "properties": {
+          "garbled": {
+            "title": "Garbled",
+            "type": "boolean"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Metrics",
+            "type": "object"
+          }
+        },
+        "required": [
+          "garbled",
+          "reasons"
+        ],
+        "title": "GarbleReport",
+        "type": "object"
+      },
+      "ImportCounts": {
+        "properties": {
+          "work": {
+            "title": "Work",
+            "type": "integer"
+          },
+          "education": {
+            "title": "Education",
+            "type": "integer"
+          },
+          "skills": {
+            "title": "Skills",
+            "type": "integer"
+          },
+          "projects": {
+            "title": "Projects",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "work",
+          "education",
+          "skills",
+          "projects"
+        ],
+        "title": "ImportCounts",
+        "type": "object"
+      },
+      "ImportOutput": {
+        "properties": {
+          "documentId": {
+            "title": "Documentid",
+            "type": "string"
+          },
+          "resumeId": {
+            "title": "Resumeid",
+            "type": "string"
+          },
+          "usedVision": {
+            "title": "Usedvision",
+            "type": "boolean"
+          },
+          "garble": {
+            "$ref": "#/components/schemas/GarbleReport"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ImportCounts"
+          }
+        },
+        "required": [
+          "documentId",
+          "resumeId",
+          "usedVision",
+          "garble",
+          "counts"
+        ],
+        "title": "ImportOutput",
+        "type": "object"
+      },
+      "DiscoveryStep": {
+        "properties": {
+          "step": {
+            "title": "Step",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "detail"
+        ],
+        "title": "DiscoveryStep",
+        "type": "object"
+      },
+      "CompanyAddOutput": {
+        "properties": {
+          "registered": {
+            "title": "Registered",
+            "type": "boolean"
+          },
+          "existed": {
+            "title": "Existed",
+            "type": "boolean"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompanyRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trail": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryStep"
+            },
+            "title": "Trail",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "registered",
+          "existed",
+          "company",
+          "trail",
+          "message"
+        ],
+        "title": "CompanyAddOutput",
+        "type": "object"
+      },
+      "WorkerPingData": {
+        "properties": {
+          "jobId": {
+            "title": "Jobid",
+            "type": "integer"
+          },
+          "workerPid": {
+            "title": "Workerpid",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "jobId",
+          "workerPid"
+        ],
+        "title": "WorkerPingData",
+        "type": "object"
       }
     },
     "securitySchemes": {

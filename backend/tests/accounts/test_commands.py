@@ -133,7 +133,7 @@ def test_create_test_user_purge(debug: None, storage: Path) -> None:
     # The ledger keeps its row, with no user.
     ledger_row = LlmCall.objects.unscoped("test: purge keeps the ledger").get(pk=ledger.pk)
     assert ledger_row.user_id is None
-    assert sorted(path.name for path in storage.iterdir()) == [keep.pk, "unrelated.txt"]
+    assert sorted(path.name for path in storage.iterdir()) == sorted([keep.pk, "unrelated.txt"])
 
     assert run("create_test_user", "--purge")[0] == ["Deleted 0 test users."]
     make_user()

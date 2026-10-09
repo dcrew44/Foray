@@ -36,6 +36,7 @@ from apps.core import throttle
 from apps.core.errors import DEFAULT_INVALID, ApiError, messages
 from apps.core.openapi import register_schema
 from apps.core.router import ApiModel, router
+from apps.core.schemas import OkMessageOut
 from foray.middleware import stamp_session
 
 auth = router(tags=["auth"])
@@ -126,11 +127,6 @@ class AuthOut(ApiModel):
 
 class OkOut(ApiModel):
     ok: bool
-
-
-class OkMessageOut(ApiModel):
-    ok: bool
-    message: str
 
 
 class ConfigOut(ApiModel):

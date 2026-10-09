@@ -30,6 +30,7 @@ from apps.core import throttle
 from apps.core.errors import ApiError, messages
 from apps.core.openapi import register_schema
 from apps.core.router import ApiModel, router
+from apps.core.schemas import OkMessageOut
 from apps.matching import queries
 from apps.matching import tasks as _tasks  # noqa: F401 (registers the tasks this API defers)
 from apps.matching.deep_eval import NoResumeError, cost_phrase, estimate_eval_cost
@@ -100,11 +101,6 @@ class RunStarted(ApiModel):
 
 class MatchesOut(ApiModel):
     matches: list[MatchRow]
-
-
-class OkMessageOut(ApiModel):
-    ok: bool
-    message: str
 
 
 def _json_number(value: Any) -> Any:

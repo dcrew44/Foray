@@ -153,6 +153,12 @@ Later steps read this before the design. Each entry: what, why, evidence.
 ## 9. Observations, no change
 
 - `tests/accounts/test_commands.py::test_create_test_user_purge` failed once in this lane's
-  baseline full run (before any step 4 change) and passed alone and in every later full run: an
-  order-dependent count of `@example.test` users. Not this step's file.
+  baseline full run (before any step 4 change) and passed alone and in every later full run.
+  Not this step's file. **Corrected by step H1:** the cause stated here first ("an
+  order-dependent count of `@example.test` users") was wrong; the test does not depend on order
+  or on other tests' users. It compared the sorted listing of `STORAGE_DIR` with the *unsorted*
+  list `[keep.pk, "unrelated.txt"]`, so it failed whenever the kept user's random id sorted after
+  `unrelated.txt` (an id starting `v`–`z`, about 8% of runs), as step-3F.md §10 found.
+  Integration G2 fixed it by sorting both sides (integration-G2.md §1); step H1 confirmed the
+  fix and ran the test 30 times (deviations/step-H1.md §4).
 - The dev `.env` sets `WORKER_CONCURRENCY=4`, so the background lane ran 4 wide here.

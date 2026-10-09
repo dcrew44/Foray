@@ -21,8 +21,9 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.accounts.schemas import SAMPLE_PREFERENCES, Settings
 from apps.core.queue import app, defer_in_tx
+from apps.jobs import refresh as refresh_module
 from apps.jobs.models import Company
-from apps.jobs.refresh import MULTI_BOARD_GATE, RefreshOutcome
+from apps.jobs.refresh import RefreshOutcome
 from apps.llm.models import LlmCall
 from apps.matching import evaluate, search
 from apps.matching.brief import EMPTY_BRIEF
@@ -48,6 +49,16 @@ from tests.queue import deferred, run_deferred
 pytestmark = pytest.mark.django_db(transaction=True)
 
 _redelivery = itertools.count(1)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_gate(monkeypatch: pytest.MonkeyPatch) -> asyncio.Lock:
+    """`MULTI_BOARD_GATE` binds to the event loop that first waits on it, and every test runs
+    its jobs on a loop of its own, so each gets a fresh gate. The search reads it from
+    `apps.jobs.refresh` at call time, so it holds this one."""
+    gate = asyncio.Lock()
+    monkeypatch.setattr(refresh_module, "MULTI_BOARD_GATE", gate)
+    return gate
 
 
 # --- helpers -------------------------------------------------------------------------------------
@@ -874,7 +885,7 @@ def test_named_companies_are_looked_up_refreshed_and_reported(
 
     async def refresh(client: Any, companies: list[Company]) -> list[RefreshOutcome]:
         refreshed_slugs.extend(company.slug for company in companies)
-        assert not MULTI_BOARD_GATE.locked()  # a named refresh is not a stale-set refresh
+        assert not refresh_module.MULTI_BOARD_GATE.locked()  # not a stale-set refresh
         return [RefreshOutcome(company.name, company.slug, "ok", 1) for company in companies]
 
     monkeypatch.setattr(search, "discover_company", discover)
@@ -908,7 +919,7 @@ def test_an_unlimited_search_refreshes_the_stale_set_under_the_gate(
     held: list[bool] = []
 
     async def refresh(client: Any, companies: list[Company]) -> list[RefreshOutcome]:
-        held.append(MULTI_BOARD_GATE.locked())
+        held.append(refresh_module.MULTI_BOARD_GATE.locked())
         return [
             RefreshOutcome(c.name, c.slug, "ok" if i == 0 else "error", 0)
             for i, c in enumerate(companies)

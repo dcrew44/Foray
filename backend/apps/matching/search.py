@@ -37,10 +37,11 @@ from apps.accounts.schemas import InterviewState, Preferences, Settings
 from apps.core.db import db
 from apps.core.errors import UserFacingError
 from apps.core.http import HttpClient
+from apps.jobs import refresh as refresh_module
 from apps.jobs.discovery import discover_company, register_boards_from_apply_links
 from apps.jobs.ingest import ingest_jobs
 from apps.jobs.models import Company, DiscoveredVia
-from apps.jobs.refresh import MULTI_BOARD_GATE, refresh_companies, stale_cutoff
+from apps.jobs.refresh import refresh_companies, stale_cutoff
 from apps.jobs.registry import find_companies_by_names, stale_companies
 from apps.jobs.sources.jsearch import JSearchDisabledError, JSearchQuotaError, search_jsearch
 from apps.matching import queries
@@ -497,7 +498,9 @@ async def refresh_boards(run: Run, targets: Targets | None, client: HttpClient) 
         ]
         await _refresh(run, stale, client, named=True)
         return
-    async with MULTI_BOARD_GATE:
+    # Read at call time, as `jobs.pipeline` does: the gate is an `asyncio.Lock`, bound to the
+    # loop that first waits on it, and tests give each loop a fresh one.
+    async with refresh_module.MULTI_BOARD_GATE:
         stale = await db(stale_companies, stale_cutoff())
         await _refresh(run, stale, client, named=False)
 

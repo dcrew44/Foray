@@ -226,6 +226,64 @@ async def test_a_pasted_board_link_is_verified_and_registered() -> None:
 
 
 @pytestmark_db
+async def test_a_pasted_board_link_is_named_after_its_slug_with_no_domain() -> None:
+    """The URL is not a name and the ATS host is not the company's domain (step-5C.md §7)."""
+    handler = routes(
+        {
+            ashby.board_url("linear"): board_ok("ashby"),
+            lever.board_url("acme_corp"): board_ok("lever"),
+        }
+    )
+    async with mock_client(handler) as client:
+        linear = await discover_company(client, "https://jobs.ashbyhq.com/linear")
+        acme = await discover_company(client, "jobs.lever.co/acme_corp/123?lever-source=x")
+    assert linear.registered is not None and acme.registered is not None
+    assert (linear.registered.name, linear.registered.domain) == ("Linear", None)
+    assert (acme.registered.name, acme.registered.domain) == ("Acme Corp", None)
+
+
+@pytestmark_db
+async def test_a_pasted_board_link_keeps_the_name_and_domain_a_company_has() -> None:
+    await Company.objects.acreate(
+        name="Linear Orbit",
+        domain="linear.app",
+        slug="linear",
+        source_type="ashby",
+        ats_slug="linear",
+        careers_urls=["https://linear.app/careers"],
+        discovered_via="seed",
+    )
+    handler = routes({ashby.board_url("linear"): board_ok("ashby")})
+    async with mock_client(handler) as client:
+        result = await discover_company(client, "https://jobs.ashbyhq.com/linear")
+    company = result.registered
+    assert company is not None and not result.created
+    assert (company.name, company.domain, company.slug) == ("Linear Orbit", "linear.app", "linear")
+    assert await Company.objects.acount() == 1
+
+
+@pytestmark_db
+async def test_a_dead_board_link_never_probes_the_ats_host_as_a_company_site() -> None:
+    """The board moved: its old link 404s, the slug finds the new board, and the ATS's own host
+    was never fetched as if it were the company's site."""
+    seen: list[str] = []
+    table = routes({ashby.board_url("acme"): board_ok("ashby")})
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen.append(str(request.url))
+        return table(request)
+
+    async with mock_client(handler) as client:
+        result = await discover_company(client, "https://boards.greenhouse.io/acme")
+    assert [step["step"] for step in result.trail] == ["ats-link", "slug-guess"]
+    assert result.trail[1]["detail"] == "ashby:acme"
+    company = result.registered
+    assert company is not None
+    assert (company.source_type, company.name, company.domain) == ("ashby", "Acme", None)
+    assert not [url for url in seen if url.startswith("https://boards.greenhouse.io/")]
+
+
+@pytestmark_db
 async def test_a_domain_follows_its_careers_page_to_the_board() -> None:
     page = '<a href="https://job-boards.greenhouse.io/acme">Open roles</a>'
     handler = routes(

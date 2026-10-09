@@ -22,7 +22,9 @@ One SIGINT/SIGTERM handler stops all three: each stops fetching, gives its runni
 `--shutdown-timeout` seconds, then cancels them (in-flight model calls included, each ledgered);
 the reaper fails their runs, and a cancelled `chat.follow_up` is retried once. Each Worker
 unregisters on the way out, so `worker.online` goes false at once after a clean stop (and about
-45 s after a crash). The Playwright browser closes last. No `task_middleware` is passed, which
+45 s after a crash). The Playwright browser closes last, within 10 s and still under the stop
+handler (a second Ctrl-C must not interrupt it): a close that hangs is logged and abandoned, so
+`stopped` is always logged. No `task_middleware` is passed, which
 would drop Django's per-task connection cleanup; timeouts live in `run_step` instead.
 """
 
@@ -49,6 +51,9 @@ from apps.runs.step import BACKGROUND, INTERACTIVE, SYSTEM
 log = logging.getLogger("foray.worker")
 
 DEFAULT_SHUTDOWN_TIMEOUT = 60.0
+# How long the PDF browser gets to close after the lanes stop (design §13.5: Playwright closes
+# last). Together with `pnpm dev:worker`'s 5 s graceful window it fits watchfiles' 15 s.
+BROWSER_CLOSE_TIMEOUT_S = 10.0
 UNAPPLIED = "There are unapplied migrations. Run pnpm db:migrate"
 
 
@@ -69,6 +74,17 @@ async def _close_browser() -> None:
         await close_browser()
     except Exception:
         log.warning("could not close the PDF browser", exc_info=True)
+
+
+async def _close_browser_bounded() -> None:
+    """Closes the PDF browser, giving up after `BROWSER_CLOSE_TIMEOUT_S`: a close that never
+    answers must not keep the worker from exiting (and from logging `stopped`)."""
+    try:
+        await asyncio.wait_for(_close_browser(), BROWSER_CLOSE_TIMEOUT_S)
+    except TimeoutError:
+        log.warning(
+            "the PDF browser did not close within %ss; exiting without it", BROWSER_CLOSE_TIMEOUT_S
+        )
 
 
 async def serve(
@@ -132,9 +148,12 @@ async def serve(
                     if isinstance(result, Exception):
                         log.error("lane %s failed", lane, exc_info=result)
     finally:
+        # Still under our handlers: after a terminal's Ctrl-C a second SIGINT follows (watchfiles
+        # forwards its own), and with Python's default handler back it would interrupt the
+        # Playwright close mid-way, leaving it waiting forever and `stopped` never logged.
+        await _close_browser_bounded()
         for signum in signals:
             loop.remove_signal_handler(signum)
-        await _close_browser()
     log.info("stopped")
     return 1 if crashed else 0
 

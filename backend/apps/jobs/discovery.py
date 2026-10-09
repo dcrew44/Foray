@@ -28,7 +28,12 @@ from django.conf import settings
 from apps.core.db import db
 from apps.core.http import BLOCKED_MESSAGE, HTML_ACCEPT, FetchError, HttpClient, HttpError
 from apps.jobs.models import Company, DiscoveredVia, SourceType
-from apps.jobs.registry import CompanyInput, get_company_by_board, upsert_company
+from apps.jobs.registry import (
+    CompanyInput,
+    company_slug,
+    get_company_by_board,
+    upsert_company,
+)
 from apps.jobs.sources.js import IA, JS_WS, js_trim
 from apps.jobs.sources.jsearch import DiscoveredBoard
 from apps.jobs.sources.types import BoardSource
@@ -77,6 +82,7 @@ SEARCH_RESULTS_TRIED = 3
 _LOOKS_LIKE_URL = re.compile(r"^(?:https?://|www\.)|\.[a-z]{2,}(?:/|\Z)", IA)
 _WWW = re.compile(r"^www\.")
 _WHITESPACE = re.compile(f"[{JS_WS}]+")
+_SLUG_SEPARATORS = re.compile(r"[-_]+")
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +139,18 @@ def find_careers_links(html: str, base_url: str) -> list[str]:
 
 def title_case(value: str) -> str:
     return " ".join(word[:1].upper() + word[1:] for word in _WHITESPACE.split(value))
+
+
+def _registered_name(source: str, ats_slug: str | None, ours: str) -> str | None:
+    """The name of the company a registration would update (`upsert_company`'s identity: the
+    board, or a careers page by its slug), if one exists."""
+    if ats_slug is not None:
+        company = get_company_by_board(source, ats_slug)
+    else:
+        company = Company.objects.filter(
+            source_type=SourceType.CAREERS_PAGE, slug=company_slug(ours)
+        ).first()
+    return company.name if company is not None else None
 
 
 @dataclass(slots=True)
@@ -214,6 +232,9 @@ async def discover_company(
     raw = js_trim(name_or_url)
     domain = normalize_domain(raw) if _LOOKS_LIKE_URL.search(raw) else None
     name = raw
+    # True once `name` is only a guess (the slug of a pasted board link): it is shown title-cased
+    # with its separators as spaces, and never replaces the name a company already has.
+    guessed = False
     careers_urls: list[str] = []
 
     async def finish(source: str, slug: str | None) -> DiscoveryResult:
@@ -233,10 +254,13 @@ async def discover_company(
         )
         if not register:
             return result
+        display = title_case(_SLUG_SEPARATORS.sub(" ", name) if guessed else name)
+        if guessed:
+            display = await db(_registered_name, source, slug, ours) or display
         result.registered, result.created = await db(
             upsert_company,
             CompanyInput(
-                name=title_case(name),
+                name=display,
                 slug=ours,
                 source_type=source,
                 ats_slug=slug,
@@ -251,11 +275,14 @@ async def discover_company(
         )
         return result
 
-    # A board URL pasted directly is the strongest possible signal.
+    # A board URL pasted directly is the strongest possible signal. It names a board, not the
+    # company: its host is the ATS's (never the company's domain, nor a site to probe for careers
+    # pages) and the URL is no name, so the board's slug stands in for the name.
     direct = find_ats_links(raw)
     if direct:
         link = direct[0]
         run.step("ats-link", f"pasted {link.source}:{link.slug}")
+        domain, name, guessed = None, link.slug, True
         if await run.usable(link):
             return await finish(link.source, link.slug)
 

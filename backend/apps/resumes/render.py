@@ -17,11 +17,14 @@ one when it has fewer pages. It changes type size and spacing only, never conten
 that spills three lines onto a second page looks careless in a way a slightly smaller font does
 not. Page counts come from PDFium (under its lock).
 
-**Dedupe by `render_hash`** = sha256(normal-density HTML + "|" + `RENDER_VERSION`). Both are
-known before any render, and the compact variant is a function of the same resume, so one key
-covers whichever density the fitting picks. An existing `resume_pdf` document with the same
-`(user, render_hash)` is reused with no render at all. Bump `RENDER_VERSION` whenever the
-template, the fitting rule or the PDF options change. Rendering never touches any document's
+**Dedupe by `render_hash`** = sha256(normal-density HTML + "|" + `RENDER_VERSION`), and for a
+tailored resume also + "|" + its download name. Both are known before any render, and the
+compact variant is a function of the same resume, so one key covers whichever density the
+fitting picks. An existing `resume_pdf` document with the same `(user, render_hash)` is reused
+with no render at all. The download name is in a tailored key because the document row carries
+it: a tailored resume whose HTML equals the base's (tailoring changed nothing) still downloads as
+"… - Resume - <Company>.pdf", not as the base's "… - Resume.pdf". Bump `RENDER_VERSION` whenever
+the template, the fitting rule or the PDF options change. Rendering never touches any document's
 `text_extracted`.
 """
 
@@ -33,6 +36,7 @@ import hashlib
 import logging
 import re
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from django.conf import settings
@@ -70,6 +74,9 @@ log = logging.getLogger(__name__)
 # a rendered PDF is reused by.
 RENDER_VERSION = "1"
 RENDER_TIMEOUT_MS = 30_000
+# Per half of closing the browser (`browser.close()`, then `playwright.stop()`); a healthy close
+# takes well under a second. The two together stay inside the worker's own 10 s bound.
+CLOSE_TIMEOUT_S = 4.0
 
 PDF_MIME = "application/pdf"
 
@@ -135,14 +142,26 @@ class _Chromium:
             await self._close_unlocked()
 
     async def _close_unlocked(self) -> None:
+        """Each half is bounded: a close that never answers (seen live when a second SIGINT
+        interrupted it mid-way) must not keep the worker from exiting. `stop()` runs even after
+        a stuck `close()`: it ends the driver process, which takes any browser it still has
+        with it."""
         browser, playwright = self._browser, self._playwright
         self._browser, self._playwright = None, None
         if browser is not None:
-            with contextlib.suppress(Exception):
-                await browser.close()
+            await _bounded("close the browser", browser.close)
         if playwright is not None:
-            with contextlib.suppress(Exception):
-                await playwright.stop()
+            await _bounded("stop the Playwright driver", playwright.stop)
+
+
+async def _bounded(what: str, step: Callable[[], Awaitable[None]]) -> None:
+    try:
+        async with asyncio.timeout(CLOSE_TIMEOUT_S):
+            await step()
+    except TimeoutError:
+        log.warning("render: could not %s within %ss; going on without it", what, CLOSE_TIMEOUT_S)
+    except Exception:
+        log.debug("render: could not %s", what, exc_info=True)
 
 
 _CHROMIUM = _Chromium()
@@ -231,13 +250,18 @@ async def render_fitted(resume: Resume) -> FittedPdf:
     return FittedPdf(pdf=normal.pdf, pages=normal.pages, density="normal")
 
 
-def render_hash(resume: Resume) -> str:
-    """The key a rendered PDF is reused by: sha256(normal-density HTML | RENDER_VERSION)."""
-    return _hash_html(render_resume_html(resume))
+def render_hash(resume: Resume, company: str | None = None) -> str:
+    """The key a rendered PDF is reused by: sha256(normal-density HTML | RENDER_VERSION), plus
+    `| <download name>` for a resume tailored for `company`."""
+    tailored_name = pdf_filename(resume, company) if company is not None else None
+    return _hash_html(render_resume_html(resume), tailored_name)
 
 
-def _hash_html(html_normal: str) -> str:
-    return hashlib.sha256(f"{html_normal}|{RENDER_VERSION}".encode()).hexdigest()
+def _hash_html(html_normal: str, tailored_name: str | None = None) -> str:
+    text = f"{html_normal}|{RENDER_VERSION}"
+    if tailored_name is not None:
+        text = f"{text}|{tailored_name}"
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
 _UNSAFE_FILENAME = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
@@ -321,6 +345,12 @@ def _record(
     except IntegrityError:
         existing = _find_rendered(user_id, key)
         if existing is None:
+            # Byte-identical to another document of this user (`documents_user_sha256`): a
+            # tailored resume rendered within the same second as its identical base, since
+            # Chromium's PDFs of one HTML differ only in their creation second. One row per
+            # bytes, so that one is used; the next render gets its own.
+            existing = Document.objects.for_user(user_id).filter(sha256=sha256_hex(pdf)).first()
+        if existing is None:
             raise
         _point_at(user_id, resume_id, existing.id)
         return existing, False
@@ -346,7 +376,10 @@ async def render_resume(user_id: str, resume_id: uuid.UUID | str) -> RenderResul
     and points `resumes.rendered_document` at it, unless a document with the same render hash
     exists: then that one is reused and nothing is rendered."""
     loaded = await db(_load, user_id, resume_id)
-    key = _hash_html(render_resume_html(loaded.resume))
+    filename = pdf_filename(loaded.resume, loaded.company)
+    key = _hash_html(
+        render_resume_html(loaded.resume), filename if loaded.company is not None else None
+    )
 
     existing = await db(_find_rendered, user_id, key)
     if existing is not None:
@@ -361,7 +394,6 @@ async def render_resume(user_id: str, resume_id: uuid.UUID | str) -> RenderResul
                 return RenderResult(document_id=existing.id, pages=pages, density=None, reused=True)
 
     fitted = await render_fitted(loaded.resume)
-    filename = pdf_filename(loaded.resume, loaded.company)
     path = storage_key(user_id, DocumentKind.RESUME_PDF.value, filename)
     await asyncio.to_thread(storage().put, path, fitted.pdf)
 

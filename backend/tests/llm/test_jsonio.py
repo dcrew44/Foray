@@ -4,9 +4,9 @@ Every expected value below was printed by Node 26 (`String(x)` and `x.toLocaleSt
 Prompts and tool strings use these helpers, never `str()` on a float, because a byte change in a
 prompt shifts behaviour and breaks prompt-cache prefixes without failing anything else.
 
-The cases marked `xfail(strict=True)` are divergences outside the salary domain that the step-1
-module still has (a handoff, see `docs/migration/deviations/step-3B.md`); when the module is
-fixed they start passing and the marker must go.
+The cases outside the salary domain (small fractions, integral floats above 2**53, a negative
+value that rounds to zero, the largest double) were strict xfails until step H1 made the module
+follow ECMAScript's Number::toString and ICU's sign rule (`docs/migration/deviations/step-H1.md`).
 """
 
 from __future__ import annotations
@@ -89,12 +89,9 @@ def test_bools_are_refused() -> None:
         js_locale(False)
 
 
-# --- divergences outside the salary domain (handoff) ---------------------------------------------
-
-HANDOFF = "handoff: apps/core/jsonio.py (step 1) diverges from JS here"
+# --- outside the salary domain ------------------------------------------------------------------
 
 
-@pytest.mark.xfail(strict=True, reason=HANDOFF)
 @pytest.mark.parametrize(
     ("x", "string"),
     [
@@ -108,7 +105,6 @@ def test_js_num_small_fractions(x: float, string: str) -> None:
     assert js_num(x) == string
 
 
-@pytest.mark.xfail(strict=True, reason=HANDOFF)
 @pytest.mark.parametrize(
     ("x", "string"),
     [
@@ -121,13 +117,11 @@ def test_js_num_integral_floats_above_2_53(x: float, string: str) -> None:
     assert js_num(x) == string
 
 
-@pytest.mark.xfail(strict=True, reason=HANDOFF)
 @pytest.mark.parametrize("x", [-0.0, -2.5e-8, -0.0004])
 def test_js_locale_negative_zero(x: float) -> None:
     assert js_locale(x) == "-0"
 
 
-@pytest.mark.xfail(strict=True, reason=HANDOFF)
 def test_js_locale_huge_values() -> None:
     expected = "179,769,313,486,231,570" + ",000" * 97
     assert js_locale(1.7976931348623157e308) == expected

@@ -306,6 +306,9 @@ def test_a_pasted_board_link_is_verified_and_filled(web: Web) -> None:
     assert (output["registered"], output["existed"]) == (True, False)
     assert output["trail"] == [{"step": "ats-link", "detail": "pasted ashby:linear"}]
     assert output["company"]["activeJobs"] == active_jobs(output["company"]["slug"]) > 0
+    # Named after the board's slug, not the URL; the ATS host is not its domain (step H1).
+    assert (output["company"]["name"], output["company"]["domain"]) == ("Linear", None)
+    assert output["message"].startswith("Added Linear. Its Ashby board has ")
 
 
 @tx

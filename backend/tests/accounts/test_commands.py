@@ -11,6 +11,8 @@ from typing import Any
 
 import pytest
 from django.conf import settings
+from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.sessions.models import Session
 from django.core.management import call_command
 from django.test import Client
 from django.utils import timezone
@@ -138,6 +140,33 @@ def test_create_test_user_purge(debug: None, storage: Path) -> None:
     assert run("create_test_user", "--purge")[0] == ["Deleted 0 test users."]
     make_user()
     assert run("create_test_user", "--purge")[0] == ["Deleted 1 test user."]
+
+
+@pytest.mark.django_db
+def test_create_test_user_purge_deletes_their_sessions(debug: None, storage: Path) -> None:
+    """A session names its user only inside its encoded data, so deleting the user leaves the
+    `django_session` row behind unless the purge decodes and deletes it too."""
+    keep = make_user(email="real.person@example.com")
+    doomed = make_user()
+    signed_in: dict[str, list[str | None]] = {}
+    for user in (keep, doomed, doomed):  # the doomed user signed in twice
+        client = Client()
+        client.force_login(user)
+        signed_in.setdefault(user.pk, []).append(client.session.session_key)
+    anonymous = SessionStore()
+    anonymous["seen"] = 1
+    anonymous.create()
+    corrupt = Session.objects.create(
+        session_key="c" * 32, session_data="not a signed session", expire_date=timezone.now()
+    )
+    assert Session.objects.count() == 5
+
+    assert run("create_test_user", "--purge")[0] == ["Deleted 1 test user."]
+    assert set(Session.objects.values_list("session_key", flat=True)) == {
+        *signed_in[keep.pk],
+        anonymous.session_key,
+        corrupt.session_key,
+    }
 
 
 # --- set_password --------------------------------------------------------------------------------

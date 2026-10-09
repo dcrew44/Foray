@@ -11,8 +11,10 @@ create one here, then sign in as it with `dev_session`.
 - `--with-match` adds one `found` match on the newest active job in the mirror (it fails if the
   mirror is empty) and also prints `match: <id>`, so tailoring and evaluation can be checked
   without a search.
-- `--purge` deletes every `@example.test` user, with their rows (cascade) and their
-  `STORAGE_DIR/<user_id>/` files, and prints the count. Their ledger rows stay, with no user.
+- `--purge` deletes every `@example.test` user, with their rows (cascade), their sessions (a
+  `django_session` row names its user only inside its encoded data, so nothing cascades to it)
+  and their `STORAGE_DIR/<user_id>/` files, and prints the count. Their ledger rows stay, with no
+  user.
 """
 
 from __future__ import annotations
@@ -25,6 +27,8 @@ from pathlib import Path
 from typing import Any
 
 from django.conf import settings
+from django.contrib.auth import SESSION_KEY
+from django.contrib.sessions.models import Session
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from django.db.models import F
@@ -55,12 +59,25 @@ def newest_active_job() -> Job | None:
     )
 
 
+def sessions_of(user_ids: set[str]) -> list[str]:
+    """The keys of the sessions signed in as one of these users. The user id lives only in the
+    session's encoded data (`_auth_user_id`), so each session is decoded; one that does not
+    decode (another SECRET_KEY, corrupt) names nobody."""
+    return [
+        session.session_key
+        for session in Session.objects.iterator()
+        if str(session.get_decoded().get(SESSION_KEY)) in user_ids
+    ]
+
+
 def purge_test_users() -> int:
-    """Delete every `@example.test` user and their stored files. Returns how many."""
+    """Delete every `@example.test` user, their sessions and their stored files. Returns how
+    many users."""
     ids = list(User.objects.filter(email__endswith=TEST_DOMAIN).values_list("pk", flat=True))
     if not ids:
         return 0
     with transaction.atomic():
+        Session.objects.filter(session_key__in=sessions_of({str(pk) for pk in ids})).delete()
         User.objects.filter(pk__in=ids).delete()
     root = Path(settings.STORAGE_DIR).resolve()
     for user_id in ids:

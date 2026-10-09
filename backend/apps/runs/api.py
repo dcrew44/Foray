@@ -28,6 +28,7 @@ from apps.core.errors import DEFAULT_NOT_FOUND, ApiError, messages
 from apps.core.openapi import register_schema
 from apps.core.queue import defer_in_tx
 from apps.core.router import ApiModel, router
+from apps.core.schemas import OkMessageOut
 from apps.runs import approvals as approval_service
 from apps.runs import lifecycle
 from apps.runs import live as live_service
@@ -73,11 +74,6 @@ def _user_id(request: HttpRequest) -> str:
 
 
 # --- schemas -------------------------------------------------------------------------------------
-
-
-class OkMessageOut(ApiModel):
-    ok: bool
-    message: str
 
 
 class RunEventsOut(ApiModel):

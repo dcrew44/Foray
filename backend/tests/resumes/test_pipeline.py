@@ -31,6 +31,7 @@ from apps.core import throttle
 from apps.core.db import db
 from apps.core.storage import sha256_hex, storage
 from apps.llm.models import LlmCall
+from apps.matching import queries as match_queries
 from apps.matching.models import JobMatch
 from apps.resumes import fakes as resume_fakes
 from apps.resumes import pipeline
@@ -499,6 +500,31 @@ def test_tailor_accepts_a_job_id_and_creates_the_match(
     again = browser.post("/api/resumes/tailor", {"matchId": job.id}).json()
     assert again["matchId"] == str(match.id)
     assert again["runId"] == response.json()["runId"]
+
+
+@pytest.mark.django_db
+def test_tailoring_resolves_ids_through_the_one_match_resolver(
+    tailor_setup: Callable[..., tuple[Browser, JobMatch]], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`apps.matching.queries.resolve_or_create_match` is the one place a match id or a job id
+    becomes a match: the tailor start uses it, and keeps no copy of its own."""
+    browser, match = tailor_setup()
+    asked: list[str] = []
+    resolve = match_queries.resolve_or_create_match
+
+    def spy(user_id: str, wanted: str) -> JobMatch | None:
+        asked.append(wanted)
+        return resolve(user_id, wanted)
+
+    monkeypatch.setattr(match_queries, "resolve_or_create_match", spy)
+    other_job = make_job(title="Data Engineer")
+    by_match = pipeline.start_tailor_run(browser.user.pk, str(match.id))
+    by_job = pipeline.start_tailor_run(browser.user.pk, f" {other_job.id} ")
+    assert asked == [str(match.id), other_job.id]  # trimmed before it is resolved
+    assert by_match.match_id == match.id
+    created = JobMatch.objects.for_user(browser.user.pk).get(job=other_job)
+    assert (by_job.match_id, created.stage) == (created.id, "found")
+    assert not hasattr(pipeline, "resolve_match")
 
 
 @pytest.mark.django_db

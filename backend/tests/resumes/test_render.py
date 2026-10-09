@@ -3,10 +3,15 @@ bundled one, `PDF_BROWSER_CHANNEL`, or a local Chrome) and are skipped when none
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import io
+import logging
+import time
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, cast
 
+import pypdfium2 as pdfium
 import pytest
 from playwright.async_api import Error as PlaywrightError
 
@@ -17,6 +22,7 @@ from apps.resumes.models import Resume as ResumeRow
 from apps.resumes.parse.pdf import parse_pdf
 from apps.resumes.render import (
     RENDER_VERSION,
+    FittedPdf,
     RenderedPdf,
     pdf_filename,
     render_fitted,
@@ -54,6 +60,10 @@ def test_render_hash_is_the_normal_html_and_the_version():
     edited = resume.model_copy(deep=True)
     edited.work[0].highlights.append("One more line.")
     assert render_hash(edited) != expected
+    # A tailored resume's key also names its download: its document carries that name.
+    named = f"{render_resume_html(resume)}|{RENDER_VERSION}|{pdf_filename(resume, 'Stripe')}"
+    assert render_hash(resume, "Stripe") == hashlib.sha256(named.encode()).hexdigest()
+    assert render_hash(resume, "Stripe") != expected
 
 
 async def test_fitting_keeps_compact_only_when_it_saves_a_page(monkeypatch: pytest.MonkeyPatch):
@@ -80,6 +90,46 @@ async def test_fitting_keeps_compact_only_when_it_saves_a_page(monkeypatch: pyte
     monkeypatch.setattr(render, "render_pdf", counting)
     assert (await render_fitted(sample())).density == "normal"
     assert len(calls) == 1  # one page already: no compact render
+
+
+class _HungBrowser:
+    async def close(self) -> None:
+        await asyncio.Event().wait()  # never answers
+
+
+class _Driver:
+    def __init__(self, *, hangs: bool = False) -> None:
+        self.hangs = hangs
+        self.stopped = False
+
+    async def stop(self) -> None:
+        self.stopped = True
+        if self.hangs:
+            await asyncio.Event().wait()
+
+
+async def test_closing_gives_up_on_a_browser_that_never_answers(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    """A close that never returns (Chromium already gone while the driver waits on it) is
+    bounded, and the driver is still stopped afterwards; a stuck stop is bounded too."""
+    monkeypatch.setattr(render, "CLOSE_TIMEOUT_S", 0.2)
+    for driver in (_Driver(), _Driver(hangs=True)):
+        chromium = render._Chromium()
+        chromium._for_this_loop()  # binds it to this loop, as a launch would
+        chromium._browser = cast(Any, _HungBrowser())
+        chromium._playwright = cast(Any, driver)
+        started = time.monotonic()
+        with caplog.at_level(logging.WARNING, logger=render.__name__):
+            # The outer bound turns a regression into a failure instead of a hung suite.
+            await asyncio.wait_for(chromium.close(), 5)
+        assert time.monotonic() - started < 2
+        assert driver.stopped
+        assert (chromium._browser, chromium._playwright) == (None, None)
+    warnings = [record.getMessage() for record in caplog.records]
+    stuck_close = "render: could not close the browser within 0.2s; going on without it"
+    stuck_stop = "render: could not stop the Playwright driver within 0.2s; going on without it"
+    assert (warnings.count(stuck_close), warnings.count(stuck_stop)) == (2, 1)
 
 
 def test_pdf_filename():
@@ -161,6 +211,88 @@ async def test_a_tailored_pdf_is_named_for_the_company_and_a_lost_file_is_render
     assert again.document_id == first.document_id
     repaired = await _sync(lambda: Document.objects.for_user(user.pk).get(id=first.document_id))
     assert storage().exists(repaired.storage_path)
+
+
+def _blank_pdf(width: int) -> bytes:
+    """A real one-page PDF (the reuse path counts its pages)."""
+    document = pdfium.PdfDocument.new()
+    try:
+        document.new_page(width, 792).close()
+        buffer = io.BytesIO()
+        document.save(buffer)
+        return buffer.getvalue()
+    finally:
+        document.close()
+
+
+async def _base_and_identical_tailored() -> tuple[Any, ResumeRow, ResumeRow]:
+    """A user whose tailored resume (for Stripe) has exactly the base's data, as a tailoring
+    that changed nothing leaves it: both render to the same HTML."""
+    user = await _sync(make_user, with_resume=True)
+    base = await _sync(lambda: ResumeRow.objects.for_user(user.pk).get(kind="base"))
+    match = await _sync(make_match, user, job=await _sync(make_job, company_name="Stripe"))
+    tailored = await _sync(make_resume, user, kind="tailored", match=match, data=base.data)
+    return user, base, tailored
+
+
+@pytest.mark.django_db(transaction=True)
+async def test_a_tailored_pdf_identical_to_the_base_still_downloads_under_its_own_name(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user, base, tailored = await _base_and_identical_tailored()
+    renders: list[int] = []
+
+    async def fitted(resume: Resume) -> FittedPdf:
+        renders.append(len(renders))
+        return FittedPdf(pdf=_blank_pdf(612 + len(renders)), pages=1, density="normal")
+
+    monkeypatch.setattr(render, "render_fitted", fitted)
+    first = await render_resume(user.pk, base.id)
+    second = await render_resume(user.pk, tailored.id)
+    assert second.document_id != first.document_id and not second.reused
+    names = await _sync(
+        lambda: dict(Document.objects.for_user(user.pk).values_list("id", "filename"))
+    )
+    assert names == {
+        first.document_id: "Avery Quinn - Resume.pdf",
+        second.document_id: "Avery Quinn - Resume - Stripe.pdf",
+    }
+    pointers = await _sync(
+        lambda: dict(ResumeRow.objects.for_user(user.pk).values_list("id", "rendered_document"))
+    )
+    assert pointers == {base.id: first.document_id, tailored.id: second.document_id}
+    # Each is reused by its own key afterwards: no further render.
+    again = await render_resume(user.pk, tailored.id)
+    assert (again.document_id, again.reused) == (second.document_id, True)
+    assert (await render_resume(user.pk, base.id)).document_id == first.document_id
+    assert renders == [0, 1]
+
+
+@pytest.mark.django_db(transaction=True)
+async def test_a_tailored_pdf_byte_identical_to_the_base_reuses_that_document(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Rendered within the same second, the two PDFs are byte-identical, and there is one row
+    per bytes (`documents_user_sha256`): the tailored resume then uses the base's document
+    rather than failing, and its stored copy is not left behind."""
+    user, base, tailored = await _base_and_identical_tailored()
+    same = _blank_pdf(612)  # made once: PDFium gives every document a fresh /ID
+
+    async def fitted(resume: Resume) -> FittedPdf:
+        return FittedPdf(pdf=same, pages=1, density="normal")
+
+    monkeypatch.setattr(render, "render_fitted", fitted)
+    first = await render_resume(user.pk, base.id)
+    second = await render_resume(user.pk, tailored.id)
+    assert (second.document_id, second.reused) == (first.document_id, True)
+    paths = await _sync(
+        lambda: list(Document.objects.for_user(user.pk).values_list("storage_path", flat=True))
+    )
+    assert len(paths) == 1
+    stored = [p for p in (storage().root / user.pk / "resume_pdf").iterdir()]
+    assert [str(p.relative_to(storage().root)) for p in stored] == paths
+    row = await _sync(lambda: ResumeRow.objects.for_user(user.pk).get(id=tailored.id))
+    assert row.rendered_document_id == first.document_id
 
 
 @pytest.mark.django_db(transaction=True)

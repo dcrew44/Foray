@@ -52,7 +52,8 @@ from apps.core.db import db
 from apps.core.errors import UserFacingError
 from apps.core.storage import StorageError, sha256_hex, storage, storage_key
 from apps.jobs.models import Job
-from apps.matching.models import JobMatch, Stage
+from apps.matching import queries as match_queries
+from apps.matching.models import JobMatch
 from apps.resumes import render as rendering
 from apps.resumes.edits import create_base_version
 from apps.resumes.extract import ResumeReadError, extract_from, read_document
@@ -100,7 +101,6 @@ __all__ = [
     "read_message",
     "render",
     "render_base_resume",
-    "resolve_match",
     "start_render_run",
     "start_tailor_run",
     "tailor",
@@ -257,28 +257,6 @@ def accept_upload(user_id: str, data: bytes, filename: str, kind: DocumentType) 
     raise AssertionError("unreachable")  # pragma: no cover
 
 
-def resolve_match(user_id: str, wanted: str) -> JobMatch | None:
-    """A match id or a job id (`resolveMatch`, then `ensureMatch`): the chat agent sees both,
-    and a posting the user found themselves gets a `found` match. None when it is neither."""
-    match_id = _as_uuid(wanted)
-    matches = JobMatch.objects.for_user(user_id).select_related("job")
-    if match_id is not None:
-        found = matches.filter(id=match_id).first()
-        if found is not None:
-            return found
-    found = matches.filter(job_id=wanted).first()
-    if found is not None:
-        return found
-    if not Job.objects.filter(id=wanted).exists():
-        return None
-    try:
-        with transaction.atomic():  # a savepoint: a concurrent insert must not poison a caller
-            JobMatch.objects.create_for(user_id, job_id=wanted, stage=Stage.FOUND)
-    except IntegrityError:
-        pass  # created concurrently (`job_matches_user_job`): use that one
-    return matches.filter(job_id=wanted).first()
-
-
 def _label(job: Job) -> str:
     return f"{job.title} at {job.company_name}"
 
@@ -292,7 +270,8 @@ def start_tailor_run(
     if latest_base_resume_row(user_id) is None:
         return Started(False, NO_RESUME_TO_TAILOR, refusal="no_resume")
     wanted = js_trim(match_or_job_id)
-    match = resolve_match(user_id, wanted) if wanted else None
+    # A match id or a job id: a posting the user found themselves gets a `found` match.
+    match = match_queries.resolve_or_create_match(user_id, wanted) if wanted else None
     if match is None:
         return Started(False, JOB_NOT_FOUND, refusal="not_found")
     label = _label(match.job)

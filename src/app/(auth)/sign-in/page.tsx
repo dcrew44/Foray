@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { ScoreChip, Wordmark } from "@/components/foray/primitives";
-import { env } from "@/env";
-import { getSession } from "@/lib/auth/session";
+import type { components } from "@/lib/api/schema";
+import { django, getMeOrNull } from "@/lib/api/server";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -13,22 +13,26 @@ function safeNext(next: string | undefined): string {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/home";
 }
 
+/**
+ * Signed in: straight on to `next`. Signed out: the form. `getMeOrNull()` answers null on a 401
+ * instead of redirecting, so a signed-out visit here can never loop back to itself.
+ */
 export default async function SignInPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
   const next = safeNext((await searchParams).next);
-  if (await getSession()) redirect(next);
+  if (await getMeOrNull()) redirect(next);
 
-  const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+  const { signupOpen } = await django<components["schemas"]["ConfigOut"]>("/api/auth/config");
 
   return (
     <div className="bg-canvas grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <div className="bg-background flex flex-col px-6 py-8 sm:px-12 lg:rounded-r-3xl lg:border-r">
         <Wordmark />
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">
-          <SignInForm googleEnabled={googleEnabled} next={next} />
+          <SignInForm next={next} signupOpen={signupOpen} />
         </div>
         <p className="text-muted-foreground text-[12.5px]">
           Your resume and matches stay on this server. Nothing is shared.

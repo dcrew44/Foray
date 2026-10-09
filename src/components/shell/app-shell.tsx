@@ -17,6 +17,7 @@ import { useState, type ReactNode } from "react";
 import { Blaze, SignalDot, Wordmark } from "@/components/foray/primitives";
 import { isActiveRun, useLive } from "@/components/live/live-provider";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import type { components } from "@/lib/api/schema";
 import { cn } from "@/lib/utils";
 
 import { RecentChats } from "./recent-chats";
@@ -28,7 +29,8 @@ import { UserMenu } from "./user-menu";
  * sheet behind a menu button.
  */
 
-export type ShellUser = { name: string; email: string };
+/** The part of `GET /api/me` the sidebar shows. */
+export type ShellUser = Pick<components["schemas"]["MeOut"], "name" | "email">;
 
 type NavItem = {
   href: string;

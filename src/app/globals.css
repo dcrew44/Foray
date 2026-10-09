@@ -279,6 +279,17 @@
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+
+  /*
+   * A toast that waits on the user (an approval was requested): marigold edge
+   * and a marigold bar on the left. The toaster's own classes are !important,
+   * so this needs the extra attribute to outrank them; the bar rides on the
+   * shadow-lg composition through --tw-inset-shadow.
+   */
+  [data-sonner-toast].foray-toast-signal {
+    border-color: color-mix(in oklab, var(--signal) 60%, var(--border)) !important;
+    --tw-inset-shadow: inset 3px 0 0 0 var(--signal);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

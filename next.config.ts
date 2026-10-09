@@ -9,11 +9,6 @@ const nextConfig = {
   // The `web` Docker target copies .next/standalone and runs server.js.
   output: "standalone",
 
-  // Native modules cannot be bundled: they are loaded from node_modules at
-  // runtime instead. @napi-rs/canvas renders PDF pages to images for the
-  // resume-extraction fallback when a PDF's text layer is unreadable.
-  serverExternalPackages: ["@napi-rs/canvas"],
-
   experimental: {
     // The proxy cuts idle sockets at 30 s by default; a chat stream can idle longer between
     // events (it also sends `: ping` every 15 s).

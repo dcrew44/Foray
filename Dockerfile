@@ -45,8 +45,6 @@ FROM deps AS build
 # Rewrites are frozen at build: /api/* goes to this origin in the built routes manifest.
 ARG DJANGO_ORIGIN=http://api:8000
 COPY . .
-# env.ts validation is skipped at build time; it goes with the legacy server code (step 11).
-ENV SKIP_ENV_VALIDATION=1
 RUN pnpm build
 
 # ---------- web ----------

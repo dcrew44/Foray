@@ -1,10 +1,9 @@
-"""The invariant register and the conventions a type checker cannot see (design §0, §1.5).
+"""The invariant register and the conventions a type checker cannot see (DESIGN.md).
 
-1. **Register.** Parses the register table (§0) and checks that every test named in its
-   "Proved by" column exists. Until step 11 the table is read from `docs/migration/design.md`;
-   step 11 points `REGISTER_SOURCE` at DESIGN.md. A row whose test *file* has not landed yet is
-   reported as pending (a skip), unless `FORAY_REGISTER_STRICT=1`, which step 10 onwards sets; a
-   file that exists but lacks the named test always fails.
+1. **Register.** Parses the "Invariant register" table of DESIGN.md and checks that every test
+   named in its "Proved by" column exists. A row whose test *file* does not exist is reported as
+   pending (a skip), unless `FORAY_REGISTER_STRICT=1`, which turns it into a failure; a file
+   that exists but lacks the named test always fails.
 2. **Conventions.** Greps the code of `apps/` and `foray/` (comments and string literals are
    ignored) and fails on:
    - `sync_to_async` outside `apps/core/db.py` and `apps/chat/views.py`;
@@ -35,7 +34,8 @@ from django.apps import apps as django_apps
 BACKEND = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND.parent
 TESTS = BACKEND / "tests"
-REGISTER_SOURCE = REPO_ROOT / "docs" / "migration" / "design.md"
+REGISTER_SOURCE = REPO_ROOT / "DESIGN.md"
+REGISTER_HEADING = "## Invariant register"
 STRICT = os.environ.get("FORAY_REGISTER_STRICT") == "1"
 SCANNED = ("apps", "foray")
 
@@ -50,8 +50,8 @@ class Proof:
 
 
 def parse_register(text: str) -> dict[str, list[Proof]]:
-    """Rows of the `## 0. Invariant register` table: {"R1": [Proof, ...], ...}."""
-    section = text.split("## 0. Invariant register", 1)[1].split("\n## ", 1)[0]
+    """Rows of the `## Invariant register` table: {"R1": [Proof, ...], ...}."""
+    section = text.split(REGISTER_HEADING, 1)[1].split("\n## ", 1)[0]
     rows: dict[str, list[Proof]] = {}
     for line in section.splitlines():
         match = re.match(r"^\|\s*(R\d+)\s*\|", line)

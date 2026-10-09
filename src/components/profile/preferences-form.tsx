@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { savePreferencesAction } from "@/app/actions/profile";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,11 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  SLOTS,
-  type Preferences,
-  type SlotId,
-} from "@/lib/profile/interview";
+import { api, call } from "@/lib/api/client";
+import type { Preferences, Slot } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 import {
@@ -31,8 +28,10 @@ import {
 /**
  * What the user is looking for, as a form — the same answers the chat
  * interview collects, for anyone who would rather fill them in than talk.
+ * It saves whether or not a resume is on file: preferences live on the user.
  */
 
+type SlotId = Slot["id"];
 type Seniority = NonNullable<Preferences["seniority"]>;
 type Remote = NonNullable<Preferences["remote_pref"]>;
 type Period = NonNullable<Preferences["salary_floor"]>["period"];
@@ -76,9 +75,9 @@ function toDraft(preferences: Preferences): Draft {
   const salary = preferences.salary_floor;
   return {
     target_roles: preferences.target_roles ?? [],
-    seniority: preferences.seniority,
+    seniority: preferences.seniority ?? null,
     locations: preferences.locations ?? [],
-    remote_pref: preferences.remote_pref,
+    remote_pref: preferences.remote_pref ?? null,
     salary_amount: salary ? formatAmount(salary.amount, salary.period) : "",
     salary_period: salary?.period ?? "year",
     salary_currency: salary?.currency ?? "USD",
@@ -127,18 +126,21 @@ function formatAmount(amount: number, period: Period): string {
   });
 }
 
-const REQUIRED = new Set<SlotId>(SLOTS.filter((slot) => slot.required).map((slot) => slot.id));
-
 export function PreferencesForm({
   initial,
-  canSave,
+  slots,
 }: {
   initial: Preferences;
-  /** False until a resume upload has created the profile these live on. */
-  canSave: boolean;
+  /** The interview's slots, as Django serves them: which answers a search needs. */
+  slots: Slot[];
 }) {
+  const router = useRouter();
   const [draft, setDraft] = useState<Draft>(() => toDraft(initial));
   const [pending, startTransition] = useTransition();
+  const required = useMemo(
+    () => new Set<SlotId>(slots.filter((slot) => slot.required).map((slot) => slot.id)),
+    [slots],
+  );
 
   const baseline = toPreferences(toDraft(initial));
   const next = toPreferences(draft);
@@ -151,19 +153,22 @@ export function PreferencesForm({
   function save() {
     if (!dirty || pending) return;
     startTransition(async () => {
-      const result = await savePreferencesAction(next);
+      const result = await call(api.PUT("/api/preferences", { body: next }));
       if (!result.ok) {
         toast.error(result.message);
         return;
       }
       toast.success(result.message);
+      // The page re-renders with the saved answers; the form is keyed on them, so it starts
+      // over from what was stored and the save bar goes away.
+      router.refresh();
     });
   }
 
   useUnsavedChanges(dirty, save);
 
   const needed = (slot: SlotId) =>
-    REQUIRED.has(slot) ? (
+    required.has(slot) ? (
       <p className="text-muted-foreground text-[12px]">Needed to search</p>
     ) : null;
 
@@ -171,7 +176,7 @@ export function PreferencesForm({
 
   return (
     <div className="space-y-4">
-      <fieldset className="min-w-0 divide-y rounded-xl border" disabled={!canSave}>
+      <fieldset className="min-w-0 divide-y rounded-xl border">
         <FormRow
           hint="Job titles, or a description of the work. Press Enter after each."
           id="pref-roles"
@@ -329,7 +334,7 @@ export function PreferencesForm({
         onSave={save}
         pending={pending}
         saveLabel="Save preferences"
-        visible={dirty && canSave}
+        visible={dirty}
       />
     </div>
   );

@@ -11,12 +11,15 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Fragment, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { refreshCompanyAction, setStatusAction } from "@/app/actions/companies";
 import { CompanyMark } from "@/components/foray/primitives";
+import { requestLiveRefresh, runToastId } from "@/components/live/live-provider";
 import { Segmented } from "@/components/profile/form-controls";
+import { useRunOutcome } from "@/components/profile/run-outcome";
+import { RunCard } from "@/components/runs/run-card";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,6 +30,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { api, call } from "@/lib/api/client";
+import type { LiveEvent } from "@/lib/api/types";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +45,10 @@ export type { CompanyRow } from "./company-row";
  * boards live, how many roles are open, and whether the last fetch worked.
  * Filtering and sorting happen here, on rows the page already loaded — a few
  * hundred rows is nothing to sort, and it keeps every keystroke instant.
+ *
+ * "Fetch now" starts a `company_refresh` run: the row shows its live card,
+ * and its outcome is toasted here, once. The page refreshes on the run's
+ * events (`RefreshOn`), which brings the row's new counts.
  */
 
 type Filter = "all" | "active" | "paused" | "invalid" | "browser";
@@ -92,15 +101,19 @@ function boardDetail(row: CompanyRow): string | null {
 }
 
 export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
-  // Rows the actions just returned, shown until the page's own data catches up
-  // — and dropped once it does, so a later refresh is never masked by them.
+  const router = useRouter();
+  // Rows Django just returned, shown until the page's own data catches up —
+  // and dropped once it does, so a later refresh is never masked by them.
   const [fresh, setFresh] = useState<Record<string, CompanyRow>>({});
   const [source, setSource] = useState(companies);
   if (source !== companies) {
     setSource(companies);
     setFresh({});
   }
-  const [busy, setBusy] = useState<Set<string>>(() => new Set());
+  /** Rows with a request in flight. */
+  const [sending, setSending] = useState<Set<string>>(() => new Set());
+  /** Rows being refreshed, by slug: the run doing it. */
+  const [refreshing, setRefreshing] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>({ key: "name", dir: "asc" });
@@ -166,28 +179,72 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
   }
 
   async function run(row: CompanyRow, action: "fetch" | "pause" | "resume") {
-    setBusy((current) => new Set(current).add(row.slug));
+    const slug = row.slug;
+    setSending((current) => new Set(current).add(slug));
     try {
-      const result =
-        action === "fetch"
-          ? await refreshCompanyAction(row.slug)
-          : await setStatusAction(row.slug, action === "pause" ? "paused" : "active");
-      if ("company" in result && result.company) remember(result.company);
-      if (result.ok) toast.success(result.message);
-      else toast.error(result.message);
-    } catch {
-      toast.error("That request did not go through. Check your connection and try again.");
+      if (action === "fetch") {
+        const result = await call(
+          api.POST("/api/companies/{slug}/refresh", { params: { path: { slug } } }),
+        );
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
+        setRefreshing((current) => ({ ...current, [slug]: result.runId }));
+        requestLiveRefresh();
+        return;
+      }
+      const result = await call(
+        api.PATCH("/api/companies/{slug}", {
+          params: { path: { slug } },
+          body: { status: action === "pause" ? "paused" : "active" },
+        }),
+      );
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      remember(result.company);
+      toast.success(result.message);
+      router.refresh();
     } finally {
-      setBusy((current) => {
+      setSending((current) => {
         const next = new Set(current);
-        next.delete(row.slug);
+        next.delete(slug);
         return next;
       });
     }
   }
 
+  /** A row's refresh ended: say how, once. The page refreshes itself on the same events. */
+  function refreshEnded(slug: string, event: LiveEvent) {
+    setRefreshing((current) => {
+      const next = { ...current };
+      delete next[slug];
+      return next;
+    });
+    const id = runToastId(event.runId ?? "");
+    if (event.kind === "run.completed") {
+      // A board that answered 404, errored or cannot be fetched completes at level `warn`.
+      if (event.level === "info") toast.success(event.message, { id });
+      else toast.error(event.message, { id });
+    } else if (event.kind === "run.failed") {
+      toast.error(event.message, { id });
+    } else {
+      // Stopped from the row's card, which goes with the run: say so where the card was.
+      toast(event.message, { id });
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {Object.entries(refreshing).map(([slug, runId]) => (
+        <RefreshWatch
+          key={runId}
+          onEnd={(event) => refreshEnded(slug, event)}
+          runId={runId}
+        />
+      ))}
       <AddCompany
         onAdded={(row) => {
           remember(row);
@@ -309,12 +366,13 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
               <tbody className="divide-y">
                 {visible.map((row) => (
                   <CompanyLine
-                    busy={busy.has(row.slug)}
+                    busy={sending.has(row.slug) || row.slug in refreshing}
                     highlighted={highlight === row.slug}
                     key={row.slug}
                     onAction={(action) => void run(row, action)}
                     onHighlightShown={clearHighlight}
                     row={row}
+                    runId={refreshing[row.slug] ?? null}
                   />
                 ))}
               </tbody>
@@ -329,6 +387,15 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
       )}
     </div>
   );
+}
+
+/**
+ * Follows one row's refresh run. It lives on the table rather than on the
+ * row, so a row hidden by a filter or search still reports its outcome.
+ */
+function RefreshWatch({ runId, onEnd }: { runId: string; onEnd: (event: LiveEvent) => void }) {
+  useRunOutcome(runId, onEnd);
+  return null;
 }
 
 function SortHeader({
@@ -377,12 +444,15 @@ function CompanyLine({
   row,
   busy,
   highlighted,
+  runId,
   onAction,
   onHighlightShown,
 }: {
   row: CompanyRow;
   busy: boolean;
   highlighted: boolean;
+  /** The row's refresh run while it is being refreshed, shown as a live card under it. */
+  runId: string | null;
   onAction: (action: "fetch" | "pause" | "resume") => void;
   onHighlightShown: () => void;
 }) {
@@ -406,126 +476,137 @@ function CompanyLine({
   const fetched = row.lastFetchedAt ? timeAgo(row.lastFetchedAt) : "Never";
 
   return (
-    <tr
-      className={cn(
-        "transition-colors",
-        highlighted ? "bg-accent" : "hover:bg-muted/40",
-        busy && "opacity-60",
-      )}
-      ref={ref}
-    >
-      <td className="py-2.5 pr-2 pl-3 sm:pr-4 sm:pl-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <CompanyMark name={row.name} size="sm" />
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
-              <span
-                className={cn(
-                  "truncate font-medium",
-                  row.status === "paused" && "text-muted-foreground",
-                )}
-              >
-                {row.name}
-              </span>
-              {row.status !== "active" && (
+    <Fragment>
+      <tr
+        className={cn(
+          "transition-colors",
+          highlighted ? "bg-accent" : "hover:bg-muted/40",
+          busy && "opacity-60",
+          // The table's divider goes under the run card, not between the card and its row.
+          runId && "!border-b-0",
+        )}
+        ref={ref}
+      >
+        <td className="py-2.5 pr-2 pl-3 sm:pr-4 sm:pl-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <CompanyMark name={row.name} size="sm" />
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
                   className={cn(
-                    "shrink-0 text-[12px]",
-                    row.status === "invalid" ? "text-destructive" : "text-muted-foreground",
+                    "truncate font-medium",
+                    row.status === "paused" && "text-muted-foreground",
                   )}
                 >
-                  {row.status === "invalid" ? "Invalid" : "Paused"}
+                  {row.name}
                 </span>
+                {row.status !== "active" && (
+                  <span
+                    className={cn(
+                      "shrink-0 text-[12px]",
+                      row.status === "invalid" ? "text-destructive" : "text-muted-foreground",
+                    )}
+                  >
+                    {row.status === "invalid" ? "Invalid" : "Paused"}
+                  </span>
+                )}
+              </div>
+              {row.tags.length > 0 && (
+                <p className="text-muted-foreground truncate text-[12.5px]">{row.tags.join(", ")}</p>
+              )}
+              {/* Narrow screens drop the board and fetch columns; say both here instead. */}
+              <p className="text-muted-foreground truncate text-[12.5px] sm:hidden" suppressHydrationWarning>
+                {BOARD_LABEL[row.sourceType]}, fetched {fetched === "Never" ? "never" : fetched}
+              </p>
+              {problem && (
+                <p className="text-destructive truncate text-[12.5px] md:hidden">{problem}</p>
               )}
             </div>
-            {row.tags.length > 0 && (
-              <p className="text-muted-foreground truncate text-[12.5px]">{row.tags.join(", ")}</p>
-            )}
-            {/* Narrow screens drop the board and fetch columns; say both here instead. */}
-            <p className="text-muted-foreground truncate text-[12.5px] sm:hidden" suppressHydrationWarning>
-              {BOARD_LABEL[row.sourceType]}, fetched {fetched === "Never" ? "never" : fetched}
-            </p>
-            {problem && (
-              <p className="text-destructive truncate text-[12.5px] md:hidden">{problem}</p>
+          </div>
+        </td>
+        <td className="hidden py-2.5 pr-4 sm:table-cell">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="bg-secondary text-secondary-foreground inline-flex h-5 shrink-0 items-center rounded-full px-2 text-[11.5px] font-medium">
+              {BOARD_LABEL[row.sourceType]}
+            </span>
+            {detail && (
+              <span className="text-muted-foreground truncate text-[12.5px]" title={detail}>
+                {detail}
+              </span>
             )}
           </div>
-        </div>
-      </td>
-      <td className="hidden py-2.5 pr-4 sm:table-cell">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="bg-secondary text-secondary-foreground inline-flex h-5 shrink-0 items-center rounded-full px-2 text-[11.5px] font-medium">
-            {BOARD_LABEL[row.sourceType]}
-          </span>
-          {detail && (
-            <span className="text-muted-foreground truncate text-[12.5px]" title={detail}>
-              {detail}
-            </span>
+        </td>
+        <td
+          className={cn(
+            "tabular py-2.5 pr-2 text-right sm:pr-4",
+            row.activeJobs === 0 && "text-muted-foreground",
           )}
-        </div>
-      </td>
-      <td
-        className={cn(
-          "tabular py-2.5 pr-2 text-right sm:pr-4",
-          row.activeJobs === 0 && "text-muted-foreground",
-        )}
-      >
-        {row.activeJobs.toLocaleString()}
-      </td>
-      <td className="hidden py-2.5 pr-4 md:table-cell">
-        {/* Relative time and local date differ between server and browser; both are fine. */}
-        <span
-          className="text-muted-foreground block truncate text-[13px]"
-          suppressHydrationWarning
-          title={row.lastFetchedAt ? new Date(row.lastFetchedAt).toLocaleString() : undefined}
         >
-          {fetched}
-        </span>
-        {problem && <span className="text-destructive block truncate text-[12.5px]">{problem}</span>}
-      </td>
-      <td className="py-2 pr-2 text-right sm:pr-3">
-        {busy ? (
-          <span className="inline-flex size-7 items-center justify-center">
-            <Spinner className="text-muted-foreground" />
+          {row.activeJobs.toLocaleString()}
+        </td>
+        <td className="hidden py-2.5 pr-4 md:table-cell">
+          {/* Relative time and local date differ between server and browser; both are fine. */}
+          <span
+            className="text-muted-foreground block truncate text-[13px]"
+            suppressHydrationWarning
+            title={row.lastFetchedAt ? new Date(row.lastFetchedAt).toLocaleString() : undefined}
+          >
+            {fetched}
           </span>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label={`Actions for ${row.name}`}
-              className="text-muted-foreground hover:bg-muted hover:text-foreground data-popup-open:bg-muted focus-visible:ring-ring/50 inline-flex size-7 items-center justify-center rounded-md outline-none focus-visible:ring-2"
-            >
-              <Ellipsis className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => onAction("fetch")}>
-                <RefreshCw />
-                Fetch now
-              </DropdownMenuItem>
-              {row.status === "active" ? (
-                <DropdownMenuItem onClick={() => onAction("pause")}>
-                  <Pause />
-                  Pause
+          {problem && <span className="text-destructive block truncate text-[12.5px]">{problem}</span>}
+        </td>
+        <td className="py-2 pr-2 text-right sm:pr-3">
+          {busy ? (
+            <span className="inline-flex size-7 items-center justify-center">
+              <Spinner className="text-muted-foreground" />
+            </span>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={`Actions for ${row.name}`}
+                className="text-muted-foreground hover:bg-muted hover:text-foreground data-popup-open:bg-muted focus-visible:ring-ring/50 inline-flex size-7 items-center justify-center rounded-md outline-none focus-visible:ring-2"
+              >
+                <Ellipsis className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => onAction("fetch")}>
+                  <RefreshCw />
+                  Fetch now
                 </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={() => onAction("resume")}>
-                  <Play />
-                  {row.status === "invalid" ? "Reactivate" : "Resume"}
-                </DropdownMenuItem>
-              )}
-              {url && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    render={<a href={url} rel="noreferrer" target="_blank" />}
-                  >
-                    <ExternalLink />
-                    Open job board
+                {row.status === "active" ? (
+                  <DropdownMenuItem onClick={() => onAction("pause")}>
+                    <Pause />
+                    Pause
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </td>
-    </tr>
+                ) : (
+                  <DropdownMenuItem onClick={() => onAction("resume")}>
+                    <Play />
+                    {row.status === "invalid" ? "Reactivate" : "Resume"}
+                  </DropdownMenuItem>
+                )}
+                {url && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      render={<a href={url} rel="noreferrer" target="_blank" />}
+                    >
+                      <ExternalLink />
+                      Open job board
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </td>
+      </tr>
+      {runId && (
+        <tr>
+          <td className="px-3 pb-3 sm:px-4" colSpan={5}>
+            <RunCard compact runId={runId} />
+          </td>
+        </tr>
+      )}
+    </Fragment>
   );
 }

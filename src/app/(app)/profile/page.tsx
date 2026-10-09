@@ -6,29 +6,27 @@ import { PageNav, type PageNavItem } from "@/components/profile/page-nav";
 import { PreferencesForm } from "@/components/profile/preferences-form";
 import { ProfileEditor } from "@/components/profile/profile-editor";
 import { ProfileHeader } from "@/components/profile/profile-header";
+import { editableResume } from "@/components/profile/resume";
 import { ResumeDropzone } from "@/components/profile/resume-dropzone";
-import { requireUser } from "@/lib/auth/session";
-import { getBaseResume } from "@/lib/db/queries/profile";
-import { latestBaseRender } from "@/lib/db/queries/resumes";
+import { django } from "@/lib/api/server";
+import type { components } from "@/lib/api/schema";
 import { timeAgo } from "@/lib/format";
-import { getOnboardingState } from "@/lib/profile/onboarding";
 
 export const metadata: Metadata = { title: "Profile" };
+
+type ProfilePageData = components["schemas"]["ProfilePage"];
 
 /**
  * Everything Foray knows about the user: what they are looking for, and the
  * resume facts every model judges them by. Until the interview is done the
  * preferences come first, since they are what stands between the user and a
- * first search.
+ * first search. Without a resume the page starts with the upload, and the
+ * preferences can already be saved below it.
  */
 export default async function ProfilePage() {
-  const user = await requireUser();
-  const [onboarding, base, render] = await Promise.all([
-    getOnboardingState(user.id),
-    getBaseResume(user.id),
-    latestBaseRender(user.id),
-  ]);
-  const { resume, preferences, progress } = onboarding;
+  const page = await django<ProfilePageData>("/api/pages/profile");
+  const { preferences, progress, slots, base, render } = page;
+  const resume = page.resume ? editableResume(page.resume) : null;
 
   const name = resume?.basics.name.trim();
   const header = (
@@ -38,31 +36,15 @@ export default async function ProfilePage() {
       pdf={
         render
           ? {
-              documentId: render.document.id,
-              version: render.resume.version,
-              current: render.resume.version === base?.version,
+              documentId: render.documentId,
+              version: render.version,
+              current: render.version === base?.version,
             }
           : null
       }
       title={name || "Your profile"}
     />
   );
-
-  if (!onboarding.hasProfile) {
-    return (
-      <PageBody>
-        {header}
-        <div className="mt-10 max-w-2xl">
-          <h2 className="text-display text-[20px] leading-tight">Start with your resume</h2>
-          <p className="text-muted-foreground mt-2 max-w-[58ch] text-[14px] leading-relaxed">
-            Foray reads your roles, schools, projects and skills into a profile you can correct
-            here. Then you tell it what you are looking for, and it goes searching.
-          </p>
-          <ResumeDropzone className="mt-6" hasResume={false} />
-        </div>
-      </PageBody>
-    );
-  }
 
   const blocking = progress.blocking.map((slot) => slot.label.toLowerCase());
   const preferencesFirst = blocking.length > 0;
@@ -78,13 +60,31 @@ export default async function ProfilePage() {
         title="What you're looking for"
       >
         <PreferencesForm
-          canSave={onboarding.hasProfile}
           initial={preferences}
           key={JSON.stringify(preferences)}
+          slots={slots}
         />
       </Section>
     </div>
   );
+
+  if (!page.hasResume) {
+    return (
+      <PageBody>
+        <RefreshOn kinds={["run.completed"]} />
+        {header}
+        <div className="mt-10 max-w-2xl">
+          <h2 className="text-display text-[20px] leading-tight">Start with your resume</h2>
+          <p className="text-muted-foreground mt-2 max-w-[58ch] text-[14px] leading-relaxed">
+            Foray reads your roles, schools, projects and skills into a profile you can correct
+            here. Then you tell it what you are looking for, and it goes searching.
+          </p>
+          <ResumeDropzone className="mt-6" hasResume={false} />
+        </div>
+        <div className="mt-16 max-w-3xl">{preferencesSection}</div>
+      </PageBody>
+    );
+  }
 
   const resumeSection = (
     <div className="scroll-mt-20 lg:scroll-mt-8" id="resume" key="resume">
@@ -135,7 +135,7 @@ export default async function ProfilePage() {
 
   return (
     <PageBody>
-      <RefreshOn kinds={["render.done"]} />
+      <RefreshOn kinds={["run.completed"]} />
       {header}
 
       <div className="mt-10 xl:grid xl:grid-cols-[minmax(0,1fr)_13rem] xl:gap-16">

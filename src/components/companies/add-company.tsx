@@ -1,22 +1,25 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
-import { addCompanyAction } from "@/app/actions/companies";
+import { requestLiveRefresh, runToastId } from "@/components/live/live-provider";
+import { useRunOutcome } from "@/components/profile/run-outcome";
+import { RunCard } from "@/components/runs/run-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import type { DiscoveryStep } from "@/lib/companies/discovery";
-
-import type { CompanyRow } from "./company-row";
+import { api, call } from "@/lib/api/client";
+import type { CompanyRow, DiscoveryStep } from "@/lib/api/types";
 
 /**
  * Adding a company by name, website or board link. Discovery checks the
  * careers page, guesses board names and verifies against the live API before
- * anything is registered, which takes a while — so the form says what it is
- * doing, and a miss shows every step that was tried.
+ * anything is registered, which takes a while — so it runs in the worker as a
+ * `company_discovery` run. The form shows the run's live card while it works,
+ * then the new row (highlighted in the table) or, on a miss, every step that
+ * was tried. The outcome is toasted here, once.
  */
 
 const STEP_LABEL: Record<string, string> = {
@@ -32,20 +35,49 @@ const STEP_LABEL: Record<string, string> = {
   "careers-page-fallback": "Careers page with no known board",
 };
 
+/** A finished discovery's `output` (`CompanyAddOutput` in `apps/runs/catalogue.py`). */
+type AddOutput = {
+  registered?: boolean;
+  existed?: boolean;
+  company?: CompanyRow | null;
+  trail?: DiscoveryStep[];
+  message?: string;
+} | null;
+
 export function AddCompany({ onAdded }: { onAdded: (company: CompanyRow) => void }) {
   const [value, setValue] = useState("");
-  const [pending, setPending] = useState<{ query: string; startedAt: number } | null>(null);
-  const [elapsed, setElapsed] = useState(0);
+  const [posting, setPosting] = useState(false);
+  const [search, setSearch] = useState<{ query: string; runId: string } | null>(null);
+  /** A stopped discovery's run: its card stays to say so until the next add. */
+  const [stopped, setStopped] = useState<string | null>(null);
   const [miss, setMiss] = useState<{ message: string; trail: DiscoveryStep[] } | null>(null);
 
-  useEffect(() => {
-    if (!pending) return;
-    const timer = setInterval(
-      () => setElapsed(Math.round((Date.now() - pending.startedAt) / 1000)),
-      1000,
-    );
-    return () => clearInterval(timer);
-  }, [pending]);
+  useRunOutcome(search?.runId ?? null, (event) => {
+    const query = search?.query ?? "";
+    setSearch(null);
+    const id = runToastId(event.runId ?? "");
+    if (event.kind === "run.cancelled") {
+      // The form is free again; the card says the search was stopped.
+      setStopped(event.runId ?? null);
+    } else if (event.kind === "run.completed") {
+      const output = event.data as AddOutput;
+      if (output?.registered && output.company) {
+        toast.success(event.message, { id });
+        setValue("");
+        onAdded(output.company);
+        return;
+      }
+      // The detail, and what was tried, sit under the field; the toast only says what happened.
+      const trail = output?.trail ?? [];
+      toast.error(trail.length > 0 ? `No job board found for “${query}”.` : event.message, { id });
+      setMiss({ message: event.message, trail });
+    } else if (event.kind === "run.failed") {
+      toast.error(event.message, { id });
+      setMiss({ message: event.message, trail: [] });
+    }
+  });
+
+  const pending = posting || search !== null;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -53,24 +85,16 @@ export function AddCompany({ onAdded }: { onAdded: (company: CompanyRow) => void
     if (!query || pending) return;
 
     setMiss(null);
-    setElapsed(0);
-    setPending({ query, startedAt: Date.now() });
-    try {
-      const result = await addCompanyAction(query);
-      if (result.ok) {
-        toast.success(result.message);
-        setValue("");
-        onAdded(result.company);
-      } else {
-        // The detail, and what was tried, sit under the field; the toast only says what happened.
-        toast.error(result.trail.length > 0 ? `No job board found for “${query}”.` : result.message);
-        setMiss({ message: result.message, trail: result.trail });
-      }
-    } catch {
-      toast.error("That request did not go through. Check your connection and try again.");
-    } finally {
-      setPending(null);
+    setStopped(null);
+    setPosting(true);
+    const result = await call(api.POST("/api/companies", { body: { query } }));
+    setPosting(false);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
     }
+    setSearch({ query, runId: result.runId });
+    requestLiveRefresh();
   }
 
   return (
@@ -82,31 +106,30 @@ export function AddCompany({ onAdded }: { onAdded: (company: CompanyRow) => void
         <Input
           autoComplete="off"
           className="h-9 flex-1 text-[13.5px] md:text-[13.5px]"
-          disabled={Boolean(pending)}
+          disabled={pending}
           id="add-company"
           onChange={(event) => setValue(event.target.value)}
           placeholder="Company name, website or job board link"
           value={value}
         />
-        <Button className="h-9" disabled={Boolean(pending) || !value.trim()} type="submit">
+        <Button className="h-9" disabled={pending || !value.trim()} type="submit">
           {pending ? <Spinner /> : <Plus />}
           {pending ? "Looking…" : "Add company"}
         </Button>
       </form>
 
-      {pending && (
-        <p
-          className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[13px]"
-          role="status"
-        >
-          <span>
+      {search && (
+        <div className="space-y-2" role="status">
+          <p className="text-muted-foreground text-[13px]">
             Looking for a job board for{" "}
-            <span className="text-foreground font-medium">{pending.query}</span>: checking its
+            <span className="text-foreground font-medium">{search.query}</span>: checking its
             careers page, then Greenhouse, Lever and Ashby. This can take half a minute.
-          </span>
-          {elapsed > 0 && <span className="tabular">{elapsed}s</span>}
-        </p>
+          </p>
+          <RunCard compact runId={search.runId} />
+        </div>
       )}
+
+      {!search && stopped && <RunCard compact runId={stopped} />}
 
       {miss && (
         <div className="rounded-xl border px-4 py-3.5" role="alert">

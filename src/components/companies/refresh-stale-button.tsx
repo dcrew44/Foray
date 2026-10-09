@@ -4,49 +4,55 @@ import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { refreshAllAction } from "@/app/actions/companies";
-import { requestLiveRefresh, useLiveEvent } from "@/components/live/live-provider";
+import { requestLiveRefresh, runToastId } from "@/components/live/live-provider";
+import { useRunOutcome } from "@/components/profile/run-outcome";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { api, call } from "@/lib/api/client";
 
-/** Give up waiting for the worker's report after this long. */
+/** Stop showing the spinner after this long; the run's outcome still toasts when it lands. */
 const PATIENCE_MS = 3 * 60 * 1000;
 
 /**
- * Queues a refresh of every board not fetched in the last couple of hours.
- * The worker does the fetching; its report arrives through the live feed.
+ * Refreshes every active board not fetched in the last couple of hours. It
+ * always starts a run, even when nothing is stale, so it always answers: the
+ * start toast says what was queued, and the run's own outcome replaces it in
+ * place ("Refreshed 23/23 boards — …", or "None of your boards are stale.").
  */
 export function RefreshStaleButton() {
-  const [waiting, setWaiting] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [runId, setRunId] = useState<string | null>(null);
 
-  useLiveEvent(["company.refresh.done"], (event) => {
-    if (!waiting) return;
-    setWaiting(false);
-    toast.success(event.message);
+  useRunOutcome(runId, (event) => {
+    setRunId(null);
+    const id = runToastId(event.runId ?? "");
+    if (event.kind === "run.completed") toast.success(event.message, { id });
+    else if (event.kind === "run.failed") toast.error(event.message, { id });
+    // Stopped elsewhere (Activity, chat): the stop message replaces the start toast.
+    else toast(event.message, { id });
   });
 
   useEffect(() => {
-    if (!waiting) return;
-    const timer = setTimeout(() => setWaiting(false), PATIENCE_MS);
+    if (!runId) return;
+    const timer = setTimeout(() => setRunId(null), PATIENCE_MS);
     return () => clearTimeout(timer);
-  }, [waiting]);
+  }, [runId]);
+
+  const waiting = posting || runId !== null;
 
   return (
     <Button
       disabled={waiting}
       onClick={async () => {
-        setWaiting(true);
-        const result = await refreshAllAction();
+        setPosting(true);
+        const result = await call(api.POST("/api/companies/refresh-stale"));
+        setPosting(false);
         if (!result.ok) {
-          setWaiting(false);
           toast.error(result.message);
           return;
         }
-        toast(result.message);
-        if (result.queued === 0) {
-          setWaiting(false);
-          return;
-        }
+        toast(result.message, { id: runToastId(result.runId) });
+        setRunId(result.runId);
         requestLiveRefresh();
       }}
       variant="outline"

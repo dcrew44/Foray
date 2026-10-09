@@ -2,20 +2,28 @@
 
 import { Check, CircleAlert, Download, FileText, OctagonX, RotateCcw } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { cancelRunAction, startSearchAction } from "@/app/actions/runs";
+import { KIND_TITLE } from "@/components/activity/run-summary";
 import { Blaze } from "@/components/foray/primitives";
-import { isActiveRun, requestLiveRefresh, useLive, useRun } from "@/components/live/live-provider";
+import {
+  isActiveRun,
+  requestLiveRefresh,
+  runToastId,
+  useLive,
+  useRun,
+} from "@/components/live/live-provider";
 import { fromMatchRow, MatchLine } from "@/components/matches/match-line";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { MatchRow } from "@/lib/db/queries/matches";
+import { api, call } from "@/lib/api/client";
+import type { LiveRun, MatchRow } from "@/lib/api/types";
 import { formatDuration, plural } from "@/lib/format";
-import type { LiveRun } from "@/lib/runs/live";
 import { cn } from "@/lib/utils";
 
 import { ApprovalCard } from "./approval-card";
+import { useRunToasts } from "./use-run-toasts";
 
 /**
  * A background run, live: what it is doing now, what it has found, and —
@@ -38,18 +46,14 @@ const TAILOR_STEPS: Step[] = [
   { id: "render", label: "Render PDF", phases: ["rendering"] },
 ];
 
-const KIND_TITLE: Record<string, string> = {
-  search: "Search",
-  rank_deep: "Deep review",
-  tailor: "Tailored resume",
-  resume_render: "Resume PDF",
-  company_discovery: "Company discovery",
-  company_refresh: "Board refresh",
-};
-
 function num(stats: Record<string, unknown>, key: string): number | null {
   const value = stats[key];
   return typeof value === "number" ? value : null;
+}
+
+function text(values: Record<string, unknown>, key: string): string | null {
+  const value = values[key];
+  return typeof value === "string" && value.trim() ? value : null;
 }
 
 /** What the run is doing right now, in words. */
@@ -83,10 +87,37 @@ function describe(run: LiveRun, workerOnline: boolean): string {
     }
     if (run.kind === "rank_deep") return `Reviewed ${plural(Number(o.evaluated ?? 0), "role")}.`;
     if (run.kind === "resume_render") return `Rendered to ${plural(Number(o.pages ?? 1), "page")}.`;
+    if (run.kind === "profile_import") {
+      const counts = (o.counts ?? {}) as Record<string, unknown>;
+      return `Read ${plural(num(counts, "work") ?? 0, "role")}, ${plural(num(counts, "education") ?? 0, "school")} and ${plural(num(counts, "skills") ?? 0, "skill")}.`;
+    }
+    // Adding or refreshing a company finishes with the sentence its run.completed carried.
+    if (run.kind === "company_discovery" || run.kind === "company_refresh") {
+      return text(o, "message") ?? "Done.";
+    }
     return "Done.";
   }
 
   // running
+  if (run.kind === "profile_import") {
+    switch (phase) {
+      case "reading":
+        return "Reading your resume";
+      case "extracting":
+        return "Picking out your roles, schools and skills";
+      case "saving":
+        return "Saving your profile";
+      default:
+        return "Working…";
+    }
+  }
+  if (run.kind === "company_discovery") {
+    return phase === "refreshing" ? "Fetching the new board's postings" : "Looking for job boards";
+  }
+  if (run.kind === "company_refresh" && phase === "waiting") {
+    return "Waiting for the scheduled board refresh to finish";
+  }
+
   switch (phase) {
     case "refreshing":
       return num(s, "boardsRefreshed") != null
@@ -147,6 +178,7 @@ export function RunCard({
 }) {
   const run = useRun(runId);
   const live = useLive();
+  const router = useRouter();
   const elapsed = useElapsed(run);
   const [stopping, startStopping] = useTransition();
 
@@ -213,8 +245,16 @@ export function RunCard({
             disabled={stopping}
             onClick={() =>
               startStopping(async () => {
-                await cancelRunAction(run.id);
+                const result = await call(
+                  api.POST("/api/runs/{id}/cancel", { params: { path: { id: run.id } } }),
+                );
                 requestLiveRefresh();
+                router.refresh();
+                // A stop is the run's outcome, which nothing else toasts; it takes the run's
+                // toast id like any other outcome. A refusal ("That run had already finished.")
+                // must not replace the finish it lost to, so it gets its own toast.
+                if (result.ok) toast(result.message, { id: runToastId(run.id) });
+                else toast.error(result.message);
               })
             }
             size="xs"
@@ -235,8 +275,10 @@ export function RunCard({
  * stopped rather than paying twice.
  */
 function RunAgain({ runId }: { runId: string }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [started, setStarted] = useState(false);
+  const [started, setStarted] = useState<string | null>(null);
+  useRunToasts(started);
 
   if (started) {
     return (
@@ -255,13 +297,14 @@ function RunAgain({ runId }: { runId: string }) {
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
-            const result = await startSearchAction({ againFrom: runId });
+            const result = await call(api.POST("/api/searches", { body: { againFrom: runId } }));
             if (!result.ok) {
               toast.error(result.message);
               return;
             }
-            setStarted(true);
+            setStarted(result.runId);
             requestLiveRefresh();
+            router.refresh();
           })
         }
         size="sm"
@@ -394,10 +437,10 @@ function ResultList({ ids, showAllLink }: { ids: string[]; showAllLink: boolean 
 
   useEffect(() => {
     let live = true;
-    void fetch(`/api/matches?ids=${key}`, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : { matches: [] }))
-      .then((body: { matches: MatchRow[] }) => {
-        if (live) setRows(body.matches);
+    void api
+      .GET("/api/matches", { params: { query: { ids: key } }, cache: "no-store" })
+      .then(({ data }) => {
+        if (live) setRows(data?.matches ?? []);
       })
       .catch(() => undefined);
     return () => {

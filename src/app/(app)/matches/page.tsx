@@ -7,41 +7,43 @@ import { StartSearchButton } from "@/components/home/live-panels";
 import { RefreshOn } from "@/components/live/refresh-on";
 import { Board } from "@/components/matches/board";
 import { MatchTable } from "@/components/matches/match-table";
+import { OPEN_STAGES } from "@/components/matches/stages";
 import { buttonVariants } from "@/components/ui/button";
-import { requireUser } from "@/lib/auth/session";
-import { ALL_STAGES, countByStage, listMatches, OPEN_STAGES } from "@/lib/db/queries/matches";
-import type { StageId } from "@/lib/format";
+import type { components } from "@/lib/api/schema";
+import { django } from "@/lib/api/server";
 import { plural } from "@/lib/format";
-import { getOnboardingState } from "@/lib/profile/onboarding";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Matches" };
 
-type SearchParams = { view?: string; stage?: string; closed?: string };
+type MatchesPageData = components["schemas"]["MatchesPage"];
+type SearchParams = Record<string, string | string[] | undefined>;
 
+/** The address bar's own say in what the page shows; Django reads them as the page did. */
+const PARAMS = ["view", "stage", "closed"] as const;
+
+/**
+ * The board or the list, in one read (`GET /api/pages/matches`). Django decides which from the
+ * address bar's `view`, `stage` and `closed` (a stage link from Home lands on the list,
+ * filtered) and returns the matches that view shows.
+ */
 export default async function MatchesPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const user = await requireUser();
   const params = await searchParams;
+  const query = new URLSearchParams();
+  for (const key of PARAMS) {
+    const value = params[key];
+    const first = Array.isArray(value) ? value[0] : value;
+    if (first !== undefined) query.set(key, first);
+  }
+  const path = query.size > 0 ? `/api/pages/matches?${query.toString()}` : "/api/pages/matches";
+  const { counts, matches, ready, view, stage, showClosed } =
+    await django<MatchesPageData>(path);
 
-  const stageParam = ALL_STAGES.includes(params.stage as StageId) ? (params.stage as StageId) : null;
-  // A stage link from Home lands on the list, filtered, rather than the board.
-  const view = params.view === "list" || stageParam ? "list" : "board";
-  const showClosed = params.closed === "1";
-
-  const [counts, matches, onboarding] = await Promise.all([
-    countByStage(user.id),
-    listMatches(user.id, {
-      stages: view === "board" && !showClosed ? OPEN_STAGES : ALL_STAGES,
-      limit: 1000,
-    }),
-    getOnboardingState(user.id),
-  ]);
-
-  const open = OPEN_STAGES.reduce((total, stage) => total + counts[stage], 0);
+  const open = OPEN_STAGES.reduce((total, id) => total + counts[id], 0);
   const closed = counts.archived + counts.rejected;
 
   return (
@@ -54,7 +56,7 @@ export default async function MatchesPage({
               <ViewLink active={view === "board"} href="/matches" icon={<Columns3 className="size-4" />} label="Board" />
               <ViewLink active={view === "list"} href="/matches?view=list" icon={<LayoutList className="size-4" />} label="List" />
             </div>
-            {onboarding.ready && <StartSearchButton label="Search again" variant="outline" />}
+            {ready && <StartSearchButton label="Search again" variant="outline" />}
           </>
         }
         description={
@@ -66,7 +68,7 @@ export default async function MatchesPage({
       />
 
       <div className="mt-8">
-        {matches.length === 0 && open === 0 && !onboarding.ready ? (
+        {matches.length === 0 && open === 0 && !ready ? (
           <EmptyState
             action={
               <Link className={buttonVariants()} href="/home">
@@ -96,7 +98,7 @@ export default async function MatchesPage({
             )}
           </>
         ) : (
-          <MatchTable initialStage={stageParam} matches={matches} />
+          <MatchTable initialStage={stage} matches={matches} />
         )}
       </div>
     </PageBody>

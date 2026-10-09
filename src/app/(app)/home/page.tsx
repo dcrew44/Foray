@@ -12,59 +12,38 @@ import { AttentionPanel, RecentActivity, StartSearchButton } from "@/components/
 import { OnboardingChat } from "@/components/home/onboarding-chat";
 import { RefreshOn } from "@/components/live/refresh-on";
 import { fromMatchRow, MatchLine } from "@/components/matches/match-line";
+import { OPEN_STAGES } from "@/components/matches/stages";
 import { ResumeDropzone } from "@/components/profile/resume-dropzone";
 import { buttonVariants } from "@/components/ui/button";
-import { requireUser } from "@/lib/auth/session";
-import { countByStage, listMatches, OPEN_STAGES } from "@/lib/db/queries/matches";
-import { monthStart, spendSince } from "@/lib/db/queries/spend";
-import { db } from "@/lib/db";
-import { approvals, runs } from "@/lib/db/schema";
+import type { components } from "@/lib/api/schema";
+import { django } from "@/lib/api/server";
 import { formatUsd, plural, STAGE_LABEL } from "@/lib/format";
-import { getOnboardingState, type OnboardingState } from "@/lib/profile/onboarding";
 import { cn } from "@/lib/utils";
-import { and, eq, inArray, sql } from "drizzle-orm";
 
 export const metadata: Metadata = { title: "Home" };
 
+type HomePageData = components["schemas"]["HomePage"];
+type OnboardingState = components["schemas"]["OnboardingState"];
+type StageCounts = components["schemas"]["StageCounts"];
+
+/**
+ * Where things stand, in one read (`GET /api/pages/home`): the headline and the ask box's
+ * suggestions are worked out by Django; the live half (decisions waiting, runs in flight, the
+ * latest events) comes from the shell's live feed.
+ */
 export default async function HomePage() {
-  const user = await requireUser();
-
-  const [onboarding, counts, best, spend, waiting] = await Promise.all([
-    getOnboardingState(user.id),
-    countByStage(user.id),
-    listMatches(user.id, { stages: ["found", "shortlisted"], limit: 6 }),
-    spendSince(user.id, monthStart()),
-    liveCounts(user.id),
-  ]);
-
-  const firstName = (user.name || "").split(" ")[0];
-  const { headline, detail } = describeState({ onboarding, counts, best, waiting, firstName });
-
-  // Suggest tailoring for the best match that does not have a resume yet.
-  const untailored = best.find((row) => !row.tailoredResumeId);
-  const suggestions = onboarding.ready
-    ? [
-        onboarding.preferences.target_roles?.[0]
-          ? `Find new ${onboarding.preferences.target_roles[0].toLowerCase()} roles`
-          : "Find new roles for me",
-        "Which of my matches fit me best, and why?",
-        untailored
-          ? `Tailor my resume for the ${untailored.company} role`
-          : "What should I improve on my resume?",
-      ]
-    : onboarding.hasResume
-      ? ["Help me set up what I'm looking for", "What does my resume say about me?"]
-      : [];
+  const { onboarding, counts, best, spend, suggestions, headline } =
+    await django<HomePageData>("/api/pages/home");
 
   return (
     <PageBody>
-      <RefreshOn kinds={["run.completed", "approval.decided", "approval.requested", "tailor.done"]} />
+      <RefreshOn kinds={["run.completed", "approval.requested", "approval.decided"]} />
 
       <div className="max-w-3xl">
-        <h1 className="text-display text-[34px] leading-[1.08] sm:text-[42px]">{headline}</h1>
-        {detail && (
+        <h1 className="text-display text-[34px] leading-[1.08] sm:text-[42px]">{headline.headline}</h1>
+        {headline.detail && (
           <p className="text-muted-foreground mt-3 max-w-[60ch] text-[15px] leading-relaxed">
-            {detail}
+            {headline.detail}
           </p>
         )}
         {onboarding.hasResume && <AskBox className="mt-7" suggestions={suggestions} />}
@@ -135,84 +114,7 @@ export default async function HomePage() {
   );
 }
 
-async function liveCounts(userId: string) {
-  const [pending, active] = await Promise.all([
-    db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(approvals)
-      .where(
-        and(
-          eq(approvals.userId, userId),
-          eq(approvals.status, "pending"),
-          sql`(${approvals.expiresAt} is null or ${approvals.expiresAt} > now())`,
-        ),
-      ),
-    db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(runs)
-      .where(and(eq(runs.userId, userId), inArray(runs.status, ["queued", "running"]))),
-  ]);
-  return { approvals: pending[0]?.n ?? 0, running: active[0]?.n ?? 0 };
-}
-
-/** The headline is a status report, not a greeting. */
-function describeState(input: {
-  onboarding: OnboardingState;
-  counts: Record<string, number>;
-  best: Awaited<ReturnType<typeof listMatches>>;
-  waiting: { approvals: number; running: number };
-  firstName: string;
-}): { headline: string; detail: string | null } {
-  const { onboarding, counts, best, waiting, firstName } = input;
-  const hi = firstName ? `${firstName}, ` : "";
-
-  if (!onboarding.hasResume) {
-    return {
-      headline: "Let's set up your search.",
-      detail:
-        "Start with your resume. Foray builds your profile from it, asks a few questions about what you want, then goes looking.",
-    };
-  }
-  if (!onboarding.ready) {
-    return {
-      headline: "A few answers and Foray can start searching.",
-      detail: `Still needed: ${onboarding.progress.blocking.map((slot) => slot.label.toLowerCase()).join(", ")}. Answer in chat, or fill them in on your profile.`,
-    };
-  }
-  if (waiting.approvals > 0) {
-    return {
-      headline:
-        waiting.approvals === 1
-          ? `${hi}one decision is waiting on you.`
-          : `${hi}${waiting.approvals} decisions are waiting on you.`,
-      detail: null,
-    };
-  }
-  if (waiting.running > 0) {
-    return { headline: "Foray is searching right now.", detail: "Results land below as they come in." };
-  }
-
-  const strong = best.filter((row) => (row.score ?? 0) >= 80).length;
-  const queue = counts.found + counts.shortlisted;
-  if (queue > 0) {
-    return {
-      headline:
-        strong > 0
-          ? `${plural(strong, "strong match", "strong matches")} waiting for a look.`
-          : `${plural(queue, "role")} in your queue.`,
-      detail:
-        counts.shortlisted > 0
-          ? `${counts.shortlisted} shortlisted, ${counts.applied} applied so far.`
-          : null,
-    };
-  }
-  return {
-    headline: "Ready when you are.",
-    detail: "Ask for what you want below, or run a search with your saved preferences.",
-  };
-}
-
-function PipelineSummary({ counts }: { counts: Record<string, number> }) {
+function PipelineSummary({ counts }: { counts: StageCounts }) {
   const max = Math.max(1, ...OPEN_STAGES.map((stage) => counts[stage] ?? 0));
 
   return (
@@ -263,8 +165,9 @@ function Onboarding({ onboarding }: { onboarding: OnboardingState }) {
       >
         {onboarding.hasResume && resume ? (
           <p className="text-muted-foreground text-[13.5px]">
-            {plural(resume.work.length, "role")}, {plural(resume.education.length, "school")} and{" "}
-            {plural(resume.skills.length, "skill")} on file.{" "}
+            {plural(resume.work?.length ?? 0, "role")},{" "}
+            {plural(resume.education?.length ?? 0, "school")} and{" "}
+            {plural(resume.skills?.length ?? 0, "skill")} on file.{" "}
             <Link className="text-primary font-medium hover:underline" href="/profile">
               Review your profile
             </Link>

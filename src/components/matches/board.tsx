@@ -18,9 +18,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { moveMatchStageAction } from "@/app/actions/matches";
 import { RecommendationPill, ScoreChip } from "@/components/foray/primitives";
-import type { MatchRow } from "@/lib/db/queries/matches";
+import type { MatchRow } from "@/lib/api/types";
 import {
   formatLocation,
   formatSalary,
@@ -31,13 +30,13 @@ import {
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+import { moveMatch } from "./match-api";
+import { CLOSED_STAGES as CLOSED, OPEN_STAGES as OPEN } from "./stages";
+
 /**
  * The pipeline as a board. Dragging a card moves the match; the move shows
  * immediately and is undone with a toast if the server refuses it.
  */
-
-const OPEN: StageId[] = ["found", "shortlisted", "applied", "interviewing", "offer"];
-const CLOSED: StageId[] = ["rejected", "archived"];
 
 /** Found can hold hundreds after a big search; the rest render on demand. */
 const COLUMN_PAGE = 40;
@@ -101,7 +100,7 @@ export function Board({ matches, showClosed }: { matches: BoardMatch[]; showClos
     setOverrides((previous) => ({ ...previous, [matchId]: target }));
 
     startTransition(async () => {
-      const result = await moveMatchStageAction(matchId, target);
+      const result = await moveMatch(matchId, target);
       if (!result.ok) {
         setOverrides((previous) => ({ ...previous, [matchId]: from }));
         toast.error(result.message ?? "That move did not save.");
@@ -113,7 +112,10 @@ export function Board({ matches, showClosed }: { matches: BoardMatch[]; showClos
           label: "Undo",
           onClick: () => {
             setOverrides((previous) => ({ ...previous, [matchId]: from }));
-            void moveMatchStageAction(matchId, from).then(() => router.refresh());
+            void moveMatch(matchId, from).then((undone) => {
+              if (!undone.ok) toast.error(undone.message);
+              router.refresh();
+            });
           },
         },
       });

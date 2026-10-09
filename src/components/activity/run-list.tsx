@@ -7,8 +7,9 @@ import { useEffect, useMemo, useState } from "react";
 import { SignalDot } from "@/components/foray/primitives";
 import { useLive } from "@/components/live/live-provider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api/client";
+import type { LiveEvent } from "@/lib/api/types";
 import { formatDuration, formatUsd, timeAgo } from "@/lib/format";
-import type { LiveEvent } from "@/lib/runs/live";
 import { cn } from "@/lib/utils";
 
 import { eventTone, KIND_TITLE, runOutcome, STATUS, type RunSummary } from "./run-summary";
@@ -173,10 +174,10 @@ function RunEvents({ summary, id }: { summary: RunSummary; id: string }) {
 
   useEffect(() => {
     let current = true;
-    fetch(`/api/runs/${run.id}/events`, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : Promise.reject(response.status)))
-      .then((body: { events: LiveEvent[] }) => {
-        if (current) setLoaded({ state: "ready", events: body.events });
+    api
+      .GET("/api/runs/{id}/events", { params: { path: { id: run.id } }, cache: "no-store" })
+      .then(({ data }) => {
+        if (current) setLoaded(data ? { state: "ready", events: data.events } : { state: "error" });
       })
       .catch(() => {
         if (current) setLoaded({ state: "error" });

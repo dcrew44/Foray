@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { moveMatchStageAction } from "@/app/actions/matches";
 import { EmptyState, RecommendationPill, ScoreChip } from "@/components/foray/primitives";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,21 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 
 import type { BoardMatch } from "./board";
+import { moveMatch } from "./match-api";
+import { ALL_STAGES as STAGES } from "./stages";
 
 /**
  * The same matches as a sortable, filterable list — for when the question is
  * "which of these" rather than "where is each".
  */
-
-const STAGES: StageId[] = [
-  "found",
-  "shortlisted",
-  "applied",
-  "interviewing",
-  "offer",
-  "rejected",
-  "archived",
-];
 
 const MIN_SCORES = [
   { label: "Any fit", value: 0 },
@@ -81,7 +72,7 @@ export function MatchTable({
   function move(matchId: string, from: StageId, to: StageId) {
     setOverrides((previous) => ({ ...previous, [matchId]: to }));
     startTransition(async () => {
-      const result = await moveMatchStageAction(matchId, to);
+      const result = await moveMatch(matchId, to);
       if (!result.ok) {
         setOverrides((previous) => ({ ...previous, [matchId]: from }));
         toast.error(result.message ?? "That change did not save.");

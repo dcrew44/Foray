@@ -14,3 +14,12 @@ playwright-report
 *.log
 .DS_Store
 .claude
+# The backend (design §13.2). Without backend/.venv, `COPY backend/ ./` would overwrite the
+# image's virtualenv with the developer's macOS one.
+backend/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+storage
+backups
+docs/migration

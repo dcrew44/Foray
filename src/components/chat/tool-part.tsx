@@ -1,5 +1,6 @@
 "use client";
 
+import type { ToolUIPart } from "ai";
 import { Check, ChevronRight, CircleAlert, CircleCheck } from "lucide-react";
 import { useState } from "react";
 
@@ -8,6 +9,7 @@ import { useLive } from "@/components/live/live-provider";
 import { MatchLine, type MatchLineData } from "@/components/matches/match-line";
 import { ApprovalCard } from "@/components/runs/approval-card";
 import { RunCard } from "@/components/runs/run-card";
+import type { ForayToolName, ForayTools, JobCard } from "@/lib/api/chat-types";
 import { formatLocation, STAGE_LABEL, type StageId } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -18,16 +20,15 @@ import { cn } from "@/lib/utils";
  * card, a list of jobs becomes match lines, a saved preference becomes one
  * quiet sentence. Anything without a bespoke rendering collapses to a single
  * line saying what the agent did, with the details a click away.
+ *
+ * Outputs are read defensively, not through `ForayTools`' output types: a
+ * part is what Django stored, and a conversation imported from the
+ * TypeScript app holds that app's shapes (an `add_company` that registered
+ * the company inline, a job card without scores). A tool name the model
+ * invented arrives as its own `tool-<name>` part, so `name` is any string.
  */
 
-type ToolState =
-  | "input-streaming"
-  | "input-available"
-  | "approval-requested"
-  | "approval-responded"
-  | "output-available"
-  | "output-error"
-  | "output-denied";
+type ToolState = ToolUIPart<ForayTools>["state"];
 
 export type ToolPartView = {
   name: string;
@@ -37,7 +38,8 @@ export type ToolPartView = {
   errorText?: string;
 };
 
-const COPY: Record<string, { running: string; done: string }> = {
+/** Every tool has its lines: adding one to `ForayTools` without them is a type error. */
+const COPY: Record<ForayToolName, { running: string; done: string }> = {
   get_profile_summary: { running: "Checking your profile", done: "Checked your profile" },
   get_resume: { running: "Reading your resume", done: "Read your resume" },
   update_profile_preferences: { running: "Saving what you told me", done: "Saved your preferences" },
@@ -57,11 +59,15 @@ const COPY: Record<string, { running: string; done: string }> = {
 };
 
 function copyFor(name: string) {
-  return COPY[name] ?? { running: `Running ${name.replaceAll("_", " ")}`, done: `Ran ${name.replaceAll("_", " ")}` };
+  return Object.hasOwn(COPY, name)
+    ? COPY[name as ForayToolName]
+    : { running: `Running ${name.replaceAll("_", " ")}`, done: `Ran ${name.replaceAll("_", " ")}` };
 }
 
 type Obj = Record<string, unknown>;
 const isObj = (value: unknown): value is Obj => Boolean(value) && typeof value === "object";
+const isStage = (value: unknown): value is StageId =>
+  typeof value === "string" && Object.hasOwn(STAGE_LABEL, value);
 
 export function ToolPart({ part }: { part: ToolPartView }) {
   const copy = copyFor(part.name);
@@ -97,7 +103,8 @@ export function ToolPart({ part }: { part: ToolPartView }) {
     );
   }
 
-  // Anything that started background work gets its live card.
+  // Anything that started background work gets its live card: a search, a
+  // deep review, a tailored resume, and a company being added or discovered.
   if (typeof output.runId === "string") {
     return <RunCard runId={output.runId} />;
   }
@@ -110,6 +117,8 @@ export function ToolPart({ part }: { part: ToolPartView }) {
     case "update_profile_preferences":
       return <PreferencesSaved input={part.input} output={output} />;
     case "add_company":
+      // Today's add_company starts a run (the card above); this is the
+      // inline registration an imported conversation may still show.
       return <CompanyAdded output={output} />;
     case "discover_companies":
       return (
@@ -131,8 +140,8 @@ export function ToolPart({ part }: { part: ToolPartView }) {
           label={
             typeof output.message === "string"
               ? output.message
-              : typeof output.stage === "string" && output.stage in STAGE_LABEL
-                ? `Moved to ${STAGE_LABEL[output.stage as StageId]}`
+              : isStage(output.stage)
+                ? `Moved to ${STAGE_LABEL[output.stage]}`
                 : copy.done
           }
         />
@@ -203,23 +212,17 @@ function ActivityLine({
   );
 }
 
-type JobCardOut = {
+/**
+ * A job line as stored: today's `JobCard`, or an older card that has no
+ * unified score, no match id, or no stage.
+ */
+type StoredJobCard = Partial<Omit<JobCard, "matchId">> & {
   matchId: string | null;
   title: string;
   company: string;
-  locations?: string[];
-  remote?: string;
-  score?: number | null;
-  fastScore?: number | null;
-  deepScore?: number | null;
-  recommendation?: string | null;
-  headline?: string | null;
-  salary?: string | null;
-  postedAt?: string | null;
-  stage?: StageId;
 };
 
-function toLine(job: JobCardOut): MatchLineData {
+function toLine(job: StoredJobCard): MatchLineData {
   return {
     matchId: job.matchId,
     title: job.title,
@@ -231,13 +234,13 @@ function toLine(job: JobCardOut): MatchLineData {
     recommendation: job.recommendation ?? null,
     salary: job.salary ?? null,
     postedAt: job.postedAt ?? null,
-    stage: job.stage ?? null,
+    stage: isStage(job.stage) ? job.stage : null,
     headline: job.headline ?? null,
   };
 }
 
 function JobList({ output }: { output: Obj }) {
-  const jobs = Array.isArray(output.jobs) ? (output.jobs as JobCardOut[]) : [];
+  const jobs = Array.isArray(output.jobs) ? (output.jobs as StoredJobCard[]) : [];
   if (jobs.length === 0) {
     return <ActivityLine label="No matches fit that yet." />;
   }
@@ -254,7 +257,7 @@ function JobList({ output }: { output: Obj }) {
 
 function JobPeek({ output }: { output: Obj }) {
   const match = isObj(output.match) ? output.match : null;
-  const job: JobCardOut = {
+  const job: StoredJobCard = {
     matchId: typeof output.matchId === "string" ? output.matchId : null,
     title: String(output.title ?? "Job"),
     company: String(output.company ?? ""),
@@ -268,7 +271,7 @@ function JobPeek({ output }: { output: Obj }) {
         : null,
     salary: typeof output.salary === "string" ? output.salary : null,
     postedAt: typeof output.postedAt === "string" ? output.postedAt : null,
-    stage: match && typeof match.stage === "string" ? (match.stage as StageId) : undefined,
+    stage: match && isStage(match.stage) ? match.stage : undefined,
   };
   return (
     <div className="bg-card overflow-hidden rounded-xl border p-1">

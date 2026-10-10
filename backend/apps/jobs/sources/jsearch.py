@@ -290,9 +290,9 @@ async def search_jsearch(
     remote_only: bool = False,
     max_requests: int = 1,
 ) -> JSearchResult:
-    """Up to `max_requests` result pages (one request each). Raises `JSearchDisabledError` or
-    `JSearchQuotaError` before spending anything; a failure after a first page returns what the
-    earlier pages produced."""
+    """Up to `max_requests` result pages (one request each, plus at most one retry; every
+    request sent is counted). Raises `JSearchDisabledError` or `JSearchQuotaError` before
+    spending anything; a failure after a first page returns what the earlier pages produced."""
     env = settings.ENV
     if not env.jsearch_enabled:
         raise JSearchDisabledError("JSEARCH_ENABLED is false")
@@ -314,9 +314,16 @@ async def search_jsearch(
         url = search_url(
             query, country=country, date_posted=date_posted, remote_only=remote_only, cursor=cursor
         )
-        # Counted before the response is read: a request that was sent and failed still spent.
-        result.requests_this_month = await db(count_request, PROVIDER)
-        result.requests_used += 1
+
+        async def counted(attempt: int) -> None:
+            # Every attempt is counted before it is sent, a retry included: a request that was
+            # sent and failed (or timed out after the server served it) still spent quota. Any
+            # attempt that would go past the month's budget is not sent, whether it is a retry
+            # or a later page's first try (an earlier retry may have used that page's share).
+            if result.requests_this_month >= budget:
+                raise JSearchQuotaError(result.requests_this_month, budget)
+            result.requests_this_month = await db(count_request, PROVIDER)
+            result.requests_used += 1
 
         try:
             body = await client.fetch_text(
@@ -325,8 +332,9 @@ async def search_jsearch(
                 retries=RETRIES,
                 headers={"x-rapidapi-key": key, "x-rapidapi-host": HOST},
                 max_bytes=JSEARCH_MAX_BYTES,
+                on_attempt=counted,
             )
-        except HttpError:
+        except HttpError, JSearchQuotaError:
             # A failure mid-paging still returns what earlier pages produced.
             if result.jobs:
                 break

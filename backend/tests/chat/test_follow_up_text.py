@@ -89,3 +89,34 @@ def test_the_kinds_typescript_lacked(kind: str, label: str) -> None:
     assert update.label == label
     name = "A board refresh" if kind == "company_refresh" else "Reading a resume"
     assert f"{name} has finished: Done." in update.text
+
+
+@pytest.mark.parametrize(
+    ("kind", "run_kind"),
+    [
+        ("deep_eval_batch", "search"),
+        ("shortlist_proposal", "search"),
+        ("deep_eval_batch", "tailor"),
+    ],
+)
+def test_a_gate_update_names_its_approval(kind: str, run_kind: str) -> None:
+    """Every update for a waiting approval says which one it is (its id, kind and title), right
+    before the rules, so a later "yes" in chat answers it without guessing. The goldens are
+    built without an id and stay byte for byte the TypeScript text."""
+    approval = ApprovalView(kind, "Shortlist 2 roles", {"items": []}, id="0b5d7c1e")
+    update = describe_update(
+        RunView(id="run-9", kind=run_kind, input={"prompt": "find roles"}, output=None),
+        EventView("approval.requested", "Waiting."),
+        approval,
+    )
+    lines = update.text.splitlines()
+    assert lines[-2] == (
+        f'The pending approval is "0b5d7c1e" ({kind}: Shortlist 2 roles). When the user answers '
+        "it in chat, pass that id to answer_approval; never guess one."
+    )
+    without = describe_update(
+        RunView(id="run-9", kind=run_kind, input={"prompt": "find roles"}, output=None),
+        EventView("approval.requested", "Waiting."),
+        ApprovalView(kind, "Shortlist 2 roles", {"items": []}),
+    )
+    assert without.text.splitlines() == lines[:-2] + lines[-1:]

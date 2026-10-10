@@ -16,7 +16,7 @@ import uuid
 
 from django.db import models
 from django.db.models import F, Q
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.accounts.models import User
 from apps.core.choices import choices_checks
@@ -52,7 +52,7 @@ class Document(UserOwned):
     # so it downloads under its own name even when its HTML equals the base's (step-H1.md §10).
     render_hash = models.CharField(max_length=64, null=True)  # noqa: DJ001
     text_extracted = models.TextField(null=True)  # noqa: DJ001 (the file's text, before any model)
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(db_default=Now())
 
     user_id: str
 

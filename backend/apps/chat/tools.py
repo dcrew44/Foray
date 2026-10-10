@@ -33,7 +33,7 @@ from dataclasses import dataclass
 from typing import Annotated, Any, Final, Literal, cast
 
 from django.db import transaction
-from django.utils import timezone
+from django.db.models.functions import Now
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_ai import RunContext
 from pydantic_ai.toolsets import FunctionToolset
@@ -589,7 +589,7 @@ def _update_preferences(user_id: str, args: UpdateProfilePreferencesInput) -> Ou
         merged = Preferences.read({**current, **answered})
         state.skipped = list(dict.fromkeys([*state.skipped, *(args.declined_slots or [])]))
         User.objects.filter(pk=user_id).update(
-            preferences=merged.dump(), interview_state=state.dump(), updated_at=timezone.now()
+            preferences=merged.dump(), interview_state=state.dump(), updated_at=Now()
         )
     progress = interview_progress(merged, state)
     return {

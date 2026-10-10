@@ -249,14 +249,67 @@ async def test_pages_by_cursor_and_counts_each_request() -> None:
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("jsearch_on", "no_backoff")
 async def test_a_failed_request_still_counts() -> None:
+    sent = 0
+
     def handler(request: httpx2.Request) -> httpx2.Response:
+        nonlocal sent
+        sent += 1
         return httpx2.Response(500, text="down")
 
     async with mock_client(handler) as client:
         with pytest.raises(jsearch.HttpError):
             await search_jsearch(client, "engineer")
     usage = await ApiUsage.objects.aget(provider="jsearch", period=current_period())
-    assert usage.requests == 1
+    # The page and its one retry both reached RapidAPI, so both are counted.
+    assert sent == 2
+    assert usage.requests == 2
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("jsearch_on", "no_backoff")
+async def test_every_attempt_counts_against_the_monthly_budget() -> None:
+    """A retried page reaches RapidAPI twice and is counted twice, so the budget guard sees what
+    was really sent. A retry that would go past the budget is not sent."""
+    sent: list[str] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        sent.append(str(request.url))
+        if len(sent) % 2 == 1:
+            return httpx2.Response(503, text="busy")  # each page's first attempt
+        return _page(raw[:1], f"c{len(sent)}")
+
+    async with mock_client(handler) as client:
+        result = await search_jsearch(client, "engineer", max_requests=3)
+    usage = await ApiUsage.objects.aget(provider="jsearch", period=current_period())
+    # Budget 5: page 1 (2 attempts) and page 2 (2 attempts) fit; page 3's first attempt is the
+    # fifth request, and its retry would be the sixth, so it is not sent.
+    assert len(sent) == 5
+    assert (usage.requests, result.requests_used, result.requests_this_month) == (5, 5, 5)
+    assert len(result.jobs) == 2
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("jsearch_on", "no_backoff")
+async def test_a_later_page_is_not_sent_once_a_retry_spent_its_share() -> None:
+    """Budget 5 with 2 already used leaves room for 3 pages, but page 1's retry spends one of
+    them. Page 2 is the fifth request; page 3's first attempt would be the sixth, so it is not
+    sent, and the pages already read come back."""
+    await ApiUsage.objects.acreate(provider="jsearch", period=current_period(), requests=2)
+    sent: list[str] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        sent.append(str(request.url))
+        if len(sent) == 1:
+            return httpx2.Response(503, text="busy")  # page 1's first attempt
+        return _page(raw[:1], f"c{len(sent)}")
+
+    async with mock_client(handler) as client:
+        result = await search_jsearch(client, "engineer", max_requests=3)
+    usage = await ApiUsage.objects.aget(provider="jsearch", period=current_period())
+    assert len(sent) == 3  # page 1 twice, then page 2
+    assert usage.requests <= 5
+    assert (usage.requests, result.requests_used, result.requests_this_month) == (5, 3, 5)
+    assert len(result.jobs) == 2
 
 
 @pytest.mark.django_db(transaction=True)
@@ -270,7 +323,7 @@ async def test_a_failure_after_a_page_keeps_what_it_has() -> None:
     async with mock_client(handler) as client:
         result = await search_jsearch(client, "engineer", max_requests=3)
     assert len(result.jobs) == 1
-    assert result.requests_used == 2
+    assert result.requests_used == 3  # page 1, then page 2 and its one retry
 
 
 @pytest.mark.django_db(transaction=True)

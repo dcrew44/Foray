@@ -545,8 +545,13 @@ def _tailor_subject(user_id: str, match_id: str) -> _TailorSubject | None:
     )
 
 
-def _tailoring(run: Run, subject: _TailorSubject, base: BaseResume) -> None:
+def _tailoring(run: Run, subject: _TailorSubject, base: BaseResume) -> bool:
+    """`tailor.started`, only while the run is still active (its row locked first, so a Stop
+    lands before or after, never between): nothing follows `run.cancelled` (R4). False when the
+    run was stopped meanwhile; the tailor then returns before the paid model call."""
     with transaction.atomic():
+        if not _lock_if_active(run.user_id, run.id):
+            return False
         lifecycle.merge_stats(
             run.id,
             phase="tailoring",
@@ -561,6 +566,22 @@ def _tailoring(run: Run, subject: _TailorSubject, base: BaseResume) -> None:
             f"Tailoring your resume for {subject.label}.",
             run_id=run.id,
             data={"matchId": str(subject.match.id)},
+        )
+        return True
+
+
+def _render_failed(run: Run, resume_id: uuid.UUID) -> None:
+    """`render.failed`, only while the run is still active (as `_tailoring`)."""
+    with transaction.atomic():
+        if not _lock_if_active(run.user_id, run.id):
+            return
+        events.emit(
+            run.user_id,
+            EventKind.RENDER_FAILED,
+            RENDER_FAILED_IN_TAILOR,
+            run_id=run.id,
+            level=Level.WARN,
+            data={"resumeId": str(resume_id)},
         )
 
 
@@ -622,7 +643,8 @@ async def tailor(run: Run) -> None:
     if base is None:
         raise UserFacingError(NO_RESUME_TO_TAILOR)
     label = subject.label
-    await db(_tailoring, run, subject, base)
+    if not await db(_tailoring, run, subject, base):
+        return  # stopped before the draft: no model call, no event after run.cancelled
 
     # 1. The draft.
     draft = await tailor_resume(
@@ -685,15 +707,7 @@ async def tailor(run: Run) -> None:
         rendered = await rendering.render_resume(run.user_id, resume_id)
     except Exception:
         log.exception("tailor run %s: the PDF could not be rendered", run.id)
-        await db(
-            events.emit,
-            run.user_id,
-            EventKind.RENDER_FAILED,
-            RENDER_FAILED_IN_TAILOR,
-            run_id=run.id,
-            level=Level.WARN,
-            data={"resumeId": str(resume_id)},
-        )
+        await db(_render_failed, run, resume_id)
 
     unsupported = len(verification.unsupported)
     document_id = str(rendered.document_id) if rendered else None

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import F, Q
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.accounts.models import User
 from apps.core.choices import choices_checks, pairing_checks
@@ -40,7 +40,7 @@ class JobMatch(UserOwned, Timestamped):
     user = models.ForeignKey(User, models.CASCADE, related_name="job_matches", db_index=False)
     job = models.ForeignKey(Job, models.CASCADE, related_name="matches")
     stage = models.TextField(choices=Stage.choices, default=Stage.FOUND)
-    stage_changed_at = models.DateTimeField(default=timezone.now)
+    stage_changed_at = models.DateTimeField(db_default=Now())
     fast_score = models.SmallIntegerField(null=True)
     fast_eval = models.JSONField(null=True)  # FastScore
     deep_score = models.SmallIntegerField(null=True)

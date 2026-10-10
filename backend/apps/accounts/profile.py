@@ -18,7 +18,7 @@ import math
 from typing import Any, Literal
 
 from django.db import transaction
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.accounts.models import User
 from apps.accounts.schemas import InterviewState, Preferences, SalaryFloor, Settings
@@ -323,7 +323,7 @@ def save_preferences(user_id: str, preferences: Preferences) -> Preferences:
         User.objects.filter(pk=user_id).update(
             preferences=normalized.dump(),
             interview_state=state.dump(),
-            updated_at=timezone.now(),
+            updated_at=Now(),
         )
     return normalized
 
@@ -336,5 +336,5 @@ def update_settings(user_id: str, patch: dict[str, Any]) -> Settings:
         row = User.objects.select_for_update().only("settings").get(pk=user_id)
         current = Settings.read(row.settings)
         merged = Settings.model_validate({**current.model_dump(), **patch})
-        User.objects.filter(pk=user_id).update(settings=merged.dump(), updated_at=timezone.now())
+        User.objects.filter(pk=user_id).update(settings=merged.dump(), updated_at=Now())
     return merged

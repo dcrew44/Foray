@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "dev:api": "cd backend && uv run python -m foray.env && uv run uvicorn foray.asgi:application --reload --reload-dir foray --reload-dir apps --port 8000 --timeout-graceful-shutdown 5",
     "dev:worker": "cd backend && uv run python -m foray.env && uv run watchfiles --filter python --sigint-timeout 15 \"python manage.py worker --shutdown-timeout 5\" foray apps",
     "dev:all": "concurrently -n web,api,worker -c cyan,yellow,magenta \"pnpm dev\" \"pnpm dev:api\" \"pnpm dev:worker\"",
@@ -26,6 +26,7 @@
     "db:backup-legacy": "cd backend && uv run python manage.py backup_legacy",
     "db:import-legacy": "cd backend && uv run python manage.py import_legacy",
     "db:verify-import": "cd backend && uv run python manage.py verify_import",
+    "db:mark-cutover": "cd backend && uv run python manage.py mark_cutover",
     "auth:set-password": "cd backend && uv run python manage.py set_password",
     "seed:companies": "cd backend && uv run python manage.py seed_companies",
     "fetch:board": "cd backend && uv run python manage.py fetch_board",

@@ -146,6 +146,62 @@ async def test_follows_redirects_by_hand_and_checks_every_hop() -> None:
     assert resolved == ["a.example.com", "b.example.com", "b.example.com", "c.example.com"]
 
 
+async def test_a_callers_headers_never_follow_a_redirect_to_another_origin() -> None:
+    """An API key goes only where it was meant to: a 302 from the API to another host (a
+    misbehaving or compromised upstream) gets the User-Agent and Accept alone. A redirect that
+    stays on the origin keeps them."""
+    seen: list[httpx2.Request] = []
+    hops = {
+        "https://jsearch.p.rapidapi.com/search": "/search-v2",
+        "https://jsearch.p.rapidapi.com/search-v2": "https://collector.example.net/x",
+        "https://collector.example.net/x": "http://jsearch.p.rapidapi.com/back",
+    }
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen.append(request)
+        target = hops.get(str(request.url))
+        if target:
+            return httpx2.Response(302, headers={"location": target})
+        return httpx2.Response(200, text="done")
+
+    secret = {"x-rapidapi-key": "SECRET", "authorization": "Bearer SECRET"}
+    async with mock_client(handler) as client:
+        assert await client.fetch_text("https://jsearch.p.rapidapi.com/search", headers=secret)
+    sent = {str(request.url): request.headers for request in seen}
+    for same_origin in (
+        "https://jsearch.p.rapidapi.com/search",
+        "https://jsearch.p.rapidapi.com/search-v2",
+    ):
+        assert sent[same_origin]["x-rapidapi-key"] == "SECRET"
+        assert sent[same_origin]["authorization"] == "Bearer SECRET"
+    # Another host, and the same host over another scheme: no caller header at all.
+    for other in ("https://collector.example.net/x", "http://jsearch.p.rapidapi.com/back"):
+        headers = sent[other]
+        assert "x-rapidapi-key" not in headers and "authorization" not in headers
+        assert (
+            headers["user-agent"].startswith("Foray/") and headers["accept"] == "application/json"
+        )
+
+
+@pytest.mark.usefixtures("no_backoff")
+async def test_on_attempt_runs_before_every_attempt() -> None:
+    answers = [httpx2.Response(503, text="busy"), httpx2.Response(200, text="fine")]
+    sent: list[int] = []
+    attempts: list[int] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        sent.append(len(attempts))
+        return answers.pop(0)
+
+    async def counted(attempt: int) -> None:
+        attempts.append(attempt)
+
+    async with mock_client(handler) as client:
+        assert await client.fetch_text("https://flaky.example.com/", on_attempt=counted) == "fine"
+    assert attempts == [0, 1]
+    assert sent == [1, 2]  # each request went out after its attempt was counted
+
+
 async def test_stops_after_five_redirects() -> None:
     def handler(request: httpx2.Request) -> httpx2.Response:
         n = int(request.url.path.strip("/") or 0)

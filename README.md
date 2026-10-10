@@ -72,10 +72,15 @@ nothing, and never writes to the old database or its files. Instead of `pnpm see
 # in .env: LEGACY_DATABASE_URL=…/foray, LEGACY_STORAGE_DIR=<the old app's data/ folder>
 pnpm db:backup-legacy    # a dump, a file manifest and a marker in BACKUP_DIR
 pnpm db:import-legacy    # every check runs inside the import's transaction
-pnpm db:verify-import    # re-runs the checks; --password-prompt checks your old password
+pnpm db:verify-import    # re-runs the checks
+pnpm db:verify-import --password-prompt   # in your own terminal: checks your old password
+pnpm db:mark-cutover     # this import is now the real data
 ```
 
-Sessions are not carried over: you sign in once with the same email and password.
+Mark the cutover before you start using the app. Until then `import_legacy --replace` and
+`reset_app_db` still work, and either one discards everything in `foray_app`, including
+anything you made since the import; once it is marked, both refuse. Sessions are not carried
+over: you sign in once with the same email and password.
 
 ### Models and cost
 

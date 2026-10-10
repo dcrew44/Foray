@@ -2,21 +2,30 @@
 
 No field uses `auto_now`/`auto_now_add`: Django's insert compiler calls `pre_save(add=True)`,
 which would overwrite an explicit value with `now()` even in `bulk_create`, and so re-date every
-imported row. Timestamps are plain defaults instead, and `Timestamped.save()` bumps
+imported row. Timestamps are database defaults instead, and `Timestamped.save()` bumps
 `updated_at` on updates. `QuerySet.update()` and raw SQL set `updated_at = now()` themselves.
+
+**One clock (step H2).** Every stored timestamp is the database's: `db_default=Now()` (Postgres
+`statement_timestamp()`) on inserts, `Now()` on updates, `now()` in raw SQL, and every
+comparison with "now" is made in SQL too. Python's clock and the Docker VM's drift apart (8 s
+after a sleep was seen), and mixing them misfired the reaper's 60 s rule, the budget's month and
+the follow-up's turn marker. An explicit value is still kept as given (the legacy import).
+Django returns a database default with `RETURNING`, so a saved instance holds the real value.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import datetime
 
 from django.db import models
-from django.utils import timezone
+from django.db.models.functions import Now
 
 
 class Timestamped(models.Model):
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
+    # Declared, so assigning `Now()` in `save()` does not widen the attribute's type.
+    created_at: models.DateTimeField[datetime] = models.DateTimeField(db_default=Now())
+    updated_at: models.DateTimeField[datetime] = models.DateTimeField(db_default=Now())
 
     class Meta:
         abstract = True
@@ -29,7 +38,7 @@ class Timestamped(models.Model):
         update_fields: Iterable[str] | None = None,
     ) -> None:
         if not self._state.adding:
-            self.updated_at = timezone.now()
+            self.updated_at = Now()  # evaluated by the database, read back with RETURNING
             if update_fields is not None:
                 update_fields = list(dict.fromkeys([*update_fields, "updated_at"]))
         super().save(

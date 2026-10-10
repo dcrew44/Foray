@@ -34,6 +34,7 @@ from typing import Any
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import connection
+from django.db.models.functions import Now
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -227,7 +228,7 @@ def check_documents() -> Check:
 def check_turn_markers() -> Check:
     stale = list(
         Conversation.objects.unscoped("acceptance checks: stale turn markers")
-        .filter(turn_started_at__lt=timezone.now() - TURN_MARKER_MAX)
+        .filter(turn_started_at__lt=Now() - TURN_MARKER_MAX)
         .values_list("id")
     )
     detail = f"{len(stale)} conversation(s) with a stale marker: {_ids(stale)}" if stale else "none"

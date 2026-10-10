@@ -13,7 +13,7 @@ from decimal import Decimal
 
 from django.db import models
 from django.db.models import F
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.accounts.models import User
 from apps.chat.models import Conversation
@@ -74,7 +74,7 @@ class LlmCall(UserOwned):
     latency_ms = models.IntegerField(null=True)
     error = models.TextField(null=True)  # noqa: DJ001 (failures are costed and counted too)
     label = models.TextField(choices=Label.choices, null=True)  # noqa: DJ001 (new)
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(db_default=Now())
 
     user_id: str | None
     run_id: uuid.UUID | None

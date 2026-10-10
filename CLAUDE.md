@@ -12,7 +12,7 @@ worker.
 | Command | What it does |
 |---|---|
 | `pnpm dev:all` | web, api and worker together (`foray-web` in `.claude/launch.json`); the browser only talks to :3000 |
-| `pnpm dev` / `dev:api` / `dev:worker` | one of them: `next dev`; uvicorn with `--reload` on :8000; `manage.py worker` under watchfiles, which restarts it on every `.py` save |
+| `pnpm dev` / `dev:api` / `dev:worker` | one of them: `next dev` on 127.0.0.1 (never the LAN); uvicorn with `--reload` on 127.0.0.1:8000; `manage.py worker` under watchfiles, which restarts it on every `.py` save |
 | `pnpm build` | production build of the frontend; run it before committing UI or route changes |
 | `pnpm db:up` / `db:down` | Postgres 18 in Docker (`docker compose up -d db`, container `foray-db-1`) / stop it |
 | `pnpm db:create` | create the `foray_app` database (once per Postgres volume) |
@@ -21,13 +21,13 @@ worker.
 | `pnpm auth:set-password <email>` | set a forgotten password at a hidden prompt (no mail transport yet); signs out every session |
 | `pnpm seed:companies [--fetch]` | load `backend/apps/jobs/seed.json` into `companies`; `--fetch` also fills the mirror |
 | `pnpm fetch:board` / `verify:boards` | print what an adapter makes of one board / check that board slugs are real (neither touches the database) |
-| `pnpm test` | `test:web` (Vitest, `src/test/unit/format.test.ts` only), then `test:api` (pytest) |
+| `pnpm test` | `test:web` (Vitest, the pure helpers in `src/test/unit/`), then `test:api` (pytest) |
 | `pnpm lint` / `typecheck` | ESLint, `ruff check` and `ruff format --check` / `tsc --noEmit` and pyright |
 | `pnpm api:types` | export `backend/openapi.json` and regenerate `src/lib/api/schema.d.ts` from it |
 | `pnpm check` | lint, typecheck, test, `api:types`, then fails if the generated files changed; run it before committing |
 | `pnpm llm:smoke [purpose …]` | one call per configured purpose, to check keys and pricing (`LLM_FAKE=1` for $0) |
 | `pnpm llm:bakeoff` | compare models on fixed fixtures (cost, latency, schema failures, agreement) |
-| `pnpm db:backup-legacy` / `db:import-legacy` / `db:verify-import` | the one-off, read-only import of the old TypeScript app's `foray` database into `foray_app` |
+| `pnpm db:backup-legacy` / `db:import-legacy` / `db:verify-import` / `db:mark-cutover` | the one-off, read-only import of the old TypeScript app's `foray` database into `foray_app`; marking the cutover makes `--replace` and `reset_app_db` refuse |
 | `pnpm docker:prod` | `docker compose --profile prod up --build`; it wants :3000 too, so stop `dev:all` first |
 
 Backend-only commands run as `cd backend && uv run python manage.py <command>`:
@@ -204,7 +204,7 @@ not the only check.
   Chromium or Chrome; `-m "not slow"` skips them.
 - `FORAY_REGISTER_STRICT=1` makes `tests/test_register.py` fail when a test that DESIGN.md's
   invariant register names does not exist. Run the full suite with it before committing.
-- Vitest covers only the frontend's pure helpers (`src/test/unit/format.test.ts`).
+- Vitest covers only the frontend's pure helpers (`src/test/unit/*.test.ts`: formatting, the sign-in `next` guard, the upload size check).
 
 ## API drift warning
 

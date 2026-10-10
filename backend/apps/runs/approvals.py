@@ -26,7 +26,6 @@ from typing import Any, Literal, cast
 from django.db import connection, transaction
 from django.db.models import Q
 from django.db.models.functions import Now
-from django.utils import timezone
 
 from apps.runs import events, lifecycle, step
 from apps.runs.catalogue import (
@@ -37,6 +36,7 @@ from apps.runs.catalogue import (
     EventKind,
     Level,
     Mode,
+    NextStep,
     RunStatus,
     StoredDecision,
 )
@@ -173,13 +173,26 @@ def lapsed_message(approval: Approval) -> str:
 # --- raising a gate ------------------------------------------------------------------------------
 
 
-def _resume(run_id: Id) -> bool:
-    """`awaiting_approval -> running`, conditionally."""
-    return bool(
-        Run.objects.unscoped("approvals: resume a paused run")
-        .filter(id=run_id, status=RunStatus.AWAITING_APPROVAL)
-        .update(status=RunStatus.RUNNING, updated_at=Now())
-    )
+# The phase each continuation starts in. A yes writes it with the decision, in the same
+# transaction as `awaiting_approval -> running`, so a card never shows the gate's stale
+# `awaiting_*` phase on a running run while the continuation waits for the worker (it writes the
+# same phase again through `resume_from`). A no or a lapse finishes the run without that work,
+# so it keeps the gate's phase until the continuation completes it.
+CONTINUATION_PHASE: dict[str, str] = {
+    NextStep.SEARCH_EVALUATE: "evaluating",
+    NextStep.SEARCH_SHORTLIST: "shortlisting",
+}
+
+
+def _resume(run_id: Id, phase: str | None = None) -> bool:
+    """`awaiting_approval -> running`, conditionally, with the continuation's phase if given."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE runs SET status = 'running', stats = stats || %s::jsonb, updated_at = now() "
+            "WHERE id = %s AND status = 'awaiting_approval' RETURNING id",
+            [lifecycle.jsonb({"phase": phase} if phase else {}), str(run_id)],
+        )
+        return cursor.fetchone() is not None
 
 
 def _defer_continuation(approval: Approval) -> int:
@@ -239,7 +252,7 @@ def request_approval(
                 status=ApprovalStatus.AUTO_APPROVED,
                 decision=decision.dump(),
                 decided_via=DecidedVia.AUTOPILOT,
-                decided_at=timezone.now(),
+                decided_at=Now(),
                 next_step=next_step,
             )
             if stats:
@@ -258,7 +271,7 @@ def request_approval(
             run.user_id,
             **fields,
             status=ApprovalStatus.PENDING,
-            expires_at=timezone.now() + APPROVAL_TTL,
+            expires_at=Now() + APPROVAL_TTL,
             next_step=next_step,
         )
         with connection.cursor() as cursor:
@@ -299,7 +312,7 @@ def _expire(approval: Approval, run: Run) -> None:
     event stays its last."""
     approval.status = ApprovalStatus.EXPIRED
     approval.decided_via = DecidedVia.EXPIRY
-    approval.decided_at = timezone.now()
+    approval.decided_at = Now()  # evaluated by the database, read back with RETURNING
     approval.save(update_fields=["status", "decided_via", "decided_at"])
     if not _resume(run.id):
         return
@@ -343,7 +356,7 @@ def decide(user_id: str, approval_id: Id, decision: Mapping[str, Any], via: str)
             return DecideResult("expired", approval)
         if approval.status != ApprovalStatus.PENDING:
             return DecideResult("already_decided", approval)
-        if approval.expires_at is not None and approval.expires_at <= timezone.now():
+        if _lapsed(approval):
             _expire(approval, run)  # the expiry path, inline
             return DecideResult("expired", approval)
         if run.status != RunStatus.AWAITING_APPROVAL:
@@ -356,9 +369,9 @@ def decide(user_id: str, approval_id: Id, decision: Mapping[str, Any], via: str)
         approval.status = ApprovalStatus.APPROVED if stored.approved else ApprovalStatus.REJECTED
         approval.decision = cast(Any, stored.dump())  # django-types types JSONField narrowly
         approval.decided_via = via
-        approval.decided_at = timezone.now()
+        approval.decided_at = Now()  # evaluated by the database, read back with RETURNING
         approval.save(update_fields=["status", "decision", "decided_via", "decided_at"])
-        _resume(run.id)
+        _resume(run.id, CONTINUATION_PHASE.get(approval.next_step) if stored.approved else None)
         _defer_continuation(approval)
         events.emit(
             user_id,
@@ -380,9 +393,19 @@ def decide(user_id: str, approval_id: Id, decision: Mapping[str, Any], via: str)
 
 _LOCK_LAPSED = """
 SELECT a.id, r.id FROM approvals a JOIN runs r ON r.id = a.run_id
- WHERE a.id = %s AND a.status = 'pending' AND a.expires_at <= %s
+ WHERE a.id = %s AND a.status = 'pending' AND a.expires_at <= statement_timestamp()
  FOR UPDATE OF a, r SKIP LOCKED
 """
+
+
+def _lapsed(approval: Approval) -> bool:
+    """Whether a pending approval is past its expiry, by the database's clock, which wrote it."""
+    return (
+        approval.expires_at is not None
+        and Approval.objects.for_user(approval.user_id)
+        .filter(id=approval.id, expires_at__lte=Now())
+        .exists()
+    )
 
 
 def expire_lapsed(limit: int = 500) -> int:
@@ -390,12 +413,11 @@ def expire_lapsed(limit: int = 500) -> int:
     its own transaction (`FOR UPDATE … SKIP LOCKED`, so a row someone is deciding right now is
     left for the next minute). An expiry is a "no" that lets the run finish. Returns how many.
 
-    `expires_at` is written with Python's clock (`request_approval`), so it is compared with
-    Python's clock everywhere, never with the database's `now()` (deviations/step-8E.md §7)."""
-    now = timezone.now()
+    `expires_at` is written by the database (`Now() + 7 days`), so it is compared with the
+    database's clock, like every stored timestamp (core/clock.py)."""
     candidates = list(
         Approval.objects.unscoped("approvals.expire: every user's lapsed approvals")
-        .filter(status=ApprovalStatus.PENDING, expires_at__lte=now)
+        .filter(status=ApprovalStatus.PENDING, expires_at__lte=Now())
         .order_by("expires_at")
         .values_list("id", flat=True)[:limit]
     )
@@ -403,7 +425,7 @@ def expire_lapsed(limit: int = 500) -> int:
     for approval_id in candidates:
         with transaction.atomic():
             with connection.cursor() as cursor:
-                cursor.execute(_LOCK_LAPSED, [str(approval_id), now])
+                cursor.execute(_LOCK_LAPSED, [str(approval_id)])
                 row = cursor.fetchone()
             if row is None:
                 continue
@@ -421,6 +443,6 @@ def list_pending(user_id: str) -> list[Approval]:
     return list(
         Approval.objects.for_user(user_id)
         .filter(status=ApprovalStatus.PENDING, run__status=RunStatus.AWAITING_APPROVAL)
-        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=Now()))
         .order_by("-created_at")
     )

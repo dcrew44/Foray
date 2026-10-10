@@ -15,11 +15,12 @@ The kinds, statuses and JSON shapes live in `runs/catalogue.py`.
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import F, Q
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.accounts.models import User
 from apps.core.choices import choices_checks
@@ -99,12 +100,13 @@ class Approval(UserOwned):
     status = models.TextField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
     decision = models.JSONField(null=True)  # StoredDecision {approved, itemIds?}
     decided_via = models.TextField(choices=DecidedVia.choices, null=True)  # noqa: DJ001
-    decided_at = models.DateTimeField(null=True)
+    # Declared, so assigning `Now()` (approvals.decide) does not widen the attribute's type.
+    decided_at: models.DateTimeField[datetime | None] = models.DateTimeField(null=True)
     # The continuation a decision defers (was `continuation` jsonb, always {userId, runId,
     # approvalId}).
     next_step = models.TextField(choices=NextStep.choices)
     expires_at = models.DateTimeField(null=True)  # pending: now + 7 days; autopilot: null
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(db_default=Now())
 
     user_id: str
     run_id: uuid.UUID
@@ -150,7 +152,7 @@ class Event(UserOwned):
     kind = models.CharField(max_length=64)  # runs.catalogue.EventKind; legacy kinds allowed
     message = models.TextField()
     data = models.JSONField(null=True)  # an open dict per kind
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(db_default=Now())
 
     user_id: str
     run_id: uuid.UUID | None

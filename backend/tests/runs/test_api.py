@@ -10,8 +10,8 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+from django.db.models.functions import Now
 from django.test import Client
-from django.utils import timezone
 
 from apps.runs import events, step
 from apps.runs.models import Approval
@@ -118,7 +118,7 @@ def test_live_lists_only_answerable_approvals(signed_in: Any) -> None:
     lapsed = make_approval(
         user,
         run=make_run(user, status="awaiting_approval"),
-        expires_at=timezone.now() - timedelta(seconds=1),
+        expires_at=Now() - timedelta(seconds=1),
     )
     on_running = make_approval(user, run=make_run(user, status="running"))  # bug #41: joined
     ids = [a["id"] for a in api.get("/api/live").json()["approvals"]]
@@ -276,7 +276,7 @@ def test_decision_endpoint_refusals(signed_in: Any) -> None:
 
     lapsed = _paused(user)
     Approval.objects.for_user(user.pk).filter(id=lapsed.id).update(
-        expires_at=timezone.now() - timedelta(seconds=1)
+        expires_at=Now() - timedelta(seconds=1)
     )
     response = api.post(f"/api/approvals/{lapsed.id}/decision", {"approved": True})
     assert response.status_code == 409

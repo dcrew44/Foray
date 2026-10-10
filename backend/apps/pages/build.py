@@ -17,13 +17,13 @@ from decimal import Decimal
 from typing import Any, cast
 
 from django.db.models import Avg, Count, F, Q, Sum
-from django.db.models.functions import TruncDate
-from django.utils import timezone
+from django.db.models.functions import Now, TruncDate
 
 from apps.accounts.api import SettingsOut
 from apps.accounts.models import User
 from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
+from apps.core import clock
 from apps.core.jsonio import js_locale
 from apps.jobs.models import Company, CompanyStatus
 from apps.jobs.pipeline import CompanyRow, company_row
@@ -112,9 +112,10 @@ def plural(count: int, one: str, many: str | None = None) -> str:
 
 
 def month_start(now: datetime | None = None) -> datetime:
-    """The first of the current month, UTC: where spend is counted from."""
-    at = (now or datetime.now(UTC)).astimezone(UTC)
-    return datetime(at.year, at.month, 1, tzinfo=UTC)
+    """The first of the current month, UTC: where spend is counted from. "Current" is the
+    database's month, as the budget guard counts it (one query), so the page and the guard
+    agree at a month boundary whatever this process's clock says."""
+    return clock.month_start(now)
 
 
 def _first_name(user: User) -> str:
@@ -223,8 +224,7 @@ def _waiting(user_id: str) -> HomeWaiting:
     approvals = (
         Approval.objects.for_user(user_id)
         .filter(status=ApprovalStatus.PENDING)
-        # `expires_at` is written with Python's clock, so it is compared with it (step-8E.md §7).
-        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=Now()))
         .count()
     )
     running = Run.objects.for_user(user_id).filter(status__in=ACTIVE_RUN_STATUSES).count()

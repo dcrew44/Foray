@@ -37,8 +37,8 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+from django.db.models.functions import Now
 from django.test.client import AsyncClient
-from django.utils import timezone
 from pydantic import BaseModel, ConfigDict
 from pydantic_ai import RunContext
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, UserPromptPart
@@ -569,6 +569,18 @@ def test_the_chat_fake_lists_matches(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     assert contract(tmp_path, "fake_list_jobs", sent, reply)["matches"] is True
 
 
+def test_the_chat_fake_adds_a_pasted_board_link() -> None:
+    """A board link holds "jobs", so the add plan is read before the list plan: "add
+    https://jobs.ashbyhq.com/linear" adds the company instead of listing matches."""
+    plan = chat_fakes._plan("add https://jobs.ashbyhq.com/linear")
+    assert [name for name, _ in plan.steps] == ["add_company"]
+    assert plan.steps[0][1]({}) == {"name_or_url": "https://jobs.ashbyhq.com/linear"}
+    assert [name for name, _ in chat_fakes._plan("Show me my matches").steps] == ["list_jobs"]
+    assert [name for name, _ in chat_fakes._plan("Which jobs did you find?").steps] == [
+        "start_search_run"
+    ]
+
+
 def test_the_chat_fake_runs_the_interview(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """On fakes, Home's "Answer in chat" opener asks the interview's question (it is not read as
     a search), and labelled answers are saved through the real `update_profile_preferences`
@@ -844,6 +856,96 @@ def test_regenerate_drops_the_stale_tail_and_never_duplicates(
         ("assistant", "Answer 3."),
     ]
     assert stored[1]["id"] == again.reply_id != first.reply_id
+
+
+def test_try_again_on_a_run_update_notice_runs_a_read_only_follow_up(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A turn failed after it started a run, the run's follow-up then landed, and the user
+    clicked "Try again": the client's `regenerate()` re-sends the last user-role message, which
+    is the automatic notice. Its reply is a follow-up again: read-only tools, attributed to the
+    run, stored with the follow-up marker. It never runs as the user's turn with write tools."""
+    offered: list[set[str]] = []
+
+    async def stream(messages: list[ModelMessage], info: AgentInfo) -> AsyncIterator[str]:
+        offered.append({tool.name for tool in info.function_tools})
+        yield "The search is waiting for your go-ahead."
+
+    install(monkeypatch, stream)
+    user = make_user()
+    conversation = make_conversation(user)
+    run_ = make_run(user, status="awaiting_approval", conversation=conversation)
+    make_message(conversation, role="user", text="Find me roles", message_id="u1")
+    make_message(conversation, role="assistant", text="Starting a search.", message_id="a1")
+    notice_meta = {
+        "kind": "run_update",
+        "runId": str(run_.id),
+        "eventId": 7,
+        "label": "Search paused for your go-ahead",
+    }
+    notice = make_message(
+        conversation,
+        role="user",
+        text=f"[Automatic update about run {run_.id}, not written by the user]\nPaused.",
+        message_id="n1",
+        metadata=notice_meta,
+    )
+    make_message(
+        conversation,
+        role="assistant",
+        text="Shall I go ahead?",
+        message_id="f1",
+        metadata={"kind": "follow_up", "runId": str(run_.id), "eventId": 7},
+    )
+    resent = {
+        "id": str(conversation.id),
+        "message": {
+            "id": "n1",
+            "role": "user",
+            "parts": notice.parts,
+            "metadata": notice_meta,
+        },
+    }
+
+    async def scenario() -> Sent:
+        return await post(await signed_in(user), resent)
+
+    sent = run(scenario())
+    assert sent.status == 200 and sent.error_texts == []
+    assert offered == [set(FOLLOW_UP_TOOLS)]  # never answer_approval, start_search_run, …
+    stored = saved(conversation.id)
+    assert [m["id"] for m in stored][:3] == ["u1", "a1", "n1"]
+    [reply] = stored[3:]
+    assert reply["id"] == sent.reply_id != "f1"
+    assert reply["metadata"] == {"kind": "follow_up", "runId": str(run_.id), "eventId": 7}
+    assert stored[2]["metadata"] == notice_meta  # the notice itself is untouched
+    rows = list(LlmCall.objects.for_user(user.pk).filter(purpose="chat"))
+    assert rows and {(row.run_id, row.conversation_id) for row in rows} == {
+        (run_.id, conversation.id)
+    }
+
+
+def test_try_again_on_the_users_own_message_keeps_every_tool(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    offered: list[set[str]] = []
+
+    async def stream(messages: list[ModelMessage], info: AgentInfo) -> AsyncIterator[str]:
+        offered.append({tool.name for tool in info.function_tools})
+        yield "Answer."
+
+    install(monkeypatch, stream)
+    user = make_user()
+    chat_id = uuid.uuid4()
+
+    async def scenario() -> None:
+        client = await signed_in(user)
+        await send(client, chat_id, "First question", message_id="m1")
+        await send(client, chat_id, "First question", message_id="m1")  # "Try again"
+
+    run(scenario())
+    assert offered == [set(TOOL_NAMES)] * 2
+    assert reply_of(chat_id).get("metadata") is None
 
 
 def test_refusals_are_plain_text_and_write_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1649,7 +1751,7 @@ def test_conversation_endpoints() -> None:
     older = make_conversation(user, title=None)
     newer = make_conversation(user, title="Search plans")
     Conversation.objects.unscoped("tests").filter(id=newer.id).update(
-        updated_at=timezone.now() + timedelta(minutes=1)
+        updated_at=Now() + timedelta(minutes=1)
     )
     make_message(newer, text="Find roles", message_id="u1")
     make_message(

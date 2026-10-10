@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from django.utils import timezone
+from django.db.models.functions import Now
 from pydantic_ai.messages import ModelMessage
 from pydantic_ai.models.function import AgentInfo, DeltaToolCall, FunctionModel
 
@@ -231,9 +231,7 @@ def test_follow_up_yields_to_user_turn(
 ) -> None:
     install(monkeypatch, says("Here is the update."))
     user, conversation, run = chat_run()
-    Conversation.objects.for_user(user.pk).filter(id=conversation.id).update(
-        turn_started_at=timezone.now()
-    )
+    Conversation.objects.for_user(user.pk).filter(id=conversation.id).update(turn_started_at=Now())
     event = emitted(user.pk, "run.completed", "Found 2 roles.", run)
     [first] = deferred("chat.follow_up")
 
@@ -257,9 +255,7 @@ def test_a_follow_up_re_defers_itself_while_a_turn_streams(
     ends; no worker slot waits."""
     install(monkeypatch, says("Here is the update."))
     user, conversation, run = chat_run()
-    Conversation.objects.for_user(user.pk).filter(id=conversation.id).update(
-        turn_started_at=timezone.now()
-    )
+    Conversation.objects.for_user(user.pk).filter(id=conversation.id).update(turn_started_at=Now())
     event = emitted(user.pk, "run.completed", "Done.", run)
     run_deferred(["interactive"])
     [later] = deferred("chat.follow_up")
@@ -277,7 +273,7 @@ def test_a_dead_turns_marker_is_ignored_and_stale_news_is_skipped(
 ) -> None:
     install(monkeypatch, says("Update."))
     user, conversation, run = chat_run()
-    long_ago = timezone.now() - timedelta(seconds=250)  # older than the 180 s turn timeout
+    long_ago = Now() - timedelta(seconds=250)  # older than the 180 s turn timeout
     Conversation.objects.for_user(user.pk).filter(id=conversation.id).update(
         turn_started_at=long_ago
     )
@@ -285,12 +281,10 @@ def test_a_dead_turns_marker_is_ignored_and_stale_news_is_skipped(
     assert run_now(event.id) == "posted"
 
     _, other, other_run = chat_run()
-    Conversation.objects.for_user(other.user_id).filter(id=other.id).update(
-        turn_started_at=timezone.now()
-    )
+    Conversation.objects.for_user(other.user_id).filter(id=other.id).update(turn_started_at=Now())
     old = emitted(other.user_id, "run.completed", "Done.", other_run)
     Event.objects.unscoped("tests").filter(id=old.id).update(
-        created_at=timezone.now() - timedelta(minutes=6)
+        created_at=Now() - timedelta(minutes=6)
     )
     assert run_now(old.id) == "skipped (stale)"
     assert messages_of(other) == []
@@ -303,7 +297,7 @@ def test_follow_up_retries_when_the_conversation_moved(monkeypatch: pytest.Monke
 
     def user_speaks() -> None:
         Conversation.objects.for_user(holder["user"]).filter(id=holder["conversation"]).update(
-            updated_at=timezone.now()
+            updated_at=Now()
         )
 
     async def stream(messages: list[ModelMessage], info: AgentInfo) -> AsyncIterator[str]:
@@ -446,8 +440,47 @@ def test_a_gate_follow_up_names_the_proposed_roles(monkeypatch: pytest.MonkeyPat
     roles = [line for line in lines if line.startswith("- ")]
     assert roles[0].startswith("- Platform Engineer at ") and "(77)" in roles[0]
     assert roles[1].startswith("- Data Engineer at ") and "(81)" in roles[1]  # trimmed title
+    # The update names the approval, so a "yes" in chat answers it without guessing an id.
+    assert any(
+        line.startswith(f'The pending approval is "{approval.id}" (deep_eval_batch: ')
+        and "pass that id to answer_approval" in line
+        for line in lines
+    )
     label = (messages_of(conversation)[0].metadata or {})["label"]
     assert label == "Search paused for your go-ahead"
+
+
+def test_a_gate_answered_from_its_card_while_the_reply_is_written_is_not_posted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The user clicks the approval card while the follow-up is being generated: the reply
+    would ask "shall I go ahead?" after the review had started. Answering from the card does not
+    touch the chat, so the post re-checks the approval itself."""
+    from apps.runs import approvals
+
+    holder: dict[str, Any] = {}
+
+    def answer_from_the_card() -> None:
+        result = approvals.decide(holder["user"], holder["approval"], {"approved": True}, "ui")
+        assert result.outcome == "decided"
+
+    async def stream(messages: list[ModelMessage], info: AgentInfo) -> AsyncIterator[str]:
+        await db(answer_from_the_card)
+        yield "Both look strong. Shall I go ahead with the deep review?"
+
+    install(monkeypatch, stream)
+    user, conversation, run = chat_run(status="awaiting_approval")
+    approval = make_approval(user, run=run, title="Deep-evaluate 2 roles")
+    holder.update(user=user.pk, approval=approval.id)
+    gate = emitted(user.pk, "approval.requested", "Waiting for you.", run, approval_id=approval.id)
+    assert run_now(gate.id) == "skipped (decided)"
+    assert messages_of(conversation) == []
+    assert followup_events(user.pk)[-1].data == {
+        "conversationId": str(conversation.id),
+        "runId": str(run.id),
+        "skipped": True,
+        "reason": "decided",
+    }
 
 
 def test_the_chat_fake_reports_in_text_with_read_only_tools(

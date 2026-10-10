@@ -26,6 +26,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from django.db.models.functions import Now
 from django.utils import timezone
 
 import apps.accounts
@@ -381,14 +382,14 @@ def make_approval(
     if run is None:
         run = make_run(user, status="awaiting_approval" if status == "pending" else "running")
     if status == ApprovalStatus.PENDING:
-        fields.setdefault("expires_at", timezone.now() + timedelta(days=7))
+        fields.setdefault("expires_at", Now() + timedelta(days=7))  # the database's clock
     elif status in (ApprovalStatus.APPROVED, ApprovalStatus.AUTO_APPROVED, ApprovalStatus.REJECTED):
         approved = status != ApprovalStatus.REJECTED
         fields.setdefault("decision", catalogue.StoredDecision(approved=approved).dump())
         fields.setdefault(
             "decided_via", "autopilot" if status == ApprovalStatus.AUTO_APPROVED else "ui"
         )
-        fields.setdefault("decided_at", timezone.now())
+        fields.setdefault("decided_at", Now())
     elif status == ApprovalStatus.EXPIRED:
         fields.setdefault("decided_via", "expiry")
     return Approval.objects.create_for(

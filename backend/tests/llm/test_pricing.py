@@ -75,9 +75,27 @@ def test_charges_anthropic_cache_writes_at_the_write_rate() -> None:
 
 
 def test_cache_writes_bill_at_the_input_rate_where_not_priced_separately() -> None:
-    assert cost_usd("openai:gpt-5.6-luna", cache_write_tokens=1_000_000) == pytest.approx(
-        0.2, abs=1e-10
+    assert cost_usd("deepseek:deepseek-flash", cache_write_tokens=1_000_000, at=PEAK) == (
+        pytest.approx(0.3, abs=1e-10)
     )
+
+
+@pytest.mark.parametrize(
+    ("ref", "rate"), [("openai:gpt-5.6-luna", 0.25), ("openai:gpt-5.6-terra", 2.5)]
+)
+def test_gpt_5_6_cache_writes_bill_at_one_and_a_quarter_times_input(ref: str, rate: float) -> None:
+    """OpenAI bills GPT-5.6 cache writes at 1.25x the uncached input rate; pydantic-ai reports
+    them as `cache_write_tokens`, so they must not fall back to the input rate."""
+    assert cost_usd(ref, cache_write_tokens=1_000_000) == pytest.approx(rate, abs=1e-10)
+    # The review's example request: 1,000 uncached, 3,000 written, 1,000 read, 300 out.
+    luna = cost_usd(
+        "openai:gpt-5.6-luna",
+        input_tokens=1_000,
+        cache_write_tokens=3_000,
+        cached_input_tokens=1_000,
+        output_tokens=300,
+    )
+    assert luna == pytest.approx(0.001330, abs=1e-12)
 
 
 def test_does_not_double_count_reasoning() -> None:

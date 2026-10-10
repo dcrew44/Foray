@@ -10,6 +10,7 @@ import { RunCard } from "@/components/runs/run-card";
 import { Spinner } from "@/components/ui/spinner";
 import { api, call } from "@/lib/api/client";
 import type { ImportOutput } from "@/lib/api/types";
+import { resumeTooLarge } from "@/lib/uploads";
 import { cn } from "@/lib/utils";
 
 import { useRunOutcome } from "./run-outcome";
@@ -66,6 +67,12 @@ export function ResumeDropzone({
   async function start(file: File) {
     if (!/\.(pdf|docx)$/i.test(file.name)) {
       setError("Upload a PDF or a Word (.docx) file.");
+      return;
+    }
+    // Refused here, before sending: past 16 MB the proxy would hang instead of answering 413.
+    const tooLarge = resumeTooLarge(file.size);
+    if (tooLarge) {
+      setError(tooLarge);
       return;
     }
     setError(null);

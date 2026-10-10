@@ -42,6 +42,7 @@ from django.db import (
     transaction,
 )
 from django.db.models import Value
+from django.db.models.functions import Now
 from django.utils import timezone
 from psycopg.rows import dict_row
 
@@ -986,13 +987,22 @@ def preflight(cfg: Config, opts: Options, *, now: datetime) -> tuple[Marker | No
         )
     busy = target_tables_with_rows()
     if busy and not opts.replace:
-        raise ImportRefused(
-            f"{cfg.target_db} already has data; pass --replace or run reset_app_db "
-            f"(rows in {', '.join(busy)})"
-        )
+        raise ImportRefused(already_has_data(cfg.target_db, busy))
     with source.session(cfg.legacy_url) as conn:
         notes["queue_jobs"] = source.active_queue_jobs(conn)
     return marker, notes
+
+
+def already_has_data(target_db: str, busy: Sequence[str]) -> str:
+    """The refusal for a target with rows. It never suggests a discarding command without saying
+    what it discards: a re-import after days of use would lose everything made since."""
+    return (
+        f"{target_db} already has data (rows in {', '.join(busy)}). Importing again discards "
+        f"everything in {target_db}, including whatever was created since the last import. "
+        "Only if that is what you want: pass --replace, or run reset_app_db. If this database "
+        "holds the data you use, run manage.py mark_cutover (pnpm db:mark-cutover) instead; "
+        "both then refuse."
+    )
 
 
 def run_import(opts: Options, *, out: Callable[[str], None] = print) -> Outcome:
@@ -1045,7 +1055,9 @@ def run_import(opts: Options, *, out: Callable[[str], None] = print) -> Outcome:
             seconds = time.monotonic() - started
             record = ImportRecord.objects.create(
                 started_at=importer.now,
-                finished_at=timezone.now(),
+                # The database's clock: acceptance_checks tells imported runs from new ones by
+                # comparing their created_at (written by the database) with this (step H2).
+                finished_at=Now(),
                 status=ImportStatus.OK,
                 legacy_db=cfg.legacy_db,
                 counts=importer.log.counts,

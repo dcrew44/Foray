@@ -22,6 +22,13 @@ from apps.legacy.importer import (
     run_import,
 )
 
+# Until the import is marked, `import_legacy --replace` and `reset_app_db` can still discard it.
+NEXT_STEPS = (
+    "Next: pnpm db:verify-import (and --password-prompt in your own terminal), then "
+    "pnpm db:mark-cutover once this is the data you will use. Until it is marked, "
+    "import_legacy --replace and reset_app_db can still discard everything in this database."
+)
+
 
 def print_outcome(command: BaseCommand, outcome: Outcome) -> None:
     command.stdout.write("Checks:")
@@ -89,3 +96,5 @@ class Command(BaseCommand):
             f"Imported in {outcome.seconds:.1f} s. Record {record.id} "
             f"({'rehearsal' if opts.rehearsal else 'import'} of {record.legacy_db})."
         )
+        if not opts.rehearsal:
+            self.stdout.write(NEXT_STEPS)

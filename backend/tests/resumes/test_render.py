@@ -7,6 +7,7 @@ import asyncio
 import hashlib
 import io
 import logging
+import threading
 import time
 from collections.abc import AsyncIterator
 from typing import Any, cast
@@ -309,3 +310,91 @@ async def _sync(fn: Any, *args: Any, **kwargs: Any) -> Any:
     from apps.core.db import db
 
     return await db(fn, *args, **kwargs)
+
+
+# --- A cancel while the document row is written --------------------------------------------------
+
+
+class _HeldWrite:
+    """Holds a `render` write in its db() thread until released, as a slow commit would, so a
+    cancel can land while it is still running."""
+
+    def __init__(self, real: Any, *, fail: bool = False) -> None:
+        self.real = real
+        self.fail = fail
+        self.entered = threading.Event()
+        self.release = threading.Event()
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        self.entered.set()
+        self.release.wait(10)
+        if self.fail:
+            raise RuntimeError("the write failed")
+        return self.real(*args, **kwargs)
+
+
+async def _cancel_while_held(held: _HeldWrite, call: Any) -> None:
+    task = asyncio.create_task(call)
+    assert await asyncio.to_thread(held.entered.wait, 10)
+    task.cancel()
+    await asyncio.sleep(0.1)  # the cancel arrives while the write is still in its thread
+    assert not task.done()  # it waits for the write's outcome instead of giving up on it
+    held.release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+
+@pytest.fixture
+def blank_render(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fitted(resume: Resume) -> FittedPdf:
+        return FittedPdf(pdf=_blank_pdf(612), pages=1, density="normal")
+
+    monkeypatch.setattr(render, "render_fitted", fitted)
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("blank_render")
+async def test_a_cancel_during_the_record_keeps_the_file_of_the_row_that_commits(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Stop, a step timeout or a shutdown cancel used to delete the new PDF while its row went
+    on to commit in the db() thread: the resume then pointed at a document whose file was gone
+    (404 "The file is missing from storage.")."""
+    user = await _sync(make_user, with_resume=True)
+    base = await _sync(lambda: ResumeRow.objects.for_user(user.pk).get(kind="base"))
+    held = _HeldWrite(render._record)
+    monkeypatch.setattr(render, "_record", held)
+    await _cancel_while_held(held, render_resume(user.pk, base.id))
+    document = await _sync(lambda: Document.objects.for_user(user.pk).get())
+    row = await _sync(lambda: ResumeRow.objects.for_user(user.pk).get(id=base.id))
+    assert row.rendered_document_id == document.id
+    assert storage().exists(document.storage_path)
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("blank_render")
+async def test_a_cancel_during_a_record_that_fails_leaves_no_file(monkeypatch: pytest.MonkeyPatch):
+    user = await _sync(make_user, with_resume=True)
+    base = await _sync(lambda: ResumeRow.objects.for_user(user.pk).get(kind="base"))
+    held = _HeldWrite(render._record, fail=True)
+    monkeypatch.setattr(render, "_record", held)
+    await _cancel_while_held(held, render_resume(user.pk, base.id))
+    assert not await _sync(lambda: Document.objects.for_user(user.pk).exists())
+    pdfs = storage().root / user.pk / "resume_pdf"
+    assert not pdfs.exists() or list(pdfs.iterdir()) == []  # no orphan file
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("blank_render")
+async def test_a_cancel_during_a_repair_keeps_the_repaired_file(monkeypatch: pytest.MonkeyPatch):
+    user = await _sync(make_user, with_resume=True)
+    base = await _sync(lambda: ResumeRow.objects.for_user(user.pk).get(kind="base"))
+    first = await render_resume(user.pk, base.id)
+    gone = await _sync(lambda: Document.objects.for_user(user.pk).get(id=first.document_id))
+    storage().delete(gone.storage_path)
+    held = _HeldWrite(render._repair)
+    monkeypatch.setattr(render, "_repair", held)
+    await _cancel_while_held(held, render_resume(user.pk, base.id))
+    repaired = await _sync(lambda: Document.objects.for_user(user.pk).get(id=first.document_id))
+    assert repaired.storage_path != gone.storage_path
+    assert storage().exists(repaired.storage_path)

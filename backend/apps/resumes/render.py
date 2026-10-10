@@ -41,7 +41,7 @@ from dataclasses import dataclass
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
-from django.utils import timezone
+from django.db.models.functions import Now
 from playwright.async_api import Browser, Playwright, Route, async_playwright
 from playwright.async_api import Error as PlaywrightError
 
@@ -312,7 +312,7 @@ def _find_rendered(user_id: str, key: str) -> Document | None:
 
 def _point_at(user_id: str, resume_id: uuid.UUID | str, document_id: uuid.UUID) -> None:
     ResumeRow.objects.for_user(user_id).filter(id=resume_id).update(
-        rendered_document_id=document_id, updated_at=timezone.now()
+        rendered_document_id=document_id, updated_at=Now()
     )
 
 
@@ -356,11 +356,45 @@ def _record(
         return existing, False
 
 
-def _repair(user_id: str, document_id: uuid.UUID, *, path: str, pdf: bytes) -> None:
-    """Points a document whose file went missing at a fresh render of the same HTML."""
-    Document.objects.for_user(user_id).filter(id=document_id).update(
-        storage_path=path, size_bytes=len(pdf), sha256=sha256_hex(pdf)
-    )
+def _repair(
+    user_id: str, resume_id: uuid.UUID | str, document_id: uuid.UUID, *, path: str, pdf: bytes
+) -> None:
+    """Points a document whose file went missing at a fresh render of the same HTML, and the
+    resume at the document, in one transaction (one outcome to wait for, see `_settled`)."""
+    with transaction.atomic():
+        Document.objects.for_user(user_id).filter(id=document_id).update(
+            storage_path=path, size_bytes=len(pdf), sha256=sha256_hex(pdf)
+        )
+        _point_at(user_id, resume_id, document_id)
+
+
+async def _settled[T](path: str, keeps_file: Callable[[T], bool], write: Awaitable[T]) -> T:
+    """Awaits a `db()` write that records the file just stored at `path`, and deletes that file
+    unless the write committed and `keeps_file(result)` says the row uses it.
+
+    A cancel (Stop, a step timeout, a shutdown abort) cannot stop the write's thread, and asgiref
+    stops waiting for it at once: the write may still commit after the cancel arrived. Deleting
+    the file then left a committed document whose file was gone (a broken PDF link). So on a
+    cancel this waits, shielded, for the write's real outcome before judging the file, and only
+    then lets the cancel through. An outcome it cannot learn (cancelled again while waiting)
+    keeps the file: an orphan file is harmless, a row without its file is not."""
+    task = asyncio.ensure_future(write)
+    try:
+        result = await asyncio.shield(task)
+    except asyncio.CancelledError:
+        with contextlib.suppress(asyncio.CancelledError):
+            await asyncio.wait({task})
+        if task.done() and (
+            task.cancelled() or task.exception() is not None or not keeps_file(task.result())
+        ):
+            await asyncio.to_thread(storage().delete, path)
+        raise
+    except BaseException:
+        await asyncio.to_thread(storage().delete, path)  # nothing committed: no orphan file
+        raise
+    if not keeps_file(result):
+        await asyncio.to_thread(storage().delete, path)
+    return result
 
 
 def _read_stored(path: str) -> bytes | None:
@@ -398,25 +432,21 @@ async def render_resume(user_id: str, resume_id: uuid.UUID | str) -> RenderResul
     await asyncio.to_thread(storage().put, path, fitted.pdf)
 
     if existing is not None:  # its file was missing or unreadable: repair it in place
-        try:
-            await db(_repair, user_id, existing.id, path=path, pdf=fitted.pdf)
-            await db(_point_at, user_id, resume_id, existing.id)
-        except BaseException:
-            await asyncio.to_thread(storage().delete, path)
-            raise
+        await _settled(
+            path,
+            lambda _: True,
+            db(_repair, user_id, resume_id, existing.id, path=path, pdf=fitted.pdf),
+        )
         return RenderResult(
             document_id=existing.id, pages=fitted.pages, density=fitted.density, reused=False
         )
 
-    try:
-        document, written = await db(
-            _record, user_id, resume_id, key=key, filename=filename, path=path, pdf=fitted.pdf
-        )
-    except BaseException:
-        await asyncio.to_thread(storage().delete, path)  # no orphan file
-        raise
+    document, written = await _settled(
+        path,
+        lambda recorded: recorded[1],  # False: another render's document is used instead
+        db(_record, user_id, resume_id, key=key, filename=filename, path=path, pdf=fitted.pdf),
+    )
     if not written:
-        await asyncio.to_thread(storage().delete, path)
         return RenderResult(document_id=document.id, pages=fitted.pages, density=None, reused=True)
     return RenderResult(
         document_id=document.id, pages=fitted.pages, density=fitted.density, reused=False

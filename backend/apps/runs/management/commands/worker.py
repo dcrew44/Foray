@@ -18,6 +18,12 @@ Then it runs three procrastinate Workers, one per lane, under `asyncio.gather` i
 | `background` | `WORKER_CONCURRENCY` (3) |
 | `system` | 2 |
 
+A lane that loses the database (a Postgres restart or an outage longer than the pool's 30 s
+wait: procrastinate's heartbeat and fetch have no error handling, so the lane ends) is started
+again after a pause, 1 s doubling to 30 s, for as long as the worker is not stopping; the other
+lanes keep running. Any other way a lane ends still stops the worker with exit code 1 (the
+prod compose restarts it).
+
 One SIGINT/SIGTERM handler stops all three: each stops fetching, gives its running jobs
 `--shutdown-timeout` seconds, then cancels them (in-flight model calls included, each ledgered);
 the reaper fails their runs, and a cancelled `chat.follow_up` is retried once. Each Worker
@@ -36,12 +42,14 @@ import os
 import signal
 from typing import Any
 
+import psycopg
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.migrations.executor import MigrationExecutor
 from procrastinate.contrib.django.django_connector import DjangoConnector
+from procrastinate.exceptions import ConnectorException
 
 from apps.core.guards import assert_app_database
 from apps.core.queue import app
@@ -55,6 +63,11 @@ DEFAULT_SHUTDOWN_TIMEOUT = 60.0
 # last). Together with `pnpm dev:worker`'s 5 s graceful window it fits watchfiles' 15 s.
 BROWSER_CLOSE_TIMEOUT_S = 10.0
 UNAPPLIED = "There are unapplied migrations. Run pnpm db:migrate"
+# A lane that lost the database starts again after this pause, doubling up to the maximum; one
+# that had been running at least RESTART_RESET_AFTER_S starts its backoff over. Read at call time.
+RESTART_DELAY_S = 1.0
+RESTART_DELAY_MAX_S = 30.0
+RESTART_RESET_AFTER_S = 60.0
 
 
 def lanes() -> list[tuple[str, int]]:
@@ -87,6 +100,57 @@ async def _close_browser_bounded() -> None:
         )
 
 
+def lost_the_database(error: BaseException) -> bool:
+    """Whether a lane ended because its database connection failed (procrastinate wraps psycopg's
+    errors in `ConnectorException`; a pool timeout is a psycopg `OperationalError`)."""
+    seen: set[int] = set()
+    current: BaseException | None = error
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, ConnectorException | psycopg.OperationalError):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
+
+
+async def _run_lane(
+    lane: str, concurrency: int, shutdown_timeout: float, stop: asyncio.Event
+) -> None:
+    """One lane's procrastinate Worker, started again whenever it loses the database, until the
+    worker stops. Any other ending returns or raises to `serve()`."""
+    loop = asyncio.get_running_loop()
+    delay = RESTART_DELAY_S
+    while True:
+        started = loop.time()
+        try:
+            await app.run_worker_async(
+                queues=[lane],
+                concurrency=concurrency,
+                name=lane,
+                install_signal_handlers=False,
+                shutdown_graceful_timeout=shutdown_timeout,
+            )
+            return
+        except Exception as error:
+            if stop.is_set() or not lost_the_database(error):
+                raise
+            if loop.time() - started >= RESTART_RESET_AFTER_S:
+                delay = RESTART_DELAY_S
+            log.error(
+                "lane %s lost the database (%s: %s); starting it again in %ss",
+                lane,
+                type(error).__name__,
+                error,
+                delay,
+            )
+        try:
+            await asyncio.wait_for(stop.wait(), delay)
+            return  # stopping: nothing to start again
+        except TimeoutError:
+            pass
+        delay = min(delay * 2, RESTART_DELAY_MAX_S)
+
+
 async def serve(
     shutdown_timeout: float,
     *,
@@ -94,7 +158,8 @@ async def serve(
     install_signal_handlers: bool = True,
 ) -> int:
     """Run the three lanes until `stop` is set (SIGINT/SIGTERM set it). Returns the exit code:
-    1 when a lane stopped on its own (its side task failed, e.g. the database went away)."""
+    1 when a lane stopped on its own for any reason but a lost database connection, which
+    `_run_lane` recovers from by starting the lane again."""
     loop = asyncio.get_running_loop()
     stop = stop or asyncio.Event()
     signals = (signal.SIGINT, signal.SIGTERM) if install_signal_handlers else ()
@@ -115,13 +180,7 @@ async def serve(
                 )
                 workers = {
                     lane: asyncio.create_task(
-                        app.run_worker_async(
-                            queues=[lane],
-                            concurrency=concurrency,
-                            name=lane,
-                            install_signal_handlers=False,
-                            shutdown_graceful_timeout=shutdown_timeout,
-                        ),
+                        _run_lane(lane, concurrency, shutdown_timeout, stop),
                         name=f"worker:{lane}",
                     )
                     for lane, concurrency in lanes()

@@ -27,6 +27,7 @@ from datetime import datetime
 
 from django.db import IntegrityError, connection, transaction
 from django.db.models import Count, F, Q
+from django.db.models.functions import Now
 from django.utils import timezone
 
 from apps.core.ids import new_id
@@ -247,7 +248,7 @@ def record_fetch(
     fields: dict[str, object] = {
         "last_fetched_at": timezone.now(),
         "last_fetch_status": status,
-        "updated_at": timezone.now(),
+        "updated_at": Now(),
     }
     if job_count is not None:
         fields["last_fetch_job_count"] = job_count
@@ -257,7 +258,7 @@ def record_fetch(
 
 
 def set_company_status(company_id: uuid.UUID, status: str) -> Company | None:
-    updated = Company.objects.filter(id=company_id).update(status=status, updated_at=timezone.now())
+    updated = Company.objects.filter(id=company_id).update(status=status, updated_at=Now())
     return Company.objects.filter(id=company_id).first() if updated else None
 
 

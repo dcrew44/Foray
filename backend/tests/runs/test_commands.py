@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import CommandError, call_command
+from django.db.models.functions import Now
 from django.utils import timezone
 
 from apps.core.storage import storage
@@ -141,7 +142,7 @@ def test_acceptance_checks_report_each_broken_invariant() -> None:
     )
     make_llm_call(user, purpose="score")  # a pipeline call with no run
     missing = make_document(user)  # its file was never written
-    stale_chat = make_conversation(user, turn_started_at=timezone.now() - timedelta(minutes=5))
+    stale_chat = make_conversation(user, turn_started_at=Now() - timedelta(minutes=5))
 
     code, out, _ = _call("acceptance_checks")
     assert code == 1
@@ -192,7 +193,7 @@ def test_acceptance_checks_skip_imported_runs() -> None:
     legacy_tailor = make_run(user, status="completed", kind="tailor")  # ended with tailor.done
     events.emit(user.pk, "tailor.done", "Your resume is ready.", run_id=legacy_tailor.id)
     ImportRecord.objects.create(
-        finished_at=timezone.now(),
+        finished_at=Now(),  # the database's clock, as the importer writes it
         status="ok",
         legacy_db="foray",
         counts={},

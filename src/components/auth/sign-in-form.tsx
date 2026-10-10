@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn, signUp } from "@/lib/api/auth";
+import { DEFAULT_NEXT, safeNext } from "@/lib/safe-next";
 
 type Mode = "sign-in" | "sign-up";
 
@@ -40,8 +41,9 @@ export function SignInForm({ next, signupOpen }: { next: string; signupOpen: boo
       return;
     }
 
-    // A brand-new account starts at onboarding, not an empty dashboard.
-    router.push(mode === "sign-up" ? "/home" : next);
+    // A brand-new account starts at onboarding, not an empty dashboard. `next` is checked again
+    // here: the client navigates to it, so it must never leave the site.
+    router.push(mode === "sign-up" ? DEFAULT_NEXT : safeNext(next));
     router.refresh();
   }
 

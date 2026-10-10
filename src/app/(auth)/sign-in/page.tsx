@@ -5,13 +5,9 @@ import { SignInForm } from "@/components/auth/sign-in-form";
 import { ScoreChip, Wordmark } from "@/components/foray/primitives";
 import type { components } from "@/lib/api/schema";
 import { django, getMeOrNull } from "@/lib/api/server";
+import { safeNext } from "@/lib/safe-next";
 
 export const metadata: Metadata = { title: "Sign in" };
-
-/** Only same-site paths are honoured, so a crafted link cannot bounce elsewhere. */
-function safeNext(next: string | undefined): string {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/home";
-}
 
 /**
  * Signed in: straight on to `next`. Signed out: the form. `getMeOrNull()` answers null on a 401

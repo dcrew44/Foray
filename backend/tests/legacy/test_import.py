@@ -36,6 +36,7 @@ from apps.jobs.models import ApiUsage, Company, Job
 from apps.jobs.sources.dedupe import content_hash
 from apps.legacy import importer, mapping, source
 from apps.legacy.importer import ImportFailure, ImportRefused, Options, Outcome, run_import
+from apps.legacy.management.commands import import_legacy as import_legacy_command
 from apps.legacy.models import ImportRecord
 from apps.legacy.verify import LegacySide, TargetSide, Verification, Verifier
 from apps.llm.models import LlmCall
@@ -408,10 +409,15 @@ def test_refuses_a_marker_whose_dump_does_not_match(legacy: LegacyEnv) -> None:
 def test_refuses_a_non_empty_target(legacy: LegacyEnv) -> None:
     make_company()
     name = connection.settings_dict["NAME"]
-    with pytest.raises(
-        ImportRefused, match=f"{name} already has data; pass --replace or run reset_app_db"
-    ):
+    with pytest.raises(ImportRefused) as refused:
         run()
+    message = str(refused.value)
+    assert message.startswith(f"{name} already has data (rows in companies).")
+    # The two commands that would discard the data are named only with what they discard, and
+    # the safe way out (marking the cutover) is offered.
+    assert f"Importing again discards everything in {name}" in message
+    assert message.index("discards") < message.index("--replace")
+    assert "manage.py mark_cutover (pnpm db:mark-cutover)" in message
     assert not User.objects.exists() and Company.objects.count() == 1
     with pytest.raises(CommandError, match="already has data"):
         call_command("import_legacy", stdout=StringIO())
@@ -720,6 +726,16 @@ def test_import_command_reports_counts_checks_and_conversions(legacy: LegacyEnv)
     assert f"Reported users {seed.OTHER}: no credential account" in text
     assert "Files: 3 in place, 3 copied by this run." in text
     assert json.loads(json.dumps(ImportRecord.objects.get().report))["rehearsal"] is False
+    # A real import ends by saying how to protect it: until marked, --replace can discard it.
+    assert text.rstrip().endswith(import_legacy_command.NEXT_STEPS)
+    assert "pnpm db:mark-cutover" in import_legacy_command.NEXT_STEPS
+
+
+def test_a_rehearsal_import_does_not_ask_for_the_cutover(legacy: LegacyEnv) -> None:
+    out = StringIO()
+    call_command("import_legacy", "--rehearsal", stdout=out)
+    assert "rehearsal of" in out.getvalue()
+    assert import_legacy_command.NEXT_STEPS not in out.getvalue()
 
 
 def test_json_null_and_naive_timestamps() -> None:

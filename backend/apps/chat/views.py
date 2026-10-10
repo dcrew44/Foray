@@ -40,6 +40,7 @@ from django.conf import settings
 from django.contrib import auth
 from django.core.exceptions import RequestDataTooBig
 from django.db import connection, transaction
+from django.db.models.functions import Now
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.http.response import HttpResponseBase
 from django.utils import timezone
@@ -111,6 +112,7 @@ TIMED_OUT: Final = "That reply took too long and was stopped."
 # validation report, or "Unknown tool name") goes back to the model as its retry prompt; the
 # user gets one plain sentence, as the AI SDK's "An error occurred." was.
 INVALID_TOOL_INPUT: Final = "Its input was not valid, so it did not run."
+RUN_UPDATE: Final = "run_update"  # `metadata.kind` of an automatic run-update notice
 
 
 # --- the request ---------------------------------------------------------------------------------
@@ -140,6 +142,8 @@ class Turn:
     message_history: list[ModelMessage] = field(default_factory=list[ModelMessage])
     follow_up: bool = False
     run_id: uuid.UUID | None = None  # follow-ups: the run reported on (attribution)
+    # Stored on the reply instead of the stream's own (a re-run follow-up keeps its marker).
+    reply_metadata: dict[str, Any] | None = None
 
     @property
     def deps(self) -> ChatDeps:
@@ -197,7 +201,7 @@ def _save_reply(turn: Turn, message: Mapping[str, Any]) -> None:
     parts = message.get("parts")
     if not parts:
         return  # a reply with no parts is not saved
-    metadata = message.get("metadata")
+    metadata = turn.reply_metadata if turn.reply_metadata is not None else message.get("metadata")
     with connection.cursor() as cursor:
         cursor.execute(
             _UPSERT_REPLY,
@@ -226,7 +230,7 @@ def finish_turn(turn: Turn, message: Mapping[str, Any]) -> None:
             return  # deleted while the reply streamed
         _save_reply(turn, message)
         Conversation.objects.for_user(turn.user_id).filter(id=turn.conversation_id).update(
-            turn_started_at=None, updated_at=timezone.now()
+            turn_started_at=None, updated_at=Now()
         )
 
 
@@ -323,9 +327,13 @@ def _valid_zone(tz: Any) -> str | None:
     return tz
 
 
-def _write_user_message(user_id: str, conversation: Conversation, incoming: Incoming) -> None:
+def _write_user_message(
+    user_id: str, conversation: Conversation, incoming: Incoming
+) -> dict[str, Any] | None:
     """Insert the message, or, for "Try again" on the latest user message, drop the stale tail
-    so the model never sees the message twice."""
+    so the model never sees the message twice. Returns the metadata of a re-sent run-update
+    notice (the client's `regenerate()` re-sends whatever user-role message is last), else
+    None."""
     rows = Message.objects.for_user(user_id).filter(conversation_id=conversation.id)
     existing = rows.filter(message_id=incoming.message_id).first()
     if existing is None:
@@ -337,11 +345,27 @@ def _write_user_message(user_id: str, conversation: Conversation, incoming: Inco
             parts=incoming.parts,
             metadata=None,
         )
-        return
+        return None
     latest = rows.filter(role=Role.USER).order_by("-seq").first()
     if latest is None or latest.seq != existing.seq:
         raise ApiError(409, ALREADY_SENT)
     rows.filter(seq__gt=existing.seq).delete()
+    metadata = existing.metadata
+    if isinstance(metadata, Mapping) and metadata.get("kind") == RUN_UPDATE:
+        return dict(metadata)
+    return None
+
+
+def _follow_up_of(notice: Mapping[str, Any]) -> tuple[uuid.UUID | None, dict[str, Any]]:
+    """For a re-sent notice: the run it reports on, and the follow-up reply's metadata."""
+    try:
+        run_id = uuid.UUID(str(notice.get("runId")))
+    except ValueError:
+        run_id = None
+    metadata: dict[str, Any] = {"kind": "follow_up", "runId": notice.get("runId")}
+    if "eventId" in notice:
+        metadata["eventId"] = notice["eventId"]
+    return run_id, metadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -388,21 +412,21 @@ def prepare_turn(session_key: str | None, body: ChatRequest) -> Turn:
     limit = throttle.CHAT
     throttle.throttle(f"chat:{user.pk}", limit.limit, limit.window_s)  # autocommit: it counts
     conversation_id = _conversation_id(body.id)
-    now = timezone.now()
+    now = timezone.now()  # the prompt's "today" only; stored timestamps are the database's
     with transaction.atomic():
         conversation = _claim(user.pk, conversation_id)
         incoming = _incoming(body)
-        _write_user_message(user.pk, conversation, incoming)
-        changes: dict[str, Any] = {"turn_started_at": now, "updated_at": now}
+        notice = _write_user_message(user.pk, conversation, incoming)
+        changes: dict[str, Any] = {"turn_started_at": Now(), "updated_at": Now()}
         if not conversation.title:
             changes["title"] = incoming.texts[0][:TITLE_MAX]
         Conversation.objects.for_user(user.pk).filter(id=conversation.id).update(**changes)
         zone = _valid_zone(body.tz)
         if zone is not None and zone != user.timezone:
-            User.objects.filter(pk=user.pk).update(timezone=zone, updated_at=now)
+            User.objects.filter(pk=user.pk).update(timezone=zone, updated_at=Now())
         history = load_history(user.pk, conversation.id)
     turn_input = convert.turn_input(history)
-    return Turn(
+    turn = Turn(
         user_id=user.pk,
         conversation_id=conversation.id,
         reply_id=generate_message_id(),
@@ -410,6 +434,13 @@ def prepare_turn(session_key: str | None, body: ChatRequest) -> Turn:
         user_prompt=turn_input.user_prompt,
         message_history=turn_input.message_history,
     )
+    if notice is not None:
+        # "Try again" re-sent an automatic run update, not the user's words: the reply is a
+        # follow-up again, with the follow-up's read-only tools and step cap, attributed to its
+        # run, and it keeps the follow-up marker. A notice must never get the write tools.
+        turn.follow_up = True
+        turn.run_id, turn.reply_metadata = _follow_up_of(notice)
+    return turn
 
 
 # --- the stream ----------------------------------------------------------------------------------
@@ -460,7 +491,9 @@ async def stream_turn(turn: Turn) -> AsyncIterator[str]:
     q: asyncio.Queue[Any] = asyncio.Queue()
     # Set inside the generator (the view body has returned by the time this runs); the task
     # copies the context.
-    with llm_context(user_id=turn.user_id, conversation_id=turn.conversation_id):
+    with llm_context(
+        user_id=turn.user_id, run_id=turn.run_id, conversation_id=turn.conversation_id
+    ):
         pump = asyncio.create_task(pump_turn(turn, q))
     started = False
     try:

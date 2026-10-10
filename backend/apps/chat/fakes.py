@@ -11,14 +11,17 @@ user prompt, and plays one short plan per kind of request:
 | labelled answers, `Roles: …; Level: …` | `update_profile_preferences`, then a sentence |
 | "find" / "search" | `start_search_run`, then a sentence |
 | "yes" / "approve" | `list_pending_approvals`, `answer_approval` (the first), a sentence |
+| "add <name>" | `add_company`, then a sentence |
 | "matches" / "jobs" | `list_jobs` with every argument null, then a sentence |
 | "resume" | `get_resume`, then a sentence |
-| "add <name>" | `add_company`, then a sentence |
 | anything else | a short text reply |
 
 A wanted tool that is not offered (a read-only follow-up, the step cap) degrades to text, never
 to a call of an unknown tool. A structured request on the `chat` purpose (`discover_companies`'
 name proposal) is left to the schema-driven default.
+
+"add <name>" is read before "matches"/"jobs": a board link such as
+`add https://jobs.ashbyhq.com/linear` contains "jobs" and must still add the company.
 
 The interview plans let the onboarding flow run on fakes (acceptance item 2): "set up" comes
 before "search" because Home's opener ("Let's set up my job search…") contains both. Answers are
@@ -250,6 +253,18 @@ def _plan(prompt: str) -> Plan:
             (("list_pending_approvals", lambda done: {}), ("answer_approval", answer)), answered
         )
 
+    added = ADD.search(prompt)
+    if added:
+        name = added.group(1).strip().rstrip(".!?").strip()
+
+        def looking(done: Done) -> str:
+            result = done.get("add_company")
+            if _get(result, "ok") is False:
+                return str(_get(result, "message") or "That company could not be added.")
+            return f"I am looking for a job board for {name}. I will report back here when done."
+
+        return Plan((("add_company", lambda done: {"name_or_url": name}),), looking)
+
     if JOBS.search(prompt):
 
         def listed(done: Done) -> str:
@@ -270,18 +285,6 @@ def _plan(prompt: str) -> Plan:
             return str(_get(result, "message") or "I could not read your resume.")
 
         return Plan((("get_resume", lambda done: {"sections": None}),), summary)
-
-    added = ADD.search(prompt)
-    if added:
-        name = added.group(1).strip().rstrip(".!?").strip()
-
-        def looking(done: Done) -> str:
-            result = done.get("add_company")
-            if _get(result, "ok") is False:
-                return str(_get(result, "message") or "That company could not be added.")
-            return f"I am looking for a job board for {name}. I will report back here when done."
-
-        return Plan((("add_company", lambda done: {"name_or_url": name}),), looking)
 
     return Plan((), lambda done: FALLBACK)
 

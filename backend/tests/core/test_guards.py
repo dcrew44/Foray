@@ -146,3 +146,45 @@ def test_env_refusal_exits_without_connecting() -> None:
     assert result.stderr.startswith("Configuration error:")
     assert "DATABASE_URL names the database" in result.stderr
     assert "foray:foray" not in result.stderr  # values are never printed
+
+
+@pytest.mark.parametrize(
+    ("storage", "refused"),
+    [
+        ("./data", True),  # the main checkout's .env today: the legacy data/ folder itself
+        ("./data/new", True),  # inside it
+        (".", True),  # containing it
+        ("./storage", False),
+        ("./data-new", False),  # a sibling whose name only starts the same way
+    ],
+)
+def test_env_keeps_storage_out_of_the_legacy_tree(
+    monkeypatch: pytest.MonkeyPatch, storage: str, refused: bool
+) -> None:
+    """STORAGE_DIR may never be, contain, or sit inside LEGACY_STORAGE_DIR: the api, the worker
+    and every command refuse to boot, instead of writing uploads into the old tree (§3.1)."""
+    from foray.env import REPO_ROOT
+
+    monkeypatch.setenv("LEGACY_STORAGE_DIR", str(REPO_ROOT / "data"))
+    monkeypatch.setenv("STORAGE_DIR", storage)
+    if not refused:
+        build_env()
+        return
+    with pytest.raises(ConfigurationError) as raised:
+        build_env()
+    assert any("LEGACY_STORAGE_DIR" in line for line in raised.value.lines)
+
+
+def test_env_resolves_symlinks_before_comparing_stores(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    legacy = tmp_path / "data"
+    legacy.mkdir()
+    (tmp_path / "store").symlink_to(legacy)
+    monkeypatch.setenv("LEGACY_STORAGE_DIR", str(legacy))
+    monkeypatch.setenv("STORAGE_DIR", str(tmp_path / "store"))
+    with pytest.raises(ConfigurationError) as raised:
+        build_env()
+    assert raised.value.lines[0].startswith("STORAGE_DIR is LEGACY_STORAGE_DIR or inside it")
+    monkeypatch.delenv("LEGACY_STORAGE_DIR")
+    build_env()  # without a legacy tree there is nothing to protect

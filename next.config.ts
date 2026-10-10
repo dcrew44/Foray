@@ -13,8 +13,10 @@ const nextConfig = {
     // The proxy cuts idle sockets at 30 s by default; a chat stream can idle longer between
     // events (it also sends `: ping` every 15 s).
     proxyTimeout: 10 * 60_000,
-    // Larger bodies are truncated into a bare 500. 16 MB leaves room for the 10 MB resume limit
-    // plus multipart overhead, so the user sees Django's friendly 413 instead.
+    // 16 MB leaves room for the 10 MB resume limit plus multipart overhead, so a file a little
+    // over the limit gets Django's friendly 413. A larger body is forwarded truncated under its
+    // original length and hangs until proxyTimeout, so the dropzone refuses anything over 10 MB
+    // itself, with the same sentence, before sending (src/lib/uploads.ts).
     proxyClientMaxBodySize: "16mb",
   },
 

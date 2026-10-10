@@ -22,8 +22,7 @@ from typing import Any, Literal
 from django.db import connection, transaction
 from django.db.models import F, Q, QuerySet
 from django.db.models.fields.json import KT
-from django.db.models.functions import Coalesce, Length
-from django.utils import timezone
+from django.db.models.functions import Coalesce, Length, Now
 
 from apps.core.router import ApiModel
 from apps.jobs.models import Job
@@ -310,7 +309,7 @@ def update_match(
     parsed = as_uuid(match_id)
     if parsed is None:
         return False
-    fields: dict[str, Any] = {"updated_at": timezone.now()}
+    fields: dict[str, Any] = {"updated_at": Now()}
     if notes is not _UNSET:
         fields["notes"] = notes
     if user_rating is not _UNSET:

@@ -16,8 +16,9 @@ from typing import Any, cast
 
 import pytest
 from django.db import connections
-from django.utils import timezone
+from django.db.models.functions import Now
 
+from apps.core.clock import database_now
 from apps.runs import approvals, lifecycle, step
 from apps.runs.approvals import (
     APPROVAL_TTL,
@@ -74,7 +75,7 @@ def test_approve_each_pauses_the_run_and_announces_it() -> None:
     assert approval.decision is None
     assert approval.next_step == "search.evaluate"
     assert approval.expires_at is not None
-    assert approval.expires_at - timezone.now() > APPROVAL_TTL - timedelta(minutes=1)
+    assert approval.expires_at - database_now() > APPROVAL_TTL - timedelta(minutes=1)
 
     run = refresh(run)
     assert run.status == "awaiting_approval"
@@ -193,6 +194,38 @@ def test_approves_a_subset_ignoring_unknown_ids_and_defers_once() -> None:
 
 
 @pytest.mark.django_db
+def test_a_yes_moves_the_run_to_its_continuations_phase_with_the_decision() -> None:
+    """The run is `running` again as soon as it is decided; its phase moves with it, so a card
+    never shows the gate's `awaiting_*` phase while the continuation waits for the worker."""
+    user = make_user()
+    run, approval, _ = _paused_at(user)
+    assert refresh(run).stats["phase"] == "awaiting_evaluation"
+    decide(user.pk, approval.id, {"approved": True}, "ui")
+    resumed = refresh(run)
+    assert (resumed.status, resumed.stats["phase"]) == ("running", "evaluating")
+    assert resumed.stats["toEvaluate"] == 3  # the gate's other stats are kept
+
+    shortlist = request_approval(
+        run.id,
+        "shortlist_proposal",
+        "Shortlist 2 roles",
+        batch_payload(),
+        stats={"phase": "awaiting_shortlist", "proposedShortlist": 2},
+    )
+    assert refresh(run).stats["phase"] == "awaiting_shortlist"
+    decide(user.pk, shortlist.id, {"approved": True}, "chat")
+    assert (refresh(run).status, refresh(run).stats["phase"]) == ("running", "shortlisting")
+
+    # A no does none of that work: the continuation completes the run from the gate's phase.
+    other, declined, _ = _paused_at(user)
+    decide(user.pk, declined.id, {"approved": False}, "ui")
+    assert (refresh(other).status, refresh(other).stats["phase"]) == (
+        "running",
+        "awaiting_evaluation",
+    )
+
+
+@pytest.mark.django_db
 def test_approves_everything_when_no_subset_is_given() -> None:
     user = make_user()
     _, approval, payload = _paused_at(user)
@@ -286,7 +319,7 @@ def test_a_lapsed_approval_cannot_be_decided_and_resumes_the_run_as_a_no() -> No
     user = make_user()
     run, approval, _ = _paused_at(user)
     Approval.objects.for_user(user.pk).filter(id=approval.id).update(
-        expires_at=timezone.now() - timedelta(seconds=1)
+        expires_at=Now() - timedelta(seconds=1)
     )
     assert approval.id not in [a.id for a in list_pending(user.pk)]
 
@@ -312,7 +345,7 @@ def test_the_sweep_resumes_a_lapsed_approval_exactly_once() -> None:
     run, approval, _ = _paused_at(user)
     fresh_run, fresh, _ = _paused_at(user)
     Approval.objects.for_user(user.pk).filter(id=approval.id).update(
-        expires_at=timezone.now() - timedelta(seconds=1)
+        expires_at=Now() - timedelta(seconds=1)
     )
     assert approvals.expire_lapsed() == 1
     assert approvals.expire_lapsed() == 0
@@ -326,7 +359,7 @@ def test_the_sweep_resumes_a_lapsed_approval_exactly_once() -> None:
 def test_the_sweep_lapses_quietly_when_the_run_already_ended() -> None:
     user = make_user()
     run = make_run(user, status="failed")
-    approval = make_approval(user, run=run, expires_at=timezone.now() - timedelta(seconds=1))
+    approval = make_approval(user, run=run, expires_at=Now() - timedelta(seconds=1))
     assert approvals.expire_lapsed() == 1
     assert _approval(approval).status == "expired"
     assert event_kinds(run.id) == []  # the terminal event stays the run's last

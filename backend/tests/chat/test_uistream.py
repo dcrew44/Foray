@@ -48,7 +48,9 @@ from tests.contract.scenarios import (
     budget_exceeded,
 )
 
-PROTOTYPES = Path(__file__).resolve().parents[3] / "docs" / "migration" / "prototypes"
+# The research's two TypeScript reference turns (an approval and its answer), kept with the goldens
+# since step H2: step 13 deletes docs/migration/, where they were first recorded.
+PROTOTYPES = GOLDENS / "prototypes"
 SCENARIOS = json.loads((GOLDENS / "scenarios.json").read_text())["scenarios"]
 
 

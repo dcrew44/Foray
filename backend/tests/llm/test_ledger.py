@@ -328,3 +328,54 @@ async def test_write_failures_are_logged_not_raised(
         result = await Agent(stack).run("Which city?")
     assert result.output == "San Francisco"
     assert any("failed to write ledger row" in r.getMessage() for r in caplog.records)
+
+
+async def test_a_call_whose_chat_is_deleted_meanwhile_keeps_its_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The user deletes the chat a search reports to while the search's step is still paying
+    for calls: the step's context still names the chat, and its foreign key fails at commit.
+    The row is written without the chat, so the budget guard still counts the spend."""
+    from apps.chat.models import Conversation
+    from apps.llm import budget
+
+    user = await db(make_user)
+    conversation = await db(make_conversation, user)
+    run = await db(make_run, user, status="running", conversation=conversation)
+
+    def delete_the_chat_mid_call(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        Conversation.objects.for_user(user.pk).filter(id=conversation.id).delete()
+        return ModelResponse(parts=[TextPart("San Francisco")], usage=USAGE)
+
+    stack = over(monkeypatch, FunctionModel(delete_the_chat_mid_call))
+    with llm_context(user_id=user.pk, run_id=str(run.id), conversation_id=str(conversation.id)):
+        await Agent(stack).run("Which city?")
+    [row] = await ledger_rows(1)
+    assert (row["user_id"], str(row["run_id"]), row["conversation_id"]) == (
+        user.pk,
+        str(run.id),
+        None,
+    )
+    assert row["cost_usd"] == LUNA_COST
+    budget.reset_cache()
+    assert await budget.month_to_date_spend() == LUNA_COST
+
+
+async def test_a_call_whose_user_is_deleted_meanwhile_is_kept_as_a_system_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from apps.accounts.models import User
+
+    user = await db(make_user)
+    run = await db(make_run, user, status="running")
+
+    def delete_the_user_mid_call(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        User.objects.filter(pk=user.pk).delete()  # cascades to the run
+        return ModelResponse(parts=[TextPart("San Francisco")], usage=USAGE)
+
+    stack = over(monkeypatch, FunctionModel(delete_the_user_mid_call))
+    with llm_context(user_id=user.pk, run_id=str(run.id)):
+        await Agent(stack).run("Which city?")
+    [row] = await ledger_rows(1)
+    assert (row["user_id"], row["run_id"], row["conversation_id"]) == (None, None, None)
+    assert row["cost_usd"] == LUNA_COST

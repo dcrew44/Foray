@@ -23,7 +23,7 @@ from typing import Any, Literal, Protocol
 
 from django.db import IntegrityError, transaction
 from django.db.models import Max
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.accounts.schemas import Preferences
 from apps.core.choices import CAMEL, JsonModel
@@ -591,7 +591,7 @@ def save_tailored_resume(
                     verification=verification.dump(),
                 )
                 JobMatch.objects.for_user(user_id).filter(id=match_id).update(
-                    tailored_resume_id=row.id, updated_at=timezone.now()
+                    tailored_resume_id=row.id, updated_at=Now()
                 )
                 return row
         except IntegrityError as error:

@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 from django.db import transaction
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.runs import approvals, events, lifecycle
 from apps.runs.models import Approval, Run
@@ -127,7 +127,7 @@ def _decide() -> tuple[Act, Callable[[Any], dict[str, Any]], Callable[[], Any]]:
 def _expire_lapsed() -> tuple[Act, Callable[[Any], dict[str, Any]], Callable[[], Any]]:
     user = make_user()
     run = make_run(user, status="awaiting_approval")
-    approval = make_approval(user, run=run, expires_at=timezone.now() - timedelta(minutes=1))
+    approval = make_approval(user, run=run, expires_at=Now() - timedelta(minutes=1))
 
     def act() -> Approval:
         assert approvals.expire_lapsed() == 1

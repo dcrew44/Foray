@@ -16,7 +16,9 @@ Conventions:
   them (the system message and the user text). Vision prompts also list their parts; page
   images are recorded by media type only.
 - `uistream/` holds the raw SSE and the persisted (`onEnd`) message per scenario;
-  `scenarios.json` lists the inputs and the scripted model chunks.
+  `scenarios.json` lists the inputs and the scripted model chunks. `uistream/prototypes/` holds
+  the research's two TypeScript reference turns (`ts-turn{1,2}`), moved here from
+  `docs/migration/prototypes/` in step H2 (not written by the capture script).
 - `auth/better_auth_hashes.json` are real Better Auth hashes of test passwords (not secrets).
 - Library versions: ai 7.0.106, better-auth 1.7.5,
   unpdf 1.8.1, mammoth 1.12.3.
@@ -129,5 +131,9 @@ Files:
 - `uistream/tool_returns_undefined.sse`
 - `uistream/tool_two_steps.persisted.json`
 - `uistream/tool_two_steps.sse`
+- `uistream/prototypes/ts-turn1.persisted.json`
+- `uistream/prototypes/ts-turn1.sse`
+- `uistream/prototypes/ts-turn2.persisted.json`
+- `uistream/prototypes/ts-turn2.sse`
 - `uistream/unknown_tool.persisted.json`
 - `uistream/unknown_tool.sse`

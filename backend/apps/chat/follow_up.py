@@ -11,6 +11,7 @@ The user's own turn always has priority, and the follow-up never waits inside a 
 
 1. **Skip** a cancelled run, a decision already answered, a deleted chat, or an event already
    reported (`messages_one_notice_per_event`). A skip emits `chat.followup {skipped, reason}`.
+   A decision is checked again when posting (step 4): the card can answer it meanwhile.
 2. **Yield** to a streaming turn: while `turn_started_at` is younger than 200 s the task
    re-defers itself in 4 s and returns (a marker older than the 180 s turn timeout belongs to a
    dead process and is ignored). An event more than 5 minutes old is skipped as `stale`.
@@ -38,7 +39,7 @@ from datetime import datetime, timedelta
 from typing import Any, Final
 
 from django.db import IntegrityError, transaction
-from django.utils import timezone
+from django.db.models.functions import Now
 from procrastinate.exceptions import AlreadyEnqueued
 
 from apps.chat import convert
@@ -51,6 +52,7 @@ from apps.chat.views import (
     instructions_for,
     load_history,
 )
+from apps.core.clock import database_now
 from apps.core.db import db
 from apps.core.ids import generate_message_id
 from apps.core.jsonio import js_num
@@ -135,10 +137,13 @@ class ApprovalView:
     kind: str
     title: str
     payload: Any
+    id: Any = None  # named in the update, so a later "yes" in chat answers the right approval
 
     @classmethod
     def of(cls, approval: Approval) -> ApprovalView:
-        return cls(kind=approval.kind, title=approval.title, payload=approval.payload)
+        return cls(
+            kind=approval.kind, title=approval.title, payload=approval.payload, id=approval.id
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -204,6 +209,18 @@ def _what(run: RunView) -> str:
     return FOLLOW_UP_KIND_NAME.get(run.kind) or "background work"
 
 
+def _approval_line(approval: ApprovalView) -> str | None:
+    """Which approval is waiting, by id. Without it the model guessed an id when the user then
+    answered in chat (deviations/step-10.md §10); the TypeScript update had no id, so the goldens
+    (built without one) are unchanged."""
+    if approval.id is None:
+        return None
+    return (
+        f'The pending approval is "{approval.id}" ({approval.kind}: {approval.title}). When the '
+        "user answers it in chat, pass that id to answer_approval; never guess one."
+    )
+
+
 def describe_update(
     run: RunView,
     event: EventView,
@@ -234,6 +251,7 @@ def describe_update(
                 "two or three sentences, say what stands out: which look strongest and why, and "
                 "anything that gives you pause. Then ask whether to go ahead with the deep "
                 "review. Do not answer the approval yourself.",
+                _approval_line(approval),
                 RULES,
             ]
             return Update("Search paused for your go-ahead", "\n".join(x for x in lines if x))
@@ -252,7 +270,8 @@ def describe_update(
             return Update(
                 "Deep review done",
                 "\n".join(
-                    [
+                    line
+                    for line in [
                         head,
                         f"The deep review for the search ({what}) is done. It proposes "
                         f"shortlisting {len(items)} {noun}, with the review's score and "
@@ -261,8 +280,10 @@ def describe_update(
                         "list_jobs. Say which look best and why, grounded in the reviews (get_job "
                         "has the evidence if you need more), then ask whether to shortlist them. "
                         "Do not answer the approval yourself.",
+                        _approval_line(approval),
                         RULES,
                     ]
+                    if line
                 ),
             )
 
@@ -271,12 +292,15 @@ def describe_update(
         return Update(
             "Waiting for your go-ahead",
             "\n".join(
-                [
+                line
+                for line in [
                     head,
                     f"{what} is paused, waiting for the user: {waiting_on}.",
                     "Say what it needs and ask.",
+                    _approval_line(approval) if approval is not None else None,
                     RULES,
                 ]
+                if line
             ),
         )
 
@@ -456,7 +480,7 @@ def load(event_id: int) -> Loaded | Skip | Wait | None:
     )
     if already.exists():
         return skip("duplicate")
-    now = timezone.now()
+    now = database_now()  # the clock that wrote the marker and the event
     if _turn_streaming(conversation, now):
         return skip("stale") if _stale(event, now) else Wait()
     return Loaded(
@@ -501,11 +525,26 @@ class Post:
     label: str
     reply_id: str
     reply_parts: list[Any]
+    # For `approval.requested`: the approval the update asks about, re-checked when posting.
+    approval_id: uuid.UUID | None = None
+
+
+def _still_pending(user_id: str, approval_id: uuid.UUID) -> bool:
+    """Inside the post's transaction: the approval, locked, is still waiting. Locked so that a
+    decision from the card either lands first (and nothing is posted) or waits for the post."""
+    return (
+        Approval.objects.for_user(user_id)
+        .select_for_update()
+        .filter(id=approval_id, status=ApprovalStatus.PENDING)
+        .exists()
+    )
 
 
 def post_follow_up(post: Post) -> str:
     """Step 4, one transaction: `posted`, `retry` (the user spoke meanwhile, so the reply would
-    be stale or interleaved), `gone` or `duplicate`."""
+    be stale or interleaved), `gone`, `duplicate`, or `decided` (the approval the update asks
+    about was answered from its card while the reply was being written: answering from the card
+    does not touch the conversation, so only this re-check notices)."""
     with transaction.atomic():
         conversation = (
             Conversation.objects.for_user(post.user_id)
@@ -515,8 +554,12 @@ def post_follow_up(post: Post) -> str:
         )
         if conversation is None:
             return "gone"
-        now = timezone.now()
-        if _turn_streaming(conversation, now) or conversation.updated_at > post.history_read_at:
+        if post.approval_id is not None and not _still_pending(post.user_id, post.approval_id):
+            return "decided"
+        if (
+            _turn_streaming(conversation, database_now())
+            or conversation.updated_at > post.history_read_at
+        ):
             return "retry"
         try:
             with transaction.atomic():  # a savepoint: the unique notice may already exist
@@ -549,7 +592,7 @@ def post_follow_up(post: Post) -> str:
         except IntegrityError:
             return "duplicate"
         Conversation.objects.for_user(post.user_id).filter(id=conversation.id).update(
-            updated_at=now
+            updated_at=Now()
         )
         announce(
             post.user_id,
@@ -583,7 +626,7 @@ def _later(event_id: int) -> str:
         .filter(id=event_id)
         .first()
     )
-    if event is not None and _stale(event, timezone.now()):
+    if event is not None and _stale(event, database_now()):
         return "stale"
     redefer(event_id)
     return "deferred"
@@ -695,6 +738,9 @@ async def run_follow_up(event_id: int) -> str:
             label=update.label,
             reply_id=reply["id"],
             reply_parts=reply["parts"],
+            approval_id=loaded.approval.id
+            if event.kind == EventKind.APPROVAL_REQUESTED and loaded.approval is not None
+            else None,
         ),
     )
     if outcome == "retry":
@@ -716,7 +762,7 @@ async def run_follow_up(event_id: int) -> str:
             REDEFER_S,
         )
         return "deferred"
-    if outcome in ("gone", "duplicate"):
+    if outcome in ("gone", "duplicate", "decided"):
         await db(
             announce, event.user_id, loaded.conversation_id, run.id, skipped=True, reason=outcome
         )

@@ -705,6 +705,65 @@ def test_tailor_stopped_mid_run_saves_nothing(
 
 
 @pytest.mark.django_db(transaction=True)
+def test_a_stop_before_the_draft_ends_the_tailor_without_a_model_call(
+    fakes: None,
+    fake_render: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tailor_setup: Callable[..., tuple[Browser, JobMatch]],
+) -> None:
+    """A Stop that lands while the tailor reads its subject: `tailor.started` used to be written
+    after `run.cancelled` (R4) and the paid draft call still started. Now the run's lock decides,
+    and the tailor returns before the model."""
+    browser, match = tailor_setup()
+    read_subject = pipeline._tailor_subject
+    drafted: list[str] = []
+
+    def subject_then_stop(user_id: str, match_id: str) -> Any:
+        subject = read_subject(user_id, match_id)
+        run = Run.objects.for_user(user_id).get()
+        assert lifecycle.cancel(user_id, run.id)
+        return subject
+
+    async def no_draft(*args: Any, **kwargs: Any) -> Any:
+        drafted.append("called")
+        raise AssertionError("a stopped tailor must not call the model")
+
+    monkeypatch.setattr(pipeline, "_tailor_subject", subject_then_stop)
+    monkeypatch.setattr(pipeline, "tailor_resume", no_draft)
+    body = browser.post("/api/resumes/tailor", {"matchId": str(match.id)}).json()
+    run_deferred()
+    run = reload(body["runId"], browser.user)
+    assert run.status == "cancelled"
+    assert kinds(run) == ["run.cancelled"]
+    assert drafted == []
+    assert not LlmCall.objects.for_user(browser.user.pk).filter(run_id=run.id).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_a_stop_during_the_render_leaves_the_cancel_last(
+    fakes: None,
+    monkeypatch: pytest.MonkeyPatch,
+    tailor_setup: Callable[..., tuple[Browser, JobMatch]],
+) -> None:
+    """A Stop during the PDF render, which then fails: `render.failed` is not written after
+    `run.cancelled`."""
+    browser, match = tailor_setup()
+
+    async def stopped_then_broken(user_id: str, resume_id: uuid.UUID | str) -> RenderResult:
+        run = await db(lambda: Run.objects.for_user(user_id).get())
+        assert await db(lifecycle.cancel, user_id, run.id)
+        raise RuntimeError("the browser crashed")
+
+    monkeypatch.setattr(rendering, "render_resume", stopped_then_broken)
+    body = browser.post("/api/resumes/tailor", {"matchId": str(match.id)}).json()
+    run_deferred()
+    run = reload(body["runId"], browser.user)
+    assert run.status == "cancelled"
+    assert kinds(run)[-1] == "run.cancelled"
+    assert "render.failed" not in kinds(run)
+
+
+@pytest.mark.django_db(transaction=True)
 def test_tailor_of_a_vanished_match_fails_plainly(
     fakes: None, tailor_setup: Callable[..., tuple[Browser, JobMatch]]
 ) -> None:

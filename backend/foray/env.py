@@ -279,6 +279,28 @@ def _problem(error: ErrorDetails) -> str:
     return f"is invalid ({msg[:1].lower() + msg[1:]})"
 
 
+def _storage_overlap(env: Env) -> str | None:
+    """STORAGE_DIR must stay out of the legacy tree, which is never written (§3.1). The import
+    refuses an overlap too, but the api and the worker would otherwise boot and quietly write
+    new uploads and PDFs into the old data/ folder (a relative STORAGE_DIR=./data in the main
+    checkout's .env resolves to exactly that). Symlinks are resolved; nothing is created."""
+    if env.legacy_storage_dir is None:
+        return None
+    storage = env.storage_dir.resolve()
+    legacy = env.legacy_storage_dir.resolve()
+    if storage == legacy or storage.is_relative_to(legacy):
+        return (
+            "STORAGE_DIR is LEGACY_STORAGE_DIR or inside it; the legacy files are never written. "
+            "Fix: point STORAGE_DIR at the new store (e.g. ./storage)."
+        )
+    if legacy.is_relative_to(storage):
+        return (
+            "LEGACY_STORAGE_DIR is inside STORAGE_DIR; keep them apart. Fix: point STORAGE_DIR "
+            "at its own folder (e.g. ./storage)."
+        )
+    return None
+
+
 def boot_checks(env: Env) -> list[str]:
     """The cross-variable checks of §1.3. Static: nothing here opens a connection."""
     lines: list[str] = []
@@ -292,6 +314,9 @@ def boot_checks(env: Env) -> list[str]:
             "LEGACY_DATABASE_URL names the same database as DATABASE_URL. Fix: the legacy URL "
             "must name the old database (foray), DATABASE_URL the new one (foray_app)."
         )
+    overlap = _storage_overlap(env)
+    if overlap:
+        lines.append(overlap)
     if env.llm_fake and not env.debug:
         lines.append("LLM_FAKE is only allowed with DEBUG=true. Fix: unset LLM_FAKE.")
     if not env.llm_fake:

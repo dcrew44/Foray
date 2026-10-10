@@ -9,6 +9,7 @@ reaper out.
 from __future__ import annotations
 
 import asyncio
+from datetime import timedelta
 
 import pytest
 
@@ -16,6 +17,7 @@ from apps.core.queue import app, defer_in_tx
 from apps.runs import lifecycle, reaper
 from apps.runs import tasks as run_tasks
 from apps.runs.management.commands import worker as worker_command
+from tests.clock import python_clock, skewed
 from tests.factories import make_approval, make_run, make_user
 from tests.queue import run_deferred, worker_connector
 from tests.runs import support
@@ -220,3 +222,28 @@ def test_lifecycle_fail_is_what_the_reaper_uses() -> None:
     # `lifecycle.fail` writes `finished_at = now()` in SQL: compare with the database's clock.
     [(database_now,)] = support.sql("SELECT clock_timestamp()")
     assert finished_at is not None and finished_at <= database_now
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("skew_s", [-120, 120])
+def test_the_orphan_rule_reads_the_databases_clock(skew_s: int) -> None:
+    """The 60 s orphan rule compares `runs.updated_at` with the database's `now()`. A run's
+    timestamps used to come from Python's clock: with it two minutes behind, a run created
+    this instant read as two minutes old and was failed at once; ahead, a dead run lived two
+    minutes longer. Every stored timestamp is the database's now (step H2). `python_clock`
+    moves `default=timezone.now` field defaults too, so either regression fails here."""
+    with python_clock(skewed(timedelta(seconds=skew_s))):
+        user = make_user()
+        just_now = make_run(user, status="running")  # nothing holds it, but it is fresh
+        quiet = make_run(user, status="queued")
+        # Its last write was 70 s ago: move what was stored back, whichever clock stored it.
+        support.sql(
+            "UPDATE runs SET updated_at = updated_at - make_interval(secs => 70) WHERE id = %s",
+            [str(quiet.id)],
+        )
+
+        result = reaper.reap_runs()
+
+    assert result.interrupted == 1
+    assert refresh(just_now).status == "running"
+    assert refresh(quiet).status == "failed"

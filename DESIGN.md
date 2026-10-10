@@ -209,6 +209,8 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
 - **Worker liveness** comes from procrastinate's own heartbeat: the sidebar says "Worker
   offline" once the newest heartbeat is 45 s old (computed in SQL, so clock skew cannot fake
   it), because a queued search with no worker is otherwise indistinguishable from a slow one.
+  A lane that loses the database (a Postgres restart) is started again with a backoff instead
+  of ending the process, and the prod containers restart unless stopped by hand.
 - **Agents**: a pydantic-ai `Agent` drives chat, built per turn with the chat purpose's model
   stack and 16 tools, and streamed to the browser in the AI SDK's UI-message protocol, which
   `useChat` reads unchanged. Search / rank / tailor / discovery are plain procrastinate
@@ -257,7 +259,11 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
 - **Process state**: procrastinate's own tables (jobs, workers, periodic defers),
   `rate_limits`, `api_usage` (third-party request quotas by month) and `legacy_imports`.
 - **Conventions**: Django migrations own the schema; plural table names; every timestamp is
-  `timestamptz` and set explicitly (no `auto_now`, so imported rows keep their dates); enums
+  `timestamptz` and set explicitly (no `auto_now`, so imported rows keep their dates); the
+  database is the one clock: a timestamp not given is `Now()` (`db_default`), updates write
+  `Now()`/`now()`, and every comparison with "now" is made in SQL or against
+  `core.clock.database_now()`, so a skew between the host's and the database's clocks cannot
+  move the reaper's 60 s rule, the budget's month or a chat turn's marker; enums
   are `TextChoices` plus a database `CHECK`; JSON columns are read through lenient pydantic
   models and keep today's key spelling (camelCase in run and approval JSON and settings,
   snake_case in preferences and evaluations); new primary keys are UUIDv7.
@@ -413,7 +419,9 @@ is built; nothing is reserved for it).
 | Model quality drift across vendors | vendor-neutral prompts with explicit schemas; the bake-off's schema-failure and agreement metrics |
 | Rate limits | per-provider token bucket per process, `asyncio` semaphores per fan-out, JSearch request cap per run + monthly counter, per-user throttles |
 | Cross-source duplicates | a normalized `dedupe_key` (company, title, primary location) at ingest, then the prefilter's one-role-one-match collapse (invariant 14) |
-| Fetching what users and models type | one guarded HTTP client refuses private, loopback and metadata addresses on every request and redirect hop, and caps response sizes |
+| Fetching what users and models type | one guarded HTTP client refuses private, loopback and metadata addresses on every request and redirect hop, caps response sizes, and sends a caller's API key only to the origin it was meant for |
+| Data reachable from the network | Postgres publishes 5432 on loopback only and `next dev` listens on 127.0.0.1; `SIGNUP_OPEN=false` once the owner's account exists; every `.env.*` but the template is git-ignored |
+| Prompt injection through postings | a posting's full text is wrapped in `<untrusted>`; short posting fields (titles, companies, headlines) reach the model unwrapped, follow-ups and a re-sent notice get read-only tools, and write tools have no structural confirmation yet |
 | API drift vs. model training data | `AGENTS.md` and the vendored AI SDK skills for the frontend; pydantic-ai pinned exactly (it ships several times a week), Django and ninja pinned; golden and contract tests pin prompts, wire bodies and the UI-stream protocol |
 | Tailoring fabrication | fact-grounded prompt + verifier with evidence ids + user approval in `approve_each` |
 | Container/native drift | the same `env.py` validation and migrations in both; the containerized check is the guard |

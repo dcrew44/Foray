@@ -10,7 +10,12 @@ politeness and safety are not per-caller decisions:
 - **Response caps,** streamed and aborted when exceeded: ATS JSON 64 MB (the design said 32;
   Anduril's Greenhouse board alone is 43 MB, deviation step-3C #1), JSearch 5 MB, HTML 3 MB.
   HTML fetches also check the content type.
-- **Redirects are followed by hand,** at most 5, so every hop is re-validated.
+- **Redirects are followed by hand,** at most 5, so every hop is re-validated. A caller's own
+  headers (an API key such as JSearch's `x-rapidapi-key` or Brave's token) go only to the
+  origin they were meant for: a hop to another scheme, host or port gets the User-Agent and
+  Accept alone, as httpx2 drops `Authorization` across origins when it follows redirects itself.
+- **`on_attempt`** is awaited before every attempt, the first and each retry, so a metered API
+  (JSearch's monthly quota) counts every request actually sent.
 - **An SSRF guard on every request and every hop.** Users type URLs (add company) and the model
   emits them (careers-page `more_listing_urls`). Only http/https on ports 80/443 are fetched,
   and a host is refused when any address it resolves to is loopback, private, link-local
@@ -220,18 +225,27 @@ class HttpClient:
         accept: str = JSON_ACCEPT,
         headers: Mapping[str, str] | None = None,
         max_bytes: int | None = None,
+        on_attempt: Callable[[int], Awaitable[None]] | None = None,
     ) -> str:
-        """The body of a 2xx answer, decoded as UTF-8. Raises `HttpError` or `NetworkError`."""
+        """The body of a 2xx answer, decoded as UTF-8. Raises `HttpError` or `NetworkError`.
+        `on_attempt(n)` is awaited before attempt n (0 first); what it raises propagates."""
         html = accept.startswith("text/html")
         cap = max_bytes if max_bytes is not None else (HTML_MAX_BYTES if html else ATS_MAX_BYTES)
-        request_headers = {"user-agent": USER_AGENT, "accept": accept, **(headers or {})}
+        base_headers = {"user-agent": USER_AGENT, "accept": accept}
 
         for attempt in range(retries + 1):
             last = attempt == retries
+            if on_attempt is not None:
+                await on_attempt(attempt)
             try:
                 async with asyncio.timeout(timeout):
                     return await self._attempt(
-                        url, headers=request_headers, timeout=timeout, html=html, max_bytes=cap
+                        url,
+                        base_headers=base_headers,
+                        headers=dict(headers or {}),
+                        timeout=timeout,
+                        html=html,
+                        max_bytes=cap,
                     )
             except HttpError as error:
                 if not is_retryable(error.status) or last:
@@ -247,15 +261,19 @@ class HttpClient:
         self,
         url: str,
         *,
+        base_headers: dict[str, str],
         headers: dict[str, str],
         timeout: float,  # noqa: ASYNC109 (the caller wraps the attempt in asyncio.timeout)
         html: bool,
         max_bytes: int,
     ) -> str:
         current = await self.check_url(url)
+        origin = URL(current).origin
         for hop in range(MAX_REDIRECTS + 1):
+            # The caller's headers only while the hop stays on the origin they were meant for.
+            sent = {**base_headers, **headers} if URL(current).origin == origin else base_headers
             async with self._client.stream(
-                "GET", current, headers=headers, timeout=timeout
+                "GET", current, headers=sent, timeout=timeout
             ) as response:
                 location = response.headers.get("location")
                 if response.status_code in REDIRECT_STATUSES and location:

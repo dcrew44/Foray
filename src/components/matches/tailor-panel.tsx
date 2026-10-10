@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { requestLiveRefresh } from "@/components/live/live-provider";
+import { requestLiveRefresh, useRun } from "@/components/live/live-provider";
 import { RunCard } from "@/components/runs/run-card";
 import { useRunToasts } from "@/components/runs/use-run-toasts";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -70,6 +70,10 @@ export function TailorPanel({
   const [pending, startTransition] = useTransition();
   const [showChanges, setShowChanges] = useState(false);
   const delivered = runId !== null && (tailored?.id ?? null) !== startedFrom;
+  // A run that failed or was stopped delivers nothing: its card stays to say why, and the panel
+  // offers the button again from live state, without a reload.
+  const run = useRun(runId);
+  const ended = run?.status === "failed" || run?.status === "cancelled";
 
   function tailor() {
     startTransition(async () => {
@@ -93,13 +97,16 @@ export function TailorPanel({
     );
   }
 
-  if (runId && !delivered) {
+  if (runId && !delivered && !ended) {
     return <RunCard runId={runId} />;
   }
+
+  const endedCard = runId && !delivered && ended ? <RunCard runId={runId} /> : null;
 
   if (!tailored) {
     return (
       <div className="space-y-3">
+        {endedCard}
         <p className="text-muted-foreground text-[13.5px] leading-relaxed">
           Foray rewrites your resume for this posting: it reorders and rephrases what is already
           true, then checks every claim against your real resume before making a PDF. It never
@@ -107,7 +114,7 @@ export function TailorPanel({
         </p>
         <Button disabled={pending} onClick={tailor}>
           <WandSparkles />
-          {pending ? "Starting…" : "Tailor my resume"}
+          {pending ? "Starting…" : endedCard ? "Try again" : "Tailor my resume"}
         </Button>
       </div>
     );
@@ -120,6 +127,7 @@ export function TailorPanel({
 
   return (
     <div className="space-y-4">
+      {endedCard}
       <div
         className={cn(
           "flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[13px]",

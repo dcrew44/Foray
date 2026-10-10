@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+from django.db import IntegrityError, connection
 from django.utils import timezone
 from pydantic_ai import RunContext
 from pydantic_ai.messages import (
@@ -90,12 +91,59 @@ def _as_uuid(value: str | uuid.UUID | None) -> uuid.UUID | None:
     return uuid.UUID(str(value))
 
 
-def insert_row(row: LedgerRow) -> LlmCall:
-    """Sync: run through db()."""
-    user_id = row.context.user_id
+def _create(user_id: str | None, fields: dict[str, Any]) -> LlmCall:
     if user_id:
-        return LlmCall.objects.create_for(user_id, **row.fields())
-    return LlmCall.objects.unscoped("ledger: a system call has no user").create(**row.fields())
+        return LlmCall.objects.create_for(user_id, **fields)
+    return LlmCall.objects.unscoped("ledger: a system call has no user").create(**fields)
+
+
+_STILL_THERE = {
+    "conversation_id": "SELECT EXISTS (SELECT 1 FROM conversations WHERE id = %s)",
+    "run_id": "SELECT EXISTS (SELECT 1 FROM runs WHERE id = %s)",
+    "user_id": "SELECT EXISTS (SELECT 1 FROM users WHERE id = %s)",
+}
+
+
+def _exists(column: str, value: Any) -> bool:
+    with connection.cursor() as cursor:
+        cursor.execute(_STILL_THERE[column], [str(value)])
+        found = cursor.fetchone()
+    return bool(found and found[0])
+
+
+def insert_row(row: LedgerRow) -> LlmCall:
+    """Sync: run through db(), in autocommit. A paid call always leaves its row (R10): when the
+    chat, run or user it was attributed to was deleted while the call ran (the user deleted the
+    chat a search reports to, say), the foreign key fails at commit, and the row is written
+    again without the links that are gone, so the budget guard still counts the spend."""
+    fields = row.fields()
+    user_id = row.context.user_id or None
+    try:
+        return _create(user_id, fields)
+    except IntegrityError:
+        dropped = [
+            column
+            for column, value in (
+                ("conversation_id", fields["conversation_id"]),
+                ("run_id", fields["run_id"]),
+                ("user_id", user_id),
+            )
+            if value is not None and not _exists(column, value)
+        ]
+        if not dropped:
+            raise
+        log.warning(
+            "ledger row (%s %s): %s deleted during the call; written without it",
+            row.purpose,
+            row.ref,
+            ", ".join(column.removesuffix("_id") for column in dropped),
+        )
+        for column in dropped:
+            if column == "user_id":
+                user_id = None
+            else:
+                fields[column] = None
+        return _create(user_id, fields)
 
 
 def _is_cancellation(exc: BaseException) -> bool:

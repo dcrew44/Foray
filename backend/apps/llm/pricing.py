@@ -33,7 +33,8 @@ class Rate:
     # Input served from the provider's prompt cache. None: the provider does not discount
     # cached input, so it bills at the normal input rate.
     cached_input: float | None = None
-    # Writing the cache. Anthropic charges this; the others fold it into the input rate.
+    # Writing the cache. Anthropic charges this, and OpenAI from GPT-5.6 on (1.25x input); the
+    # others fold it into the input rate.
     cache_write: float | None = None
     # Set only when a vendor bills reasoning tokens *on top of* output tokens. Every provider
     # here counts them inside output already, so the default is 0: adding them again would
@@ -68,11 +69,11 @@ PRICING: dict[str, Pricing] = {
         bands=(Band(17, 0, Rate(input=0.15, output=0.6, cached_input=0.015)),),
         fallback=Rate(input=0.3, output=1.2, cached_input=0.03),
     ),
-    "openai:gpt-5.6-luna": Rate(input=0.2, output=1.2, cached_input=0.02),
+    "openai:gpt-5.6-luna": Rate(input=0.2, output=1.2, cached_input=0.02, cache_write=0.25),
     "google:gemini-3.8-flash": Rate(input=0.75, output=3.75, cached_input=0.19),
     "anthropic:claude-haiku-4-5": Rate(input=1, output=5, cached_input=0.1, cache_write=1.25),
     # --- strong tier --------------------------------------------------------------------------
-    "openai:gpt-5.6-terra": Rate(input=2, output=12, cached_input=0.2),
+    "openai:gpt-5.6-terra": Rate(input=2, output=12, cached_input=0.2, cache_write=2.5),
     "google:gemini-3.1-pro-preview": Rate(input=2, output=12, cached_input=0.5),
     "anthropic:claude-sonnet-5": Rate(input=2, output=10, cached_input=0.2, cache_write=2.5),
     "anthropic:claude-opus-5": Rate(input=5, output=25, cached_input=0.5, cache_write=6.25),

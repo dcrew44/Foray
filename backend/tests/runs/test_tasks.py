@@ -22,6 +22,7 @@ from typing import Any, cast
 import pytest
 from django.conf import settings
 from django.contrib.sessions.models import Session
+from django.db.models.functions import Now
 from django.utils import timezone
 from procrastinate import utils as procrastinate_utils
 from procrastinate.periodic import PeriodicDeferrer, PeriodicRegistry
@@ -368,7 +369,7 @@ def test_prune_drops_old_queue_jobs_sessions_and_throttle_counters() -> None:
 def test_expire_task_runs_the_sweep() -> None:
     user = make_user()
     run = make_run(user, status="awaiting_approval")
-    approval = make_approval(user, run=run, expires_at=timezone.now() - timedelta(minutes=1))
+    approval = make_approval(user, run=run, expires_at=Now() - timedelta(minutes=1))
     defer_in_tx(run_tasks.approvals_expire, queueing_lock="approvals:expire")
     run_deferred(["system"])
     assert refresh(run).status == "running"

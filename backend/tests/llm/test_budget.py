@@ -136,3 +136,33 @@ def test_dollars_never_use_an_exponent() -> None:
     assert BudgetExceeded(Decimal("0.000001")).user_message == (
         "This month's model budget of $0.000001 is spent. Raise LLM_MONTHLY_BUDGET_USD to continue."
     )
+
+
+async def test_the_month_is_the_databases_whatever_this_processs_clock_says() -> None:
+    """The guard counts from the start of the database's month (`now()` in SQL). Ledger rows
+    used to be dated by this process's clock, so with it behind the database's across a month
+    boundary, a row paid for this month was dated last month and the guard never saw it. Rows
+    are dated by the database now (step H2). `python_clock` moves `default=timezone.now` field
+    defaults too, so a Python-clock `llm_calls.created_at` fails here."""
+    from apps.core.clock import month_start
+    from apps.llm import ledger
+    from apps.llm.context import LlmContext
+    from apps.llm.usage import TokenCounts
+    from tests.clock import python_clock
+
+    this_month = await db(month_start)
+    row = ledger.LedgerRow(
+        purpose="score",
+        ref="openai:gpt-5.6-luna",
+        tokens=TokenCounts(input_tokens=1000),
+        cost_usd=Decimal("1.25"),
+        latency_ms=10,
+        error=None,
+        context=LlmContext(),
+        label=None,
+    )
+    # This process believes it is still the last day of last month.
+    with python_clock(lambda: this_month - timedelta(hours=3)):
+        stored = await db(ledger.insert_row, row)
+    assert stored.created_at >= this_month
+    assert await db(budget.month_to_date_spend_sync) == Decimal("1.25")

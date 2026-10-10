@@ -14,7 +14,7 @@ import uuid
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import F, Q
-from django.utils import timezone
+from django.db.models.functions import Now
 
 from apps.accounts.models import User
 from apps.core.choices import choices_checks
@@ -197,7 +197,7 @@ class ApiUsage(models.Model):
     provider = models.TextField()
     period = models.CharField(max_length=7)  # UTC "YYYY-MM"
     requests = models.IntegerField(default=0)
-    updated_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(db_default=Now())
 
     class Meta:
         db_table = "api_usage"

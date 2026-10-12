@@ -2572,7 +2572,7 @@
         "type": "object"
       },
       "MatchPatch": {
-        "description": "Any of the three; a field left out is left alone, `null` clears notes or the rating.",
+        "description": "Any of the three; a field left out is left alone, `null` clears notes or the rating.\n\n`stageChangedAt` goes only with `stage`: the board's Undo sends the time the match had\nentered the stage it goes back to, so an undone move leaves \"found … ago\" as it was (a\nlater time than now is taken as now).",
         "properties": {
           "stage": {
             "anyOf": [
@@ -2593,6 +2593,18 @@
               }
             ],
             "title": "Stage"
+          },
+          "stageChangedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stagechangedat"
           },
           "notes": {
             "anyOf": [

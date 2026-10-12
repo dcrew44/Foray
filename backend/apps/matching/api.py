@@ -22,7 +22,14 @@ from typing import Annotated, Any, cast
 from django.db import transaction
 from django.http import HttpRequest
 from ninja import Status
-from pydantic import BeforeValidator, Field, StrictStr, field_validator
+from pydantic import (
+    AwareDatetime,
+    BeforeValidator,
+    Field,
+    StrictStr,
+    field_validator,
+    model_validator,
+)
 
 from apps.accounts.models import User
 from apps.accounts.schemas import AutonomyMode
@@ -114,9 +121,14 @@ Rating = Annotated[int, Field(ge=-10, le=10), BeforeValidator(_json_number)]
 
 
 class MatchPatch(ApiModel):
-    """Any of the three; a field left out is left alone, `null` clears notes or the rating."""
+    """Any of the three; a field left out is left alone, `null` clears notes or the rating.
+
+    `stageChangedAt` goes only with `stage`: the board's Undo sends the time the match had
+    entered the stage it goes back to, so an undone move leaves "found … ago" as it was (a
+    later time than now is taken as now)."""
 
     stage: StageName | None = None
+    stage_changed_at: AwareDatetime | None = None
     notes: Annotated[StrictStr, Field(max_length=20_000)] | None = None
     # The UI decides the scale (thumbs as -1/1, or stars as 1-5); this keeps it a small integer.
     user_rating: Rating | None = None
@@ -127,6 +139,12 @@ class MatchPatch(ApiModel):
         if value is None:
             raise ValueError("a stage cannot be null")
         return value
+
+    @model_validator(mode="after")
+    def _stage_changed_at_needs_a_stage(self) -> MatchPatch:
+        if self.stage_changed_at is not None and self.stage is None:
+            raise ValueError("stageChangedAt goes with a stage")
+        return self
 
 
 def _patch_invalid(errors: Sequence[dict[str, Any]]) -> str:
@@ -199,7 +217,9 @@ def patch_match(request: HttpRequest, id: uuid.UUID, body: MatchPatch) -> dict[s
     if "user_rating" in sent:
         changes["user_rating"] = body.user_rating
     with transaction.atomic():
-        if body.stage is not None and not queries.set_match_stage(user_id, id, body.stage):
+        if body.stage is not None and not queries.set_match_stage(
+            user_id, id, body.stage, entered_at=body.stage_changed_at
+        ):
             raise ApiError(404, MATCH_GONE)
         if changes and not queries.update_match(user_id, id, **changes):
             raise ApiError(404, MATCH_GONE)

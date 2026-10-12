@@ -1063,10 +1063,16 @@ export interface components {
         /**
          * MatchPatch
          * @description Any of the three; a field left out is left alone, `null` clears notes or the rating.
+         *
+         *     `stageChangedAt` goes only with `stage`: the board's Undo sends the time the match had
+         *     entered the stage it goes back to, so an undone move leaves "found … ago" as it was (a
+         *     later time than now is taken as now).
          */
         MatchPatch: {
             /** Stage */
             stage?: ("found" | "shortlisted" | "applied" | "interviewing" | "offer" | "rejected" | "archived") | null;
+            /** Stagechangedat */
+            stageChangedAt?: string | null;
             /** Notes */
             notes?: string | null;
             /** Userrating */

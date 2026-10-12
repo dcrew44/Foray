@@ -283,18 +283,21 @@ def latest_matched_at(user_id: str) -> datetime | None:
 # --- writes from the UI and chat -----------------------------------------------------------------
 
 
-def set_match_stage(user_id: str, match_id: Any, stage: str) -> bool:
+def set_match_stage(
+    user_id: str, match_id: Any, stage: str, *, entered_at: datetime | None = None
+) -> bool:
     """Moves a match to a stage; False when the match is not this user's. Moving to the stage it
-    is already in is a no-op that keeps its timestamp."""
+    is already in is a no-op that keeps its timestamp. `entered_at` is an Undo's: when the match
+    had entered `stage` before the move being undone (never later than now)."""
     parsed = as_uuid(match_id)
     if parsed is None or stage not in Stage.values:
         return False
     with connection.cursor() as cursor:
         cursor.execute(
             "UPDATE job_matches SET stage = %s, stage_changed_at = CASE WHEN stage = %s "
-            "THEN stage_changed_at ELSE now() END, updated_at = now() "
-            "WHERE user_id = %s AND id = %s",
-            [stage, stage, user_id, str(parsed)],
+            "THEN stage_changed_at ELSE LEAST(coalesce(%s::timestamptz, now()), now()) END, "
+            "updated_at = now() WHERE user_id = %s AND id = %s",
+            [stage, stage, entered_at, user_id, str(parsed)],
         )
         return cursor.rowcount > 0
 

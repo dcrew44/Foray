@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -217,6 +218,50 @@ def test_moves_a_match_and_names_it(signed_in: Any) -> None:
     assert JobMatch.objects.for_user(user.pk).get(id=match.id).stage_changed_at == (
         moved.stage_changed_at
     )
+
+
+def test_an_undo_puts_back_when_the_match_entered_its_stage(signed_in: Any) -> None:
+    """Step 13: dragging an imported match to Shortlisted and pressing Undo left it in Found
+    "since 18m ago" instead of Sep 25: the Undo was a second move, stamped now. The board now
+    sends the time the match had entered the stage it goes back to."""
+    api, user = signed_in()
+    match = make_match(user)
+    entered = datetime(2026, 9, 25, 23, 3, 34, 628300, tzinfo=UTC)
+    JobMatch.objects.for_user(user.pk).filter(id=match.id).update(stage_changed_at=entered)
+
+    def stamp() -> datetime:
+        return JobMatch.objects.for_user(user.pk).get(id=match.id).stage_changed_at
+
+    api.patch(f"/api/matches/{match.id}", {"stage": "shortlisted"})
+    assert stamp() > entered
+    undo = api.patch(
+        f"/api/matches/{match.id}",
+        {"stage": "found", "stageChangedAt": "2026-09-25T23:03:34.6283Z"},
+    )
+    assert undo.json()["ok"] is True
+    assert (JobMatch.objects.for_user(user.pk).get(id=match.id).stage, stamp()) == (
+        "found",
+        entered,
+    )
+    # The same stage again keeps its timestamp, whatever is sent.
+    api.patch(f"/api/matches/{match.id}", {"stage": "found", "stageChangedAt": "2026-01-01T00:00Z"})
+    assert stamp() == entered
+    # Never later than now.
+    api.patch(
+        f"/api/matches/{match.id}", {"stage": "applied", "stageChangedAt": "2099-01-01T00:00Z"}
+    )
+    assert entered < stamp() < datetime(2099, 1, 1, tzinfo=UTC)
+    # Only with a stage, and only an aware time.
+    for body in (
+        {"stageChangedAt": "2026-09-25T23:03:34Z"},
+        {"stage": "found", "stageChangedAt": "2026-09-25T23:03:34"},
+    ):
+        answer = api.patch(f"/api/matches/{match.id}", body)
+        assert (answer.status_code, answer.json()["message"]) == (
+            400,
+            "That change could not be read.",
+        )
+    assert JobMatch.objects.for_user(user.pk).get(id=match.id).stage == "applied"
 
 
 def test_notes_and_rating(signed_in: Any) -> None:

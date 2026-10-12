@@ -57,6 +57,7 @@ export type BoardMatch = Pick<
   | "salaryCurrency"
   | "salaryPeriod"
   | "postedAt"
+  | "stageChangedAt"
   | "tailoredResumeId"
 >;
 
@@ -96,6 +97,9 @@ export function Board({ matches, showClosed }: { matches: BoardMatch[]; showClos
 
     const from = overrides[matchId] ?? match.stage;
     if (from === target) return;
+    // When the match entered `from`, for an Undo. Known only while the server's row is in
+    // `from`; after a move the page has not refreshed yet, the Undo stamps now.
+    const enteredAt = from === match.stage ? match.stageChangedAt : undefined;
 
     setOverrides((previous) => ({ ...previous, [matchId]: target }));
 
@@ -112,7 +116,7 @@ export function Board({ matches, showClosed }: { matches: BoardMatch[]; showClos
           label: "Undo",
           onClick: () => {
             setOverrides((previous) => ({ ...previous, [matchId]: from }));
-            void moveMatch(matchId, from).then((undone) => {
+            void moveMatch(matchId, from, enteredAt).then((undone) => {
               if (!undone.ok) toast.error(undone.message);
               router.refresh();
             });

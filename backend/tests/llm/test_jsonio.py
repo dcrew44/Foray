@@ -6,7 +6,8 @@ prompt shifts behaviour and breaks prompt-cache prefixes without failing anythin
 
 The cases outside the salary domain (small fractions, integral floats above 2**53, a negative
 value that rounds to zero, the largest double) were strict xfails until step H1 made the module
-follow ECMAScript's Number::toString and ICU's sign rule (`docs/migration/deviations/step-H1.md`).
+follow ECMAScript's Number::toString and ICU's sign rule (the migration's step-H1 notes, removed
+with docs/migration/ at the merge; see `git log -- docs/migration/deviations/step-H1.md`).
 """
 
 from __future__ import annotations

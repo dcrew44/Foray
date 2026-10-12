@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { signOut } from "@/lib/auth/client";
+import { signOut } from "@/lib/api/auth";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export function SignOutButton() {
       onClick={async () => {
         setPending(true);
         const result = await signOut();
-        if (result.error) {
+        if (!result.ok) {
           setPending(false);
           toast.error("Signing out did not work. Reload the page and try again.");
           return;

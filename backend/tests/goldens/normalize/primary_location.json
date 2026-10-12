@@ -1,0 +1,59 @@
+[
+  {
+    "input": [
+      "Dublin, Ireland",
+      "San Jose, CA"
+    ],
+    "output": {
+      "raw": "San Jose, CA",
+      "city": "San Jose",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": [
+      "Dublin, Ireland",
+      "Berlin"
+    ],
+    "output": {
+      "raw": "Dublin, Ireland",
+      "city": "Dublin",
+      "region": "Ireland",
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": [],
+    "output": null
+  },
+  {
+    "input": [
+      "Remote",
+      "SF Bay Area"
+    ],
+    "output": {
+      "raw": "SF Bay Area",
+      "city": null,
+      "region": null,
+      "country": null,
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": [
+      "New York City, NY",
+      "San Francisco, CA",
+      "Oakland, CA"
+    ],
+    "output": {
+      "raw": "San Francisco, CA",
+      "city": "San Francisco",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  }
+]

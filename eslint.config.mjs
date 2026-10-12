@@ -13,57 +13,26 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Django backend: Python, linted by ruff. Its .venv holds vendored JavaScript.
+    "backend/**",
   ]),
 
-  // --- Architecture boundaries (see DESIGN.md "Invariants") -----------------
-  // Next and the worker are two entry points over one shared library. Neither
-  // may reach into the other; shared code lives in src/lib.
+  // --- Server-only API helper ----------------------------------------------
+  // src/lib/api/server.ts reads cookies and headers and redirects; it runs only
+  // in server components. A "use client" module must call Django through
+  // src/lib/api/client.ts instead. `no-restricted-imports` cannot see the
+  // directive, so this matches it in the syntax tree: a "use client" prologue,
+  // then any import, re-export or dynamic import of lib/api/server.
   {
-    files: ["src/app/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx,js,jsx,mjs}"],
     rules: {
-      "no-restricted-imports": [
+      "no-restricted-syntax": [
         "error",
         {
-          patterns: [
-            {
-              group: ["playwright", "playwright-core", "playwright/*"],
-              message:
-                "Playwright belongs to the worker process. Next must never import it.",
-            },
-            {
-              group: ["@/worker", "@/worker/*", "**/worker/*"],
-              message:
-                "Next must not import worker internals. Share code through src/lib.",
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    files: ["src/worker/**/*.ts"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: [
-                "@/app",
-                "@/app/*",
-                "@/components",
-                "@/components/*",
-                "**/app/*",
-              ],
-              message:
-                "The worker must not import the Next app. Share code through src/lib.",
-            },
-            {
-              group: ["next", "next/*", "server-only"],
-              message:
-                "The worker is a plain Node process, not a Next runtime.",
-            },
-          ],
+          selector:
+            "Program:has(> ExpressionStatement[directive='use client']) :matches(ImportDeclaration, ExportNamedDeclaration, ExportAllDeclaration, ImportExpression)[source.value=/(^|\\/)lib\\/api\\/server(\\.ts)?$/]",
+          message:
+            "A \"use client\" module must not import src/lib/api/server.ts (server components only). Call Django through src/lib/api/client.ts.",
         },
       ],
     },

@@ -1,1 +1,0 @@
-DROP INDEX "account_provider_account_idx";

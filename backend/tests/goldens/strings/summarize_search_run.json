@@ -1,0 +1,122 @@
+[
+  {
+    "input": {
+      "candidates": 0,
+      "newMatches": 0,
+      "scored": 0,
+      "autoArchived": 0,
+      "evaluated": 0,
+      "shortlisted": 0,
+      "topMatchIds": [],
+      "recommended": 0,
+      "strong": 0,
+      "good": 0
+    },
+    "output": "No open roles matched your criteria this time."
+  },
+  {
+    "input": {
+      "candidates": 60,
+      "newMatches": 60,
+      "scored": 60,
+      "autoArchived": 0,
+      "evaluated": 12,
+      "shortlisted": 4,
+      "topMatchIds": [],
+      "recommended": 5,
+      "strong": 0,
+      "good": 0
+    },
+    "output": "Found 60 roles, scored 60, deep-evaluated 12. 5 look worth applying to; 4 shortlisted."
+  },
+  {
+    "input": {
+      "candidates": 60,
+      "newMatches": 60,
+      "scored": 60,
+      "autoArchived": 0,
+      "evaluated": 12,
+      "shortlisted": 0,
+      "topMatchIds": [],
+      "recommended": 1,
+      "strong": 0,
+      "good": 0
+    },
+    "output": "Found 60 roles, scored 60, deep-evaluated 12. 1 looks worth applying to."
+  },
+  {
+    "input": {
+      "candidates": 60,
+      "newMatches": 60,
+      "scored": 60,
+      "autoArchived": 0,
+      "evaluated": 3,
+      "shortlisted": 0,
+      "topMatchIds": [],
+      "recommended": 0,
+      "strong": 0,
+      "good": 0
+    },
+    "output": "Found 60 roles, scored 60, deep-evaluated 3. None looked worth applying to."
+  },
+  {
+    "input": {
+      "candidates": 60,
+      "newMatches": 0,
+      "scored": 0,
+      "autoArchived": 1,
+      "evaluated": 0,
+      "shortlisted": 0,
+      "topMatchIds": [],
+      "recommended": 0,
+      "strong": 1,
+      "good": 2
+    },
+    "output": "Found 60 roles (none new). 1 looks strong, 2 are worth a look, 1 was archived as too weak."
+  },
+  {
+    "input": {
+      "candidates": 60,
+      "newMatches": 7,
+      "scored": 60,
+      "autoArchived": 5,
+      "evaluated": 0,
+      "shortlisted": 0,
+      "topMatchIds": [],
+      "recommended": 0,
+      "strong": 3,
+      "good": 1
+    },
+    "output": "Found 60 roles (7 new), scored 60. 3 look strong, 1 is worth a look, 5 were archived as too weak."
+  },
+  {
+    "input": {
+      "candidates": 1,
+      "newMatches": 1,
+      "scored": 1,
+      "autoArchived": 0,
+      "evaluated": 0,
+      "shortlisted": 0,
+      "topMatchIds": [],
+      "recommended": 0,
+      "strong": 0,
+      "good": 0
+    },
+    "output": "Found 1 role, scored 1."
+  },
+  {
+    "input": {
+      "candidates": 60,
+      "newMatches": 60,
+      "scored": 0,
+      "autoArchived": 0,
+      "evaluated": 0,
+      "shortlisted": 0,
+      "topMatchIds": [],
+      "recommended": 0,
+      "strong": 0,
+      "good": 0
+    },
+    "output": "Found 60 roles."
+  }
+]

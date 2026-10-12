@@ -1,0 +1,152 @@
+[
+  {
+    "input": {
+      "evaluations": [
+        {
+          "matchId": "m-Senior Backend Engineer",
+          "jobId": "j-Senior Backend Engineer",
+          "title": "Senior Backend Engineer",
+          "company": "Stripe",
+          "evaluation": {
+            "score": 82,
+            "recommendation": "apply"
+          }
+        }
+      ],
+      "failed": 0
+    },
+    "output": "Evaluated Senior Backend Engineer at Stripe: 82, worth applying."
+  },
+  {
+    "input": {
+      "evaluations": [
+        {
+          "matchId": "m-Senior Backend Engineer",
+          "jobId": "j-Senior Backend Engineer",
+          "title": "Senior Backend Engineer",
+          "company": "Stripe",
+          "evaluation": {
+            "score": 82,
+            "recommendation": "apply"
+          }
+        },
+        {
+          "matchId": "m-Platform Engineer",
+          "jobId": "j-Platform Engineer",
+          "title": "Platform Engineer",
+          "company": "Café Numérique",
+          "evaluation": {
+            "score": 91,
+            "recommendation": "strong"
+          }
+        }
+      ],
+      "failed": 0
+    },
+    "output": "Evaluated 2 roles: Platform Engineer at Café Numérique (91, a strong match); Senior Backend Engineer at Stripe (82, worth applying)."
+  },
+  {
+    "input": {
+      "evaluations": [
+        {
+          "matchId": "m-Senior Backend Engineer",
+          "jobId": "j-Senior Backend Engineer",
+          "title": "Senior Backend Engineer",
+          "company": "Stripe",
+          "evaluation": {
+            "score": 82,
+            "recommendation": "apply"
+          }
+        },
+        {
+          "matchId": "m-Platform Engineer",
+          "jobId": "j-Platform Engineer",
+          "title": "Platform Engineer",
+          "company": "Café Numérique",
+          "evaluation": {
+            "score": 91,
+            "recommendation": "strong"
+          }
+        },
+        {
+          "matchId": "m-Data Engineer",
+          "jobId": "j-Data Engineer",
+          "title": "Data Engineer",
+          "company": "Linear",
+          "evaluation": {
+            "score": 55,
+            "recommendation": "maybe"
+          }
+        }
+      ],
+      "failed": 1
+    },
+    "output": "Evaluated 3 roles: Platform Engineer at Café Numérique (91, a strong match); Senior Backend Engineer at Stripe (82, worth applying); Data Engineer at Linear (55, a maybe). 1 could not be evaluated."
+  },
+  {
+    "input": {
+      "evaluations": [
+        {
+          "matchId": "m-Senior Backend Engineer",
+          "jobId": "j-Senior Backend Engineer",
+          "title": "Senior Backend Engineer",
+          "company": "Stripe",
+          "evaluation": {
+            "score": 82,
+            "recommendation": "apply"
+          }
+        },
+        {
+          "matchId": "m-Platform Engineer",
+          "jobId": "j-Platform Engineer",
+          "title": "Platform Engineer",
+          "company": "Café Numérique",
+          "evaluation": {
+            "score": 91,
+            "recommendation": "strong"
+          }
+        },
+        {
+          "matchId": "m-Data Engineer",
+          "jobId": "j-Data Engineer",
+          "title": "Data Engineer",
+          "company": "Linear",
+          "evaluation": {
+            "score": 55,
+            "recommendation": "maybe"
+          }
+        },
+        {
+          "matchId": "m-SRE",
+          "jobId": "j-SRE",
+          "title": "SRE",
+          "company": "Vanta",
+          "evaluation": {
+            "score": 30,
+            "recommendation": "skip"
+          }
+        }
+      ],
+      "failed": 2
+    },
+    "output": "Evaluated 4 roles: Platform Engineer at Café Numérique (91, a strong match); Senior Backend Engineer at Stripe (82, worth applying); Data Engineer at Linear (55, a maybe); and 1 more. 2 could not be evaluated."
+  },
+  {
+    "input": {
+      "evaluations": [
+        {
+          "matchId": "m-SRE",
+          "jobId": "j-SRE",
+          "title": "SRE",
+          "company": "Vanta",
+          "evaluation": {
+            "score": 30,
+            "recommendation": "skip"
+          }
+        }
+      ],
+      "failed": 0
+    },
+    "output": "Evaluated SRE at Vanta: 30, probably not worth applying."
+  }
+]

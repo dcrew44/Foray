@@ -1,20 +1,22 @@
 "use client";
 
 import { Download, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { renderBaseResumeAction } from "@/app/actions/resumes";
 import { PageHeader } from "@/components/foray/primitives";
 import { isActiveRun, requestLiveRefresh, useRun } from "@/components/live/live-provider";
 import { RunCard } from "@/components/runs/run-card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { api, call } from "@/lib/api/client";
 
 /**
  * The profile's header, with the base resume as a PDF: download the latest
  * render, or make one. A render runs in the worker, so starting one shows its
- * live card here until the PDF is ready.
+ * live card here until the PDF is ready; the page refreshes on the run's
+ * `run.completed`, which brings the new PDF's link.
  */
 export function ProfileHeader({
   title,
@@ -28,6 +30,7 @@ export function ProfileHeader({
   pdf: { documentId: string; version: number; current: boolean } | null;
   canRender: boolean;
 }) {
+  const router = useRouter();
   const [runId, setRunId] = useState<string | null>(null);
   const [starting, startTransition] = useTransition();
   const run = useRun(runId);
@@ -35,13 +38,14 @@ export function ProfileHeader({
 
   function render() {
     startTransition(async () => {
-      const result = await renderBaseResumeAction();
+      const result = await call(api.POST("/api/resume/render"));
       if (!result.ok) {
         toast.error(result.message);
         return;
       }
       setRunId(result.runId);
       requestLiveRefresh();
+      router.refresh();
     });
   }
 

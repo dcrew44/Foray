@@ -1,0 +1,583 @@
+[
+  {
+    "name": "deep_eval_gate",
+    "input": {
+      "run": {
+        "id": "run-1",
+        "kind": "search",
+        "input": {
+          "prompt": "entry-level roles at Anthropic",
+          "brief": {
+            "companies": [
+              "Anthropic"
+            ],
+            "seniority": "entry"
+          }
+        },
+        "output": {
+          "candidates": 20
+        }
+      },
+      "event": {
+        "kind": "approval.requested",
+        "message": "Waiting for your go-ahead."
+      },
+      "approval": {
+        "kind": "deep_eval_batch",
+        "title": "Deep-evaluate 8 roles (about $0.25)",
+        "payload": {
+          "items": []
+        }
+      },
+      "proposed": [
+        {
+          "title": "Software Engineer, Research Data Platform",
+          "company": "Anthropic",
+          "score": 78,
+          "headline": "Strong data platform overlap",
+          "locations": "San Francisco, CA"
+        },
+        {
+          "title": "Fellow — Café Systems",
+          "company": "Anthropic",
+          "score": null,
+          "headline": null,
+          "locations": ""
+        }
+      ]
+    },
+    "output": {
+      "label": "Search paused for your go-ahead",
+      "text": "[Automatic update about run run-1, not written by the user]\nThe search (Entry-level roles at Anthropic) has scored what it found and is paused, waiting for the user: Deep-evaluate 8 roles (about $0.25). Waiting for your go-ahead.\nThe roles it proposes to review, best first (fast score in brackets):\n- Software Engineer, Research Data Platform at Anthropic (78), San Francisco, CA: Strong data platform overlap\n- Fellow — Café Systems at Anthropic\nThe approval card above already lists these roles, so do not call list_jobs. In two or three sentences, say what stands out: which look strongest and why, and anything that gives you pause. Then ask whether to go ahead with the deep review. Do not answer the approval yourself.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "deep_eval_gate_no_roles",
+    "input": {
+      "run": {
+        "id": "run-1",
+        "kind": "search",
+        "input": {
+          "prompt": "entry-level roles at Anthropic",
+          "brief": {
+            "companies": [
+              "Anthropic"
+            ],
+            "seniority": "entry"
+          }
+        },
+        "output": {
+          "candidates": 20
+        }
+      },
+      "event": {
+        "kind": "approval.requested",
+        "message": "Waiting."
+      },
+      "approval": {
+        "kind": "deep_eval_batch",
+        "title": "Deep-evaluate 1 role",
+        "payload": {}
+      },
+      "proposed": []
+    },
+    "output": {
+      "label": "Search paused for your go-ahead",
+      "text": "[Automatic update about run run-1, not written by the user]\nThe search (Entry-level roles at Anthropic) has scored what it found and is paused, waiting for the user: Deep-evaluate 1 role. Waiting.\nThe approval card above already lists these roles, so do not call list_jobs. In two or three sentences, say what stands out: which look strongest and why, and anything that gives you pause. Then ask whether to go ahead with the deep review. Do not answer the approval yourself.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "shortlist_from_payload",
+    "input": {
+      "run": {
+        "id": "run-1",
+        "kind": "search",
+        "input": {
+          "prompt": "entry-level roles at Anthropic",
+          "brief": {
+            "companies": [
+              "Anthropic"
+            ],
+            "seniority": "entry"
+          }
+        },
+        "output": {
+          "candidates": 20
+        }
+      },
+      "event": {
+        "kind": "approval.requested",
+        "message": ""
+      },
+      "approval": {
+        "kind": "shortlist_proposal",
+        "title": "Shortlist 2 roles",
+        "payload": {
+          "items": [
+            {
+              "title": "Software Engineer",
+              "company": "Anthropic"
+            },
+            {
+              "title": "Fellow",
+              "company": "Anthropic"
+            }
+          ]
+        }
+      },
+      "proposed": []
+    },
+    "output": {
+      "label": "Deep review done",
+      "text": "[Automatic update about run run-1, not written by the user]\nThe deep review for the search (Entry-level roles at Anthropic) is done. It proposes shortlisting 2 roles, with the review's score and verdict:\n- Software Engineer at Anthropic\n- Fellow at Anthropic\nThe approval card above already lists these roles, so do not call list_jobs. Say which look best and why, grounded in the reviews (get_job has the evidence if you need more), then ask whether to shortlist them. Do not answer the approval yourself.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "shortlist_one_proposed",
+    "input": {
+      "run": {
+        "id": "run-1",
+        "kind": "search",
+        "input": {
+          "prompt": "entry-level roles at Anthropic",
+          "brief": {
+            "companies": [
+              "Anthropic"
+            ],
+            "seniority": "entry"
+          }
+        },
+        "output": {
+          "candidates": 20
+        }
+      },
+      "event": {
+        "kind": "approval.requested",
+        "message": ""
+      },
+      "approval": {
+        "kind": "shortlist_proposal",
+        "title": "Shortlist 1 role",
+        "payload": {
+          "items": []
+        }
+      },
+      "proposed": [
+        {
+          "title": "Software Engineer, Research Data Platform",
+          "company": "Anthropic",
+          "score": 78,
+          "headline": "Strong data platform overlap",
+          "locations": "San Francisco, CA"
+        }
+      ]
+    },
+    "output": {
+      "label": "Deep review done",
+      "text": "[Automatic update about run run-1, not written by the user]\nThe deep review for the search (Entry-level roles at Anthropic) is done. It proposes shortlisting 1 role, with the review's score and verdict:\n- Software Engineer, Research Data Platform at Anthropic (78), San Francisco, CA: Strong data platform overlap\nThe approval card above already lists these roles, so do not call list_jobs. Say which look best and why, grounded in the reviews (get_job has the evidence if you need more), then ask whether to shortlist them. Do not answer the approval yourself.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "other_approval",
+    "input": {
+      "run": {
+        "id": "run-9",
+        "kind": "tailor",
+        "input": {
+          "prompt": "Tailor your resume for Engineer at Stripe"
+        },
+        "output": null
+      },
+      "event": {
+        "kind": "approval.requested",
+        "message": "Approve the tailored resume."
+      },
+      "approval": {
+        "kind": "tailor",
+        "title": "Use this resume?",
+        "payload": {}
+      },
+      "proposed": []
+    },
+    "output": {
+      "label": "Waiting for your go-ahead",
+      "text": "[Automatic update about run run-9, not written by the user]\ntailoring your resume for Engineer at Stripe is paused, waiting for the user: Use this resume?.\nSay what it needs and ask.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "other_approval_no_approval",
+    "input": {
+      "run": {
+        "id": "run-9",
+        "kind": "company_discovery",
+        "input": {},
+        "output": null
+      },
+      "event": {
+        "kind": "approval.requested",
+        "message": "Needs a decision."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Waiting for your go-ahead",
+      "text": "[Automatic update about run run-9, not written by the user]\ncompany discovery is paused, waiting for the user: Needs a decision..\nSay what it needs and ask.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "search_completed",
+    "input": {
+      "run": {
+        "id": "run-1",
+        "kind": "search",
+        "input": {
+          "prompt": "entry-level roles at Anthropic",
+          "brief": {
+            "companies": [
+              "Anthropic"
+            ],
+            "seniority": "entry"
+          }
+        },
+        "output": {
+          "candidates": 20
+        }
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Found 20 roles."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Search finished",
+      "text": "[Automatic update about run run-1, not written by the user]\nThe search (Entry-level roles at Anthropic) has finished. Its result: Found 20 roles.\nCall list_jobs with run_id \"run-1\" to see them; the user sees those as cards, so do not retype their details. Show the best few (limit 5), then say in one or two sentences what stands out.\nEnd with one concrete next step you could take for them.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "search_completed_empty",
+    "input": {
+      "run": {
+        "id": "run-1",
+        "kind": "search",
+        "input": {
+          "prompt": "entry-level roles at Anthropic",
+          "brief": {
+            "companies": [
+              "Anthropic"
+            ],
+            "seniority": "entry"
+          }
+        },
+        "output": {
+          "candidates": 0
+        }
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "No open roles matched."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Search finished",
+      "text": "[Automatic update about run run-1, not written by the user]\nThe search (Entry-level roles at Anthropic) has finished. Its result: No open roles matched.\nNothing matched. Say so plainly and suggest one or two ways to widen the search.\nEnd with one concrete next step you could take for them.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "search_hints_only",
+    "input": {
+      "run": {
+        "id": "run-4",
+        "kind": "search",
+        "input": {
+          "prompt": "find me remote jobs",
+          "hints": {
+            "remote": "remote",
+            "roles": [
+              "Senior backend engineer"
+            ]
+          }
+        },
+        "output": {
+          "candidates": 3
+        }
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Found 3 roles."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Search finished",
+      "text": "[Automatic update about run run-4, not written by the user]\nThe search (Senior backend engineer roles, remote only) has finished. Its result: Found 3 roles.\nCall list_jobs with run_id \"run-4\" to see them; the user sees those as cards, so do not retype their details. Show the best few (limit 5), then say in one or two sentences what stands out.\nEnd with one concrete next step you could take for them.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "search_prompt_only",
+    "input": {
+      "run": {
+        "id": "run-5",
+        "kind": "search",
+        "input": {
+          "prompt": "Search with my saved preferences"
+        },
+        "output": null
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Found 2 roles."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Search finished",
+      "text": "[Automatic update about run run-5, not written by the user]\nThe search (Search with my saved preferences) has finished. Its result: Found 2 roles.\nNothing matched. Say so plainly and suggest one or two ways to widen the search.\nEnd with one concrete next step you could take for them.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "search_no_input",
+    "input": {
+      "run": {
+        "id": "run-6",
+        "kind": "search",
+        "input": null,
+        "output": null
+      },
+      "event": {
+        "kind": "run.failed",
+        "message": "The board fetch failed."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Search stopped",
+      "text": "[Automatic update about run run-6, not written by the user]\nA search stopped with an error: The board fetch failed.\nExplain what happened in a sentence, without technical detail, and offer to try again.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "tailor_failed",
+    "input": {
+      "run": {
+        "id": "run-2",
+        "kind": "tailor",
+        "input": {
+          "prompt": "Tailor your resume for Engineer at Stripe"
+        },
+        "output": null
+      },
+      "event": {
+        "kind": "tailor.failed",
+        "message": "The model timed out."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Tailoring stopped",
+      "text": "[Automatic update about run run-2, not written by the user]\nTailoring your resume for Engineer at Stripe stopped with an error: The model timed out.\nExplain what happened in a sentence, without technical detail, and offer to try again.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "tailor_done",
+    "input": {
+      "run": {
+        "id": "run-3",
+        "kind": "tailor",
+        "input": {
+          "prompt": "Tailor your resume for Engineer at Stripe"
+        },
+        "output": null
+      },
+      "event": {
+        "kind": "tailor.done",
+        "message": "Your resume is ready."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Tailored resume ready",
+      "text": "[Automatic update about run run-3, not written by the user]\nTailoring your resume for Engineer at Stripe is done. Your resume is ready.\nTell them it is ready (the card above has the PDF), mention anything flagged for their review, and suggest what to do next.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "tailor_no_prompt",
+    "input": {
+      "run": {
+        "id": "run-3b",
+        "kind": "tailor",
+        "input": {},
+        "output": null
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Done."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Tailored resume ready",
+      "text": "[Automatic update about run run-3b, not written by the user]\nTailoring a resume is done. Done.\nTell them it is ready (the card above has the PDF), mention anything flagged for their review, and suggest what to do next.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "rank_deep_done",
+    "input": {
+      "run": {
+        "id": "run-7",
+        "kind": "rank_deep",
+        "input": {},
+        "output": {
+          "evaluated": 2
+        }
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Evaluated 2 roles: Engineer at Stripe (82, worth applying)."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Deep review finished",
+      "text": "[Automatic update about run run-7, not written by the user]\nThe deep review has finished. Its result: Evaluated 2 roles: Engineer at Stripe (82, worth applying).\nGive the verdict on each reviewed role in a sentence or two, grounded in the review (get_job with its match id has the evidence), and suggest a next step.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "rank_deep_failed",
+    "input": {
+      "run": {
+        "id": "run-7",
+        "kind": "rank_deep",
+        "input": null,
+        "output": null
+      },
+      "event": {
+        "kind": "run.failed",
+        "message": "No resume."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Deep review stopped",
+      "text": "[Automatic update about run run-7, not written by the user]\nA deep review stopped with an error: No resume.\nExplain what happened in a sentence, without technical detail, and offer to try again.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "render_done",
+    "input": {
+      "run": {
+        "id": "run-8",
+        "kind": "resume_render",
+        "input": null,
+        "output": null
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Rendered 1 page."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Rendering finished",
+      "text": "[Automatic update about run run-8, not written by the user]\nRendering a resume has finished: Rendered 1 page.\nReport the result briefly.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "discovery_done",
+    "input": {
+      "run": {
+        "id": "run-10",
+        "kind": "company_discovery",
+        "input": {
+          "prompt": "Find boards for Linear"
+        },
+        "output": null
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Registered Linear."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Discovery finished",
+      "text": "[Automatic update about run run-10, not written by the user]\nFind boards for Linear has finished: Registered Linear.\nReport the result briefly.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "discovery_no_prompt",
+    "input": {
+      "run": {
+        "id": "run-11",
+        "kind": "company_discovery",
+        "input": {},
+        "output": null
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "Registered 3 of 5."
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Discovery finished",
+      "text": "[Automatic update about run run-11, not written by the user]\nCompany discovery has finished: Registered 3 of 5.\nReport the result briefly.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "unknown_kind",
+    "input": {
+      "run": {
+        "id": "run-12",
+        "kind": "mystery",
+        "input": {},
+        "output": null
+      },
+      "event": {
+        "kind": "run.completed",
+        "message": "ok"
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Run finished",
+      "text": "[Automatic update about run run-12, not written by the user]\nBackground work has finished: ok\nReport the result briefly.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  },
+  {
+    "name": "unknown_kind_failed",
+    "input": {
+      "run": {
+        "id": "run-13",
+        "kind": "mystery",
+        "input": {},
+        "output": null
+      },
+      "event": {
+        "kind": "run.failed",
+        "message": "boom"
+      },
+      "approval": null,
+      "proposed": []
+    },
+    "output": {
+      "label": "Run stopped",
+      "text": "[Automatic update about run run-13, not written by the user]\nBackground work stopped with an error: boom\nExplain what happened in a sentence, without technical detail, and offer to try again.\nKeep it short and conversational: a few sentences, no headings. Do not repeat what the conversation above already says, and do not restate numbers the run card shows unless they matter. In this reply you can only look things up: do not say you started, approved, moved or changed anything."
+    }
+  }
+]

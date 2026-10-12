@@ -1,0 +1,432 @@
+[
+  {
+    "input": "San Francisco, CA",
+    "output": {
+      "raw": "San Francisco, CA",
+      "city": "San Francisco",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": "Austin, Texas",
+    "output": {
+      "raw": "Austin, Texas",
+      "city": "Austin",
+      "region": "TX",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "SF Bay Area",
+    "output": {
+      "raw": "SF Bay Area",
+      "city": null,
+      "region": null,
+      "country": null,
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": "Mountain View, CA",
+    "output": {
+      "raw": "Mountain View, CA",
+      "city": "Mountain View",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": "Oakland, CA",
+    "output": {
+      "raw": "Oakland, CA",
+      "city": "Oakland",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": "Palo Alto, CA",
+    "output": {
+      "raw": "Palo Alto, CA",
+      "city": "Palo Alto",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": "New York, NY (Remote)",
+    "output": {
+      "raw": "New York, NY (Remote)",
+      "city": "New York",
+      "region": "NY",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "Seattle, WA - Hybrid",
+    "output": {
+      "raw": "Seattle, WA - Hybrid",
+      "city": "Seattle",
+      "region": "WA",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "  San Francisco, CA (Remote)  ",
+    "output": {
+      "raw": "  San Francisco, CA (Remote)  ",
+      "city": "San Francisco",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": "Remote",
+    "output": {
+      "raw": "Remote",
+      "city": "Remote",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "London, United Kingdom",
+    "output": {
+      "raw": "London, United Kingdom",
+      "city": "London",
+      "region": null,
+      "country": "GB",
+      "metro": null
+    }
+  },
+  {
+    "input": "London, UK",
+    "output": {
+      "raw": "London, UK",
+      "city": "London",
+      "region": null,
+      "country": "GB",
+      "metro": null
+    }
+  },
+  {
+    "input": "Dublin, Ireland",
+    "output": {
+      "raw": "Dublin, Ireland",
+      "city": "Dublin",
+      "region": "Ireland",
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Berlin",
+    "output": {
+      "raw": "Berlin",
+      "city": "Berlin",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "San Jose, CA",
+    "output": {
+      "raw": "San Jose, CA",
+      "city": "San Jose",
+      "region": "CA",
+      "country": "US",
+      "metro": "bay-area"
+    }
+  },
+  {
+    "input": "Toronto, ON, Canada",
+    "output": {
+      "raw": "Toronto, ON, Canada",
+      "city": "Toronto",
+      "region": "ON",
+      "country": "Canada",
+      "metro": null
+    }
+  },
+  {
+    "input": "Montréal, QC",
+    "output": {
+      "raw": "Montréal, QC",
+      "city": "Montréal",
+      "region": "QC",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "Zürich, Switzerland",
+    "output": {
+      "raw": "Zürich, Switzerland",
+      "city": "Zürich",
+      "region": "Switzerland",
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Boston, MA, USA",
+    "output": {
+      "raw": "Boston, MA, USA",
+      "city": "Boston",
+      "region": "MA",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "New York City, NY / Remote",
+    "output": {
+      "raw": "New York City, NY / Remote",
+      "city": "New York City",
+      "region": "NY",
+      "country": "Remote",
+      "metro": null
+    }
+  },
+  {
+    "input": "Austin | TX",
+    "output": {
+      "raw": "Austin | TX",
+      "city": "Austin",
+      "region": "TX",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "Remote - US",
+    "output": {
+      "raw": "Remote - US",
+      "city": "Remote - US",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "",
+    "output": {
+      "raw": "",
+      "city": null,
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "   ",
+    "output": {
+      "raw": "   ",
+      "city": null,
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Dubai",
+    "output": {
+      "raw": "Dubai",
+      "city": "Dubai",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Dublin",
+    "output": {
+      "raw": "Dublin",
+      "city": "Dublin",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Europe",
+    "output": {
+      "raw": "Europe",
+      "city": "Europe",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Ho Chi Minh",
+    "output": {
+      "raw": "Ho Chi Minh",
+      "city": "Ho Chi Minh",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "London",
+    "output": {
+      "raw": "London",
+      "city": "London",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Los Angeles, California",
+    "output": {
+      "raw": "Los Angeles, California",
+      "city": "Los Angeles",
+      "region": "CA",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "New York City, NY",
+    "output": {
+      "raw": "New York City, NY",
+      "city": "New York City",
+      "region": "NY",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "New York, New York",
+    "output": {
+      "raw": "New York, New York",
+      "city": "New York",
+      "region": "NY",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "North America",
+    "output": {
+      "raw": "North America",
+      "city": "North America",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Remote - Canada",
+    "output": {
+      "raw": "Remote - Canada",
+      "city": "Remote - Canada",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Remote U.S.",
+    "output": {
+      "raw": "Remote U.S.",
+      "city": "Remote U.S.",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Remote from the US",
+    "output": {
+      "raw": "Remote from the US",
+      "city": "Remote from the US",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Seattle, San Francisco, New York City",
+    "output": {
+      "raw": "Seattle, San Francisco, New York City",
+      "city": "Seattle",
+      "region": "San Francisco",
+      "country": "New York City",
+      "metro": null
+    }
+  },
+  {
+    "input": "Seattle, WA",
+    "output": {
+      "raw": "Seattle, WA",
+      "city": "Seattle",
+      "region": "WA",
+      "country": "US",
+      "metro": null
+    }
+  },
+  {
+    "input": "Singapore",
+    "output": {
+      "raw": "Singapore",
+      "city": "Singapore",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Stockholm",
+    "output": {
+      "raw": "Stockholm",
+      "city": "Stockholm",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Taiwan (Home Mix)",
+    "output": {
+      "raw": "Taiwan (Home Mix)",
+      "city": "Taiwan (Home Mix)",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Tokyo",
+    "output": {
+      "raw": "Tokyo",
+      "city": "Tokyo",
+      "region": null,
+      "country": null,
+      "metro": null
+    }
+  },
+  {
+    "input": "Vancouver, British Columbia",
+    "output": {
+      "raw": "Vancouver, British Columbia",
+      "city": "Vancouver",
+      "region": "British Columbia",
+      "country": null,
+      "metro": null
+    }
+  }
+]

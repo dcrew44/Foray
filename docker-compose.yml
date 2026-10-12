@@ -1,25 +1,41 @@
-# Postgres always; web + worker + migrate only under `--profile prod`.
+# Postgres always; migrate, api, worker and web only under `--profile prod` (design §13.3).
 # Dev runs the app natively (pnpm dev:all) against this database.
+#
+# Postgres publishes 5432 on loopback only (127.0.0.1), never on the LAN: it holds every
+# user's data and the session table. In the prod profile web also publishes :3000. The browser
+# talks to web alone; web rewrites /api/* to api:8000, and its server components call api:8000
+# directly. TLS (Phase 4) goes in front of web, with TRUSTED_PROXY_HOPS=1.
+#
+# POSTGRES_PASSWORD comes from .env (default `foray`), and sets the password of a fresh volume
+# only; an existing volume keeps its role's password until `ALTER ROLE foray PASSWORD …`. Keep
+# it URL-safe: it is also spliced into the containers' DATABASE_URL.
+#
+# The long-running services restart unless stopped by hand: after a database outage the worker
+# reconnects by itself (manage.py worker restarts a lane that lost its connection), and a
+# process that does exit comes back.
 
 name: foray
 
 services:
   db:
     image: pgvector/pgvector:pg18
-    # pgvector is unused in Phase 1; having the extension available means enabling
-    # embeddings later is a migration, not a container swap.
+    # pgvector is unused; having the extension available means enabling embeddings later is a
+    # migration, not a container swap.
     environment:
       POSTGRES_USER: foray
-      POSTGRES_PASSWORD: foray
-      POSTGRES_DB: foray
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foray}
+      # Applies only to a fresh volume. The existing dev volume gets foray_app from
+      # `pnpm db:create`, next to the legacy `foray`.
+      POSTGRES_DB: foray_app
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
+    restart: unless-stopped
     volumes:
       # Postgres 18+ images keep data in a major-version subdirectory, so the
       # mount goes one level up from the old /var/lib/postgresql/data.
       - db-data:/var/lib/postgresql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U foray -d foray']
+      test: ['CMD-SHELL', 'pg_isready -U foray -d foray_app']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -29,52 +45,93 @@ services:
     profiles: ['prod']
     build:
       context: .
-      target: worker
-    command: ['node_modules/.bin/tsx', 'src/lib/db/migrate.ts']
+      target: backend
+    command: ['python', 'manage.py', 'migrate']
     env_file: .env
     environment:
-      DATABASE_URL: postgres://foray:foray@db:5432/foray
+      DATABASE_URL: postgres://foray:${POSTGRES_PASSWORD:-foray}@db:5432/foray_app
     depends_on:
       db:
         condition: service_healthy
     restart: 'no'
+
+  api:
+    profiles: ['prod']
+    build:
+      context: .
+      target: backend
+    command:
+      - uvicorn
+      - foray.asgi:application
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8000'
+      - --workers
+      - '1'
+      - --timeout-graceful-shutdown
+      - '10'
+    restart: unless-stopped
+    env_file: .env
+    environment: &backend-env
+      DATABASE_URL: postgres://foray:${POSTGRES_PASSWORD:-foray}@db:5432/foray_app
+      DJANGO_ORIGIN: http://api:8000
+      # The image's store. A dev .env names a host path here, which env_file would pass through.
+      STORAGE_DIR: /data
+    volumes:
+      - app-storage:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"
+      # Every 2 s while starting, so web follows quickly; then every 30 s, which keeps the
+      # access log readable (each check is one line).
+      start_period: 60s
+      start_interval: 2s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    profiles: ['prod']
+    build:
+      context: .
+      target: backend
+    command: ['python', 'manage.py', 'worker', '--shutdown-timeout', '60']
+    # Running jobs get 60 s, then the PDF browser up to 10 s; SIGKILL only after 90 s.
+    stop_grace_period: 90s
+    restart: unless-stopped
+    env_file: .env
+    environment: *backend-env
+    volumes:
+      - app-storage:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
   web:
     profiles: ['prod']
     build:
       context: .
       target: web
-    env_file: .env
+      args:
+        DJANGO_ORIGIN: http://api:8000
+    restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://foray:foray@db:5432/foray
+      DJANGO_ORIGIN: http://api:8000
       HOSTNAME: '0.0.0.0'
       PORT: '3000'
     ports:
       - '3000:3000'
-    volumes:
-      - storage-data:/app/data
     depends_on:
-      db:
+      api:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-
-  worker:
-    profiles: ['prod']
-    build:
-      context: .
-      target: worker
-    env_file: .env
-    environment:
-      DATABASE_URL: postgres://foray:foray@db:5432/foray
-    volumes:
-      - storage-data:/app/data
-    depends_on:
-      db:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
 volumes:
   db-data:
-  storage-data:
+  app-storage:

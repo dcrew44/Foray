@@ -1,0 +1,136 @@
+{
+  "escapeHtml": [
+    {
+      "input": "<a href=\"x\" onclick='y'>&</a>",
+      "output": "&lt;a href=&quot;x&quot; onclick=&#39;y&#39;&gt;&amp;&lt;/a&gt;"
+    },
+    {
+      "input": null,
+      "output": ""
+    },
+    {
+      "input": "__undefined__",
+      "output": ""
+    },
+    {
+      "input": 42,
+      "output": "42"
+    },
+    {
+      "input": "Café ✓",
+      "output": "Café ✓"
+    }
+  ],
+  "safeHref": [
+    {
+      "input": "github.com/dana",
+      "output": "https://github.com/dana"
+    },
+    {
+      "input": "https://example.com/x",
+      "output": "https://example.com/x"
+    },
+    {
+      "input": "http://example.com",
+      "output": "http://example.com"
+    },
+    {
+      "input": "mailto:dana@example.com",
+      "output": "mailto:dana@example.com"
+    },
+    {
+      "input": "dana@example.com",
+      "output": "mailto:dana@example.com"
+    },
+    {
+      "input": "javascript:alert(1)",
+      "output": null
+    },
+    {
+      "input": "data:text/html,x",
+      "output": null
+    },
+    {
+      "input": "localhost:8080/x",
+      "output": null
+    },
+    {
+      "input": "www.example.co.uk/path?q=1#frag",
+      "output": "https://www.example.co.uk/path?q=1#frag"
+    },
+    {
+      "input": "has space.com",
+      "output": null
+    },
+    {
+      "input": "",
+      "output": null
+    },
+    {
+      "input": null,
+      "output": null
+    }
+  ],
+  "displayUrl": [
+    {
+      "input": "https://www.github.com/x/",
+      "output": "github.com/x"
+    },
+    {
+      "input": "mailto:a@b.co",
+      "output": "a@b.co"
+    },
+    {
+      "input": "http://example.com///",
+      "output": "example.com"
+    },
+    {
+      "input": " www.linkedin.com/in/dana/ ",
+      "output": "linkedin.com/in/dana"
+    }
+  ],
+  "dateRange": [
+    {
+      "input": [
+        "March 2023",
+        "Present"
+      ],
+      "output": "March 2023 – Present"
+    },
+    {
+      "input": [
+        "2021",
+        "2021"
+      ],
+      "output": "2021"
+    },
+    {
+      "input": [
+        null,
+        "2021"
+      ],
+      "output": "2021"
+    },
+    {
+      "input": [
+        "2019",
+        null
+      ],
+      "output": "2019"
+    },
+    {
+      "input": [
+        null,
+        null
+      ],
+      "output": ""
+    },
+    {
+      "input": [
+        "  June 2021 ",
+        " "
+      ],
+      "output": "June 2021"
+    }
+  ]
+}

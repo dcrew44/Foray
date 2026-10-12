@@ -4,6 +4,7 @@ import { ChevronDown, LogOut, Monitor, Moon, Settings2, Sun } from "lucide-react
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSyncExternalStore } from "react";
+import { toast } from "sonner";
 
 import {
   DropdownMenu,
@@ -15,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "@/lib/auth/client";
+import { signOut } from "@/lib/api/auth";
 import { initials } from "@/lib/format";
 import {
   chooseTheme,
@@ -80,7 +81,11 @@ export function UserMenu({ user }: { user: ShellUser }) {
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={async () => {
-            await signOut();
+            const result = await signOut();
+            if (!result.ok) {
+              toast.error("Signing out did not work. Reload the page and try again.");
+              return;
+            }
             router.push("/sign-in");
             router.refresh();
           }}

@@ -1,26 +1,16 @@
-import { and, eq } from "drizzle-orm";
 import { ArrowLeft, Clock, ExternalLink, MapPin, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
 import { CompanyMark, PageBody, Section } from "@/components/foray/primitives";
 import { RefreshOn } from "@/components/live/refresh-on";
-import {
-  DeepEvaluation,
-  FastEvaluation,
-  type DeepEvalView,
-  type FastEvalView,
-} from "@/components/matches/evaluation";
+import { DeepEvaluation, FastEvaluation } from "@/components/matches/evaluation";
 import { EvaluateButton, MatchNotes, StageSelect } from "@/components/matches/match-controls";
 import { Posting } from "@/components/matches/posting";
-import { TailorPanel, type TailoredView } from "@/components/matches/tailor-panel";
+import { TailorPanel } from "@/components/matches/tailor-panel";
 import { buttonVariants } from "@/components/ui/button";
-import { requireUser } from "@/lib/auth/session";
-import { db } from "@/lib/db";
-import { getMatchDetail } from "@/lib/db/queries/matches";
-import { getBaseResume } from "@/lib/db/queries/profile";
-import { resumes } from "@/lib/db/schema";
+import type { components } from "@/lib/api/schema";
+import { django } from "@/lib/api/server";
 import {
   formatLocation,
   formatSalary,
@@ -28,55 +18,40 @@ import {
   remoteLabel,
   STAGE_LABEL,
   timeAgo,
-  type StageId,
 } from "@/lib/format";
 
+type MatchDetailPage = components["schemas"]["MatchDetailPage"];
 type Params = { params: Promise<{ id: string }> };
 
+/**
+ * One match in one read (`GET /api/pages/matches/{id}`): the match with its stored
+ * evaluations, the posting, its tailored resume and whether a base resume exists. A malformed
+ * id, an unknown one and another user's all answer 404, which `django()` turns into
+ * `notFound()`. The title and the page make the same GET, which Next memoises within a render,
+ * so they cost one call between them.
+ */
+function load(id: string) {
+  return django<MatchDetailPage>(`/api/pages/matches/${encodeURIComponent(id)}`);
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const user = await requireUser();
-  const detail = await getMatchDetail(user.id, (await params).id);
-  return { title: detail ? `${detail.job.title} at ${detail.job.companyName}` : "Match" };
+  const { job } = await load((await params).id);
+  return { title: `${job.title} at ${job.companyName}` };
 }
 
 export default async function MatchPage({ params }: Params) {
-  const user = await requireUser();
   const { id } = await params;
+  const { match, job, tailored, hasBaseResume } = await load(id);
 
-  const detail = await getMatchDetail(user.id, id);
-  if (!detail) notFound();
-  const { match, job } = detail;
-
-  const [tailoredRow, base] = await Promise.all([
-    match.tailoredResumeId
-      ? db
-          .select()
-          .from(resumes)
-          .where(and(eq(resumes.id, match.tailoredResumeId), eq(resumes.userId, user.id)))
-          .limit(1)
-          .then((rows) => rows[0] ?? null)
-      : Promise.resolve(null),
-    getBaseResume(user.id),
-  ]);
-
-  const tailored: TailoredView | null = tailoredRow
-    ? {
-        id: tailoredRow.id,
-        documentId: tailoredRow.renderedDocumentId,
-        createdAt: tailoredRow.createdAt.toISOString(),
-        changes: (tailoredRow.changes as TailoredView["changes"]) ?? [],
-        verification: (tailoredRow.verification as TailoredView["verification"]) ?? null,
-      }
-    : null;
-
-  const deep = match.deepEval as DeepEvalView | null;
-  const fast = match.fastEval as FastEvalView | null;
+  const deep = match.deepEval;
+  const fast = match.fastEval;
   const salary = formatSalary(job);
   const remote = remoteLabel(job.remote);
 
   return (
     <PageBody>
-      <RefreshOn kinds={["run.completed", "tailor.done", "render.done"]} />
+      {/* Tailoring and rendering end with run.completed too, so one kind covers them. */}
+      <RefreshOn kinds={["run.completed"]} />
 
       <Link
         className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1.5 text-[13px]"
@@ -116,7 +91,7 @@ export default async function MatchPage({ params }: Params) {
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <StageSelect matchId={match.id} stage={match.stage as StageId} />
+          <StageSelect matchId={match.id} stage={match.stage} />
           <a className={buttonVariants({ variant: "outline" })} href={job.url} rel="noreferrer" target="_blank">
             <ExternalLink />
             View posting
@@ -160,7 +135,7 @@ export default async function MatchPage({ params }: Params) {
         <aside className="space-y-10">
           <Section title="Tailored resume">
             <div id="resume" className="scroll-mt-6">
-              <TailorPanel hasResume={Boolean(base)} matchId={match.id} tailored={tailored} />
+              <TailorPanel hasResume={hasBaseResume} matchId={match.id} tailored={tailored} />
             </div>
           </Section>
 
@@ -171,7 +146,7 @@ export default async function MatchPage({ params }: Params) {
           <Section title="History">
             <dl className="text-[13px]">
               <Row label="Found" value={timeAgo(match.createdAt)} />
-              <Row label={STAGE_LABEL[match.stage as StageId]} value={`since ${timeAgo(match.stageChangedAt)}`} />
+              <Row label={STAGE_LABEL[match.stage]} value={`since ${timeAgo(match.stageChangedAt)}`} />
               {match.fastScore != null && <Row label="Triage score" value={String(match.fastScore)} />}
               {match.deepScore != null && <Row label="Deep review" value={String(match.deepScore)} />}
               <Row label="Source" value={job.source === "jsearch" ? "Job aggregator" : job.source === "web" ? "Careers page" : `${job.source[0]!.toUpperCase()}${job.source.slice(1)} board`} />

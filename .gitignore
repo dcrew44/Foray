@@ -12,13 +12,19 @@ dist/
 build/
 *.tsbuildinfo
 
-# environment
+# environment: every .env variant holds secrets (step 13 keeps the old one as .env.legacy);
+# only the template is tracked
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # runtime data (uploads, rendered PDFs) — see STORAGE_DIR
 data/
+# the Django store and the migration backups (STORAGE_DIR, BACKUP_DIR), and the store the
+# cutover moves aside (storage.pre-cutover-<stamp>)
+/storage/
+/storage.*/
+/backups/
 
 # test output
 coverage/

@@ -3,15 +3,22 @@
 import { Play } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { startSearchAction } from "@/app/actions/runs";
+import { eventTone } from "@/components/activity/run-summary";
 import { Section, SignalDot } from "@/components/foray/primitives";
-import { isActiveRun, requestLiveRefresh, useLive } from "@/components/live/live-provider";
+import {
+  isActiveRun,
+  requestLiveRefresh,
+  runToastId,
+  useLive,
+} from "@/components/live/live-provider";
 import { ApprovalCard } from "@/components/runs/approval-card";
 import { RunCard } from "@/components/runs/run-card";
+import { useRunToasts } from "@/components/runs/use-run-toasts";
 import { Button } from "@/components/ui/button";
+import { api, call } from "@/lib/api/client";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -82,16 +89,7 @@ export function RecentActivity() {
         <ol className="space-y-3">
           {recent.map((event) => (
             <li className="flex gap-2.5 text-[13px] leading-snug" key={event.id}>
-              <SignalDot
-                className="mt-1.5"
-                tone={
-                  event.level === "error"
-                    ? "error"
-                    : event.level === "warn" || event.kind === "approval.requested"
-                      ? "signal"
-                      : "ok"
-                }
-              />
+              <SignalDot className="mt-1.5" tone={eventTone(event)} />
               <div className="min-w-0">
                 <p className="text-foreground/90">{event.message}</p>
                 <p className="text-muted-foreground mt-0.5 text-[12px]">{timeAgo(event.createdAt)}</p>
@@ -115,6 +113,8 @@ export function StartSearchButton({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [runId, setRunId] = useState<string | null>(null);
+  useRunToasts(runId);
 
   return (
     <Button
@@ -122,12 +122,16 @@ export function StartSearchButton({
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
-          const result = await startSearchAction();
+          const result = await call(api.POST("/api/searches", { body: {} }));
           if (!result.ok) {
+            // A missing preference (422) or a search already under way (409): say which.
             toast.error(result.message);
+            requestLiveRefresh();
             return;
           }
-          toast.success(result.message);
+          // The run's outcome later takes this toast's place rather than stacking under it.
+          toast.success(result.message, { id: runToastId(result.runId) });
+          setRunId(result.runId);
           requestLiveRefresh();
           router.refresh();
         })

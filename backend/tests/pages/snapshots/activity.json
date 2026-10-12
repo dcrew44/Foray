@@ -1,0 +1,91 @@
+{
+  "runs": [
+    {
+      "conversationId": "null",
+      "costUsd": "number",
+      "run": {
+        "createdAt": "string",
+        "error": "null",
+        "finishedAt": "null",
+        "id": "string",
+        "kind": "string",
+        "mode": "string",
+        "output": "null",
+        "prompt": "string",
+        "startedAt": "string",
+        "stats": {},
+        "status": "string",
+        "summary": "null"
+      },
+      "target": "string"
+    },
+    {
+      "conversationId": "null",
+      "costUsd": "number",
+      "run": {
+        "createdAt": "string",
+        "error": "null",
+        "finishedAt": "string",
+        "id": "string",
+        "kind": "string",
+        "mode": "string",
+        "output": "null",
+        "prompt": "string",
+        "startedAt": "string",
+        "stats": {},
+        "status": "string",
+        "summary": "null"
+      },
+      "target": "string"
+    },
+    {
+      "conversationId": "null",
+      "costUsd": "number",
+      "run": {
+        "createdAt": "string",
+        "error": "null",
+        "finishedAt": "string",
+        "id": "string",
+        "kind": "string",
+        "mode": "string",
+        "output": "null",
+        "prompt": "null",
+        "startedAt": "string",
+        "stats": {},
+        "status": "string",
+        "summary": "null"
+      },
+      "target": "string"
+    },
+    {
+      "conversationId": "string",
+      "costUsd": "number",
+      "run": {
+        "createdAt": "string",
+        "error": "null",
+        "finishedAt": "string",
+        "id": "string",
+        "kind": "string",
+        "mode": "string",
+        "output": {
+          "autoArchived": "number",
+          "candidates": "number",
+          "evaluated": "number",
+          "newMatches": "number",
+          "scored": "number",
+          "shortlisted": "number",
+          "strong": "number",
+          "topMatchIds": [
+            "string"
+          ]
+        },
+        "prompt": "string",
+        "startedAt": "string",
+        "stats": {},
+        "status": "string",
+        "summary": "string"
+      },
+      "target": "string"
+    }
+  ]
+}

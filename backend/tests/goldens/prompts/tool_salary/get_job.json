@@ -1,0 +1,73 @@
+{
+  "builder": "tool_salary",
+  "case": "get_job",
+  "note": "input values are what Postgres returns for the numeric salary columns (strings)",
+  "cases": [
+    {
+      "input": {
+        "salary_min": "150000",
+        "salary_max": "200000",
+        "salary_currency": "USD",
+        "salary_period": "year"
+      },
+      "output": {
+        "salary": "USD 150000–200000 per year"
+      }
+    },
+    {
+      "input": {
+        "salary_min": "124.128",
+        "salary_max": "130.5",
+        "salary_currency": "USD",
+        "salary_period": "hour"
+      },
+      "output": {
+        "salary": "USD 124.128–130.5 per hour"
+      }
+    },
+    {
+      "input": {
+        "salary_min": "150000",
+        "salary_max": null,
+        "salary_currency": "USD",
+        "salary_period": "year"
+      },
+      "output": {
+        "salary": "USD 150000–? per year"
+      }
+    },
+    {
+      "input": {
+        "salary_min": null,
+        "salary_max": "7.982",
+        "salary_currency": null,
+        "salary_period": null
+      },
+      "output": {
+        "salary": "?–7.982 per ?"
+      }
+    },
+    {
+      "input": {
+        "salary_min": "150000",
+        "salary_max": "200000",
+        "salary_currency": null,
+        "salary_period": null
+      },
+      "output": {
+        "salary": "150000–200000 per ?"
+      }
+    },
+    {
+      "input": {
+        "salary_min": null,
+        "salary_max": null,
+        "salary_currency": "USD",
+        "salary_period": "year"
+      },
+      "output": {
+        "salary": null
+      }
+    }
+  ]
+}

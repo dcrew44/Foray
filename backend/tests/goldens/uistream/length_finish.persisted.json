@@ -1,0 +1,14 @@
+{
+  "id": "asst_length_finish",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Cut off mid",
+      "state": "done"
+    }
+  ]
+}

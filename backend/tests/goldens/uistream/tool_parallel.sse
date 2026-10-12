@@ -1,0 +1,28 @@
+data: {"type":"start","messageId":"asst_tool_parallel"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_1","toolName":"get_job","input":{"id":"greenhouse:acme:1"}}
+
+data: {"type":"tool-input-available","toolCallId":"call_2","toolName":"list_jobs","input":{"limit":1}}
+
+data: {"type":"tool-output-available","toolCallId":"call_1","output":{"ok":true,"jobId":"greenhouse:acme:1","title":"Backend Engineer"}}
+
+data: {"type":"tool-output-available","toolCallId":"call_2","output":{"count":1,"jobs":[{"matchId":"m-1","jobId":"greenhouse:acme:1","title":"Backend Engineer","company":"Café Numérique","salary":"$150k–200k"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"t2"}
+
+data: {"type":"text-delta","id":"t2","delta":"Both are in."}
+
+data: {"type":"text-end","id":"t2"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+

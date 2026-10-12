@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 
-import { getSession } from "@/lib/auth/session";
+import { getMeOrNull } from "@/lib/api/server";
 
 /** The root is a doorway: home for a signed-in user, sign-in for everyone else. */
 export default async function Root() {
-  redirect((await getSession()) ? "/home" : "/sign-in");
+  redirect((await getMeOrNull()) ? "/home" : "/sign-in");
 }

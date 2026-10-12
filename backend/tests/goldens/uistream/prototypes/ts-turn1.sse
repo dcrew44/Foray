@@ -1,0 +1,38 @@
+data: {"type":"start","messageId":"asst_turn1"}
+
+data: {"type":"start-step"}
+
+data: {"type":"reasoning-start","id":"r1"}
+
+data: {"type":"reasoning-delta","id":"r1","delta":"Thinking..."}
+
+data: {"type":"reasoning-end","id":"r1"}
+
+data: {"type":"text-start","id":"t1"}
+
+data: {"type":"text-delta","id":"t1","delta":"Let me "}
+
+data: {"type":"text-delta","id":"t1","delta":"look."}
+
+data: {"type":"text-end","id":"t1"}
+
+data: {"type":"tool-input-start","toolCallId":"call_1","toolName":"list_jobs"}
+
+data: {"type":"tool-input-delta","toolCallId":"call_1","inputTextDelta":"{\"limit\":"}
+
+data: {"type":"tool-input-delta","toolCallId":"call_1","inputTextDelta":"2}"}
+
+data: {"type":"tool-input-available","toolCallId":"call_1","toolName":"list_jobs","input":{"limit":2}}
+
+data: {"type":"tool-input-available","toolCallId":"call_2","toolName":"tailor_resume","input":{"jobId":"j1"}}
+
+data: {"type":"tool-approval-request","approvalId":"aitxt-BagamQocoJJXZhVF3jPS9oOc","toolCallId":"call_2"}
+
+data: {"type":"tool-output-available","toolCallId":"call_1","output":{"jobs":[{"id":"j1","title":"Engineer"}]}}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"tool-calls"}
+
+data: [DONE]
+

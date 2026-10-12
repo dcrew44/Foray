@@ -1,0 +1,24 @@
+data: {"type":"start","messageId":"asst_tool_returns_undefined"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-available","toolCallId":"call_1","toolName":"get_job","input":{"id":"undefined"}}
+
+data: {"type":"tool-output-available","toolCallId":"call_1","output":null}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"t2"}
+
+data: {"type":"text-delta","id":"t2","delta":"It returned nothing."}
+
+data: {"type":"text-end","id":"t2"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+

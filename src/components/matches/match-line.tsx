@@ -6,7 +6,7 @@ import {
   RecommendationPill,
   ScoreChip,
 } from "@/components/foray/primitives";
-import type { MatchRow } from "@/lib/db/queries/matches";
+import type { MatchRow } from "@/lib/api/types";
 import {
   formatLocation,
   formatSalary,

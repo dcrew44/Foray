@@ -1,0 +1,26 @@
+{
+  "id": "asst_invalid_tool_input",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_1",
+      "state": "output-error",
+      "rawInput": {
+        "limit": "two"
+      },
+      "errorText": "An error occurred."
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Retrying was not needed.",
+      "state": "done"
+    }
+  ]
+}

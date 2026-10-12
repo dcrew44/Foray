@@ -1,0 +1,61 @@
+{
+  "builder": "fast_score",
+  "case": "fractional_salary_sparse_resume",
+  "input": {
+    "resume": {
+      "basics": {
+        "name": "Zoë Ñúñez",
+        "links": []
+      },
+      "work": [
+        {
+          "id": "00000000-0000-4000-8000-000000000051",
+          "source": "resume",
+          "company": "Ålesund Fiskeri AS",
+          "position": "Data analyst",
+          "startDate": null,
+          "endDate": null,
+          "highlights": []
+        }
+      ],
+      "education": [],
+      "projects": [],
+      "skills": []
+    },
+    "preferences": {
+      "target_roles": [
+        "Backend engineer",
+        "Platform engineer"
+      ],
+      "seniority": "mid",
+      "locations": [
+        "San Francisco Bay Area",
+        "Remote (US)"
+      ],
+      "remote_pref": "hybrid",
+      "salary_floor": {
+        "amount": 124.128,
+        "currency": "USD",
+        "period": "hour"
+      },
+      "work_auth": "US citizen, no sponsorship needed",
+      "start_date": "January 2027",
+      "must_haves": [],
+      "dealbreakers": null
+    },
+    "focus": null,
+    "posting": {
+      "id": "lever:acme:2",
+      "title": "Data Engineer",
+      "company_name": "Ålesund Fiskeri",
+      "locations": [],
+      "remote": "unknown",
+      "salary_min": "124.128",
+      "salary_max": "130.5",
+      "description_text": "Short description with ünïcödé."
+    },
+    "note": "posting salaries are the strings Postgres returns for numeric columns"
+  },
+  "instructions": "You triage job postings for one candidate. Score 0–100.\n\nThe scale, which is not a feeling:\n- 85–100: squarely what they asked for. Right level, right domain, right\n  location, and their background is a direct match.\n- 70–84: a good fit with a gap they could close, or a slightly different domain.\n- 55–69: plausible. Adjacent domain, or the level is a little off, or the\n  posting is vague enough that it might be right.\n- 30–54: probably wrong — wrong level, wrong discipline, or a hard requirement\n  they do not meet.\n- 0–29: clearly not this person.\n\nRules:\n- Judge against what the posting actually says. If it does not state something,\n  that is not a miss — it is unknown.\n- hard_requirement_misses is only for requirements the posting states and the\n  candidate demonstrably does not meet. A \"nice to have\" is never a miss, and\n  neither is a technology they have not listed.\n- seniority is the posting's level, not the candidate's.\n- fit_reasons: at most three, short, concrete. No restating the job title.\n- Be decisive. A middling score for everything is useless triage.\n\n<candidate>\nWants: {\"target_roles\":[\"Backend engineer\",\"Platform engineer\"],\"seniority\":\"mid\",\"locations\":[\"San Francisco Bay Area\",\"Remote (US)\"],\"remote_pref\":\"hybrid\",\"salary_floor\":{\"amount\":124.128,\"currency\":\"USD\",\"period\":\"hour\"},\"work_auth\":\"US citizen, no sponsorship needed\",\"start_date\":\"January 2027\",\"must_haves\":[],\"dealbreakers\":null}\n\nExperience:\n- Data analyst at Ålesund Fiskeri AS (?–present)\n\nEducation:\n(none on file)\n\nSkills: (none on file)\n</candidate>",
+  "prompt": "<posting>\nTitle: Data Engineer\nCompany: Ålesund Fiskeri\nLocation: unstated (unknown)\nPay: 124.128–130.5\n\nShort description with ünïcödé.\n</posting>"
+}

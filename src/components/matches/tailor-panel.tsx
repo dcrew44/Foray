@@ -1,13 +1,16 @@
 "use client";
 
 import { ChevronRight, CircleAlert, CircleCheck, Download, FileText, RotateCcw, WandSparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { tailorResumeAction } from "@/app/actions/resumes";
-import { requestLiveRefresh } from "@/components/live/live-provider";
+import { requestLiveRefresh, useRun } from "@/components/live/live-provider";
 import { RunCard } from "@/components/runs/run-card";
+import { useRunToasts } from "@/components/runs/use-run-toasts";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { api, call } from "@/lib/api/client";
+import type { TailoredView } from "@/lib/api/types";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -31,16 +34,14 @@ type Unsupported = {
   source?: "rule" | "model";
 };
 
-export type TailoredView = {
-  id: string;
-  documentId: string | null;
-  createdAt: string;
-  changes: Change[];
-  verification: {
-    passed?: boolean;
-    unsupported?: Unsupported[];
-    revised?: boolean;
-  } | null;
+/**
+ * `TailoredView.verification` as stored. The schema types it, and `changes`, as plain objects
+ * (they keep today's snake_case keys), so the panel names the fields it reads.
+ */
+type Verification = {
+  passed?: boolean;
+  unsupported?: Unsupported[];
+  revised?: boolean;
 };
 
 const SECTION_LABEL: Record<string, string> = {
@@ -60,17 +61,23 @@ export function TailorPanel({
   tailored: TailoredView | null;
   hasResume: boolean;
 }) {
+  const router = useRouter();
   const [runId, setRunId] = useState<string | null>(null);
+  useRunToasts(runId);
   // The resume on screen when a run was started. Once the page refreshes with
   // a different one, that run has delivered and the full view takes over.
   const [startedFrom, setStartedFrom] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [showChanges, setShowChanges] = useState(false);
   const delivered = runId !== null && (tailored?.id ?? null) !== startedFrom;
+  // A run that failed or was stopped delivers nothing: its card stays to say why, and the panel
+  // offers the button again from live state, without a reload.
+  const run = useRun(runId);
+  const ended = run?.status === "failed" || run?.status === "cancelled";
 
   function tailor() {
     startTransition(async () => {
-      const result = await tailorResumeAction(matchId);
+      const result = await call(api.POST("/api/resumes/tailor", { body: { matchId } }));
       if (!result.ok) {
         toast.error(result.message);
         return;
@@ -78,6 +85,7 @@ export function TailorPanel({
       setStartedFrom(tailored?.id ?? null);
       setRunId(result.runId);
       requestLiveRefresh();
+      router.refresh();
     });
   }
 
@@ -89,13 +97,16 @@ export function TailorPanel({
     );
   }
 
-  if (runId && !delivered) {
+  if (runId && !delivered && !ended) {
     return <RunCard runId={runId} />;
   }
+
+  const endedCard = runId && !delivered && ended ? <RunCard runId={runId} /> : null;
 
   if (!tailored) {
     return (
       <div className="space-y-3">
+        {endedCard}
         <p className="text-muted-foreground text-[13.5px] leading-relaxed">
           Foray rewrites your resume for this posting: it reorders and rephrases what is already
           true, then checks every claim against your real resume before making a PDF. It never
@@ -103,18 +114,20 @@ export function TailorPanel({
         </p>
         <Button disabled={pending} onClick={tailor}>
           <WandSparkles />
-          {pending ? "Starting…" : "Tailor my resume"}
+          {pending ? "Starting…" : endedCard ? "Try again" : "Tailor my resume"}
         </Button>
       </div>
     );
   }
 
-  const unsupported = tailored.verification?.unsupported ?? [];
-  const passed = tailored.verification?.passed ?? unsupported.length === 0;
-  const changes = tailored.changes ?? [];
+  const verification = tailored.verification as Verification | null;
+  const unsupported = verification?.unsupported ?? [];
+  const passed = verification?.passed ?? unsupported.length === 0;
+  const changes = (tailored.changes ?? []) as Change[];
 
   return (
     <div className="space-y-4">
+      {endedCard}
       <div
         className={cn(
           "flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[13px]",
@@ -124,7 +137,7 @@ export function TailorPanel({
         {passed ? <CircleCheck className="mt-0.5 size-4 shrink-0" /> : <CircleAlert className="mt-0.5 size-4 shrink-0" />}
         <span>
           {passed
-            ? `Every claim checked against your resume${tailored.verification?.revised ? ", after reverting a few it could not support" : ""}.`
+            ? `Every claim checked against your resume${verification?.revised ? ", after reverting a few it could not support" : ""}.`
             : `${unsupported.length} ${unsupported.length === 1 ? "claim needs" : "claims need"} your eye before you send this.`}
         </span>
       </div>

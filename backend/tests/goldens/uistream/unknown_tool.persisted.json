@@ -1,0 +1,25 @@
+{
+  "id": "asst_unknown_tool",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "dynamic-tool",
+      "toolName": "no_such_tool",
+      "toolCallId": "call_1",
+      "state": "output-error",
+      "input": {},
+      "errorText": "An error occurred."
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Never mind.",
+      "state": "done"
+    }
+  ]
+}

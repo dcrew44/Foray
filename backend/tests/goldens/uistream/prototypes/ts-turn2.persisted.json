@@ -1,0 +1,59 @@
+{
+  "id": "asst_turn1",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "reasoning",
+      "id": "r1",
+      "text": "Thinking...",
+      "state": "done"
+    },
+    {
+      "type": "text",
+      "text": "Let me look.",
+      "state": "done"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_1",
+      "state": "output-available",
+      "input": {
+        "limit": 2
+      },
+      "output": {
+        "jobs": [
+          {
+            "id": "j1",
+            "title": "Engineer"
+          }
+        ]
+      }
+    },
+    {
+      "type": "tool-tailor_resume",
+      "toolCallId": "call_2",
+      "state": "output-available",
+      "input": {
+        "jobId": "j1"
+      },
+      "output": {
+        "runId": "run_j1"
+      },
+      "approval": {
+        "id": "aitxt-BagamQocoJJXZhVF3jPS9oOc",
+        "approved": true
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Started your tailored resume.",
+      "state": "done"
+    }
+  ]
+}

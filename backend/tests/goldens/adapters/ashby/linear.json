@@ -1,0 +1,152 @@
+{
+  "fixture": "ashby/linear.json",
+  "request": "https://api.ashbyhq.com/posting-api/job-board/linear?includeCompensation=true",
+  "companySlug": "linear",
+  "jobs": [
+    {
+      "id": "ashby:linear:d3bc1ced-3ce4-4086-a050-555055dbb1ff",
+      "source": "ashby",
+      "externalId": "d3bc1ced-3ce4-4086-a050-555055dbb1ff",
+      "companySlug": "linear",
+      "companyName": "linear",
+      "title": "Senior / Staff Fullstack Engineer",
+      "locations": [
+        "Europe"
+      ],
+      "locationNorm": {
+        "raw": "Europe",
+        "city": "Europe",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "remote",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "At Linear, we're building the product development system for teams and agents. AI is fundamentally changing how software gets built, and we’re shaping the tools this new era requires.\n\nFounded in 2019, Linear has become the platform of choice for more than 40,000 companies (including OpenAI, Coinbase, and Ramp) to plan, build, and ship their products. Today, our team is distributed across North America, Europe, and Australia, and we’re continuing to grow internationally. What unites us is relentless focus, fast execution, and a deep care for software craftsmanship.\n\nAs a small team, we’re all generalists and constantly picking up new challenges. When it comes to code, we’re looking to work with experienced people who can pick a problem and solve it. We use TypeScript and build scalable systems so we can continuously make progress on a solid foundation. We don’t expect you to have a background in everything we use, but we do expect strong JavaScript fundamentals and a background working with React and TypeScript.\n\nLocation & work mode\n\nLinear is a remote-first company, with optional co-working offices in San Francisco, New York, and London. This role is open to candidates based in North America and Europe. You can work from most timezones within these regions. We value deep focus and async collaboration, with intentional moments to connect in person through team off-sites, optional co-working, and occasional travel.\n\nWhat you'll do\n\n•\nBuild new user-facing features with everything from database models to GraphQL resolvers and UI components\n\n•\nOptimize our data synchronization stack by applying better serialization protocols\n\n•\nAdd real-time collaborative editing to our content editor\n\n•\nImprove performance by profiling and tweaking virtualized list rendering\n\n•\nAdd analytics, monitoring, and alerts to our service so that we can better respond to operational incidents\n\n•\nOpen-source any non-trivial innovations that come out of our work on the product\n\n•\nRedefine best-in-class software development processes so that we can build a purpose-built product.\n\nWhat we're looking for\n\n•\n5+ years of experience building customer-facing products at a high-quality software company\n\n•\nStrong React and TypeScript fundamentals, with experience across the full stack (Browser technologies, Node, GraphQL, PostgreSQL)\n\n•\nTrack record of driving complex, end-to-end features (not just incremental improvements and refactors) with visible impact on the product\n\n•\nProduct sensibility: you care about UX, speed, and polish, and you push back when something doesn't feel right\n\n•\nComfortable working without heavy PM overhead; you can help to shape the problem, not just implement a solution\n\n•\nHigh ownership mentality: self-directed, full-lifecycle builder who takes a feature from idea to shipped\n\n•\nThrives in a remote, async-first environment with a lean, high-output team\n\n•\nExperience at a startup or a company with a genuinely high engineering bar\n\nOur tech\n\nThis stack reflects the systems we build and operate. You’re not expected to have experience with everything listed, but you should be excited to work close to product, performance, and real-world scale.\n\n•\nAgentic workload system utilizing temporal, operating at production scale\n\n•\nProprietary websocket data sync framework built for speed and offline support\n\n•\nReact, MobX, styled-components on the frontend\n\n•\nExtensive, widely used, GraphQL API and SDK\n\n•\nNode, Postgres, Temporal, and Redis in the backend\n\n•\nHosted on Google Cloud with k8s\n\n•\nGitHub, Slack, Notion\n\nWhat we offer\n\nWe're a small, focused team that cares deeply about the quality of our work and the people we do it with. Here's what you can expect:\n\n•\nCompetitive salary and equity\n\n•\nEmployee-friendly equity terms including early exercise in the US and extended exercise windows\n\n•\nDaily meal and coffee stipend on every workday\n\n•\nPaid co-working space or desk\n\n•\nHealth coverage (based on country requirements)\n\n•\n5 weeks paid vacation, plus local statutory holidays\n\n•\n4 months paid parental leave\n\n•\nPaid month off after 4 years & every 2 years thereafter\n\n•\nRegular team events and off-sites\n\n•\nRemote-first with no required commute\n\nLearn how we think and work\n\n•\nRead Me a story about our mission\n\n•\nOur hiring process: How we hire at Linear\n\n•\nHow we work: Designing remote work at Linear\n\n•\nWhy and how we do work trials Linear blog post\n\n•\nHow we use AI in design feature of Linear's design team\n\n•\nScaling our real-time sync engine talk by our cofounder, Tuomas Artman, at Linear's 2023 offsite\n\n•\nOur recent tender offer: Sharing Linear’s growth with the people building it\n\nA note on recruitment fraud: all official Linear hiring communication comes from an @linear.app email address, and all open roles are listed at linear.app/careers. We never ask candidates for payment or financial information. Suspicious messages can be reported to security@linear.app.",
+      "url": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff",
+      "applyUrl": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application",
+      "postedAt": "2021-04-27T20:13:45.158Z",
+      "contentHash": "5d5cd190777af4e92fd41dabbf4857eb5779a22b",
+      "dedupeKey": "19a12201003bdd31094e2c365b376d821ae83f3c",
+      "descriptionRaw": {
+        "sha256": "e4ce9fe17f3b60feb9b9009e1a9e1c10f9d6ace821ac6f84cab6fc3b1fdc6467",
+        "utf8Bytes": 8769
+      }
+    },
+    {
+      "id": "ashby:linear:cd5ae036-0223-427a-b038-ba16ef9dcb32",
+      "source": "ashby",
+      "externalId": "cd5ae036-0223-427a-b038-ba16ef9dcb32",
+      "companySlug": "linear",
+      "companyName": "linear",
+      "title": "Senior / Staff Fullstack Engineer",
+      "locations": [
+        "North America"
+      ],
+      "locationNorm": {
+        "raw": "North America",
+        "city": "North America",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "remote",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "At Linear, we're building the product development system for teams and agents. AI is fundamentally changing how software gets built, and we’re shaping the tools this new era requires.\n\nFounded in 2019, Linear has become the platform of choice for more than 40,000 companies (including OpenAI, Coinbase, and Ramp) to plan, build, and ship their products. Today, our team is distributed across North America, Europe, and Australia, and we’re continuing to grow internationally. What unites us is relentless focus, fast execution, and a deep care for software craftsmanship.\n\nAs a small team, we’re all generalists that work across the full stack (built in Typescript end-to-end). We’re looking for experienced engineers that thrive in an environment of autonomy and individual responsibility to help us build the future of product development.\n\nLocation & work mode\n\nLinear is a remote-first company, with optional co-working offices in San Francisco, New York, and London. This role is open to candidates based in the US and Europe. You can work from anywhere within those regions. We value deep focus and async collaboration, with intentional moments to connect in person through team off-sites, optional co-working, and occasional travel.\n\nWhat you'll do\n\n•\nBuild new user-facing features with everything from database models to GraphQL resolvers and UI components\n\n•\nOptimize our data synchronization stack by applying better serialization protocols\n\n•\nAdd real-time collaborative editing to our content editor\n\n•\nImprove performance by profiling and tweaking virtualized list rendering\n\n•\nAdd analytics, monitoring, and alerts to our service so that we can better respond to operational incidents\n\n•\nOpen-source any non-trivial innovations that come out of our work on the product\n\n•\nRedefine best-in-class software development processes so that we can build a purpose-built product.\n\nWhat we're looking for\n\n•\n5+ years of experience building customer-facing products at a high-quality software company\n\n•\nStrong React and TypeScript fundamentals, with experience across the full stack (Browser technologies, Node, GraphQL, PostgreSQL)\n\n•\nTrack record of driving complex, end-to-end features (not just incremental improvements and refactors) with visible impact on the product\n\n•\nProduct sensibility: you care about UX, speed, and polish, and you push back when something doesn't feel right\n\n•\nComfortable working without heavy PM overhead; you can help to shape the problem, not just implement a solution\n\n•\nHigh ownership mentality: self-directed, full-lifecycle builder who takes a feature from idea to shipped\n\n•\nThrives in a remote, async-first environment with a lean, high-output team\n\n•\nExperience at a startup or a company with a genuinely high engineering bar\n\nOur tech\n\nThis stack reflects the systems we build and operate. You’re not expected to have experience with everything listed, but you should be excited to work close to product, performance, and real-world scale.\n\n•\nAgentic workload system utilizing temporal, operating at production scale\n\n•\nProprietary websocket data sync framework built for speed and offline support\n\n•\nReact, MobX, styled-components on the frontend\n\n•\nExtensive, widely used, GraphQL API and SDK\n\n•\nNode, Postgres, Temporal, and Redis in the backend\n\n•\nHosted on Google Cloud with k8s\n\n•\nGitHub, Slack, Notion\n\nWhat we offer\n\nWe're a small, focused team that cares deeply about the quality of our work and the people we do it with. Here's what you can expect:\n\n•\nCompetitive salary and equity\n\n•\nEmployee-friendly equity terms including early exercise in the US and extended exercise windows\n\n•\nDaily meal and coffee stipend on every workday\n\n•\nPaid co-working space or desk\n\n•\nHealth coverage (based on country requirements)\n\n•\n5 weeks paid vacation, plus local statutory holidays\n\n•\n4 months paid parental leave\n\n•\nPaid month off after 4 years & every 2 years thereafter\n\n•\nRegular team events and off-sites\n\n•\nRemote-first with no required commute\n\nLearn how we think and work\n\n•\nRead Me a story about our mission\n\n•\nOur hiring process: How we hire at Linear\n\n•\nHow we work: Designing remote work at Linear\n\n•\nWhy and how we do work trials Linear blog post\n\n•\nHow we use AI in design feature of Linear's design team\n\n•\nScaling our real-time sync engine talk by our cofounder, Tuomas Artman, at Linear's 2023 offsite\n\n•\nOur recent tender offer: Sharing Linear’s growth with the people building it\n\nA note on recruitment fraud: all official Linear hiring communication comes from an @linear.app email address, and all open roles are listed at linear.app/careers. We never ask candidates for payment or financial information. Suspicious messages can be reported to security@linear.app.",
+      "url": "https://jobs.ashbyhq.com/linear/cd5ae036-0223-427a-b038-ba16ef9dcb32",
+      "applyUrl": "https://jobs.ashbyhq.com/linear/cd5ae036-0223-427a-b038-ba16ef9dcb32/application",
+      "postedAt": "2021-08-18T20:48:26.891Z",
+      "contentHash": "0402cecbcfd0716e3c317f4cd0b09ab39a2021cb",
+      "dedupeKey": "e87d137568b0be499ba5a29399b986d53dab2ee5",
+      "descriptionRaw": {
+        "sha256": "b440bd41b88291e7d4c37478d28c47f85c1394d79bceca9ac20c1eb09f854978",
+        "utf8Bytes": 8566
+      }
+    },
+    {
+      "id": "ashby:linear:069c4628-88d7-4e4d-b393-c996fc7f3076",
+      "source": "ashby",
+      "externalId": "069c4628-88d7-4e4d-b393-c996fc7f3076",
+      "companySlug": "linear",
+      "companyName": "linear",
+      "title": "Senior / Staff Product Engineer",
+      "locations": [
+        "Europe"
+      ],
+      "locationNorm": {
+        "raw": "Europe",
+        "city": "Europe",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "remote",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "At Linear, we're building the product development system for teams and agents. AI is fundamentally changing how software gets built, and we’re shaping the tools this new era requires.\n\nFounded in 2019, Linear has become the platform of choice for more than 40,000 companies (including OpenAI, Coinbase, and Ramp) to plan, build, and ship their products. Today, our team is distributed across North America, Europe, and Australia, and we’re continuing to grow internationally. What unites us is relentless focus, fast execution, and a deep care for software craftsmanship.\n\nAs a small team, we’re all generalists that work across the full stack (built in Typescript end-to-end). We’re looking for experienced engineers that thrive in an environment of autonomy and individual responsibility to help us build the future of product development.\n\nLocation & work mode\n\nLinear is a remote-first company, with optional co-working offices in San Francisco, New York, and London. This role is open to candidates based in the US and Europe. You can work from anywhere within these regions. We value deep focus and async collaboration, with intentional moments to connect in person through team off-sites, optional co-working, and occasional travel.\n\nWhat you'll do\n\n•\nWork closely with founders and design to implement new concepts and ideas\n\n•\nBuild AI-powered functionality into the core of Linear\n\n•\nUpdate our realtime collaborative content editor used across all internal surfaces\n\n•\nBuild new user-facing features with beautiful and scalable UI components\n\n•\nObsessively improve application performance\n\n•\nRefine our software development processes to keep the team operating at high velocity\n\nWhat we're looking for\n\n•\n5+ years of experience building customer-facing products at a high-quality software company\n\n•\nStrong React and TypeScript fundamentals, with experience across the full stack (Browser technologies, Node, GraphQL, PostgreSQL)\n\n•\nTrack record of driving complex, end-to-end features (not just incremental improvements and refactors) with visible impact on the product\n\n•\nProduct sensibility: you care about UX, speed, and polish, and you push back when something doesn't feel right\n\n•\nComfortable working without heavy PM overhead; you can help to shape the problem, not just implement a solution\n\n•\nHigh ownership mentality: self-directed, full-lifecycle builder who takes a feature from idea to shipped\n\n•\nThrives in a remote, async-first environment with a lean, high-output team\n\n•\nExperience at a startup or a company with a genuinely high engineering bar\n\nOur tech\n\nThis stack reflects the systems we build and operate. You’re not expected to have experience with everything listed, but you should be excited to work close to product, performance, and real-world scale.\n\n•\nAgentic workload system utilizing temporal, operating at production scale\n\n•\nProprietary websocket data sync framework built for speed and offline support\n\n•\nReact, MobX, styled-components on the frontend\n\n•\nExtensive, widely used, GraphQL API and SDK\n\n•\nNode, Postgres, Temporal, and Redis in the backend\n\n•\nHosted on Google Cloud with k8s\n\n•\nGitHub, Slack, Notion\n\nWhat we offer\n\nWe're a small, focused team that cares deeply about the quality of our work and the people we do it with. Here's what you can expect:\n\n•\nCompetitive salary and equity\n\n•\nEmployee-friendly equity terms including early exercise in the US and extended exercise windows\n\n•\nDaily meal and coffee stipend on every workday\n\n•\nPaid co-working space or desk\n\n•\nHealth coverage (based on country requirements)\n\n•\n5 weeks paid vacation, plus local statutory holidays\n\n•\n4 months paid parental leave\n\n•\nPaid month off after 4 years & every 2 years thereafter\n\n•\nRegular team events and off-sites\n\n•\nRemote-first with no required commute\n\nLearn how we think and work\n\n•\nRead Me a story about our mission\n\n•\nOur hiring process: How we hire at Linear\n\n•\nHow we work: Designing remote work at Linear\n\n•\nWhy and how we do work trials Linear blog post\n\n•\nHow we use AI in design feature of Linear's design team\n\n•\nScaling our real-time sync engine talk by our cofounder, Tuomas Artman, at Linear's 2023 offsite\n\n•\nOur recent tender offer: Sharing Linear’s growth with the people building it\n\nA note on recruitment fraud: all official Linear hiring communication comes from an @linear.app email address, and all open roles are listed at linear.app/careers. We never ask candidates for payment or financial information. Suspicious messages can be reported to security@linear.app.",
+      "url": "https://jobs.ashbyhq.com/linear/069c4628-88d7-4e4d-b393-c996fc7f3076",
+      "applyUrl": "https://jobs.ashbyhq.com/linear/069c4628-88d7-4e4d-b393-c996fc7f3076/application",
+      "postedAt": "2022-01-22T08:49:37.626Z",
+      "contentHash": "5cfdc20360093b93437e086e394da9cf70b9b38e",
+      "dedupeKey": "56dd6f454b8da36f9ca46fceaefc6af52fc13378",
+      "descriptionRaw": {
+        "sha256": "dfcd138aec9fd124022bd22bdff58a8efc60972ad6d4a2887e5afc90cdbce7c1",
+        "utf8Bytes": 8331
+      }
+    },
+    {
+      "id": "ashby:linear:f04f398b-6320-499d-8a60-290239d62da8",
+      "source": "ashby",
+      "externalId": "f04f398b-6320-499d-8a60-290239d62da8",
+      "companySlug": "linear",
+      "companyName": "linear",
+      "title": "Design Engineer (Web & Brand)",
+      "locations": [
+        "North America",
+        "Europe"
+      ],
+      "locationNorm": {
+        "raw": "North America",
+        "city": "North America",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "remote",
+      "employmentType": "FullTime",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "At Linear, we're building the product development system for teams and agents. AI is fundamentally changing how software gets built, and we’re shaping the tools this new era requires.\n\nFounded in 2019, Linear has become the platform of choice for more than 40,000 companies (including OpenAI, Coinbase, and Ramp) to plan, build, and ship their products. Today, our team is distributed across North America, Europe, and Australia, and we’re continuing to grow internationally. What unites us is relentless focus, fast execution, and a deep care for software craftsmanship.\n\nWe're looking for a Design Engineer with strong visual taste to help drive our creative initiatives across web and brand. When it comes to design and code, we’re looking to work with experienced people who can pick up any problem and solve it. For us, it’s both how it works and how it looks. At its core, Linear is a developer tool where speed, interactions, and small details matter. We expect a broad set of design skills and the ability to create high-quality designs, interactions, and prototypes.\n\nIn this role, you will help communicate Linear's story—what we're building and why it matters—as part of our internal creative agency: the Magic Team.\n\nWhat you'll do\n\n•\nYou will be responsible for building complex and interactive UI web/app experiences\n\n•\nBuild beautiful, responsive websites, landing pages, and internal tools\n\n•\nImplement creative animations and interactions in code\n\n•\nExplore visual design in Figma and translate it to web-native experiences\n\nWhat we're looking for\n\n•\nEye for good design\n\n•\nStrong frontend engineering skills\n\n•\nExperience building end-to-end websites and landing pages\n\n•\nExperience with React and TypeScript\n\n•\nExperience using agentic coding tools as part of the design process (from exploring ideas to building production-quality interactions)\n\n•\nA portfolio or Twitter profile showcasing a range of technical skills, a creative use of code, and prototyping skills\n\nWhat we offer\n\n•\nInteresting and challenging work\n\n•\nWork life balance\n\n•\nCompetitive salary and equity\n\n•\nEmployee-friendly equity terms (extended exercise)\n\n•\nPaid lunch and coffee during work days\n\n•\nWork remotely, no commuting to the office\n\n•\nPaid co-working space/desk at an office\n\n•\nRegular team events and offsites\n\n•\n5 weeks paid vacation\n\n•\n4 months paid parental leave\n\nLearn how we think and work\n\n•\nPart I and Part II of how we redesigned the Linear UI\n\n•\nRead me a story about our mission\n\n•\nWhy and how we do work trials Linear blog post\n\n•\nHow we use AI in design feature of Linear's design team\n\n•\nCrafting quality that endures Config keynote by our Co-founder & CEO, Karri Saarinen\n\n•\nBuilding for quality: Our Investment in Linear Accel Series B blog post",
+      "url": "https://jobs.ashbyhq.com/linear/f04f398b-6320-499d-8a60-290239d62da8",
+      "applyUrl": "https://jobs.ashbyhq.com/linear/f04f398b-6320-499d-8a60-290239d62da8/application",
+      "postedAt": "2026-09-15T18:05:31.687Z",
+      "contentHash": "d89fc7f38418793f245426c1aa6c9226b8834fed",
+      "dedupeKey": "a5b647e46dbdee4e5dd65b9ce3ab2934e8c59341",
+      "descriptionRaw": {
+        "sha256": "66f99deac65893feddd3e56bcbbcd83b522279c4cb2f769e20c7df28a32a1710",
+        "utf8Bytes": 5022
+      }
+    }
+  ]
+}

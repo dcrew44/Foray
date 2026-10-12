@@ -1,0 +1,163 @@
+{
+  "normalizeCompany": [
+    {
+      "input": "Stripe, Inc.",
+      "output": "stripe"
+    },
+    {
+      "input": "Ben & Jerry's LLC",
+      "output": "ben and jerry s"
+    },
+    {
+      "input": "Café Numérique S.A.",
+      "output": "caf num rique s a"
+    },
+    {
+      "input": "ACME CORP.",
+      "output": "acme"
+    },
+    {
+      "input": "Foo GmbH & Co. KG",
+      "output": "foo and kg"
+    }
+  ],
+  "normalizeTitle": [
+    {
+      "input": "Senior Software Engineer (Remote)",
+      "output": "senior software engineer"
+    },
+    {
+      "input": "Software Engineer II [Payments] REQ-12345",
+      "output": "software engineer ii"
+    },
+    {
+      "input": "C++ Engineer #4567",
+      "output": "c++ engineer #"
+    },
+    {
+      "input": "C# Developer - Remote - US",
+      "output": "c# developer"
+    },
+    {
+      "input": "Staff Engineer – Full-time",
+      "output": "staff engineer"
+    },
+    {
+      "input": "Ingénieur logiciel",
+      "output": "ing nieur logiciel"
+    }
+  ],
+  "normalizeLocationForKey": [
+    {
+      "input": "San Francisco, CA",
+      "output": "san francisco ca"
+    },
+    {
+      "input": null,
+      "output": ""
+    },
+    {
+      "input": "São Paulo",
+      "output": "s o paulo"
+    }
+  ],
+  "dedupeKey": [
+    {
+      "input": {
+        "companyName": "Stripe",
+        "title": "Backend Engineer",
+        "primaryLocation": "San Francisco"
+      },
+      "output": "08c8f1f5f79305cee14aaba96e9749b78c189972"
+    },
+    {
+      "input": {
+        "companyName": "Stripe, Inc.",
+        "title": "Backend Engineer (Remote)",
+        "primaryLocation": "San Francisco"
+      },
+      "output": "08c8f1f5f79305cee14aaba96e9749b78c189972"
+    },
+    {
+      "input": {
+        "companyName": "Stripe",
+        "title": "Backend Engineer",
+        "primaryLocation": null
+      },
+      "output": "b44ce485f3c72152f9e1ee5e35c909bf0393513b"
+    }
+  ],
+  "contentHash": [
+    {
+      "input": {
+        "title": "Engineer",
+        "locations": [
+          "B",
+          "A"
+        ],
+        "descriptionRaw": "<p>x</p>",
+        "salaryMin": 150000,
+        "salaryMax": 200000
+      },
+      "output": "fe0e8a4a13e3178578a886c0402e7a0fcc7abb33"
+    },
+    {
+      "input": {
+        "title": "Engineer",
+        "locations": [
+          "A",
+          "B"
+        ],
+        "descriptionRaw": "<p>x</p>",
+        "salaryMin": 150000,
+        "salaryMax": 200000
+      },
+      "output": "fe0e8a4a13e3178578a886c0402e7a0fcc7abb33"
+    },
+    {
+      "input": {
+        "title": "Engineer",
+        "locations": [],
+        "descriptionRaw": null,
+        "salaryMin": 124.128,
+        "salaryMax": null
+      },
+      "output": "55211cef558e28d4fc0cfb9f1484712f47d11e23"
+    },
+    {
+      "input": {
+        "title": "Ingénieur",
+        "locations": [
+          "Montréal"
+        ]
+      },
+      "output": "0b2519b9c7dd70ba74dc8b1efffa3c56645f8be4"
+    }
+  ],
+  "jobId": [
+    {
+      "input": [
+        "greenhouse",
+        "anthropic",
+        "4567"
+      ],
+      "output": "greenhouse:anthropic:4567"
+    }
+  ],
+  "webJobId": [
+    {
+      "input": {
+        "companySlug": "retool",
+        "url": "https://retool.com/careers/jobs/123"
+      },
+      "output": "web:retool:edc0100ca959d945363545be6057ddc015c4a39a"
+    },
+    {
+      "input": {
+        "companySlug": "retool",
+        "url": "https://www.crusoe.ai/about/careers?gh_jid=9"
+      },
+      "output": "web:retool:52c672e530336ae0b998044e9f91f1235d1e1059"
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "id": "asst_step_cap",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_1",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_2",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_3",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_4",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_5",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_6",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_7",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_8",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    }
+  ]
+}

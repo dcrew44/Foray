@@ -6,7 +6,7 @@ import { SignalDot } from "@/components/foray/primitives";
 import { useLive } from "@/components/live/live-provider";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { LiveEvent } from "@/lib/runs/live";
+import type { LiveEvent } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 import { eventTone } from "./run-summary";

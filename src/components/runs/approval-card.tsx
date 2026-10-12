@@ -1,10 +1,10 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { decideApprovalAction } from "@/app/actions/approvals";
 import {
   RecommendationPill,
   ScoreChip,
@@ -12,7 +12,8 @@ import {
 import { requestLiveRefresh } from "@/components/live/live-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { LiveApproval } from "@/lib/runs/live";
+import { api, call } from "@/lib/api/client";
+import type { LiveApproval } from "@/lib/api/types";
 import { formatUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +70,7 @@ export function ApprovalCard({
     skip: "Decline",
   };
 
+  const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(items.map((item) => item.matchId)),
   );
@@ -83,16 +85,21 @@ export function ApprovalCard({
 
   function decide(approved: boolean) {
     startTransition(async () => {
-      const result = await decideApprovalAction(approval.id, {
-        approved,
-        itemIds: approved ? [...selected] : undefined,
-      });
+      const result = await call(
+        api.POST("/api/approvals/{id}/decision", {
+          params: { path: { id: approval.id } },
+          body: { approved, itemIds: approved ? [...selected] : undefined },
+        }),
+      );
+      // The pages that show this decision re-read, whether it went through or someone (the
+      // chat, another tab) answered first.
+      requestLiveRefresh();
+      router.refresh();
       if (!result.ok) {
         toast.error(result.message);
         return;
       }
       setDecided(approved && count > 0 ? "approved" : "skipped");
-      requestLiveRefresh();
     });
   }
 

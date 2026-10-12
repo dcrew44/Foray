@@ -1,0 +1,158 @@
+{
+  "base": {
+    "createdAt": "string",
+    "version": "number"
+  },
+  "hasResume": "boolean",
+  "preferences": {
+    "dealbreakers": [
+      "string"
+    ],
+    "locations": [
+      "string"
+    ],
+    "must_haves": [
+      "string"
+    ],
+    "remote_pref": "string",
+    "salary_floor": {
+      "amount": "number",
+      "currency": "string",
+      "period": "string"
+    },
+    "seniority": "string",
+    "start_date": "string",
+    "target_roles": [
+      "string"
+    ],
+    "work_auth": "string"
+  },
+  "progress": {
+    "answered": "number",
+    "blocking": [],
+    "complete": "boolean",
+    "filled": [
+      {
+        "fields": [
+          "string"
+        ],
+        "id": "string",
+        "intent": "string",
+        "label": "string",
+        "required": "boolean"
+      }
+    ],
+    "outstanding": [],
+    "total": "number"
+  },
+  "ready": "boolean",
+  "render": {
+    "documentId": "string",
+    "version": "number"
+  },
+  "resume": {
+    "basics": {
+      "email": "string",
+      "headline": "string",
+      "links": [
+        {
+          "id": "string",
+          "label": "string",
+          "source": "string",
+          "url": "string"
+        }
+      ],
+      "location": "string",
+      "name": "string",
+      "phone": "null"
+    },
+    "education": [
+      {
+        "area": "string",
+        "endDate": "string",
+        "highlights": [
+          "string"
+        ],
+        "id": "string",
+        "institution": "string",
+        "score": "null",
+        "source": "string",
+        "startDate": "string",
+        "studyType": "string"
+      },
+      {
+        "area": "string",
+        "endDate": "string",
+        "highlights": [],
+        "id": "string",
+        "institution": "string",
+        "score": "null",
+        "source": "string",
+        "startDate": "string",
+        "studyType": "string"
+      }
+    ],
+    "projects": [
+      {
+        "description": "string",
+        "endDate": "null",
+        "highlights": [
+          "string"
+        ],
+        "id": "string",
+        "name": "string",
+        "source": "string",
+        "startDate": "string",
+        "url": "string"
+      }
+    ],
+    "skills": [
+      {
+        "category": "string",
+        "id": "string",
+        "name": "string",
+        "source": "string"
+      }
+    ],
+    "summary": "string",
+    "work": [
+      {
+        "company": "string",
+        "endDate": "string",
+        "highlights": [
+          "string"
+        ],
+        "id": "string",
+        "location": "string",
+        "position": "string",
+        "source": "string",
+        "startDate": "string",
+        "summary": "string"
+      },
+      {
+        "company": "string",
+        "endDate": "string",
+        "highlights": [
+          "string"
+        ],
+        "id": "string",
+        "location": "string",
+        "position": "string",
+        "source": "string",
+        "startDate": "string",
+        "summary": "null"
+      }
+    ]
+  },
+  "slots": [
+    {
+      "fields": [
+        "string"
+      ],
+      "id": "string",
+      "intent": "string",
+      "label": "string",
+      "required": "boolean"
+    }
+  ]
+}

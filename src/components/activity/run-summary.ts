@@ -1,19 +1,15 @@
-import type { LiveEvent, LiveRun } from "@/lib/runs/live";
+import type { LiveEvent, LiveRun, RunSummary } from "@/lib/api/types";
 
 /**
- * A run as the activity page lists it: the live shape, plus what the page
- * looked up on the server — what the run was about and what it cost.
+ * A run as the activity page lists it (`GET /api/pages/activity`): the live shape, plus what
+ * Django looked up for it — what the run was about (`target`: "Senior Backend Engineer at
+ * Life360") and what it cost (`costUsd`, null for a run the live feed added after the page
+ * loaded).
  */
-export type RunSummary = {
-  run: LiveRun;
-  /** The prompt or the thing it worked on: "Senior Backend Engineer at Life360". */
-  target: string | null;
-  /** Model spend attributed to this run, or null when not looked up yet. */
-  costUsd: number | null;
-  conversationId: string | null;
-};
+export type { RunSummary };
 
-export const KIND_TITLE: Record<string, string> = {
+/** What each kind of run is called, on run cards and in the activity list. */
+export const KIND_TITLE: Record<LiveRun["kind"], string> = {
   search: "Search",
   rank_deep: "Deep review",
   tailor: "Tailored resume",

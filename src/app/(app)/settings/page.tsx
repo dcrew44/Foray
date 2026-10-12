@@ -15,24 +15,15 @@ import {
   SpendChart,
 } from "@/components/settings/spend";
 import { WorkerPanel } from "@/components/settings/worker-panel";
-import { requireUser } from "@/lib/auth/session";
-import { getProfile } from "@/lib/db/queries/profile";
-import {
-  monthStart,
-  spendByDay,
-  spendByModel,
-  spendByPurpose,
-  spendSince,
-} from "@/lib/db/queries/spend";
+import type { components } from "@/lib/api/schema";
+import { django } from "@/lib/api/server";
 import { formatUsd, initials } from "@/lib/format";
-import { configuredPurposes, reasoningFor, type ReasoningEffort } from "@/lib/llm/models";
-import { rateFor, type Rate } from "@/lib/llm/pricing";
-import { configuredProviders, type ProviderId } from "@/lib/llm/registry";
-import { parseSettings } from "@/lib/profile/settings";
-import { estimateEvalCost } from "@/lib/ranking/deep-eval";
-import { jsearchBudget } from "@/lib/sources/jsearch";
 
 export const metadata: Metadata = { title: "Settings" };
+
+type S = components["schemas"];
+type ReasoningEffort = S["PurposeModel"]["reasoning"];
+type ProviderId = S["ProviderKeys"]["present"][number];
 
 const EFFORT_LABEL: Record<ReasoningEffort, string> = {
   none: "None",
@@ -45,27 +36,20 @@ const EFFORT_LABEL: Record<ReasoningEffort, string> = {
 
 const PROVIDERS: ProviderId[] = ["openai", "anthropic", "google", "deepseek", "compat"];
 
+/**
+ * How the agents behave for the user, what they have cost this month, what
+ * they run on, and whether the worker is up. One read of Django's settings
+ * page; provider keys never leave the server, only which ones are set.
+ */
 export default async function SettingsPage() {
-  const user = await requireUser();
-  const since = monthStart();
+  const page = await django<S["SettingsPage"]>("/api/pages/settings");
+  const { user, settings, spend: total, byPurpose, byModel, byDay, aggregator, purposes } = page;
+  const since = new Date(page.monthStart);
 
-  const [profile, total, byPurpose, byModel, byDay, aggregator] = await Promise.all([
-    getProfile(user.id),
-    spendSince(user.id, since),
-    spendByPurpose(user.id, since),
-    spendByModel(user.id, since),
-    spendByDay(user.id, since),
-    jsearchBudget(),
-  ]);
-
-  const settings = parseSettings(profile?.settings);
   // The same estimator the approval card quotes from, so the two always agree.
-  const review = estimateEvalCost(1);
-  const purposes = configuredPurposes();
-  const present = new Set(configuredProviders());
-  const inUse = new Set(
-    purposes.flatMap((row) => (row.ref ? [row.ref.split(":")[0] as ProviderId] : [])),
-  );
+  const review = page.review;
+  const present = new Set<string>(page.providers.present);
+  const inUse = new Set(purposes.flatMap((row) => (row.ref ? [row.ref.split(":")[0]] : [])));
 
   const monthName = since.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
   const nextMonth = new Date(Date.UTC(since.getUTCFullYear(), since.getUTCMonth() + 1, 1));
@@ -86,15 +70,10 @@ export default async function SettingsPage() {
         <div className="min-w-0 max-w-3xl space-y-16">
           <div className="scroll-mt-20 lg:scroll-mt-8" id="behaviour">
             <Section
-              description={
-                profile
-                  ? "Defaults for every search. Changes apply to the next one."
-                  : "These are saved on your profile, which your first resume upload creates."
-              }
+              description="Defaults for every search. Changes apply to the next one."
               title="How Foray works for you"
             >
               <BehaviourForm
-                canSave={Boolean(profile)}
                 initial={settings}
                 reviewCost={review.perItemUsd}
                 reviewModel={review.perItemUsd != null ? (review.model.split(":").pop() ?? null) : null}
@@ -181,7 +160,7 @@ export default async function SettingsPage() {
                     <tbody className="divide-y">
                       {purposes.map((row) => {
                         const [provider, model] = row.ref?.split(":") ?? [];
-                        const rate = row.ref ? rateFor(row.ref) : null;
+                        const rate = row.rate;
                         return (
                           <tr className="align-top" key={row.purpose}>
                             <td className="py-3 pr-4 pl-5 font-medium">
@@ -196,7 +175,7 @@ export default async function SettingsPage() {
                                   </span>
                                 </td>
                                 <td className="text-muted-foreground py-3 pr-4">
-                                  {EFFORT_LABEL[reasoningFor(row.purpose)]}
+                                  {EFFORT_LABEL[row.reasoning]}
                                 </td>
                                 <td className="tabular text-muted-foreground py-3 pr-5 text-right">
                                   {rate ? priceLabel(rate) : "Not priced"}
@@ -302,7 +281,7 @@ export default async function SettingsPage() {
   );
 }
 
-function priceLabel(rate: Rate): string {
+function priceLabel(rate: S["TokenRate"]): string {
   const usd = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
   return `${usd(rate.input)} in, ${usd(rate.output)} out`;
 }

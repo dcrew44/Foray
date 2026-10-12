@@ -1,12 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import {
-  DefaultChatTransport,
-  getStaticToolName,
-  isStaticToolUIPart,
-  isTextUIPart,
-} from "ai";
+import { getStaticToolName, isStaticToolUIPart, isTextUIPart } from "ai";
 import { ArrowUp, CircleAlert, MessageSquarePlus, RotateCcw, Square } from "lucide-react";
 import Link from "next/link";
 import {
@@ -30,22 +25,22 @@ import { PENDING_PROMPT_KEY } from "@/components/home/ask-box";
 import { requestLiveRefresh, useLiveEvent, watchRuns } from "@/components/live/live-provider";
 import { announceConversationsChanged } from "@/components/shell/recent-chats";
 import { buttonVariants } from "@/components/ui/button";
-import type { ForayUIMessage } from "@/lib/agents/chat-agent";
+import type { ChatSuggestion, ForayUIMessage } from "@/lib/api/chat-types";
+import { api } from "@/lib/api/client";
 import { FOLLOW_UP_EVENT, FOLLOW_UP_KINDS } from "@/lib/chat/follow-up-kinds";
 import { cn } from "@/lib/utils";
 
+import { chatLink } from "./chat-link";
 import { ToolPart, type ToolPartView } from "./tool-part";
 
 /**
  * The conversation with the agent.
  *
  * Postgres holds the history and is the authority, so only the newest message
- * goes over the wire. Tool calls render as what they did — a live run card, a
- * list of matches, a sentence — rather than as JSON.
+ * goes over the wire (`POST /api/chat`, Django's streaming view). Tool calls
+ * render as what they did — a live run card, a list of matches, a sentence —
+ * rather than as JSON.
  */
-
-/** A starting point. `prefill` ones need the user to finish the sentence. */
-export type ChatSuggestion = { title: string; prompt: string; prefill?: boolean };
 
 export function Chat({
   chatId,
@@ -63,22 +58,19 @@ export function Chat({
   const [persisted, setPersisted] = useState(!isNew);
   const [text, setText] = useState("");
   const textarea = useRef<HTMLTextAreaElement>(null);
+  // One transport per chat (the component is keyed by its id).
+  const [link] = useState(() => chatLink(chatId, !isNew));
 
   const { messages, setMessages, sendMessage, status, error, stop, regenerate, clearError } =
     useChat<ForayUIMessage>({
       id: chatId,
       messages: initialMessages,
-      transport: new DefaultChatTransport({
-        api: "/api/chat",
-        prepareSendMessagesRequest: ({ id, messages: all }) => ({
-          body: { id, message: all.at(-1) },
-        }),
-      }),
+      transport: link.transport,
       onFinish: () => {
         // Tools may have started runs; pull their state now rather than on
         // the next tick.
         requestLiveRefresh();
-        if (!persisted) {
+        if (!persisted && link.claimed()) {
           // Address bar only: a real navigation would remount this component
           // and drop the reply that just streamed in.
           window.history.replaceState(null, "", `/chat/${chatId}`);
@@ -92,8 +84,9 @@ export function Chat({
 
   // --- The agent reporting back ---------------------------------------------
   // A run this chat started pauses, finishes or fails; the worker has the
-  // agent write a follow-up into this conversation (lib/chat/follow-up.ts).
-  // Between the two, the chat says Foray is catching up, then loads the reply.
+  // agent write a follow-up into this conversation (backend
+  // `apps/chat/follow_up.py`) and emits `chat.followup`. Between the two, the
+  // chat says Foray is catching up, then loads the notice and the reply.
   const runIds = useMemo(() => runIdsIn(messages), [messages]);
   // This chat shows its runs' moments inline, so the app does not toast them.
   const runKey = [...runIds].sort().join(",");
@@ -103,10 +96,18 @@ export function Chat({
   const reloadWhenIdle = useRef(false);
 
   const reload = useCallback(async () => {
-    const response = await fetch(`/api/conversations/${chatId}`, { cache: "no-store" });
-    if (!response.ok) return;
-    const body = (await response.json()) as { messages: ForayUIMessage[] };
-    setMessages((local) => mergeMessages(body.messages, local));
+    try {
+      const { data } = await api.GET("/api/conversations/{id}", {
+        params: { path: { id: chatId } },
+        cache: "no-store",
+      });
+      if (!data) return;
+      // The rows are the stored UI messages, returned as they are (§7.4).
+      const stored = data.messages as unknown as ForayUIMessage[];
+      setMessages((local) => mergeMessages(stored, local));
+    } catch {
+      // Django unreachable for a moment: the next follow-up or a reload catches up.
+    }
   }, [chatId, setMessages]);
 
   useLiveEvent(
@@ -277,7 +278,8 @@ function runIdsIn(messages: ForayUIMessage[]): Set<string> {
     if (message.role !== "assistant") continue;
     for (const part of message.parts) {
       if (!isStaticToolUIPart(part) || part.state !== "output-available") continue;
-      const runId = (part.output as { runId?: unknown } | undefined)?.runId;
+      // Read loosely: a stored output may predate today's shapes.
+      const runId = (part.output as { runId?: unknown } | null | undefined)?.runId;
       if (typeof runId === "string") ids.add(runId);
     }
   }
@@ -297,9 +299,9 @@ function mergeMessages(server: ForayUIMessage[], local: ForayUIMessage[]): Foray
 
 /** The divider text for an automatic run update, or null for any other message. */
 function runUpdateLabel(message: ForayUIMessage): string | null {
-  const metadata = message.metadata as { kind?: unknown; label?: unknown } | undefined;
+  const metadata = message.metadata;
   if (message.role !== "user" || metadata?.kind !== "run_update") return null;
-  return typeof metadata.label === "string" ? metadata.label : "Update";
+  return typeof metadata.label === "string" && metadata.label ? metadata.label : "Update";
 }
 
 /**

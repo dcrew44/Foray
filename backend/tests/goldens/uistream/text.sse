@@ -1,0 +1,20 @@
+data: {"type":"start","messageId":"asst_text"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"t1"}
+
+data: {"type":"text-delta","id":"t1","delta":"Here is "}
+
+data: {"type":"text-delta","id":"t1","delta":"the answer: Zoë’s café ✓ \"quoted\"\n"}
+
+data: {"type":"text-delta","id":"t1","delta":"</script> & done."}
+
+data: {"type":"text-end","id":"t1"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+

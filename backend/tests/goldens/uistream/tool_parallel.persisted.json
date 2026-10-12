@@ -1,0 +1,50 @@
+{
+  "id": "asst_tool_parallel",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-get_job",
+      "toolCallId": "call_1",
+      "state": "output-available",
+      "input": {
+        "id": "greenhouse:acme:1"
+      },
+      "output": {
+        "ok": true,
+        "jobId": "greenhouse:acme:1",
+        "title": "Backend Engineer"
+      }
+    },
+    {
+      "type": "tool-list_jobs",
+      "toolCallId": "call_2",
+      "state": "output-available",
+      "input": {
+        "limit": 1
+      },
+      "output": {
+        "count": 1,
+        "jobs": [
+          {
+            "matchId": "m-1",
+            "jobId": "greenhouse:acme:1",
+            "title": "Backend Engineer",
+            "company": "Café Numérique",
+            "salary": "$150k–200k"
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Both are in.",
+      "state": "done"
+    }
+  ]
+}

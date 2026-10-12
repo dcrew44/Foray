@@ -1,17 +1,18 @@
 "use client";
 
 import { Plus, Trash, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { saveProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Resume } from "@/lib/resume/schema";
+import { api, call } from "@/lib/api/client";
 
 import { BulletList } from "./bullet-list";
 import { AreaField, Field, SourceNote } from "./field";
 import { SaveBar, sameContent, useUnsavedChanges } from "./form-controls";
+import type { EditableResume as Resume } from "./resume";
 import { SkillsEditor } from "./skills-editor";
 
 /**
@@ -22,13 +23,15 @@ import { SkillsEditor } from "./skills-editor";
  * has to be easy and the corrections have to stick. The whole resume is held in
  * local state and saved in one go; the server works out which items actually
  * changed, marks only those as the user's own, and stores the result as a new
- * version of the base resume.
+ * version of the base resume. The page then re-renders with that version, and
+ * the editor (keyed on it) starts over from what was stored.
  */
 
 type ListSection = "work" | "education" | "projects";
 type Item<S extends ListSection> = Resume[S][number];
 
 export function ProfileEditor({ initial }: { initial: Resume }) {
+  const router = useRouter();
   const [resume, setResume] = useState<Resume>(initial);
   // Bumped on discard, so editors holding a draft of their own start over.
   const [resetKey, setResetKey] = useState(0);
@@ -84,15 +87,16 @@ export function ProfileEditor({ initial }: { initial: Resume }) {
     if (!dirty || pending) return;
     const cleaned = prune(resume);
     startTransition(async () => {
-      const result = await saveProfile(cleaned);
+      const result = await call(api.PUT("/api/resume", { body: cleaned }));
       if (!result.ok) {
-        toast.error(result.error);
+        toast.error(result.message);
         return;
       }
       setResume(cleaned);
-      toast.success("Profile saved", {
+      toast.success(result.message, {
         description: "Scoring, reviews and tailoring use this version from now on.",
       });
+      router.refresh();
     });
   }
 

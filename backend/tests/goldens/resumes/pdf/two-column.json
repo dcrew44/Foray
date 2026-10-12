@@ -1,0 +1,18 @@
+{
+  "fixture": "resumes/two-column.pdf",
+  "sha256": "9fe6b8b016b5df651c1d619d602b5a4c781160ee3f4a05bf8dd61fc2bf5b8151",
+  "text": "CONTACT\nLocation\nProvidence, RI\nPhone\n(555) 0177-4412\nEmail\nm.oyelaran.priest@example.com\nGitHub\ngithub.com/moyelaran\nLinkedIn\nlinkedin.com/in/moyelaranpriest\nSite\noyelaran.example.dev\nMarcus Oyelaran-Priest\nFull-Stack Software Engineer · Distributed Systems & Developer Tooling\nSUMMARY\nSoftware engineer with three and a half years of experience shipping customer-facing\nweb products and the services behind them. Strongest on the seam between the API\nand the browser: schema design, caching, and the kind of front-end performance\nwork that shows up in real user metrics. Looking for a mid-level role on a team that\ntakes testing seriously.\nLANGUAGES\nTypeScript Java Python\nKotlin SQL HTML/CSS\nFRAMEWORKS\nReact Next.js Spring Boot\nNode.js Django\nPlaywright JUnit\nEXPERIENCE\nSoftware Engineer January 2024 – Present\nTidewater Systems — Providence, RI\nOwn the billing-events service (Kotlin, Spring Boot, PostgreSQL) that reconciles\nabout 2.4 million usage records per day against the invoicing ledger.\nEliminated a long-standing double-charge bug by moving reconciliation onto\nidempotency keys, which cut billing support tickets by 61% quarter over quarter.\nLed the migration of 14 services from CircleCI to a self-hosted runner pool, taking\nthe median pipeline from 11 minutes to 4 minutes 20 seconds and cutting CI\nspend by $3,100 per month.\nWrote the team's Playwright end-to-end suite covering the seven highest-traffic\nflows; it now gates every deploy to production.\nPLATFORM\nPostgreSQL MySQL\nRedis RabbitMQ Docker\nKubernetes GCP Datadog\nCircleCI\nAssociate Software Engineer August 2022 – December 2023\nBlue Harbor Media — Boston, MA\nBuilt the subscriber paywall front end in React and Next.js, serving roughly\n310,000 monthly unique readers.\nImproved Largest Contentful Paint on article pages from 4.1 s to 1.8 s by deferring\nthird-party embeds and moving hero images to responsive AVIF, which lifted\nmeasured article completion rate by 9%.\nAdded a Redis-backed edge cache for the article API, dropping origin load by\nabout 70% during traffic spikes tied to breaking news.\nRan the accessibility audit that brought the reader app to WCAG 2.1 AA on all\ntemplates.\nEDUCATION\nB.S. Software Engineering\nRennick Institute of Technology\n2018 – 2022 · Providence, RI\nSenior capstone: distributed rate\nlimiting. GPA 3.71.\nCertificate, Cloud Architecture\nRennick Professional Studies\n2023\nEngineering Intern June 2021 – August 2021\nFernhollow Robotics — Worcester, MA\nWrote the telemetry dashboard used by the field-test team to review autonomous\nruns.\nReduced log ingestion storage by 38% by switching to columnar Parquet with\ndaily compaction.\nINTERESTS\nCompetitive rowing, letterpress\nprinting, and maintaining a small\nMastodon instance for a local\nmakerspace.\nREFERENCES\nAvailable on request.\nPROJECTS\nHarborlight\ngithub.com/moyelaran/harborlight\nA self-hostable status page that derives incident timelines from existing alerting\nwebhooks instead of asking engineers to write updates by hand. About 1,400 stars.\nquiettype\ngithub.com/moyelaran/quiettype\nA TypeScript codemod that finds and narrows implicit any in large codebases, written\nup at oyelaran.example.dev/posts/quiettype.",
+  "pageCount": 2,
+  "garble": {
+    "garbled": false,
+    "reasons": [],
+    "metrics": {
+      "chars": 3181,
+      "charsPerPage": 1590.5,
+      "spaceRatio": 0.1402074819239233,
+      "alphaRatio": 0.9287020109689214,
+      "replacementRatio": 0,
+      "singleCharWordRatio": 0.05145413870246085
+    }
+  }
+}

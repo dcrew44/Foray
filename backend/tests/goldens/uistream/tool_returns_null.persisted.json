@@ -1,0 +1,26 @@
+{
+  "id": "asst_tool_returns_null",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-get_job",
+      "toolCallId": "call_1",
+      "state": "output-available",
+      "input": {
+        "id": "null"
+      },
+      "output": null
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "It returned null.",
+      "state": "done"
+    }
+  ]
+}

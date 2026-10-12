@@ -13,15 +13,15 @@ import {
 } from "react";
 import { toast } from "sonner";
 
+import { announceConversationsChanged } from "@/components/shell/recent-chats";
 import type {
   LiveApproval,
   LiveEvent,
   LiveRun,
   LiveSnapshot,
-} from "@/lib/runs/live";
-import { announceConversationsChanged } from "@/components/shell/recent-chats";
+  WorkerStatus,
+} from "@/lib/api/types";
 import { FOLLOW_UP_EVENT } from "@/lib/chat/follow-up-kinds";
-import type { WorkerStatus } from "@/lib/system/heartbeat";
 
 /**
  * The app's one connection to background work.
@@ -189,12 +189,28 @@ export function LiveProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * Runs an open chat is showing inline. Their moments are not toasted: the
- * card and the agent's follow-up are already in front of the user.
+ * Runs whose moments something on screen already shows: an open chat's run
+ * cards, or a component that reports its own run's outcome (the resume
+ * dropzone, adding or refreshing a company). They are not toasted here; the
+ * card, the agent's follow-up or the component's own toast already tells the
+ * user.
  */
 const watchedRuns = new Map<string, number>();
 
-/** Marks runs as shown in the open chat; the returned function unmarks them. */
+/**
+ * The sonner id of a run's outcome toast. Every toast of a run's outcome uses
+ * it, here and in a component that toasts its own run, so a second toast for
+ * the same run replaces the first instead of stacking.
+ */
+export function runToastId(runId: string): string {
+  return `run-${runId}`;
+}
+
+/**
+ * Marks runs as shown on screen; the returned function unmarks them. Call it
+ * while mounted: if the user navigates away first, the generic toast fires
+ * instead, exactly once.
+ */
 export function watchRuns(ids: Iterable<string>): () => void {
   const list = [...ids];
   for (const id of list) watchedRuns.set(id, (watchedRuns.get(id) ?? 0) + 1);
@@ -232,18 +248,20 @@ function announce(event: LiveEvent, navigate: (href: string) => void) {
         classNames: { toast: "foray-toast-signal" },
       });
       return;
+    // Every run kind ends with run.completed or run.failed, tailoring and
+    // rendering included, so these two are the outcome toasts. A company
+    // discovery's news rides on its own run.completed.
     case "run.completed":
-    case "tailor.done":
-    case "render.done":
-      toast.success(event.message, { id: `event-${event.id}` });
+      toast.success(event.message, { id: outcomeToastId(event) });
       return;
     case "run.failed":
-      toast.error(event.message, { id: `event-${event.id}` });
-      return;
-    case "company.discovered":
-      toast(event.message, { id: `event-${event.id}` });
+      toast.error(event.message, { id: outcomeToastId(event) });
       return;
   }
+}
+
+function outcomeToastId(event: LiveEvent): string {
+  return event.runId ? runToastId(event.runId) : `event-${event.id}`;
 }
 
 export function useLive(): LiveContextValue {

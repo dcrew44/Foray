@@ -1,31 +1,36 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { Chat, type ChatSuggestion } from "@/components/chat/chat";
-import type { ForayUIMessage } from "@/lib/agents/chat-agent";
-import { requireUser } from "@/lib/auth/session";
-import { getConversation, loadMessages } from "@/lib/db/queries/conversations";
-import { listMatches } from "@/lib/db/queries/matches";
-import { getOnboardingState } from "@/lib/profile/onboarding";
+import { Chat } from "@/components/chat/chat";
+import type { ChatPage as ChatPageData, ConversationOut, ForayUIMessage } from "@/lib/api/chat-types";
+import { django } from "@/lib/api/server";
 
 export const metadata: Metadata = { title: "Chat" };
+
+/** A conversation id: a UUID, as Django's path parameter is typed (§5.2). */
+const CHAT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * /chat starts a new thread; /chat/<id> resumes one.
  *
  * A new thread gets a fresh id on every visit and is keyed by it, so "New
  * chat" always remounts a clean conversation even when the address bar was
- * rewritten client-side by the previous one.
+ * rewritten client-side by the previous one. The id is minted here, on the
+ * server, per visit; Django claims it on the first message (§7.3).
+ *
+ * Each branch makes one Django read, which also checks the session: a 401
+ * goes to sign in, and someone else's conversation is the same 404 as one
+ * that does not exist.
  */
 export default async function ChatPage({
   params,
 }: {
   params: Promise<{ id?: string[] }>;
 }) {
-  const user = await requireUser();
   const conversationId = (await params).id?.[0] ?? null;
 
   if (!conversationId) {
+    const { suggestions } = await django<ChatPageData>("/api/pages/chat");
     const draftId = crypto.randomUUID();
     return (
       <Chat
@@ -33,83 +38,29 @@ export default async function ChatPage({
         initialMessages={[]}
         isNew
         key={draftId}
-        suggestions={await suggestionsFor(user.id)}
+        suggestions={suggestions}
         title={null}
       />
     );
   }
 
-  // Someone else's conversation is indistinguishable from one that does not
-  // exist: getConversation filters on user id.
-  const conversation = await getConversation(user.id, conversationId);
-  if (!conversation) notFound();
+  // Django would answer 404 too; checking first keeps the id out of the
+  // request path unless it is one.
+  if (!CHAT_ID.test(conversationId)) notFound();
 
-  const history = (await loadMessages(user.id, conversation.id)) as ForayUIMessage[];
+  const { conversation, messages } = await django<ConversationOut>(
+    `/api/conversations/${conversationId}`,
+  );
 
   return (
     <Chat
       chatId={conversation.id}
-      initialMessages={history}
+      // The rows are the stored UI messages, returned as they are (§7.4).
+      initialMessages={messages as unknown as ForayUIMessage[]}
       isNew={false}
       key={conversation.id}
       suggestions={[]}
       title={conversation.title}
     />
   );
-}
-
-/** Starting points that fit where this user is. */
-async function suggestionsFor(userId: string): Promise<ChatSuggestion[]> {
-  const onboarding = await getOnboardingState(userId);
-
-  if (!onboarding.hasResume) {
-    return [
-      {
-        title: "How does this work?",
-        prompt: "What can you do, and what do you need from me to get started?",
-      },
-    ];
-  }
-
-  if (!onboarding.ready) {
-    return [
-      {
-        title: "Set up my search",
-        prompt: "Let's set up my job search. Ask me what you need to know.",
-      },
-      {
-        title: "What's on my resume?",
-        prompt: "Summarize my resume and tell me what kinds of roles it fits.",
-      },
-    ];
-  }
-
-  const [top] = await listMatches(userId, { stages: ["found", "shortlisted"], limit: 1 });
-  const role = onboarding.preferences.target_roles?.[0]?.toLowerCase() ?? "roles";
-  const where = onboarding.preferences.locations?.[0];
-
-  return [
-    {
-      title: "Find new roles",
-      prompt: `Find new ${role}${where ? ` in ${where}` : ""} for me.`,
-    },
-    {
-      title: "Compare my best matches",
-      prompt: "Which of my matches fit me best, and why? Be specific.",
-    },
-    top
-      ? {
-          title: "Tailor my resume",
-          prompt: `Tailor my resume for the ${top.title} role at ${top.company}.`,
-        }
-      : {
-          title: "Improve my resume",
-          prompt: "What would make my resume stronger for the roles I want?",
-        },
-    {
-      title: "Add a company",
-      prompt: "Start tracking this company for me: ",
-      prefill: true,
-    },
-  ];
 }

@@ -6,17 +6,17 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn, signUp } from "@/lib/auth/client";
+import { signIn, signUp } from "@/lib/api/auth";
+import { DEFAULT_NEXT, safeNext } from "@/lib/safe-next";
 
 type Mode = "sign-in" | "sign-up";
 
-export function SignInForm({
-  googleEnabled,
-  next,
-}: {
-  googleEnabled: boolean;
-  next: string;
-}) {
+/**
+ * Email and password, against Django's `/api/auth/*`. A failure shows Django's own sentence
+ * ("Invalid email or password", "Too many attempts…"). The sign-up switch only appears while
+ * sign-ups are open (`SIGNUP_OPEN`, read by the page from `/api/auth/config`).
+ */
+export function SignInForm({ next, signupOpen }: { next: string; signupOpen: boolean }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [name, setName] = useState("");
@@ -32,22 +32,18 @@ export function SignInForm({
 
     const result =
       mode === "sign-up"
-        ? await signUp.email({ name: name || email.split("@")[0]!, email, password })
-        : await signIn.email({ email, password });
+        ? await signUp({ name: name || email.split("@")[0]!, email, password })
+        : await signIn({ email, password });
 
-    if (result.error) {
+    if (!result.ok) {
       setPending(false);
-      setError(
-        result.error.message ??
-          (mode === "sign-up"
-            ? "That account could not be created."
-            : "That email and password do not match an account."),
-      );
+      setError(result.message);
       return;
     }
 
-    // A brand-new account starts at onboarding, not an empty dashboard.
-    router.push(mode === "sign-up" ? "/home" : next);
+    // A brand-new account starts at onboarding, not an empty dashboard. `next` is checked again
+    // here: the client navigates to it, so it must never leave the site.
+    router.push(mode === "sign-up" ? DEFAULT_NEXT : safeNext(next));
     router.refresh();
   }
 
@@ -123,30 +119,21 @@ export function SignInForm({
         </Button>
       </form>
 
-      {googleEnabled && (
-        <Button
-          className="h-10 w-full"
-          onClick={() => signIn.social({ provider: "google", callbackURL: next })}
-          type="button"
-          variant="outline"
-        >
-          Continue with Google
-        </Button>
+      {signupOpen && (
+        <p className="text-muted-foreground text-[13.5px]">
+          {mode === "sign-in" ? "New to Foray? " : "Already have an account? "}
+          <button
+            className="text-primary font-medium underline-offset-4 hover:underline"
+            onClick={() => {
+              setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+              setError(null);
+            }}
+            type="button"
+          >
+            {mode === "sign-in" ? "Create an account" : "Sign in"}
+          </button>
+        </p>
       )}
-
-      <p className="text-muted-foreground text-[13.5px]">
-        {mode === "sign-in" ? "New to Foray? " : "Already have an account? "}
-        <button
-          className="text-primary font-medium underline-offset-4 hover:underline"
-          onClick={() => {
-            setMode(mode === "sign-in" ? "sign-up" : "sign-in");
-            setError(null);
-          }}
-          type="button"
-        >
-          {mode === "sign-in" ? "Create an account" : "Sign in"}
-        </button>
-      </p>
     </div>
   );
 }

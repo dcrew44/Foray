@@ -1,0 +1,105 @@
+[
+  {
+    "input": {
+      "target_roles": null,
+      "seniority": null,
+      "locations": null,
+      "remote_pref": null,
+      "salary_floor": null,
+      "work_auth": null,
+      "start_date": null,
+      "must_haves": null,
+      "dealbreakers": null
+    },
+    "output": "- nothing recorded yet"
+  },
+  {
+    "input": {
+      "target_roles": [
+        "Backend engineer",
+        "Platform engineer"
+      ],
+      "seniority": "mid",
+      "locations": [
+        "San Francisco Bay Area",
+        "Remote (US)"
+      ],
+      "remote_pref": "hybrid",
+      "salary_floor": {
+        "amount": 150000,
+        "currency": "USD",
+        "period": "year"
+      },
+      "work_auth": "US citizen, no sponsorship needed",
+      "start_date": "January 2027",
+      "must_haves": [
+        "Go or Python"
+      ],
+      "dealbreakers": [
+        "On-call more than one week in four"
+      ]
+    },
+    "output": "- target_roles: [\"Backend engineer\",\"Platform engineer\"]\n- seniority: \"mid\"\n- locations: [\"San Francisco Bay Area\",\"Remote (US)\"]\n- remote_pref: \"hybrid\"\n- work_auth: \"US citizen, no sponsorship needed\"\n- salary_floor: {\"amount\":150000,\"currency\":\"USD\",\"period\":\"year\"}\n- start_date: \"January 2027\"\n- must_haves: [\"Go or Python\"]\n- dealbreakers: [\"On-call more than one week in four\"]"
+  },
+  {
+    "input": {
+      "target_roles": [
+        "Backend engineer",
+        "Platform engineer"
+      ],
+      "seniority": "mid",
+      "locations": [
+        "San Francisco Bay Area",
+        "Remote (US)"
+      ],
+      "remote_pref": "hybrid",
+      "salary_floor": {
+        "amount": 124.128,
+        "currency": "USD",
+        "period": "hour"
+      },
+      "work_auth": "US citizen, no sponsorship needed",
+      "start_date": "January 2027",
+      "must_haves": [],
+      "dealbreakers": null
+    },
+    "output": "- target_roles: [\"Backend engineer\",\"Platform engineer\"]\n- seniority: \"mid\"\n- locations: [\"San Francisco Bay Area\",\"Remote (US)\"]\n- remote_pref: \"hybrid\"\n- work_auth: \"US citizen, no sponsorship needed\"\n- salary_floor: {\"amount\":124.128,\"currency\":\"USD\",\"period\":\"hour\"}\n- start_date: \"January 2027\""
+  },
+  {
+    "input": {
+      "target_roles": [
+        "Software engineer"
+      ],
+      "seniority": "entry",
+      "locations": [
+        "Zürich",
+        "München"
+      ],
+      "remote_pref": "any",
+      "salary_floor": null,
+      "work_auth": "EU citizen",
+      "start_date": null,
+      "must_haves": null,
+      "dealbreakers": null
+    },
+    "output": "- target_roles: [\"Software engineer\"]\n- seniority: \"entry\"\n- locations: [\"Zürich\",\"München\"]\n- remote_pref: \"any\"\n- work_auth: \"EU citizen\""
+  },
+  {
+    "input": {
+      "target_roles": [
+        "Software engineer"
+      ],
+      "seniority": null,
+      "locations": [
+        "New York, NY"
+      ],
+      "remote_pref": null,
+      "salary_floor": null,
+      "work_auth": null,
+      "start_date": null,
+      "must_haves": null,
+      "dealbreakers": null
+    },
+    "output": "- target_roles: [\"Software engineer\"]\n- locations: [\"New York, NY\"]"
+  }
+]

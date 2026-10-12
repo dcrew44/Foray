@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { moveMatchStageAction } from "@/app/actions/matches";
 import { EmptyState, RecommendationPill, ScoreChip } from "@/components/foray/primitives";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,21 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 
 import type { BoardMatch } from "./board";
+import { moveMatch } from "./match-api";
+import { ALL_STAGES as STAGES } from "./stages";
 
 /**
  * The same matches as a sortable, filterable list — for when the question is
  * "which of these" rather than "where is each".
  */
-
-const STAGES: StageId[] = [
-  "found",
-  "shortlisted",
-  "applied",
-  "interviewing",
-  "offer",
-  "rejected",
-  "archived",
-];
 
 const MIN_SCORES = [
   { label: "Any fit", value: 0 },
@@ -81,7 +72,7 @@ export function MatchTable({
   function move(matchId: string, from: StageId, to: StageId) {
     setOverrides((previous) => ({ ...previous, [matchId]: to }));
     startTransition(async () => {
-      const result = await moveMatchStageAction(matchId, to);
+      const result = await moveMatch(matchId, to);
       if (!result.ok) {
         setOverrides((previous) => ({ ...previous, [matchId]: from }));
         toast.error(result.message ?? "That change did not save.");
@@ -165,7 +156,7 @@ export function MatchTable({
               <tr>
                 <th className="w-16 py-2.5 pl-4 font-medium">Fit</th>
                 <th className="py-2.5 pr-4 font-medium">Role</th>
-                <th className="hidden w-[210px] py-2.5 pr-4 font-medium lg:table-cell">Location</th>
+                <th className="hidden w-[210px] py-2.5 pr-4 font-medium xl:table-cell">Location</th>
                 <th className="hidden w-[128px] py-2.5 pr-4 font-medium md:table-cell">Pay</th>
                 <th className="w-[148px] py-2.5 pr-4 font-medium">Stage</th>
                 <th className="hidden w-[92px] py-2.5 pr-4 text-right font-medium sm:table-cell">Posted</th>
@@ -186,7 +177,7 @@ export function MatchTable({
                       </span>
                     </Link>
                   </td>
-                  <td className="text-muted-foreground hidden truncate py-2.5 pr-4 lg:table-cell">
+                  <td className="text-muted-foreground hidden truncate py-2.5 pr-4 xl:table-cell">
                     {formatLocation(match.locations, match.remote)}
                   </td>
                   <td className="tabular hidden py-2.5 pr-4 whitespace-nowrap md:table-cell">

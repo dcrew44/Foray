@@ -1,0 +1,148 @@
+[
+  {
+    "input": {
+      "roles": null,
+      "seniority": null,
+      "locations": null,
+      "remote": null,
+      "companies": null,
+      "focus": null
+    },
+    "output": null
+  },
+  {
+    "input": {
+      "roles": null,
+      "seniority": "entry",
+      "locations": null,
+      "remote": null,
+      "companies": [
+        "Anthropic"
+      ],
+      "focus": null
+    },
+    "output": "Entry-level roles at Anthropic"
+  },
+  {
+    "input": {
+      "roles": [
+        "software engineer"
+      ],
+      "seniority": "entry",
+      "locations": [
+        "San Francisco Bay Area"
+      ],
+      "remote": null,
+      "companies": [
+        "Anthropic"
+      ],
+      "focus": null
+    },
+    "output": "Entry-level software engineer roles at Anthropic, in San Francisco Bay Area"
+  },
+  {
+    "input": {
+      "roles": [
+        "Senior Backend Engineer"
+      ],
+      "seniority": "senior",
+      "locations": null,
+      "remote": null,
+      "companies": null,
+      "focus": null
+    },
+    "output": "Senior Backend Engineer roles"
+  },
+  {
+    "input": {
+      "roles": [
+        "backend engineer",
+        "platform engineer",
+        "SRE"
+      ],
+      "seniority": null,
+      "locations": null,
+      "remote": "remote",
+      "companies": null,
+      "focus": null
+    },
+    "output": "Backend engineer, platform engineer or SRE roles, remote only"
+  },
+  {
+    "input": {
+      "roles": [
+        "data scientist"
+      ],
+      "seniority": null,
+      "locations": null,
+      "remote": "any",
+      "companies": [
+        "Stripe",
+        "Linear"
+      ],
+      "focus": null
+    },
+    "output": "Data scientist roles at Stripe or Linear"
+  },
+  {
+    "input": {
+      "roles": null,
+      "seniority": "staff_plus",
+      "locations": [
+        "Zürich",
+        "München",
+        "Wien"
+      ],
+      "remote": "onsite",
+      "companies": null,
+      "focus": null
+    },
+    "output": "Staff-level and above roles, in Zürich, München or Wien, on site"
+  },
+  {
+    "input": {
+      "roles": null,
+      "seniority": "intern",
+      "locations": null,
+      "remote": "hybrid",
+      "companies": null,
+      "focus": "climate"
+    },
+    "output": "Internship roles, hybrid"
+  },
+  {
+    "input": {
+      "roles": null,
+      "seniority": "new_grad",
+      "locations": null,
+      "remote": null,
+      "companies": null,
+      "focus": null
+    },
+    "output": "New-grad roles"
+  },
+  {
+    "input": {
+      "roles": [
+        "new grad engineer"
+      ],
+      "seniority": "mid",
+      "locations": null,
+      "remote": null,
+      "companies": null,
+      "focus": null
+    },
+    "output": "New grad engineer roles"
+  },
+  {
+    "input": {
+      "roles": null,
+      "seniority": null,
+      "locations": null,
+      "remote": null,
+      "companies": null,
+      "focus": "only the focus is set"
+    },
+    "output": null
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "fixture": "ashby/_not-found.txt",
+  "request": "https://api.ashbyhq.com/posting-api/job-board/foray-no-such-company-xyz123?includeCompensation=true",
+  "response": {
+    "status": 404,
+    "contentType": "text/plain; charset=utf-8",
+    "body": "Not Found"
+  },
+  "outcome": {
+    "error": {
+      "name": "BoardNotFoundError",
+      "message": "No ashby board for slug \"foray-no-such-company-xyz123\""
+    }
+  }
+}

@@ -1,0 +1,173 @@
+[
+  {
+    "input": "The salary range is $150,000 - $200,000 per year",
+    "output": {
+      "min": 150000,
+      "max": 200000,
+      "currency": "USD",
+      "period": "year"
+    }
+  },
+  {
+    "input": "$180-220k",
+    "output": {
+      "min": 180000,
+      "max": 220000,
+      "currency": "USD",
+      "period": "year"
+    }
+  },
+  {
+    "input": "$180-220k annually",
+    "output": {
+      "min": 180000,
+      "max": 220000,
+      "currency": "USD",
+      "period": "year"
+    }
+  },
+  {
+    "input": "$55 - $70 per hour",
+    "output": {
+      "min": 55,
+      "max": 70,
+      "currency": "USD",
+      "period": "hour"
+    }
+  },
+  {
+    "input": "£70,000 – £95,000 per year",
+    "output": {
+      "min": 70000,
+      "max": 95000,
+      "currency": "GBP",
+      "period": "year"
+    }
+  },
+  {
+    "input": "Salary: 90,000 - 120,000 EUR annually",
+    "output": {
+      "min": 90000,
+      "max": 120000,
+      "currency": "EUR",
+      "period": "year"
+    }
+  },
+  {
+    "input": "Founded 2015 - 2020, we have grown fast",
+    "output": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    }
+  },
+  {
+    "input": "a team of 5 - 10 engineers",
+    "output": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    }
+  },
+  {
+    "input": "$200,000 - $150,000",
+    "output": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    }
+  },
+  {
+    "input": "Competitive salary and equity",
+    "output": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    }
+  },
+  {
+    "input": "C$95k — C$120k per year",
+    "output": {
+      "min": 95000,
+      "max": 120000,
+      "currency": "CAD",
+      "period": "year"
+    }
+  },
+  {
+    "input": "US$1.2m to US$1.5m OTE",
+    "output": {
+      "min": 1200000,
+      "max": 1500000,
+      "currency": "USD",
+      "period": "year"
+    }
+  },
+  {
+    "input": "Pay: 124.128 – 130.5 per hour",
+    "output": {
+      "min": 124.128,
+      "max": 130.5,
+      "currency": null,
+      "period": "hour"
+    }
+  },
+  {
+    "input": "Base pay 7,982 - 9,100 a month",
+    "output": {
+      "min": 7982,
+      "max": 9100,
+      "currency": null,
+      "period": "month"
+    }
+  },
+  {
+    "input": "The base salary is 150000 to 150000",
+    "output": {
+      "min": 150000,
+      "max": 150000,
+      "currency": null,
+      "period": "year"
+    }
+  },
+  {
+    "input": "$4,000 - $5,000 monthly",
+    "output": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    }
+  },
+  {
+    "input": "Compensation: $1-2m",
+    "output": {
+      "min": 1000000,
+      "max": 2000000,
+      "currency": "USD",
+      "period": "year"
+    }
+  },
+  {
+    "input": null,
+    "output": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    }
+  },
+  {
+    "input": "",
+    "output": {
+      "min": null,
+      "max": null,
+      "currency": null,
+      "period": null
+    }
+  }
+]

@@ -2,21 +2,25 @@
 
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveSettingsAction } from "@/app/actions/settings";
 import { SaveBar, useUnsavedChanges } from "@/components/profile/form-controls";
 import { Slider } from "@/components/ui/slider";
+import { api, call } from "@/lib/api/client";
+import type { Settings } from "@/lib/api/types";
 import { formatUsd } from "@/lib/format";
-import type { AutonomyMode, Settings } from "@/lib/profile/settings";
 import { cn } from "@/lib/utils";
 
 /**
  * How the agents behave by default: whether a search stops to ask before it
  * spends, where the archive line sits, and how many matches earn the strong
- * model's full read.
+ * model's full read. The settings live on the user, so they can always be
+ * saved, resume or not.
  */
+
+type AutonomyMode = Settings["defaultMode"];
 
 const MODES: Array<{ value: AutonomyMode; label: string; detail: string }> = [
   {
@@ -33,16 +37,15 @@ const MODES: Array<{ value: AutonomyMode; label: string; detail: string }> = [
 
 export function BehaviourForm({
   initial,
-  canSave,
   reviewCost,
   reviewModel,
 }: {
   initial: Settings;
-  canSave: boolean;
   /** Rough cost of one deep review, or null when the model is unpriced. */
   reviewCost: number | null;
   reviewModel: string | null;
 }) {
+  const router = useRouter();
   // The sliders cover the useful range; a stored value outside it (set from
   // chat, say) is shown at the nearest end rather than breaking the slider.
   const baseline = {
@@ -61,16 +64,19 @@ export function BehaviourForm({
   function save() {
     if (!dirty || pending) return;
     startTransition(async () => {
-      const result = await saveSettingsAction({
-        defaultMode: mode,
-        scoreThreshold: threshold,
-        deepEvalTopN: topN,
-      });
+      const result = await call(
+        api.PATCH("/api/settings", {
+          body: { defaultMode: mode, scoreThreshold: threshold, deepEvalTopN: topN },
+        }),
+      );
       if (!result.ok) {
         toast.error(result.message);
         return;
       }
       toast.success(result.message);
+      // The baseline is the page's data: once it re-renders with what was saved, the form is
+      // clean again and the save bar goes away.
+      router.refresh();
     });
   }
 
@@ -86,7 +92,7 @@ export function BehaviourForm({
 
   return (
     <div className="space-y-4">
-      <fieldset className="min-w-0 divide-y rounded-xl border" disabled={!canSave}>
+      <fieldset className="min-w-0 divide-y rounded-xl border">
         <div className="space-y-3 px-5 py-4">
           <div className="space-y-1">
             <p className="text-[13.5px] font-medium" id="autonomy-label">
@@ -99,7 +105,6 @@ export function BehaviourForm({
           <RadioGroup
             aria-labelledby="autonomy-label"
             className="grid gap-2.5 sm:grid-cols-2"
-            disabled={!canSave}
             onValueChange={(value) => setMode(value as AutonomyMode)}
             value={mode}
           >
@@ -140,7 +145,6 @@ export function BehaviourForm({
               <span className="text-display tabular text-[15px]">{threshold}</span>
             </>
           }
-          disabled={!canSave}
           max={80}
           min={30}
           onChange={setThreshold}
@@ -167,7 +171,6 @@ export function BehaviourForm({
               </>
             )
           }
-          disabled={!canSave}
           max={40}
           min={0}
           onChange={setTopN}
@@ -181,7 +184,7 @@ export function BehaviourForm({
         onSave={save}
         pending={pending}
         saveLabel="Save settings"
-        visible={dirty && canSave}
+        visible={dirty}
       />
     </div>
   );

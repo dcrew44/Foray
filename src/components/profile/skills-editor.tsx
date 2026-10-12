@@ -4,7 +4,7 @@ import { Plus, Trash, X } from "lucide-react";
 import { useState, type ClipboardEvent, type KeyboardEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { SkillItem } from "@/lib/resume/schema";
+import type { SkillItem } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 /**

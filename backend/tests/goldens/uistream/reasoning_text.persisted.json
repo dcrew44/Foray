@@ -1,0 +1,20 @@
+{
+  "id": "asst_reasoning_text",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "reasoning",
+      "id": "r1",
+      "text": "Thinking...",
+      "state": "done"
+    },
+    {
+      "type": "text",
+      "text": "Done thinking.",
+      "state": "done"
+    }
+  ]
+}

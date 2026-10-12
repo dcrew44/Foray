@@ -1,0 +1,14 @@
+{
+  "id": "asst_stream_error",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Partial ",
+      "state": "done"
+    }
+  ]
+}

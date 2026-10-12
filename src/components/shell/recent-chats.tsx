@@ -33,10 +33,15 @@ export function RecentChats() {
   const [items, setItems] = useState<Conversation[] | null>(null);
 
   const load = useCallback(async () => {
-    const response = await fetch("/api/conversations", { cache: "no-store" });
-    if (!response.ok) return;
-    const body = (await response.json()) as { conversations: Conversation[] };
-    setItems(body.conversations);
+    try {
+      const response = await fetch("/api/conversations", { cache: "no-store" });
+      if (!response.ok) return;
+      const body = (await response.json()) as { conversations: Conversation[] };
+      setItems(body.conversations);
+    } catch {
+      // A load cut off by a full page load, or a server that is restarting, keeps the last
+      // list; the next change reloads it.
+    }
   }, []);
 
   useEffect(() => {

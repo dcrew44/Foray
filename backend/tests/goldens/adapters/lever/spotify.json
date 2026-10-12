@@ -1,0 +1,152 @@
+{
+  "fixture": "lever/spotify.json",
+  "request": "https://api.lever.co/v0/postings/spotify?mode=json",
+  "companySlug": "spotify",
+  "jobs": [
+    {
+      "id": "lever:spotify:2193db3f-77c5-43b8-b030-8f92c9882bf1",
+      "source": "lever",
+      "externalId": "2193db3f-77c5-43b8-b030-8f92c9882bf1",
+      "companySlug": "spotify",
+      "companyName": "spotify",
+      "title": "Android Engineer - Experience",
+      "locations": [
+        "London",
+        "Stockholm"
+      ],
+      "locationNorm": {
+        "raw": "London",
+        "city": "London",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "hybrid",
+      "employmentType": "Permanent",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "We design Spotify’s consumer experience—end to end, moment to moment, across every screen, platform, and partner integration. Our mission is to make listening feel effortless, personal, and joyful for billions of users around the world. That means turning complexity into clarity across hundreds of touchpoints—from our mobile and desktop apps to the smart speakers, TVs, cars, and integrations where Spotify shows up every day. If it touches a consumer, we shape it. We bring deep insight into human behavior, design, and technology to craft experiences that feel intuitive, expressive, and unmistakably Spotify.\n\nThe Stream Reporting team is responsible for capturing and processing the consumption signals that power some of Spotify’s most important experiences and business functions. Our systems help ensure accurate royalty reporting, support experimentation and analytics, and provide trusted data that informs recommendations and personalization across Spotify.\n\nWe’re looking for an Android Engineer to join a highly collaborative team working at the intersection of mobile development, data, and platform systems. This is an opportunity to build software that operates at Spotify scale and helps power experiences used by millions of listeners every day. You’ll help shape how listening and engagement signals are captured across Spotify’s mobile experiences and transformed into trusted datasets used throughout the company.\n\nWhat You'll Do\n\n•\n\nDevelop and maintain mobile client components that capture and report listening and user behavior signals across Spotify.\n\n•\n\nBuild high-quality, well-tested, and well-documented Kotlin code that contributes to business-critical datasets used for royalty reporting, analytics, experimentation, and personalization.\n\n•\n\nCollaborate with engineers across Android, iOS, backend, and data teams to deliver end-to-end solutions.\n\n•\n\nHelp improve the architecture, reliability, and quality of the systems used to collect and process user behavior signals.\n\n•\n\nContribute to new capabilities that enable Spotify to capture richer listening and engagement signals across evolving product experiences.\n\n•\n\nDrive technical improvements that make it easier for teams across Spotify to add, validate, and maintain event reporting integrations.\n\n•\n\nUse modern AI-assisted engineering tools and workflows to improve productivity and software quality.\n\n•\n\nContribute to a culture of continuous learning, knowledge sharing, and technical excellence.\n\nWho You Are\n\n•\n\nYou have experience developing Android and iOS applications using Kotlin using Swift or Objective-C\n\n• You have solid experience as a Engingeer I\n\n•\n\nYou know how to build maintainable, scalable, and well-tested software systems.\n\n•\n\nYou are comfortable working within large codebases and can quickly learn unfamiliar domains and technologies.\n\n•\n\nYou have experience collaborating with engineers and stakeholders across multiple teams.\n\n•\n\nYou care about code quality, testing, documentation, and long-term maintainability.\n\n•\n\nYou demonstrate curiosity, ownership, and a willingness to step outside your immediate area of expertise when needed.\n\n•\n\nYou are comfortable using modern development tooling, including AI-assisted coding solutions.\n\n•\n\nYou thrive in environments where learning and long-term growth are valued.\n\n•\n\nYou might have experience with C++ and understand how native code integrates with Android and iOS applications.\n\n•\n\nYou might have familiarity with SQL, analytics systems, or data engineering concepts.\n\n•\n\nYou have experience with instrumentation, telemetry, event collection, or large-scale client-side data systems.\n\n•\n\nYou have worked on mobile applications that operate at significant scale and reliability requirements.\n\nWhere You'll Be\n\n•\n\nThis role is based in London or Stockholm.\n\n•\n\nWe offer you the flexibility to work where you work best! There will be some in person meetings, but still allows for flexibility to work from home.\n\nAt Spotify, we are passionate about inclusivity and making sure our entire recruitment process is accessible to everyone. We have ways to request reasonable accommodations during the interview process and help assist in what you need. If you need accommodations at any stage of the application or interview process, please let us know - we’re here to support you in any way we can.",
+      "url": "https://jobs.lever.co/spotify/2193db3f-77c5-43b8-b030-8f92c9882bf1",
+      "applyUrl": "https://jobs.lever.co/spotify/2193db3f-77c5-43b8-b030-8f92c9882bf1/apply",
+      "postedAt": "2026-06-23T11:29:45.805Z",
+      "contentHash": "e9ea1e0449af2e3d113727fceb75307b204e1ea9",
+      "dedupeKey": "488e9208dce2370d13f20bae17be4fe621cb88f8",
+      "descriptionRaw": {
+        "sha256": "fbf50b0022b83c99cd92f3dabf8fc4e2eb7bcb3ca8f752b39114fb45bccfd199",
+        "utf8Bytes": 5497
+      }
+    },
+    {
+      "id": "lever:spotify:d87833d0-fb78-4794-b45d-3fe5c8274bc8",
+      "source": "lever",
+      "externalId": "d87833d0-fb78-4794-b45d-3fe5c8274bc8",
+      "companySlug": "spotify",
+      "companyName": "spotify",
+      "title": "Artist & Label Partnerships Contractor, Vietnam",
+      "locations": [
+        "Ho Chi Minh"
+      ],
+      "locationNorm": {
+        "raw": "Ho Chi Minh",
+        "city": "Ho Chi Minh",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "hybrid",
+      "employmentType": "Short Term",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "Spotify is looking for a short-term contractor for the Artist & Label Partnerships team in Vietnam.\n\nThe Artist & Label Partnerships team are the face of Spotify to artists, managers, labels & distributors. Focusing on the Vietnamese music landscape, this role will serve as the point of contact for record labels, distributors and artists, ensuring that artists & their teams are familiar with Spotify standard methodologies, resources and tools. The role will closely support the cross-functional teams with on-platform promotion and off-platform artist marketing.\n\nPlease note this is a fixed-term, 6 months, contractor role hired through a third party.\n\nWhat You'll Do\n\n• Maintain positive partnerships across artist and label communities within Vietnam.\n\n• Support our key partners in Vietnam on Spotify tools, resources and insights.\n\n• Work closely with our cross functional teams to support artists and labels on priority releases in Vietnam\n\n• Collaborate with the regional Music team to ensure content strategies are localized and successfully executed.\n\n• Ensure Spotify has the best possible content offering in Vietnam and use this to further Spotify’s appeal to existing and new users.\n\nWho You Are\n\n• You have at least 3+ years of working experience in the music/entertainment industry. Regional and global experience would be an added advantage.\n\n• Extremely well organized, dedicated with the ability to plan, deliver on tight deadlines and pay outstanding attention to detail.\n\n• You have a deep understanding and established network within the local music industry in Vietnam and have built relevant contacts with labels and artists to effectively collaborate with the community.\n\n• You have a strong background in music and technology and a consistent record with operations.\n\n• You have a strong grasp of content knowledge, music and cultural trends, artists, user engagement and behaviors.\n\n• You have excellent stakeholder management skills.\n\n• You have experience working within Vietnam and ideally across multiple markets within regional and global teams.\n\n• You are very fluent in written and spoken English and Vietnamese.\n\n• And finally, a great teammate, adapt well to change, and always have a positive demeanor.\n\nWhere You'll Be\n\n• This contract is based in Ho Chi Minh City, Vietnam.\n\nSpotify is an equal opportunity employer. You are welcome at Spotify for who you are, no matter where you come from, what you look like, or what’s playing in your headphones. Our platform is for everyone, and so is our workplace. The more voices we have represented and amplified in our business, the more we will all thrive, contribute, and be forward-thinking! So bring us your personal experience, your perspectives, and your background. It’s in our differences that we will find the power to keep revolutionizing the way the world listens.\n\nAt Spotify, we are passionate about inclusivity and making sure our entire recruitment process is accessible to everyone. We have ways to request reasonable accommodations during the interview process and help assist in what you need. If you need accommodations at any stage of the application or interview process, please let us know - we’re here to support you in any way we can.\n\nSpotify transformed music listening forever when we launched in 2008. Our mission is to unlock the potential of human creativity by giving a million creative artists the opportunity to live off their art and billions of fans the chance to enjoy and be passionate about these creators. Everything we do is driven by our love for music and podcasting. Today, we are the world’s most popular audio streaming subscription service.",
+      "url": "https://jobs.lever.co/spotify/d87833d0-fb78-4794-b45d-3fe5c8274bc8",
+      "applyUrl": "https://jobs.lever.co/spotify/d87833d0-fb78-4794-b45d-3fe5c8274bc8/apply",
+      "postedAt": "2026-08-27T03:43:07.805Z",
+      "contentHash": "e85b4f74cfafcd03e0444fd3fc3b41896885094e",
+      "dedupeKey": "a426963854f07df46d97b68e065384db0fafde7e",
+      "descriptionRaw": {
+        "sha256": "3b73c9ceba021ea5cac88475fbf9de686d248dcf92736862d2af15bfe00613ce",
+        "utf8Bytes": 3954
+      }
+    },
+    {
+      "id": "lever:spotify:ddb5dfa9-c5ef-4199-bd19-c179af568cc8",
+      "source": "lever",
+      "externalId": "ddb5dfa9-c5ef-4199-bd19-c179af568cc8",
+      "companySlug": "spotify",
+      "companyName": "spotify",
+      "title": "Artist & Label Partnerships Manager, Maghreb",
+      "locations": [
+        "Dubai"
+      ],
+      "locationNorm": {
+        "raw": "Dubai",
+        "city": "Dubai",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "onsite",
+      "employmentType": "Permanent",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "The Music Mission team owns Spotify’s end to end proposition for music creators and the experiences they create for fans. The team is dedicated to building tools and services to enable creation, promotion, expression, and monetization at scale.\n\nWe’re looking for a strategic-minded, execution-oriented Artist & Label Partnerships Manager for the Maghreb region, covering Morocco, Algeria, and Tunisia. You’ll join Spotify’s Music team in the Middle East, North Africa, Turkey & Pakistan (MENAT+) region and report to the regional Head of Music.\n\nYou’ll sit at the heart of the music ecosystem, moving between high-level release strategies and the day-to-day work that drives artist and business growth. You’ll build trusted relationships across the industry, bring deep knowledge of the Maghreb music landscape to Spotify, and help artists and partners make the most of our platform. Your work will strengthen Spotify’s role as a trusted, culturally relevant voice across the Maghreb.\n\nWhat You'll Do\n\n• Be a primary Spotify partner for artists, labels, and other music partners across Morocco, Algeria, and Tunisia, building relationships that support artist development and long-term growth\n\n• Develop and execute a holistic music strategy for the Maghreb that aligns with regional business goals and reflects the momentum of the region’s evolving music scene\n\n• Build impactful artist partnerships and lead creative, cross-functional initiatives that strengthen artist-to-fan engagement both on and off Spotify\n\n• Identify emerging artists, music trends, audience behaviors, and cultural movements across the Maghreb, bringing actionable insights to the MENAT+ team, global counterparts, and partners across Editorial, Artist Marketing, Consumer Marketing, Licensing, and other teams\n\n• Support and educate artists, labels, and their teams on Spotify tools, resources, and insights, helping partners get more value from the platform\n\n• Work closely with regional Editorial teams and Genre Groups on priority releases and content opportunities, while representing Artist & Label Partnerships in high-impact regional and global projects\n\n• Connect Spotify teams with the music industry to identify and execute opportunities for Spotify and our partners, while helping ensure we have a compelling content offering across the Maghreb\n\n• Travel regularly to Morocco, Algeria, and Tunisia to build relationships and stay closely connected to the region’s music communities\n\nWho You Are\n\n• You have 7+ years of experience in artist and label partnerships within a digital music service, record label, media, technology, or related music industry organization\n\n• You have a deep understanding of the music ecosystem across Morocco, Algeria, and Tunisia, with established relationships across artist and label communities\n\n• You understand Spotify’s role in the music industry and can combine strong cultural judgment with data and audience insights to inform strategy and tell compelling stories\n\n• You stay close to emerging music and audience movements across the Maghreb, from Moroccan pop, rap, and chaabi to Algerian raï, Tunisian alternative scenes, and the sounds shaping what comes next\n\n• You’re a confident communicator and storyteller who can present to senior stakeholders, advocate for the market, negotiate effectively, and build alignment across different teams and perspectives\n\n• You’re comfortable owning complex projects in a fast-changing environment, balancing strategic priorities with hands-on execution and bringing strong organization and attention to detail\n\n• You have experience working across regional and global teams and can navigate global-to-local structures while keeping partners and cross-functional teams aligned\n\n• You’re fluent in English and French. Arabic, including Darija and/or other Maghreb dialects, is strongly valued, as are additional languages relevant to the region\n\nWhere You'll Be\n\n• This role is based in Dubai\n\n• We offer you the flexibility to work where you work best! There will be some in person meetings, but still allows for flexibility to work from home.\n\nAt Spotify, we are passionate about inclusivity and making sure our entire recruitment process is accessible to everyone. We have ways to request reasonable accommodations during the interview process and help assist in what you need. If you need accommodations at any stage of the application or interview process, please let us know - we’re here to support you in any way we can.",
+      "url": "https://jobs.lever.co/spotify/ddb5dfa9-c5ef-4199-bd19-c179af568cc8",
+      "applyUrl": "https://jobs.lever.co/spotify/ddb5dfa9-c5ef-4199-bd19-c179af568cc8/apply",
+      "postedAt": "2026-08-12T17:18:58.306Z",
+      "contentHash": "bdf0219dbc79aad0dbb83f6f380e4517694df987",
+      "dedupeKey": "e8429bb7ab54e853a7311d7821cf6860ed9426df",
+      "descriptionRaw": {
+        "sha256": "89deb812ae3da7ca7f62236d7dccd155b64ecd0e8b870747948f194721c29bf1",
+        "utf8Bytes": 5426
+      }
+    },
+    {
+      "id": "lever:spotify:77526d53-3811-4336-9c0d-72f6ac0242c7",
+      "source": "lever",
+      "externalId": "77526d53-3811-4336-9c0d-72f6ac0242c7",
+      "companySlug": "spotify",
+      "companyName": "spotify",
+      "title": "Artist Label Partnerships Manager, Taiwan",
+      "locations": [
+        "Taiwan (Home Mix)"
+      ],
+      "locationNorm": {
+        "raw": "Taiwan (Home Mix)",
+        "city": "Taiwan (Home Mix)",
+        "region": null,
+        "country": null,
+        "metro": null
+      },
+      "remote": "onsite",
+      "employmentType": "Permanent",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "We are looking for a strategic-minded, execution-oriented Artists & Label Partnerships Manager for Taiwan, to join Spotify’s Music team based in Taipei. In this role, you will be part of the Music team in Southeast Asia, reporting to the regional Head of Artists & Label Partnerships.\n\nYou will sit at the heart of the music ecosystem, moving between high-level release strategies and the day-to-day tactical execution that drives artist and business growth. This role is perfect for a music industry professional who thrives on building relationships and navigating the intersection of technology and creativity.\n\nOur ideal candidate has fun at work and a desire to make a positive impact on the music industry as a whole. Above all, your work will impact the way the world experiences music and strengthen Spotify’s role as a trusted, culturally relevant voice in the music landscape. This role is based in Taipei and will require international travel occasionally.\n\nWhat You'll Do\n\n• Focusing on the Taiwan music landscape, You will be the primary point of contact for local and global music partners based in Taiwan, ensuring that Spotify remains the most valued partner for artists and our industry partners, utilising on-platform promotion and off-platform marketing to ensure Spotify is the premiere platform for artist development\n\n• Develop and execute a holistic music strategy for Taiwan that aligns with regional business goals\n\n• You will contribute your expertise to various music-related projects within the company, executing on creative and cross-functional collaborations in the region and beyond, building impactful and innovative artist partnerships to enable artists and artist-fan engagement\n\n• You will proactively identify music trends, emerging talent and opportunities in the local and global music landscape, providing deep cultural and musical insights with the local SEA team to execute pivotal initiatives, your global counterparts on multi-market campaigns and other key internal partners & teams including editorial, artist marketing, consumer marketing, licensing and others\n\n• Support and educate our key partners across artists and labels communities in Taiwan on Spotify tools, resources and insights to encourage them and improve their daily business\n\n• Lead artists & label partnerships representation in high-impact cross-functional projects and strategic bets at both a regional and global level\n\n• Ensure Spotify has the best possible content offering in Taiwan and use this to further Spotify’s appeal to existing and new users\n\n• Work with regional Editorial teams and regional Genre Groups on high priority releases, as well as other cross-functional teams to progress towards various content objectives\n\n• Connect other Spotify teams with the music industry to help drive and execute opportunities driven by Spotify and our partners. You will act as liaison between Spotify and artist / label partners.\n\nWho You Are\n\n• You have at least 7+ years of working experience with label and artist relations in an established digital music service, record label, media or tech company. Regional and global experience would be an added advantage\n\n• You have a deep understanding and established network within the local music industry in Taiwan and have built relevant contacts with labels and artists to effectively collaborate with the community\n\n• You will demonstrate a team player spirit, a passion for performance-oriented analytics, and a solid understanding of Spotify’s role in the music industry both locally and globally\n\n• You are skilled at leveraging data and audience insights to support strategic decisions and build clear narratives\n\n• You are culturally aware, with the ability to critically evaluate music trends, emerging movements and audience behaviour beyond just data\n\n• You are a confident storyteller and public speaker. You are able to prepare and deliver executive level presentations, effectively advocate for the market and secure stakeholder buy-in with ease\n\n• You are well organised and detail-oriented with the ability to plan, deliver on tight deadlines and pay outstanding attention to detail\n\n• You are at ease and have proven experience navigating fast-changing priorities in a dynamic environment, comfortable navigating complex global-to-local organizational structures and aligning cross-functional teams around Music priorities\n\n• You have strong project management skills with a consistent record in marketing and operations\n\n• You have excellent negotiation and people skills and consistently demonstrates a positive attitude\n\n• You have experience working within Taiwan and ideally across multiple markets within regional and global teams\n\n• Fluent in English and Mandarin. Fluency in regional languages would be an added advantage\n\nWhere You'll Be\n\n• This role is based in Taipei\n\n• We offer you the flexibility to work where you work best! There will be some in person meetings, but still allows for flexibility to work from home\n\nAt Spotify, we are passionate about inclusivity and making sure our entire recruitment process is accessible to everyone. We have ways to request reasonable accommodations during the interview process and help assist in what you need. If you need accommodations at any stage of the application or interview process, please let us know - we’re here to support you in any way we can.",
+      "url": "https://jobs.lever.co/spotify/77526d53-3811-4336-9c0d-72f6ac0242c7",
+      "applyUrl": "https://jobs.lever.co/spotify/77526d53-3811-4336-9c0d-72f6ac0242c7/apply",
+      "postedAt": "2026-04-16T13:42:42.281Z",
+      "contentHash": "7cafaddf6eeeccef8e6a6fb005fc797cce057a81",
+      "dedupeKey": "26b59fb2cd13015717f4f29e9142abb7c0c3468f",
+      "descriptionRaw": {
+        "sha256": "c55918f8ee197f93d82530d702d920d94e248b411b187e5ceafa0ab2ebaa2fa1",
+        "utf8Bytes": 6337
+      }
+    }
+  ]
+}

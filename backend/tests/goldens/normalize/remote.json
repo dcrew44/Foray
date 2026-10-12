@@ -1,0 +1,103 @@
+[
+  {
+    "input": {
+      "location": "San Francisco",
+      "isRemoteFlag": true
+    },
+    "output": "remote"
+  },
+  {
+    "input": {
+      "location": "Hybrid remote"
+    },
+    "output": "hybrid"
+  },
+  {
+    "input": {
+      "location": "Hybrid Remote - Austin, TX"
+    },
+    "output": "hybrid"
+  },
+  {
+    "input": {
+      "location": "Remote - US"
+    },
+    "output": "remote"
+  },
+  {
+    "input": {
+      "location": "",
+      "title": "Software Engineer (Remote)"
+    },
+    "output": "remote"
+  },
+  {
+    "input": {
+      "location": "San Francisco, CA"
+    },
+    "output": "onsite"
+  },
+  {
+    "input": {
+      "location": "San Francisco, CA",
+      "description": "You will work with remote teams across the company."
+    },
+    "output": "onsite"
+  },
+  {
+    "input": {
+      "location": "",
+      "description": "This is a fully remote position."
+    },
+    "output": "remote"
+  },
+  {
+    "input": {
+      "location": "",
+      "description": "Hybrid: three days a week in our office."
+    },
+    "output": "hybrid"
+  },
+  {
+    "input": {
+      "location": null,
+      "title": null,
+      "description": null
+    },
+    "output": "unknown"
+  },
+  {
+    "input": {
+      "location": "On-site, Denver"
+    },
+    "output": "onsite"
+  },
+  {
+    "input": {
+      "location": "In-office"
+    },
+    "output": "onsite"
+  },
+  {
+    "input": {
+      "location": "Earth",
+      "title": "Engineer",
+      "description": "x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x remote ok"
+    },
+    "output": "onsite"
+  },
+  {
+    "input": {
+      "location": "",
+      "title": "WFH engineer"
+    },
+    "output": "remote"
+  },
+  {
+    "input": {
+      "location": "Remote-first",
+      "isRemoteFlag": false
+    },
+    "output": "remote"
+  }
+]

@@ -1,0 +1,98 @@
+{
+  "hasBaseResume": "boolean",
+  "job": {
+    "applyUrl": "string",
+    "companyName": "string",
+    "descriptionText": "string",
+    "isActive": "boolean",
+    "locations": [
+      "string"
+    ],
+    "postedAt": "string",
+    "remote": "string",
+    "salaryCurrency": "string",
+    "salaryMax": "number",
+    "salaryMin": "number",
+    "salaryPeriod": "string",
+    "source": "string",
+    "title": "string",
+    "url": "string"
+  },
+  "match": {
+    "createdAt": "string",
+    "deepEval": {
+      "gaps": [
+        {
+          "gap": "string",
+          "note": "string",
+          "severity": "string"
+        }
+      ],
+      "location_fit": "string",
+      "matched_requirements": [
+        {
+          "evidence": "string",
+          "fact_ids": [
+            "string"
+          ],
+          "requirement": "string",
+          "strength": "string"
+        }
+      ],
+      "recommendation": "string",
+      "risk_flags": [],
+      "salary_fit": "string",
+      "score": "number",
+      "seniority_fit": "string",
+      "summary": "string",
+      "talking_points": [
+        "string"
+      ]
+    },
+    "deepScore": "number",
+    "fastEval": {
+      "fit_reasons": [
+        "string"
+      ],
+      "hard_requirement_misses": [],
+      "red_flags": [],
+      "score": "number",
+      "seniority": "string"
+    },
+    "fastScore": "number",
+    "id": "string",
+    "notes": "string",
+    "stage": "string",
+    "stageChangedAt": "string",
+    "tailoredResumeId": "string"
+  },
+  "tailored": {
+    "changes": [
+      {
+        "after": "string",
+        "before": "string",
+        "evidence_fact_ids": [
+          "string"
+        ],
+        "item_id": "string",
+        "reason": "string",
+        "section": "string"
+      }
+    ],
+    "createdAt": "string",
+    "documentId": "string",
+    "id": "string",
+    "verification": {
+      "baseResumeId": "null",
+      "baseVersion": "number",
+      "checked": "number",
+      "checkedAt": "string",
+      "modelChecked": "number",
+      "modelError": "null",
+      "passed": "boolean",
+      "revised": "boolean",
+      "revisions": [],
+      "unsupported": []
+    }
+  }
+}

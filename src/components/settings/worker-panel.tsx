@@ -3,40 +3,54 @@
 import { Check, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { pingWorker } from "@/app/actions/ping";
 import { SignalDot } from "@/components/foray/primitives";
 import { requestLiveRefresh, useLive, useLiveEvent } from "@/components/live/live-provider";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { api, call } from "@/lib/api/client";
+import type { WorkerPingData } from "@/lib/api/types";
 import { formatDuration, timeAgo } from "@/lib/format";
 
 /**
  * Whether the background worker is alive, with a way to prove it: send a job
- * and watch its answer come back through the same feed every run uses.
+ * and watch its answer come back through the same feed every run uses. The
+ * answer names the process that took it.
  */
 
 type Probe =
   | { state: "idle" }
-  | { state: "waiting"; sentAt: number }
-  | { state: "answered"; ms: number }
+  | { state: "waiting"; sentAt: number; jobId: number | null }
+  | { state: "answered"; ms: number; pid: number | null }
   | { state: "silent" }
   | { state: "failed"; message: string };
 
 /** How long to wait for the answer before saying there was none. */
 const PATIENCE_MS = 20_000;
 
+const NOT_QUEUED = "The test job could not be queued. Check that the database is running.";
+
 export function WorkerPanel() {
   const { worker, ready } = useLive();
   const [probe, setProbe] = useState<Probe>({ state: "idle" });
 
   useLiveEvent(["worker.ping"], (event) => {
+    const answer = event.data as WorkerPingData | null;
     setProbe((current) => {
       if (current.state !== "waiting") return current;
+      // Another tab's test job is not this one's answer. Before the job id is known (the
+      // answer beat the reply), any answer will do.
+      if (current.jobId != null && answer?.jobId != null && answer.jobId !== current.jobId) {
+        return current;
+      }
       // When the worker wrote its answer, if the clocks agree; otherwise when
       // this page heard it, which is never less than the truth.
       const heard = Date.now() - current.sentAt;
       const written = new Date(event.createdAt).getTime() - current.sentAt;
-      return { state: "answered", ms: written > 0 && written <= heard ? written : heard };
+      return {
+        state: "answered",
+        ms: written > 0 && written <= heard ? written : heard,
+        pid: answer?.workerPid ?? null,
+      };
     });
   });
 
@@ -54,16 +68,19 @@ export function WorkerPanel() {
 
   async function send() {
     const sentAt = Date.now();
-    setProbe({ state: "waiting", sentAt });
-    try {
-      await pingWorker();
-      requestLiveRefresh();
-    } catch {
-      setProbe({
-        state: "failed",
-        message: "The test job could not be queued. Check that the database is running.",
-      });
+    setProbe({ state: "waiting", sentAt, jobId: null });
+    const result = await call(api.POST("/api/worker/ping"));
+    if (!result.ok) {
+      const message = (result as { message?: string }).message;
+      setProbe({ state: "failed", message: message ?? NOT_QUEUED });
+      return;
     }
+    setProbe((current) =>
+      current.state === "waiting" && current.sentAt === sentAt
+        ? { ...current, jobId: result.jobId }
+        : current,
+    );
+    requestLiveRefresh();
   }
 
   const online = worker?.online ?? false;
@@ -91,11 +108,18 @@ export function WorkerPanel() {
             )}
           </p>
           <p className="text-muted-foreground text-[12.5px]">
-            {!ready
-              ? "Reading the worker's heartbeat."
-              : worker?.lastSeenAt
-                ? `Last heartbeat ${timeAgo(worker.lastSeenAt)}${worker.pid ? `, process ${worker.pid}` : ""}.`
-                : "No heartbeat yet. The worker has not run against this database."}
+            {!ready ? (
+              "Reading the worker's heartbeat."
+            ) : worker?.lastSeenAt ? (
+              `Last heartbeat ${timeAgo(worker.lastSeenAt)}.`
+            ) : (
+              // A worker that stopped normally leaves no heartbeat behind (design §9.7), so
+              // this covers both "never started" and "stopped".
+              <>
+                The worker is not running. Start it with{" "}
+                <code className="text-foreground">pnpm dev:worker</code>.
+              </>
+            )}
           </p>
         </div>
         <Button
@@ -113,8 +137,9 @@ export function WorkerPanel() {
           {probe.state === "answered" ? (
             <p className="flex items-center gap-2">
               <Check className="text-success size-4 shrink-0" />
-              The worker picked up the test job and answered in{" "}
-              {probe.ms < 1000 ? "under a second" : formatDuration(probe.ms)}.
+              {probe.pid != null
+                ? `Answered by process ${probe.pid} in ${probe.ms < 1000 ? "under a second" : formatDuration(probe.ms)}.`
+                : `The worker answered in ${probe.ms < 1000 ? "under a second" : formatDuration(probe.ms)}.`}
             </p>
           ) : probe.state === "waiting" ? (
             <p className="text-muted-foreground">
@@ -126,9 +151,19 @@ export function WorkerPanel() {
           ) : probe.state === "silent" || !online ? (
             <p className="text-muted-foreground">
               {probe.state === "silent" ? "No answer after 20 seconds. " : ""}
-              Searches, reviews and tailoring wait in the queue until the worker runs. Start it
-              in a terminal with <code className="text-foreground">pnpm dev:worker</code>, or run
-              the app and worker together with <code className="text-foreground">pnpm dev:all</code>.
+              Searches, reviews and tailoring wait in the queue until the worker runs.{" "}
+              {worker?.lastSeenAt ? (
+                <>
+                  Start it in a terminal with{" "}
+                  <code className="text-foreground">pnpm dev:worker</code>, or run the app and
+                  worker together with <code className="text-foreground">pnpm dev:all</code>.
+                </>
+              ) : (
+                <>
+                  You can also run the app and worker together with{" "}
+                  <code className="text-foreground">pnpm dev:all</code>.
+                </>
+              )}
             </p>
           ) : null}
         </div>

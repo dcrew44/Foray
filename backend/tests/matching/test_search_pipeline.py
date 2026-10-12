@@ -25,7 +25,7 @@ from apps.jobs import refresh as refresh_module
 from apps.jobs.models import Company
 from apps.jobs.refresh import RefreshOutcome
 from apps.llm.models import LlmCall
-from apps.matching import evaluate, search
+from apps.matching import evaluate, fast_score, search
 from apps.matching.brief import EMPTY_BRIEF
 from apps.matching.deep_eval import NoResumeError
 from apps.matching.evaluate import UnknownMatchError, start_match_evaluation
@@ -40,7 +40,7 @@ from apps.matching.queries import (
 )
 from apps.matching.schemas import DeepEval
 from apps.matching.search import gate_deep_evaluation
-from apps.runs import approvals, lifecycle
+from apps.runs import approvals, lifecycle, reaper
 from apps.runs.models import Approval, Event, Run
 from tests.factories import make_company, make_job, make_match, make_resume, make_run, make_user
 from tests.matching.conftest import FakeLLM
@@ -946,6 +946,33 @@ def test_a_search_without_required_preferences_fails_with_the_reason(llm: FakeLL
     )
     assert kinds(run) == ["run.started", "run.failed"]
     assert llm.calls == []
+
+
+def test_a_run_failed_during_scoring_stops_spending(
+    mirror: dict[str, Any], llm: FakeLLM, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Step 13: the reaper failed a search whose worker had only been asleep; its task woke up
+    and went on scoring for 45 minutes, paying for each call and writing scores to a run that
+    had already ended. Any terminal status stops a pipeline, not only `cancelled`. One posting
+    a batch, so the stop check runs between each."""
+    monkeypatch.setattr(fast_score, "BATCH", 1)
+    user = make_user(with_resume=True)
+    run = search.start_search(user.pk, prompt="anything").run
+
+    def reaped() -> None:  # on the model's thread, after the first score is answered
+        if lifecycle.fail(run.id, reaper.INTERRUPTED):
+            connections.close_all()
+
+    llm.after_fast = reaped
+    run_deferred()
+
+    failed = refreshed(run)
+    assert (failed.status, failed.error) == ("failed", reaper.INTERRUPTED)
+    assert len(llm.of("fast")) == 1  # the other three postings were never sent
+    assert kinds(run)[-1] == "run.failed"
+    assert approvals_for(run) == []
+    scored = JobMatch.objects.unscoped("tests").filter(user_id=user.pk, fast_score__isnull=False)
+    assert scored.count() == 1
 
 
 def test_a_stop_during_scoring_keeps_the_stop_last(mirror: dict[str, Any], llm: FakeLLM) -> None:

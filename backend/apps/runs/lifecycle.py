@@ -273,10 +273,12 @@ def cancel(user_id: str, run_id: Id) -> bool:
 
 
 def is_cancelled(run_id: Id) -> bool:
-    """For pipelines, between stages, batches and items."""
+    """For pipelines, between stages, batches and items: True once the run has stopped for any
+    reason, not only a Stop. A run the reaper (or anything else) failed may still have its task
+    alive (a laptop that slept, step 13), and that task must stop spending and writing too."""
     return (
-        _runs("is_cancelled: the pipeline's own run")
-        .filter(id=run_id, status=RunStatus.CANCELLED)
+        not _runs("is_cancelled: the pipeline's own run")
+        .filter(id=run_id, status__in=ACTIVE)
         .exists()
     )
 

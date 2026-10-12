@@ -31,7 +31,9 @@ unregisters on the way out, so `worker.online` goes false at once after a clean 
 45 s after a crash). The Playwright browser closes last, within 10 s and still under the stop
 handler (a second Ctrl-C must not interrupt it): a close that hangs is logged and abandoned, so
 `stopped` is always logged. No `task_middleware` is passed, which
-would drop Django's per-task connection cleanup; timeouts live in `run_step` instead.
+would drop Django's per-task connection cleanup; timeouts live in `run_step` instead. The one
+`worker_middleware`, `reaper.track_running`, records the jobs this process is running, so the
+stalled-job sweep never fails them after a sleep (step 13).
 """
 
 from __future__ import annotations
@@ -129,6 +131,8 @@ async def _run_lane(
                 name=lane,
                 install_signal_handlers=False,
                 shutdown_graceful_timeout=shutdown_timeout,
+                # Tells the stalled-job sweep which jobs this process is running (`reaper.py`).
+                worker_middleware=[reaper.track_running],
             )
             return
         except Exception as error:

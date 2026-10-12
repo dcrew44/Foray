@@ -13,6 +13,7 @@ from datetime import timedelta
 
 import pytest
 
+from apps.core.db import db
 from apps.core.queue import app, defer_in_tx
 from apps.runs import lifecycle, reaper
 from apps.runs import tasks as run_tasks
@@ -209,6 +210,96 @@ def test_startup_sweep_fails_a_stalled_job(monkeypatch: pytest.MonkeyPatch) -> N
     assert support.sql(
         "SELECT count(*) FROM procrastinate_workers WHERE id <> %s", [worker_id]
     ) == [(0,)]
+
+
+@pytest.mark.django_db(transaction=True)
+def test_a_sleep_never_fails_what_this_worker_is_running(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Step 13: after the laptop slept, every heartbeat was minutes old, and the first reap failed
+    the search, the tailor and the sibling reaps this very worker was running; the reaper then
+    failed their runs as "Interrupted". Through `serve()`, the real lanes and middleware:
+
+    1. every heartbeat of this process is 10 minutes old (the machine was paused): the sweep is
+       skipped, so the step running here and its run live, and a dead worker's job waits;
+    2. the heartbeats are fresh again, but the step's worker row was pruned, so its job has no
+       worker: the sweep fails the dead worker's job, but not the step this process is running.
+
+    Heartbeats are written only at registration here, so the test alone decides their age."""
+    monkeypatch.setattr(worker_command.periodic, "install", lambda *_, **__: [])
+    monkeypatch.setitem(app.worker_defaults, "update_heartbeat_interval", 3600)
+    caplog.set_level("WARNING", logger="foray.worker")
+    user = make_user()
+    run, _ = lifecycle.start_run(
+        user.pk,
+        "search",
+        input={"prompt": "Find me a role"},
+        dedupe_key=None,
+        task=support.step,
+        task_kwargs={"action": "sleep", "seconds": 60},
+    )
+    lock = f"run:{run.id}"
+
+    def step_job() -> int | None:
+        found = [job["id"] for job in jobs(lock=lock) if job["status"] == "doing"]
+        return found[0] if found else None
+
+    async def reap() -> None:
+        reap_job = await db(
+            defer_in_tx, run_tasks.maintenance_reap, queueing_lock="maintenance:reap", timestamp=0
+        )
+        await support.wait_for(lambda: support.job_status(reap_job) == "succeeded", 20)
+
+    async def main() -> int:
+        stop = asyncio.Event()
+        with support.empty_periodic_registry():
+            server = asyncio.create_task(
+                worker_command.serve(0.5, stop=stop, install_signal_handlers=False)
+            )
+            try:
+                step = await support.wait_for(step_job, 20)
+                await db(age_run, run.id, 120)  # quiet long enough to be reaped if nothing held it
+                dead = await db(dead_worker, 3600)
+                dead_job = await db(doing_job, "tests.sleep", worker_id=dead, queue="system")
+                [(background,)] = await db(
+                    support.sql, "SELECT worker_id FROM procrastinate_jobs WHERE id = %s", [step]
+                )
+
+                # 1. The whole machine was paused.
+                await db(
+                    support.sql,
+                    "UPDATE procrastinate_workers SET last_heartbeat = now() - interval '10 min' "
+                    "WHERE id <> %s",
+                    [dead],
+                )
+                await reap()
+                assert await db(support.job_status, step) == "doing"
+                assert await db(support.job_status, dead_job) == "doing"  # judged next time
+                assert (await db(refresh, run)).status == "running"
+                assert "stalled-job sweep skipped" in caplog.text
+
+                # 2. The heartbeats caught up, but meanwhile a lane that started again pruned its
+                # sibling's stale row (procrastinate prunes stale workers at startup), so the
+                # step's job has no worker any more: to the jobs table it looks orphaned.
+                await db(
+                    support.sql,
+                    "UPDATE procrastinate_workers SET last_heartbeat = now() WHERE id <> %s",
+                    [dead],
+                )
+                await db(
+                    support.sql, "DELETE FROM procrastinate_workers WHERE id = %s", [background]
+                )
+                await reap()
+                assert await db(support.job_status, dead_job) == "failed"
+                assert await db(support.job_status, step) == "doing"
+                assert (await db(refresh, run)).status == "running"
+            finally:
+                stop.set()
+                code = await asyncio.wait_for(server, 30)
+        return code
+
+    assert asyncio.run(main()) == 0
+    assert reaper.INTERRUPTED not in caplog.text
 
 
 @pytest.mark.django_db

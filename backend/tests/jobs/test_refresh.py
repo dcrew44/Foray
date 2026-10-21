@@ -5,6 +5,7 @@ commands (seed, fetch_board, verify_boards) without the network."""
 from __future__ import annotations
 
 import io
+import json
 from datetime import timedelta
 from typing import Any
 
@@ -129,16 +130,17 @@ def test_staleness_is_two_hours() -> None:
 
 @pytest.mark.django_db
 def test_seed_companies_registers_the_seed_list_idempotently() -> None:
+    size = len(json.loads(seed_command.SEED_PATH.read_text()))
     out = io.StringIO()
     call_command("seed_companies", stdout=out)
-    assert "seeding 225 companies\u2026" in out.getvalue()
-    assert "registered 225" in out.getvalue()
-    assert Company.objects.count() == 225
+    assert f"seeding {size} companies\u2026" in out.getvalue()
+    assert f"registered {size}" in out.getvalue()
+    assert Company.objects.count() == size
     assert set(Company.objects.values_list("discovered_via", flat=True)) == {"seed"}
 
     Company.objects.filter(slug="1password").update(status="invalid")
     call_command("seed_companies", stdout=io.StringIO())
-    assert Company.objects.count() == 225
+    assert Company.objects.count() == size
     assert Company.objects.get(slug="1password").status == "invalid"
 
 

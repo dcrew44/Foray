@@ -11,6 +11,17 @@
     ]
   },
   {
+    "name": "1X",
+    "slug": "1x",
+    "sourceType": "ashby",
+    "atsSlug": "1x",
+    "domain": "1x.tech",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
     "name": "Abnormal Security",
     "slug": "abnormalsecurity",
     "sourceType": "greenhouse",
@@ -40,6 +51,17 @@
     "domain": "affirm.com",
     "tags": [
       "fintech"
+    ]
+  },
+  {
+    "name": "Agility Robotics",
+    "slug": "agilityrobotics",
+    "sourceType": "greenhouse",
+    "atsSlug": "agilityrobotics",
+    "domain": "agilityrobotics.com",
+    "tags": [
+      "ai",
+      "hardware"
     ]
   },
   {
@@ -86,6 +108,26 @@
     ]
   },
   {
+    "name": "Akuna Capital",
+    "slug": "akunacapital",
+    "sourceType": "greenhouse",
+    "atsSlug": "akunacapital",
+    "domain": "akunacapital.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Albedo",
+    "slug": "albedo",
+    "sourceType": "greenhouse",
+    "atsSlug": "albedo",
+    "domain": "albedo.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Alchemy",
     "slug": "alchemy",
     "sourceType": "ashby",
@@ -108,6 +150,27 @@
     ]
   },
   {
+    "name": "AlphaSense",
+    "slug": "alphasense",
+    "sourceType": "greenhouse",
+    "atsSlug": "alphasense",
+    "domain": "alpha-sense.com",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
+    "name": "Ambi Robotics",
+    "slug": "ambirobotics",
+    "sourceType": "lever",
+    "atsSlug": "ambirobotics",
+    "domain": "ambirobotics.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Ambience Healthcare",
     "slug": "ambiencehealthcare",
     "sourceType": "ashby",
@@ -121,7 +184,7 @@
   {
     "name": "Amplitude",
     "slug": "amplitude",
-    "sourceType": "greenhouse",
+    "sourceType": "ashby",
     "atsSlug": "amplitude",
     "domain": "amplitude.com",
     "tags": [
@@ -152,6 +215,17 @@
     ]
   },
   {
+    "name": "Anterior",
+    "slug": "anterior",
+    "sourceType": "ashby",
+    "atsSlug": "anterior",
+    "domain": "anterior.com",
+    "tags": [
+      "healthtech",
+      "ai"
+    ]
+  },
+  {
     "name": "Anthropic",
     "slug": "anthropic",
     "sourceType": "greenhouse",
@@ -159,6 +233,16 @@
     "domain": "anthropic.com",
     "tags": [
       "ai"
+    ]
+  },
+  {
+    "name": "Antora Energy",
+    "slug": "antora",
+    "sourceType": "greenhouse",
+    "atsSlug": "antora",
+    "domain": "antoraenergy.com",
+    "tags": [
+      "climate"
     ]
   },
   {
@@ -170,6 +254,16 @@
     "tags": [
       "ai",
       "infra"
+    ]
+  },
+  {
+    "name": "Apollo.io",
+    "slug": "apolloio",
+    "sourceType": "greenhouse",
+    "atsSlug": "apolloio",
+    "domain": "apollo.io",
+    "tags": [
+      "enterprise"
     ]
   },
   {
@@ -226,6 +320,27 @@
     ]
   },
   {
+    "name": "Assort Health",
+    "slug": "assorthealth",
+    "sourceType": "ashby",
+    "atsSlug": "assorthealth",
+    "domain": "assorthealth.com",
+    "tags": [
+      "healthtech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Astera Labs",
+    "slug": "asteralabs",
+    "sourceType": "greenhouse",
+    "atsSlug": "asteralabs",
+    "domain": "asteralabs.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Astranis",
     "slug": "astranis",
     "sourceType": "greenhouse",
@@ -248,11 +363,42 @@
     ]
   },
   {
+    "name": "At-Bay",
+    "slug": "atbayjobs",
+    "sourceType": "greenhouse",
+    "atsSlug": "atbayjobs",
+    "domain": "at-bay.com",
+    "tags": [
+      "security",
+      "fintech"
+    ]
+  },
+  {
+    "name": "Atom Computing",
+    "slug": "atomcomputing",
+    "sourceType": "lever",
+    "atsSlug": "atomcomputing",
+    "domain": "atom-computing.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Attentive",
     "slug": "attentive",
     "sourceType": "greenhouse",
     "atsSlug": "attentive",
     "domain": "attentive.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Attio",
+    "slug": "attio",
+    "sourceType": "ashby",
+    "atsSlug": "attio",
+    "domain": "attio.com",
     "tags": [
       "enterprise"
     ]
@@ -268,6 +414,16 @@
     ]
   },
   {
+    "name": "Base Power",
+    "slug": "base-power",
+    "sourceType": "ashby",
+    "atsSlug": "base-power",
+    "domain": "basepowercompany.com",
+    "tags": [
+      "climate"
+    ]
+  },
+  {
     "name": "Baseten",
     "slug": "baseten",
     "sourceType": "ashby",
@@ -276,6 +432,16 @@
     "tags": [
       "ai",
       "infra"
+    ]
+  },
+  {
+    "name": "Bedrock Robotics",
+    "slug": "bedrock-robotics",
+    "sourceType": "ashby",
+    "atsSlug": "bedrock-robotics",
+    "domain": "bedrockrobotics.com",
+    "tags": [
+      "hardware"
     ]
   },
   {
@@ -297,6 +463,37 @@
     "domain": "betterment.com",
     "tags": [
       "fintech"
+    ]
+  },
+  {
+    "name": "Black Forest Labs",
+    "slug": "black-forest-labs",
+    "sourceType": "ashby",
+    "atsSlug": "black-forest-labs",
+    "domain": "bfl.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Bland AI",
+    "slug": "bland",
+    "sourceType": "ashby",
+    "atsSlug": "bland",
+    "domain": "bland.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Block",
+    "slug": "block",
+    "sourceType": "greenhouse",
+    "atsSlug": "block",
+    "domain": "block.xyz",
+    "tags": [
+      "fintech",
+      "consumer"
     ]
   },
   {
@@ -331,6 +528,27 @@
     ]
   },
   {
+    "name": "Brilliant",
+    "slug": "brilliant",
+    "sourceType": "lever",
+    "atsSlug": "brilliant",
+    "domain": "brilliant.org",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Browserbase",
+    "slug": "browserbase",
+    "sourceType": "ashby",
+    "atsSlug": "browserbase",
+    "domain": "browserbase.com",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
     "name": "Buildkite",
     "slug": "buildkite",
     "sourceType": "greenhouse",
@@ -341,6 +559,26 @@
     ]
   },
   {
+    "name": "Bumble",
+    "slug": "bumbleinc",
+    "sourceType": "ashby",
+    "atsSlug": "bumbleinc",
+    "domain": "bumble.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Calendly",
+    "slug": "calendly",
+    "sourceType": "greenhouse",
+    "atsSlug": "calendly",
+    "domain": "calendly.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
     "name": "Calm",
     "slug": "calm",
     "sourceType": "greenhouse",
@@ -348,6 +586,16 @@
     "domain": "calm.com",
     "tags": [
       "consumer",
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Canvas Medical",
+    "slug": "canvasmedical",
+    "sourceType": "lever",
+    "atsSlug": "canvasmedical",
+    "domain": "canvasmedical.com",
+    "tags": [
       "healthtech"
     ]
   },
@@ -370,6 +618,16 @@
     "tags": [
       "fintech",
       "enterprise"
+    ]
+  },
+  {
+    "name": "Cartesia",
+    "slug": "cartesia",
+    "sourceType": "ashby",
+    "atsSlug": "cartesia",
+    "domain": "cartesia.ai",
+    "tags": [
+      "ai"
     ]
   },
   {
@@ -459,6 +717,17 @@
     ]
   },
   {
+    "name": "Clerk",
+    "slug": "clerk",
+    "sourceType": "ashby",
+    "atsSlug": "clerk",
+    "domain": "clerk.com",
+    "tags": [
+      "devtools",
+      "security"
+    ]
+  },
+  {
     "name": "ClickHouse",
     "slug": "clickhouse",
     "sourceType": "ashby",
@@ -467,6 +736,17 @@
     "tags": [
       "data",
       "infra"
+    ]
+  },
+  {
+    "name": "Cline",
+    "slug": "cline",
+    "sourceType": "greenhouse",
+    "atsSlug": "cline",
+    "domain": "cline.bot",
+    "tags": [
+      "ai",
+      "devtools"
     ]
   },
   {
@@ -481,6 +761,17 @@
     ]
   },
   {
+    "name": "Coalition",
+    "slug": "coalition",
+    "sourceType": "greenhouse",
+    "atsSlug": "coalition",
+    "domain": "coalitioninc.com",
+    "tags": [
+      "security",
+      "fintech"
+    ]
+  },
+  {
     "name": "Cockroach Labs",
     "slug": "cockroachlabs",
     "sourceType": "greenhouse",
@@ -492,6 +783,28 @@
     ]
   },
   {
+    "name": "CodeRabbit",
+    "slug": "coderabbit",
+    "sourceType": "ashby",
+    "atsSlug": "coderabbit",
+    "domain": "coderabbit.ai",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Cognition",
+    "slug": "cognition",
+    "sourceType": "ashby",
+    "atsSlug": "cognition",
+    "domain": "cognition.ai",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
     "name": "Cohere",
     "slug": "cohere",
     "sourceType": "ashby",
@@ -499,6 +812,16 @@
     "domain": "cohere.com",
     "tags": [
       "ai"
+    ]
+  },
+  {
+    "name": "Cohere Health",
+    "slug": "coherehealth",
+    "sourceType": "greenhouse",
+    "atsSlug": "coherehealth",
+    "domain": "coherehealth.com",
+    "tags": [
+      "healthtech"
     ]
   },
   {
@@ -534,6 +857,16 @@
     ]
   },
   {
+    "name": "Commure",
+    "slug": "commure",
+    "sourceType": "ashby",
+    "atsSlug": "commure",
+    "domain": "commure.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
     "name": "Confluent",
     "slug": "confluent",
     "sourceType": "ashby",
@@ -542,6 +875,17 @@
     "tags": [
       "data",
       "infra"
+    ]
+  },
+  {
+    "name": "Convex",
+    "slug": "convex-dev",
+    "sourceType": "ashby",
+    "atsSlug": "convex-dev",
+    "domain": "convex.dev",
+    "tags": [
+      "devtools",
+      "data"
     ]
   },
   {
@@ -578,6 +922,27 @@
     ]
   },
   {
+    "name": "Cribl",
+    "slug": "cribl",
+    "sourceType": "greenhouse",
+    "atsSlug": "cribl",
+    "domain": "cribl.io",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
+    "name": "Crosby",
+    "slug": "crosby",
+    "sourceType": "ashby",
+    "atsSlug": "crosby",
+    "domain": "crosby.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
     "name": "Crusoe",
     "slug": "crusoe",
     "sourceType": "ashby",
@@ -607,6 +972,17 @@
     "tags": [
       "ai",
       "devtools"
+    ]
+  },
+  {
+    "name": "d-Matrix",
+    "slug": "d-matrix",
+    "sourceType": "ashby",
+    "atsSlug": "d-matrix",
+    "domain": "d-matrix.ai",
+    "tags": [
+      "ai",
+      "hardware"
     ]
   },
   {
@@ -676,6 +1052,17 @@
     ]
   },
   {
+    "name": "Dexterity",
+    "slug": "dexterity",
+    "sourceType": "lever",
+    "atsSlug": "dexterity",
+    "domain": "dexterity.ai",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
     "name": "Discord",
     "slug": "discord",
     "sourceType": "greenhouse",
@@ -683,6 +1070,16 @@
     "domain": "discord.com",
     "tags": [
       "consumer"
+    ]
+  },
+  {
+    "name": "Distyl AI",
+    "slug": "distyl",
+    "sourceType": "ashby",
+    "atsSlug": "distyl",
+    "domain": "distyl.ai",
+    "tags": [
+      "ai"
     ]
   },
   {
@@ -762,6 +1159,16 @@
     ]
   },
   {
+    "name": "Elation Health",
+    "slug": "elationhealth",
+    "sourceType": "greenhouse",
+    "atsSlug": "elationhealth",
+    "domain": "elationhealth.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
     "name": "ElevenLabs",
     "slug": "elevenlabs",
     "sourceType": "ashby",
@@ -772,6 +1179,26 @@
     ]
   },
   {
+    "name": "Elicit",
+    "slug": "elicit",
+    "sourceType": "ashby",
+    "atsSlug": "elicit",
+    "domain": "elicit.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Eliyan",
+    "slug": "eliyan",
+    "sourceType": "lever",
+    "atsSlug": "eliyan",
+    "domain": "eliyan.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Envoy",
     "slug": "envoy",
     "sourceType": "ashby",
@@ -779,6 +1206,47 @@
     "domain": "envoy.com",
     "tags": [
       "enterprise"
+    ]
+  },
+  {
+    "name": "Epic Games",
+    "slug": "epicgames",
+    "sourceType": "greenhouse",
+    "atsSlug": "epicgames",
+    "domain": "epicgames.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Epirus",
+    "slug": "epirus",
+    "sourceType": "greenhouse",
+    "atsSlug": "epirus",
+    "domain": "epirusinc.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Etched",
+    "slug": "etched",
+    "sourceType": "ashby",
+    "atsSlug": "etched",
+    "domain": "etched.com",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Eudia",
+    "slug": "eudia",
+    "sourceType": "greenhouse",
+    "atsSlug": "eudia",
+    "domain": "eudia.com",
+    "tags": [
+      "ai"
     ]
   },
   {
@@ -793,6 +1261,16 @@
     ]
   },
   {
+    "name": "Exa",
+    "slug": "exa",
+    "sourceType": "ashby",
+    "atsSlug": "exa",
+    "domain": "exa.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
     "name": "Expensify",
     "slug": "expensify",
     "sourceType": "ashby",
@@ -804,6 +1282,27 @@
     ]
   },
   {
+    "name": "Extropic",
+    "slug": "extropic",
+    "sourceType": "ashby",
+    "atsSlug": "extropic",
+    "domain": "extropic.ai",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Factory",
+    "slug": "factory",
+    "sourceType": "ashby",
+    "atsSlug": "factory",
+    "domain": "factory.ai",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
     "name": "Faire",
     "slug": "faire",
     "sourceType": "greenhouse",
@@ -811,6 +1310,48 @@
     "domain": "faire.com",
     "tags": [
       "marketplace"
+    ]
+  },
+  {
+    "name": "fal",
+    "slug": "fal-ai",
+    "sourceType": "ashby",
+    "atsSlug": "fal-ai",
+    "domain": "fal.ai",
+    "tags": [
+      "ai",
+      "infra"
+    ]
+  },
+  {
+    "name": "Fastly",
+    "slug": "fastly",
+    "sourceType": "greenhouse",
+    "atsSlug": "fastly",
+    "domain": "fastly.com",
+    "tags": [
+      "infra"
+    ]
+  },
+  {
+    "name": "Fervo Energy",
+    "slug": "fervoenergy",
+    "sourceType": "greenhouse",
+    "atsSlug": "fervoenergy",
+    "domain": "fervoenergy.com",
+    "tags": [
+      "climate"
+    ]
+  },
+  {
+    "name": "Fieldguide",
+    "slug": "fieldguide",
+    "sourceType": "ashby",
+    "atsSlug": "fieldguide",
+    "domain": "fieldguide.io",
+    "tags": [
+      "ai",
+      "fintech"
     ]
   },
   {
@@ -844,6 +1385,17 @@
     "tags": [
       "fintech",
       "devtools"
+    ]
+  },
+  {
+    "name": "Fireblocks",
+    "slug": "fireblocks",
+    "sourceType": "greenhouse",
+    "atsSlug": "fireblocks",
+    "domain": "fireblocks.com",
+    "tags": [
+      "crypto",
+      "security"
     ]
   },
   {
@@ -890,6 +1442,38 @@
     ]
   },
   {
+    "name": "Formic",
+    "slug": "formic",
+    "sourceType": "greenhouse",
+    "atsSlug": "formic",
+    "domain": "formic.co",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Freed",
+    "slug": "freed",
+    "sourceType": "ashby",
+    "atsSlug": "freed",
+    "domain": "getfreed.ai",
+    "tags": [
+      "healthtech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Freenome",
+    "slug": "freenome",
+    "sourceType": "greenhouse",
+    "atsSlug": "freenome",
+    "domain": "freenome.com",
+    "tags": [
+      "biotech",
+      "healthtech"
+    ]
+  },
+  {
     "name": "Front",
     "slug": "frontcareers",
     "sourceType": "ashby",
@@ -897,6 +1481,79 @@
     "domain": "front.com",
     "tags": [
       "enterprise"
+    ]
+  },
+  {
+    "name": "FullStory",
+    "slug": "fullstory",
+    "sourceType": "ashby",
+    "atsSlug": "fullstory",
+    "domain": "fullstory.com",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "name": "Gamma",
+    "slug": "gamma",
+    "sourceType": "ashby",
+    "atsSlug": "gamma",
+    "domain": "gamma.app",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
+    "name": "Garner Health",
+    "slug": "garnerhealth",
+    "sourceType": "greenhouse",
+    "atsSlug": "garnerhealth",
+    "domain": "getgarner.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Gather AI",
+    "slug": "gatherai",
+    "sourceType": "greenhouse",
+    "atsSlug": "gatherai",
+    "domain": "gather.ai",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Gecko Robotics",
+    "slug": "gecko-robotics",
+    "sourceType": "ashby",
+    "atsSlug": "gecko-robotics",
+    "domain": "geckorobotics.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Gem",
+    "slug": "gem",
+    "sourceType": "gem",
+    "atsSlug": "gem",
+    "domain": "gem.com",
+    "tags": [
+      "enterprise",
+      "ai"
+    ]
+  },
+  {
+    "name": "Gemini",
+    "slug": "gemini",
+    "sourceType": "greenhouse",
+    "atsSlug": "gemini",
+    "domain": "gemini.com",
+    "tags": [
+      "crypto",
+      "fintech"
     ]
   },
   {
@@ -964,6 +1621,17 @@
     ]
   },
   {
+    "name": "Granola",
+    "slug": "granola",
+    "sourceType": "ashby",
+    "atsSlug": "granola",
+    "domain": "granola.ai",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
     "name": "Greenhouse",
     "slug": "greenhouse",
     "sourceType": "greenhouse",
@@ -971,6 +1639,28 @@
     "domain": "greenhouse.io",
     "tags": [
       "enterprise"
+    ]
+  },
+  {
+    "name": "Greptile",
+    "slug": "greptile",
+    "sourceType": "ashby",
+    "atsSlug": "greptile",
+    "domain": "greptile.com",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Groq",
+    "slug": "groq",
+    "sourceType": "gem",
+    "atsSlug": "groq",
+    "domain": "groq.com",
+    "tags": [
+      "ai",
+      "hardware"
     ]
   },
   {
@@ -982,6 +1672,16 @@
     "tags": [
       "fintech",
       "enterprise"
+    ]
+  },
+  {
+    "name": "Hadrian",
+    "slug": "hadrian",
+    "sourceType": "gem",
+    "atsSlug": "hadrian",
+    "domain": "hadrian.co",
+    "tags": [
+      "hardware"
     ]
   },
   {
@@ -1028,10 +1728,41 @@
     ]
   },
   {
-    "name": "Hex",
-    "slug": "hextechnologies",
+    "name": "Healthie",
+    "slug": "healthie",
     "sourceType": "greenhouse",
-    "atsSlug": "hextechnologies",
+    "atsSlug": "healthie",
+    "domain": "gethealthie.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Helion",
+    "slug": "helion",
+    "sourceType": "ashby",
+    "atsSlug": "helion",
+    "domain": "helionenergy.com",
+    "tags": [
+      "climate",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Hermeus",
+    "slug": "hermeus",
+    "sourceType": "lever",
+    "atsSlug": "hermeus",
+    "domain": "hermeus.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Hex",
+    "slug": "hex",
+    "sourceType": "ashby",
+    "atsSlug": "hex",
     "domain": "hex.tech",
     "tags": [
       "data"
@@ -1050,11 +1781,22 @@
   {
     "name": "Hightouch",
     "slug": "hightouch",
-    "sourceType": "greenhouse",
+    "sourceType": "ashby",
     "atsSlug": "hightouch",
     "domain": "hightouch.com",
     "tags": [
       "data"
+    ]
+  },
+  {
+    "name": "Hims & Hers",
+    "slug": "hims-and-hers",
+    "sourceType": "ashby",
+    "atsSlug": "hims-and-hers",
+    "domain": "forhims.com",
+    "tags": [
+      "healthtech",
+      "consumer"
     ]
   },
   {
@@ -1079,6 +1821,48 @@
     ]
   },
   {
+    "name": "Hugging Face",
+    "slug": "huggingface",
+    "sourceType": "workable",
+    "atsSlug": "huggingface",
+    "domain": "huggingface.co",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Hume AI",
+    "slug": "humeai",
+    "sourceType": "greenhouse",
+    "atsSlug": "humeai",
+    "domain": "hume.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Huntress",
+    "slug": "huntress",
+    "sourceType": "greenhouse",
+    "atsSlug": "huntress",
+    "domain": "huntress.com",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "name": "Ideogram",
+    "slug": "ideogram",
+    "sourceType": "ashby",
+    "atsSlug": "ideogram",
+    "domain": "ideogram.ai",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
     "name": "Imbue",
     "slug": "imbue",
     "sourceType": "greenhouse",
@@ -1089,6 +1873,16 @@
     ]
   },
   {
+    "name": "IMC Trading",
+    "slug": "imc",
+    "sourceType": "greenhouse",
+    "atsSlug": "imc",
+    "domain": "imc.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
     "name": "Included Health",
     "slug": "includedhealth",
     "sourceType": "lever",
@@ -1096,6 +1890,27 @@
     "domain": "includedhealth.com",
     "tags": [
       "healthtech"
+    ]
+  },
+  {
+    "name": "Inflection AI",
+    "slug": "inflectionai",
+    "sourceType": "greenhouse",
+    "atsSlug": "inflectionai",
+    "domain": "inflection.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Inngest",
+    "slug": "inngest",
+    "sourceType": "ashby",
+    "atsSlug": "inngest",
+    "domain": "inngest.com",
+    "tags": [
+      "devtools",
+      "infra"
     ]
   },
   {
@@ -1142,6 +1957,16 @@
     ]
   },
   {
+    "name": "Island",
+    "slug": "island",
+    "sourceType": "greenhouse",
+    "atsSlug": "island",
+    "domain": "island.io",
+    "tags": [
+      "security"
+    ]
+  },
+  {
     "name": "Iterable",
     "slug": "iterable",
     "sourceType": "greenhouse",
@@ -1150,6 +1975,56 @@
     "tags": [
       "enterprise",
       "data"
+    ]
+  },
+  {
+    "name": "Jane Street",
+    "slug": "janestreet",
+    "sourceType": "greenhouse",
+    "atsSlug": "janestreet",
+    "domain": "janestreet.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Juicebox",
+    "slug": "juicebox",
+    "sourceType": "ashby",
+    "atsSlug": "juicebox",
+    "domain": "juicebox.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Jump Trading",
+    "slug": "jumptrading",
+    "sourceType": "greenhouse",
+    "atsSlug": "jumptrading",
+    "domain": "jumptrading.com",
+    "tags": [
+      "fintech"
+    ]
+  },
+  {
+    "name": "Kairos Power",
+    "slug": "kairospower",
+    "sourceType": "greenhouse",
+    "atsSlug": "kairospower",
+    "domain": "kairospower.com",
+    "tags": [
+      "climate"
+    ]
+  },
+  {
+    "name": "Khan Academy",
+    "slug": "khanacademy",
+    "sourceType": "greenhouse",
+    "atsSlug": "khanacademy",
+    "domain": "khanacademy.org",
+    "tags": [
+      "consumer"
     ]
   },
   {
@@ -1171,6 +2046,28 @@
     "domain": "komodohealth.com",
     "tags": [
       "healthtech",
+      "data"
+    ]
+  },
+  {
+    "name": "Kong",
+    "slug": "kong",
+    "sourceType": "ashby",
+    "atsSlug": "kong",
+    "domain": "konghq.com",
+    "tags": [
+      "infra",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Labelbox",
+    "slug": "labelbox",
+    "sourceType": "greenhouse",
+    "atsSlug": "labelbox",
+    "domain": "labelbox.com",
+    "tags": [
+      "ai",
       "data"
     ]
   },
@@ -1217,6 +2114,16 @@
     ]
   },
   {
+    "name": "Legora",
+    "slug": "legora",
+    "sourceType": "ashby",
+    "atsSlug": "legora",
+    "domain": "legora.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
     "name": "Life360",
     "slug": "life360",
     "sourceType": "greenhouse",
@@ -1224,6 +2131,17 @@
     "domain": "life360.com",
     "tags": [
       "consumer"
+    ]
+  },
+  {
+    "name": "Lightmatter",
+    "slug": "lightmatter",
+    "sourceType": "greenhouse",
+    "atsSlug": "lightmatter",
+    "domain": "lightmatter.co",
+    "tags": [
+      "ai",
+      "hardware"
     ]
   },
   {
@@ -1245,6 +2163,37 @@
     "domain": "lithic.com",
     "tags": [
       "fintech"
+    ]
+  },
+  {
+    "name": "LlamaIndex",
+    "slug": "llamaindex",
+    "sourceType": "ashby",
+    "atsSlug": "llamaindex",
+    "domain": "llamaindex.ai",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Loft Orbital",
+    "slug": "loftorbital",
+    "sourceType": "lever",
+    "atsSlug": "loftorbital",
+    "domain": "loftorbital.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "LogRocket",
+    "slug": "logrocket",
+    "sourceType": "lever",
+    "atsSlug": "logrocket",
+    "domain": "logrocket.com",
+    "tags": [
+      "devtools"
     ]
   },
   {
@@ -1279,6 +2228,36 @@
     ]
   },
   {
+    "name": "Lyra Health",
+    "slug": "lyrahealth",
+    "sourceType": "lever",
+    "atsSlug": "lyrahealth",
+    "domain": "lyrahealth.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Mach Industries",
+    "slug": "machindustries",
+    "sourceType": "greenhouse",
+    "atsSlug": "machindustries",
+    "domain": "machindustries.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Mashgin",
+    "slug": "mashgin",
+    "sourceType": "lever",
+    "atsSlug": "mashgin",
+    "domain": "mashgin.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Material Security",
     "slug": "materialsecurity",
     "sourceType": "ashby",
@@ -1297,6 +2276,37 @@
     "tags": [
       "data",
       "infra"
+    ]
+  },
+  {
+    "name": "MatX",
+    "slug": "matx",
+    "sourceType": "ashby",
+    "atsSlug": "matx",
+    "domain": "matx.com",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Maven AGI",
+    "slug": "maven-agi",
+    "sourceType": "ashby",
+    "atsSlug": "maven-agi",
+    "domain": "mavenagi.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Maven Clinic",
+    "slug": "mavenclinic",
+    "sourceType": "greenhouse",
+    "atsSlug": "mavenclinic",
+    "domain": "mavenclinic.com",
+    "tags": [
+      "healthtech"
     ]
   },
   {
@@ -1364,6 +2374,16 @@
     ]
   },
   {
+    "name": "Mintlify",
+    "slug": "mintlify",
+    "sourceType": "ashby",
+    "atsSlug": "mintlify",
+    "domain": "mintlify.com",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
     "name": "Miro",
     "slug": "miro",
     "sourceType": "ashby",
@@ -1427,6 +2447,16 @@
     ]
   },
   {
+    "name": "MotherDuck",
+    "slug": "motherduck",
+    "sourceType": "ashby",
+    "atsSlug": "motherduck",
+    "domain": "motherduck.com",
+    "tags": [
+      "data"
+    ]
+  },
+  {
     "name": "Motive",
     "slug": "motive",
     "sourceType": "greenhouse",
@@ -1435,6 +2465,27 @@
     "tags": [
       "enterprise",
       "hardware"
+    ]
+  },
+  {
+    "name": "Muon Space",
+    "slug": "muonspace",
+    "sourceType": "greenhouse",
+    "atsSlug": "muonspace",
+    "domain": "muonspace.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Nabla",
+    "slug": "nabla",
+    "sourceType": "ashby",
+    "atsSlug": "nabla",
+    "domain": "nabla.com",
+    "tags": [
+      "healthtech",
+      "ai"
     ]
   },
   {
@@ -1460,6 +2511,27 @@
     ]
   },
   {
+    "name": "Netskope",
+    "slug": "netskope",
+    "sourceType": "greenhouse",
+    "atsSlug": "netskope",
+    "domain": "netskope.com",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "name": "Neuralink",
+    "slug": "neuralink",
+    "sourceType": "greenhouse",
+    "atsSlug": "neuralink",
+    "domain": "neuralink.com",
+    "tags": [
+      "hardware",
+      "healthtech"
+    ]
+  },
+  {
     "name": "Nextdoor",
     "slug": "nextdoor",
     "sourceType": "greenhouse",
@@ -1467,6 +2539,28 @@
     "domain": "nextdoor.com",
     "tags": [
       "consumer"
+    ]
+  },
+  {
+    "name": "Nominal",
+    "slug": "nominal",
+    "sourceType": "gem",
+    "atsSlug": "nominal",
+    "domain": "nominal.io",
+    "tags": [
+      "hardware",
+      "data"
+    ]
+  },
+  {
+    "name": "Notable",
+    "slug": "notable",
+    "sourceType": "ashby",
+    "atsSlug": "notable",
+    "domain": "notablehealth.com",
+    "tags": [
+      "healthtech",
+      "ai"
     ]
   },
   {
@@ -1503,6 +2597,26 @@
     ]
   },
   {
+    "name": "Observe.AI",
+    "slug": "observeai",
+    "sourceType": "greenhouse",
+    "atsSlug": "observeai",
+    "domain": "observe.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Oklo",
+    "slug": "oklo",
+    "sourceType": "greenhouse",
+    "atsSlug": "oklo",
+    "domain": "oklo.com",
+    "tags": [
+      "climate"
+    ]
+  },
+  {
     "name": "Okta",
     "slug": "okta",
     "sourceType": "greenhouse",
@@ -1534,6 +2648,27 @@
     ]
   },
   {
+    "name": "OpenEvidence",
+    "slug": "openevidence",
+    "sourceType": "ashby",
+    "atsSlug": "openevidence",
+    "domain": "openevidence.com",
+    "tags": [
+      "healthtech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Orca Security",
+    "slug": "orcasecurity",
+    "sourceType": "greenhouse",
+    "atsSlug": "orcasecurity",
+    "domain": "orca.security",
+    "tags": [
+      "security"
+    ]
+  },
+  {
     "name": "Oscar Health",
     "slug": "oscar",
     "sourceType": "greenhouse",
@@ -1552,6 +2687,78 @@
     "tags": [
       "enterprise",
       "ai"
+    ]
+  },
+  {
+    "name": "Pacific Fusion",
+    "slug": "pacificfusion",
+    "sourceType": "greenhouse",
+    "atsSlug": "pacificfusion",
+    "domain": "pacificfusion.com",
+    "tags": [
+      "climate",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Palantir",
+    "slug": "palantir",
+    "sourceType": "lever",
+    "atsSlug": "palantir",
+    "domain": "palantir.com",
+    "tags": [
+      "data",
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Paradigm",
+    "slug": "paradigm",
+    "sourceType": "ashby",
+    "atsSlug": "paradigm",
+    "domain": "paradigm.xyz",
+    "tags": [
+      "crypto"
+    ]
+  },
+  {
+    "name": "Paraform",
+    "slug": "paraform",
+    "sourceType": "ashby",
+    "atsSlug": "paraform",
+    "domain": "paraform.com",
+    "tags": [
+      "marketplace"
+    ]
+  },
+  {
+    "name": "Parloa",
+    "slug": "parloa",
+    "sourceType": "greenhouse",
+    "atsSlug": "parloa",
+    "domain": "parloa.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Partiful",
+    "slug": "partiful",
+    "sourceType": "ashby",
+    "atsSlug": "partiful",
+    "domain": "partiful.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Path Robotics",
+    "slug": "pathrobotics",
+    "sourceType": "greenhouse",
+    "atsSlug": "pathrobotics",
+    "domain": "path-robotics.com",
+    "tags": [
+      "hardware"
     ]
   },
   {
@@ -1588,6 +2795,16 @@
     ]
   },
   {
+    "name": "Phantom",
+    "slug": "phantom",
+    "sourceType": "ashby",
+    "atsSlug": "phantom",
+    "domain": "phantom.com",
+    "tags": [
+      "crypto"
+    ]
+  },
+  {
     "name": "Photoroom",
     "slug": "photoroom",
     "sourceType": "ashby",
@@ -1607,6 +2824,17 @@
     "tags": [
       "ai",
       "hardware"
+    ]
+  },
+  {
+    "name": "Pika",
+    "slug": "pika",
+    "sourceType": "ashby",
+    "atsSlug": "pika",
+    "domain": "pika.art",
+    "tags": [
+      "ai",
+      "consumer"
     ]
   },
   {
@@ -1632,6 +2860,17 @@
     ]
   },
   {
+    "name": "PingCAP",
+    "slug": "pingcap",
+    "sourceType": "greenhouse",
+    "atsSlug": "pingcap",
+    "domain": "pingcap.com",
+    "tags": [
+      "data",
+      "infra"
+    ]
+  },
+  {
     "name": "Pinterest",
     "slug": "pinterest",
     "sourceType": "greenhouse",
@@ -1653,6 +2892,59 @@
     ]
   },
   {
+    "name": "Plain",
+    "slug": "plain",
+    "sourceType": "ashby",
+    "atsSlug": "plain",
+    "domain": "plain.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Planet",
+    "slug": "planetlabs",
+    "sourceType": "greenhouse",
+    "atsSlug": "planetlabs",
+    "domain": "planet.com",
+    "tags": [
+      "hardware",
+      "data"
+    ]
+  },
+  {
+    "name": "PlanetScale",
+    "slug": "planetscale",
+    "sourceType": "greenhouse",
+    "atsSlug": "planetscale",
+    "domain": "planetscale.com",
+    "tags": [
+      "infra",
+      "data"
+    ]
+  },
+  {
+    "name": "Pomelo Care",
+    "slug": "pomelo-care",
+    "sourceType": "ashby",
+    "atsSlug": "pomelo-care",
+    "domain": "pomelocare.com",
+    "tags": [
+      "healthtech"
+    ]
+  },
+  {
+    "name": "Poolside",
+    "slug": "poolside",
+    "sourceType": "ashby",
+    "atsSlug": "poolside",
+    "domain": "poolside.ai",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
     "name": "Poshmark",
     "slug": "poshmark",
     "sourceType": "ashby",
@@ -1661,6 +2953,69 @@
     "tags": [
       "marketplace",
       "consumer"
+    ]
+  },
+  {
+    "name": "Prefect",
+    "slug": "prefect",
+    "sourceType": "ashby",
+    "atsSlug": "prefect",
+    "domain": "prefect.io",
+    "tags": [
+      "data",
+      "devtools"
+    ]
+  },
+  {
+    "name": "PsiQuantum",
+    "slug": "psiquantum",
+    "sourceType": "greenhouse",
+    "atsSlug": "psiquantum",
+    "domain": "psiquantum.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Pure Storage",
+    "slug": "purestorage",
+    "sourceType": "greenhouse",
+    "atsSlug": "purestorage",
+    "domain": "purestorage.com",
+    "tags": [
+      "infra",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Pylon",
+    "slug": "pylon",
+    "sourceType": "ashby",
+    "atsSlug": "pylon",
+    "domain": "usepylon.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
+    "name": "Quora",
+    "slug": "quora",
+    "sourceType": "ashby",
+    "atsSlug": "quora",
+    "domain": "quora.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
+    "name": "Rad AI",
+    "slug": "radai",
+    "sourceType": "ashby",
+    "atsSlug": "radai",
+    "domain": "radai.com",
+    "tags": [
+      "healthtech",
+      "ai"
     ]
   },
   {
@@ -1728,6 +3083,26 @@
     ]
   },
   {
+    "name": "Reka",
+    "slug": "reka",
+    "sourceType": "ashby",
+    "atsSlug": "reka",
+    "domain": "reka.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Relativity Space",
+    "slug": "relativity",
+    "sourceType": "greenhouse",
+    "atsSlug": "relativity",
+    "domain": "relativityspace.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Render",
     "slug": "render",
     "sourceType": "ashby",
@@ -1758,6 +3133,77 @@
     "tags": [
       "devtools",
       "ai"
+    ]
+  },
+  {
+    "name": "Resend",
+    "slug": "resend",
+    "sourceType": "ashby",
+    "atsSlug": "resend",
+    "domain": "resend.com",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Restate",
+    "slug": "restate",
+    "sourceType": "ashby",
+    "atsSlug": "restate",
+    "domain": "restate.dev",
+    "tags": [
+      "infra"
+    ]
+  },
+  {
+    "name": "Retool",
+    "slug": "retool",
+    "sourceType": "gem",
+    "atsSlug": "retool",
+    "domain": "retool.com",
+    "tags": [
+      "devtools"
+    ]
+  },
+  {
+    "name": "Rigetti",
+    "slug": "rigetti",
+    "sourceType": "lever",
+    "atsSlug": "rigetti",
+    "domain": "rigetti.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Rilla",
+    "slug": "rilla",
+    "sourceType": "ashby",
+    "atsSlug": "rilla",
+    "domain": "rilla.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Rillet",
+    "slug": "rillet",
+    "sourceType": "ashby",
+    "atsSlug": "rillet",
+    "domain": "rillet.com",
+    "tags": [
+      "fintech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Riot Games",
+    "slug": "riotgames",
+    "sourceType": "greenhouse",
+    "atsSlug": "riotgames",
+    "domain": "riotgames.com",
+    "tags": [
+      "consumer"
     ]
   },
   {
@@ -1803,6 +3249,27 @@
     ]
   },
   {
+    "name": "Rocket Lab",
+    "slug": "rocketlab",
+    "sourceType": "greenhouse",
+    "atsSlug": "rocketlab",
+    "domain": "rocketlabusa.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Rogo",
+    "slug": "rogo",
+    "sourceType": "ashby",
+    "atsSlug": "rogo",
+    "domain": "rogo.ai",
+    "tags": [
+      "ai",
+      "fintech"
+    ]
+  },
+  {
     "name": "Roku",
     "slug": "roku",
     "sourceType": "greenhouse",
@@ -1811,6 +3278,16 @@
     "tags": [
       "consumer",
       "hardware"
+    ]
+  },
+  {
+    "name": "Rondo Energy",
+    "slug": "rondoenergy",
+    "sourceType": "greenhouse",
+    "atsSlug": "rondoenergy",
+    "domain": "rondo.com",
+    "tags": [
+      "climate"
     ]
   },
   {
@@ -1832,6 +3309,17 @@
     "domain": "rubrik.com",
     "tags": [
       "security",
+      "infra"
+    ]
+  },
+  {
+    "name": "RunPod",
+    "slug": "runpod",
+    "sourceType": "ashby",
+    "atsSlug": "runpod",
+    "domain": "runpod.io",
+    "tags": [
+      "ai",
       "infra"
     ]
   },
@@ -1880,6 +3368,16 @@
     ]
   },
   {
+    "name": "Saronic",
+    "slug": "saronic",
+    "sourceType": "ashby",
+    "atsSlug": "saronic",
+    "domain": "saronic.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
     "name": "Scale AI",
     "slug": "scaleai",
     "sourceType": "greenhouse",
@@ -1891,6 +3389,16 @@
     ]
   },
   {
+    "name": "Scopely",
+    "slug": "scopely",
+    "sourceType": "greenhouse",
+    "atsSlug": "scopely",
+    "domain": "scopely.com",
+    "tags": [
+      "consumer"
+    ]
+  },
+  {
     "name": "Scribd",
     "slug": "scribdinc",
     "sourceType": "ashby",
@@ -1898,6 +3406,16 @@
     "domain": "scribd.com",
     "tags": [
       "consumer"
+    ]
+  },
+  {
+    "name": "Secureframe",
+    "slug": "secureframe",
+    "sourceType": "lever",
+    "atsSlug": "secureframe",
+    "domain": "secureframe.com",
+    "tags": [
+      "security"
     ]
   },
   {
@@ -1922,6 +3440,49 @@
     ]
   },
   {
+    "name": "Sesame",
+    "slug": "sesame",
+    "sourceType": "ashby",
+    "atsSlug": "sesame",
+    "domain": "sesame.com",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "SF Compute",
+    "slug": "sfcompute",
+    "sourceType": "ashby",
+    "atsSlug": "sfcompute",
+    "domain": "sfcompute.com",
+    "tags": [
+      "ai",
+      "infra"
+    ]
+  },
+  {
+    "name": "Shield AI",
+    "slug": "shieldai",
+    "sourceType": "lever",
+    "atsSlug": "shieldai",
+    "domain": "shield.ai",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Siena AI",
+    "slug": "siena",
+    "sourceType": "ashby",
+    "atsSlug": "siena",
+    "domain": "siena.cx",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
     "name": "Sierra",
     "slug": "sierra",
     "sourceType": "ashby",
@@ -1941,6 +3502,16 @@
     "tags": [
       "data",
       "enterprise"
+    ]
+  },
+  {
+    "name": "SingleStore",
+    "slug": "singlestore",
+    "sourceType": "greenhouse",
+    "atsSlug": "singlestore",
+    "domain": "singlestore.com",
+    "tags": [
+      "data"
     ]
   },
   {
@@ -1977,6 +3548,17 @@
     ]
   },
   {
+    "name": "Snyk",
+    "slug": "snyk",
+    "sourceType": "ashby",
+    "atsSlug": "snyk",
+    "domain": "snyk.io",
+    "tags": [
+      "security",
+      "devtools"
+    ]
+  },
+  {
     "name": "Socket",
     "slug": "socket",
     "sourceType": "greenhouse",
@@ -1995,6 +3577,16 @@
     "domain": "sofi.com",
     "tags": [
       "fintech"
+    ]
+  },
+  {
+    "name": "Sola Security",
+    "slug": "sola",
+    "sourceType": "ashby",
+    "atsSlug": "sola",
+    "domain": "sola.security",
+    "tags": [
+      "security"
     ]
   },
   {
@@ -2020,6 +3612,28 @@
     ]
   },
   {
+    "name": "Span",
+    "slug": "span",
+    "sourceType": "ashby",
+    "atsSlug": "span",
+    "domain": "span.io",
+    "tags": [
+      "climate",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Speak",
+    "slug": "speak",
+    "sourceType": "ashby",
+    "atsSlug": "speak",
+    "domain": "speak.com",
+    "tags": [
+      "ai",
+      "consumer"
+    ]
+  },
+  {
     "name": "StackBlitz",
     "slug": "stackblitz",
     "sourceType": "greenhouse",
@@ -2028,6 +3642,16 @@
     "tags": [
       "devtools",
       "ai"
+    ]
+  },
+  {
+    "name": "Starburst",
+    "slug": "starburst",
+    "sourceType": "greenhouse",
+    "atsSlug": "starburst",
+    "domain": "starburst.io",
+    "tags": [
+      "data"
     ]
   },
   {
@@ -2070,6 +3694,39 @@
     "tags": [
       "consumer",
       "marketplace"
+    ]
+  },
+  {
+    "name": "Suki",
+    "slug": "suki",
+    "sourceType": "greenhouse",
+    "atsSlug": "suki",
+    "domain": "suki.ai",
+    "tags": [
+      "healthtech",
+      "ai"
+    ]
+  },
+  {
+    "name": "Sumo Logic",
+    "slug": "sumologic",
+    "sourceType": "greenhouse",
+    "atsSlug": "sumologic",
+    "domain": "sumologic.com",
+    "tags": [
+      "data",
+      "security"
+    ]
+  },
+  {
+    "name": "Suno",
+    "slug": "suno",
+    "sourceType": "ashby",
+    "atsSlug": "suno",
+    "domain": "suno.com",
+    "tags": [
+      "ai",
+      "consumer"
     ]
   },
   {
@@ -2116,6 +3773,16 @@
     ]
   },
   {
+    "name": "Tavily",
+    "slug": "tavily",
+    "sourceType": "greenhouse",
+    "atsSlug": "tavily",
+    "domain": "tavily.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
     "name": "Temporal",
     "slug": "temporal",
     "sourceType": "ashby",
@@ -2124,6 +3791,27 @@
     "tags": [
       "devtools",
       "infra"
+    ]
+  },
+  {
+    "name": "Tenstorrent",
+    "slug": "tenstorrent",
+    "sourceType": "greenhouse",
+    "atsSlug": "tenstorrent",
+    "domain": "tenstorrent.com",
+    "tags": [
+      "ai",
+      "hardware"
+    ]
+  },
+  {
+    "name": "Thoropass",
+    "slug": "thoropass",
+    "sourceType": "greenhouse",
+    "atsSlug": "thoropass",
+    "domain": "thoropass.com",
+    "tags": [
+      "security"
     ]
   },
   {
@@ -2148,6 +3836,16 @@
     ]
   },
   {
+    "name": "Tinybird",
+    "slug": "tinybird",
+    "sourceType": "lever",
+    "atsSlug": "tinybird",
+    "domain": "tinybird.co",
+    "tags": [
+      "data"
+    ]
+  },
+  {
     "name": "Together AI",
     "slug": "togetherai",
     "sourceType": "greenhouse",
@@ -2166,6 +3864,27 @@
     "domain": "torq.io",
     "tags": [
       "security"
+    ]
+  },
+  {
+    "name": "Trigger.dev",
+    "slug": "triggerdev",
+    "sourceType": "ashby",
+    "atsSlug": "triggerdev",
+    "domain": "trigger.dev",
+    "tags": [
+      "devtools",
+      "infra"
+    ]
+  },
+  {
+    "name": "Turing",
+    "slug": "turing",
+    "sourceType": "greenhouse",
+    "atsSlug": "turing",
+    "domain": "turing.com",
+    "tags": [
+      "ai"
     ]
   },
   {
@@ -2190,6 +3909,16 @@
     ]
   },
   {
+    "name": "Twingate",
+    "slug": "twingate",
+    "sourceType": "lever",
+    "atsSlug": "twingate",
+    "domain": "twingate.com",
+    "tags": [
+      "security"
+    ]
+  },
+  {
     "name": "Twitch",
     "slug": "twitch",
     "sourceType": "greenhouse",
@@ -2210,6 +3939,17 @@
     ]
   },
   {
+    "name": "Typeface",
+    "slug": "typeface",
+    "sourceType": "greenhouse",
+    "atsSlug": "typeface",
+    "domain": "typeface.ai",
+    "tags": [
+      "ai",
+      "enterprise"
+    ]
+  },
+  {
     "name": "Udemy",
     "slug": "udemy",
     "sourceType": "greenhouse",
@@ -2218,6 +3958,16 @@
     "tags": [
       "consumer",
       "marketplace"
+    ]
+  },
+  {
+    "name": "Uniswap Labs",
+    "slug": "uniswap",
+    "sourceType": "ashby",
+    "atsSlug": "uniswap",
+    "domain": "uniswap.org",
+    "tags": [
+      "crypto"
     ]
   },
   {
@@ -2231,6 +3981,17 @@
     ]
   },
   {
+    "name": "Unstructured",
+    "slug": "unstructured",
+    "sourceType": "ashby",
+    "atsSlug": "unstructured",
+    "domain": "unstructured.io",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
     "name": "Upwork",
     "slug": "upwork",
     "sourceType": "greenhouse",
@@ -2238,6 +3999,36 @@
     "domain": "upwork.com",
     "tags": [
       "marketplace"
+    ]
+  },
+  {
+    "name": "Ursa Major",
+    "slug": "ursamajor",
+    "sourceType": "greenhouse",
+    "atsSlug": "ursamajor",
+    "domain": "ursamajor.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Valar Atomics",
+    "slug": "valaratomics",
+    "sourceType": "greenhouse",
+    "atsSlug": "valaratomics",
+    "domain": "valaratomics.com",
+    "tags": [
+      "climate"
+    ]
+  },
+  {
+    "name": "Vannevar Labs",
+    "slug": "vannevarlabs",
+    "sourceType": "greenhouse",
+    "atsSlug": "vannevarlabs",
+    "domain": "vannevarlabs.com",
+    "tags": [
+      "ai"
     ]
   },
   {
@@ -2249,6 +4040,37 @@
     "tags": [
       "security",
       "enterprise"
+    ]
+  },
+  {
+    "name": "Vapi",
+    "slug": "vapi",
+    "sourceType": "ashby",
+    "atsSlug": "vapi",
+    "domain": "vapi.ai",
+    "tags": [
+      "ai",
+      "devtools"
+    ]
+  },
+  {
+    "name": "Varda Space",
+    "slug": "vardaspace",
+    "sourceType": "greenhouse",
+    "atsSlug": "vardaspace",
+    "domain": "varda.com",
+    "tags": [
+      "hardware"
+    ]
+  },
+  {
+    "name": "Vast",
+    "slug": "vast",
+    "sourceType": "greenhouse",
+    "atsSlug": "vast",
+    "domain": "vastspace.com",
+    "tags": [
+      "hardware"
     ]
   },
   {
@@ -2306,6 +4128,17 @@
     ]
   },
   {
+    "name": "Weaviate",
+    "slug": "weaviate",
+    "sourceType": "ashby",
+    "atsSlug": "weaviate",
+    "domain": "weaviate.io",
+    "tags": [
+      "ai",
+      "data"
+    ]
+  },
+  {
     "name": "Webflow",
     "slug": "webflow",
     "sourceType": "greenhouse",
@@ -2359,6 +4192,36 @@
     ]
   },
   {
+    "name": "xAI",
+    "slug": "xai",
+    "sourceType": "greenhouse",
+    "atsSlug": "xai",
+    "domain": "x.ai",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "You.com",
+    "slug": "youcom",
+    "sourceType": "greenhouse",
+    "atsSlug": "youcom",
+    "domain": "you.com",
+    "tags": [
+      "ai"
+    ]
+  },
+  {
+    "name": "Zapier",
+    "slug": "zapier",
+    "sourceType": "ashby",
+    "atsSlug": "zapier",
+    "domain": "zapier.com",
+    "tags": [
+      "enterprise"
+    ]
+  },
+  {
     "name": "Zed",
     "slug": "zed",
     "sourceType": "ashby",
@@ -2391,6 +4254,17 @@
     ]
   },
   {
+    "name": "Zoox",
+    "slug": "zoox",
+    "sourceType": "lever",
+    "atsSlug": "zoox",
+    "domain": "zoox.com",
+    "tags": [
+      "hardware",
+      "ai"
+    ]
+  },
+  {
     "name": "Zscaler",
     "slug": "zscaler",
     "sourceType": "greenhouse",
@@ -2398,6 +4272,16 @@
     "domain": "zscaler.com",
     "tags": [
       "security"
+    ]
+  },
+  {
+    "name": "Zus Health",
+    "slug": "zushealth",
+    "sourceType": "lever",
+    "atsSlug": "zushealth",
+    "domain": "zushealth.com",
+    "tags": [
+      "healthtech"
     ]
   }
 ]

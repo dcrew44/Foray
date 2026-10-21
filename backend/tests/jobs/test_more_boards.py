@@ -17,6 +17,7 @@ from apps.jobs.discovery import AtsLink, find_ats_links, has_unsupported_ats
 from apps.jobs.sources import BOARD_ADAPTERS, BOARD_SOURCES, gem, recruitee, workable
 from apps.jobs.sources.jsearch import DiscoveredBoard, ats_from_apply_options
 from apps.jobs.sources.types import BoardNotFound
+from apps.jobs.verify import find_board
 from tests.jobs.conftest import fixture_json, fixture_text, mock_client, routes
 
 huggingface = fixture_json("workable/huggingface.json")
@@ -260,3 +261,16 @@ def test_the_new_boards_are_no_longer_unsupported() -> None:
 def test_a_jsearch_apply_link_can_point_at_a_new_board() -> None:
     job = {"job_id": "1", "job_apply_link": "https://jobs.gem.com/retool/4003629005"}
     assert ats_from_apply_options(job) == DiscoveredBoard("gem", "retool")
+
+
+async def test_a_slug_guess_never_probes_workable() -> None:
+    """Guessing is what got an address banned from Workable for a day."""
+    probed: list[str] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        probed.append(request.url.host)
+        return httpx2.Response(404, text="Not Found")
+
+    async with mock_client(handler) as client:
+        assert await find_board(client, "acme") is None
+    assert probed and not any("workable" in host for host in probed)

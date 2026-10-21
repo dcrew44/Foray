@@ -29,6 +29,10 @@ BOARD_SOURCES: tuple[BoardSource, ...] = (
     "gem",
 )
 
+# The boards a slug may be guessed against. Workable's widget API bans an address for a day
+# after about a thousand misses, so a Workable board is read only from a link that names it.
+GUESS_SOURCES: tuple[BoardSource, ...] = tuple(s for s in BOARD_SOURCES if s != "workable")
+
 
 def board_adapter(source: str) -> BoardAdapter | None:
     return BOARD_ADAPTERS.get(source)

@@ -61,6 +61,9 @@ HTML_MAX_BYTES = 3 * MB
 DEFAULT_TIMEOUT_S = 20.0
 DEFAULT_RETRIES = 3
 RETRY_AFTER_CAP_S = 60.0
+# A server that asks for a longer wait than this has blocked us for longer than any run should
+# wait (Workable answers a rate-limited address with a day), so retrying early is pointless.
+RETRY_AFTER_GIVE_UP_S = 600.0
 MAX_REDIRECTS = 5
 REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 ERROR_BODY_CHARS = 2000
@@ -124,16 +127,29 @@ def is_retryable(status: int | str) -> bool:
     return isinstance(status, int) and (status in (408, 429) or status >= 500)
 
 
+def _retry_after_seconds(retry_after: str | None) -> float | None:
+    """`Retry-After` as seconds, or None when absent or an HTTP-date."""
+    if not retry_after:
+        return None
+    try:
+        seconds = float(retry_after.strip())
+    except ValueError:
+        return None
+    return seconds if math.isfinite(seconds) else None
+
+
+def gives_up(error: HttpError) -> bool:
+    """A `Retry-After` beyond `RETRY_AFTER_GIVE_UP_S`: fail now rather than retry in vain."""
+    seconds = _retry_after_seconds(error.retry_after)
+    return seconds is not None and seconds > RETRY_AFTER_GIVE_UP_S
+
+
 def backoff_seconds(attempt: int, retry_after: str | None) -> float:
     """`Retry-After` seconds when given (capped at 60), else 0.5 s, 1 s, 2 s ... plus jitter,
-    so parallel fetchers do not resynchronise."""
-    if retry_after:
-        try:
-            seconds = float(retry_after.strip())
-        except ValueError:
-            seconds = math.nan  # an HTTP-date falls through to the exponential backoff
-        if math.isfinite(seconds):
-            return max(0.0, min(seconds, RETRY_AFTER_CAP_S))
+    so parallel fetchers do not resynchronise. An HTTP-date falls through to the backoff."""
+    seconds = _retry_after_seconds(retry_after)
+    if seconds is not None:
+        return max(0.0, min(seconds, RETRY_AFTER_CAP_S))
     return 2**attempt * 0.5 + random.uniform(0, 0.25)
 
 
@@ -248,7 +264,7 @@ class HttpClient:
                         max_bytes=cap,
                     )
             except HttpError as error:
-                if not is_retryable(error.status) or last:
+                if not is_retryable(error.status) or last or gives_up(error):
                     raise
                 await _sleep(backoff_seconds(attempt, error.retry_after))
             except (httpx2.RequestError, TimeoutError, OSError) as error:

@@ -360,6 +360,24 @@ async def test_honours_retry_after_capped_at_a_minute(no_backoff: list[float]) -
     assert no_backoff == [7.0, 60.0]
 
 
+async def test_a_day_long_retry_after_fails_at_once(no_backoff: list[float]) -> None:
+    """Workable answers a rate-limited address with `Retry-After: 83035`: retrying after a
+    minute cannot succeed, and three minutes of sleeping stalled every slug guess behind it."""
+    calls = 0
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        nonlocal calls
+        calls += 1
+        return httpx2.Response(429, headers={"retry-after": "83035"})
+
+    async with mock_client(handler) as client:
+        with pytest.raises(HttpError) as raised:
+            await client.fetch_text("https://banned.example.com/")
+    assert raised.value.status == 429
+    assert calls == 1
+    assert no_backoff == []
+
+
 async def test_gives_up_after_the_retries(no_backoff: list[float]) -> None:
     calls = 0
 

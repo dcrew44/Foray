@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from apps.core.http import HttpClient
-from apps.jobs.sources import BOARD_ADAPTERS, BOARD_SOURCES
+from apps.jobs.sources import BOARD_ADAPTERS, GUESS_SOURCES
 from apps.jobs.sources.js import js_trim
 from apps.jobs.sources.types import BoardNotFound, BoardSource
 
@@ -44,10 +44,10 @@ async def verify_board(client: HttpClient, source: BoardSource, slug: str) -> Ve
 
 
 async def find_board(
-    client: HttpClient, slug: str, sources: Sequence[BoardSource] = BOARD_SOURCES
+    client: HttpClient, slug: str, sources: Sequence[BoardSource] = GUESS_SOURCES
 ) -> VerifyOutcome | None:
-    """Tries one slug against every board provider, in parallel. A board with jobs beats an
-    empty one (real but useless right now); the first in source order wins."""
+    """Tries one slug against every guessable board provider, in parallel. A board with jobs
+    beats an empty one (real but useless right now); the first in source order wins."""
     outcomes = await asyncio.gather(*(verify_board(client, source, slug) for source in sources))
     return next((o for o in outcomes if o.status == "ok"), None) or next(
         (o for o in outcomes if o.status == "empty"), None

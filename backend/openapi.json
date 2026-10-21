@@ -2879,6 +2879,9 @@
           "greenhouse",
           "lever",
           "ashby",
+          "workable",
+          "recruitee",
+          "gem",
           "careers_page"
         ],
         "title": "SourceType",
@@ -4302,6 +4305,9 @@
               "greenhouse",
               "lever",
               "ashby",
+              "workable",
+              "recruitee",
+              "gem",
               "jsearch",
               "web"
             ],

@@ -136,6 +136,9 @@ BOARD_LABEL: dict[str, str] = {
     SourceType.GREENHOUSE: "Greenhouse",
     SourceType.LEVER: "Lever",
     SourceType.ASHBY: "Ashby",
+    SourceType.WORKABLE: "Workable",
+    SourceType.RECRUITEE: "Recruitee",
+    SourceType.GEM: "Gem",
     SourceType.CAREERS_PAGE: "Careers page",
 }
 

@@ -10,6 +10,9 @@ export const BOARD_LABEL: Record<CompanyRow["sourceType"], string> = {
   greenhouse: "Greenhouse",
   lever: "Lever",
   ashby: "Ashby",
+  workable: "Workable",
+  recruitee: "Recruitee",
+  gem: "Gem",
   careers_page: "Careers page",
 };
 

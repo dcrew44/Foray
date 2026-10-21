@@ -26,6 +26,9 @@ class SourceType(models.TextChoices):
     GREENHOUSE = "greenhouse"
     LEVER = "lever"
     ASHBY = "ashby"
+    WORKABLE = "workable"
+    RECRUITEE = "recruitee"
+    GEM = "gem"
     CAREERS_PAGE = "careers_page"
 
 
@@ -54,6 +57,9 @@ class JobSource(models.TextChoices):
     GREENHOUSE = "greenhouse"
     LEVER = "lever"
     ASHBY = "ashby"
+    WORKABLE = "workable"
+    RECRUITEE = "recruitee"
+    GEM = "gem"
     JSEARCH = "jsearch"
     WEB = "web"
 
@@ -74,7 +80,7 @@ class Period(models.TextChoices):
 
 
 # The shape of every job id: `source:company_slug:external_id`, or `web:<slug>:<sha1(url)>`.
-JOB_ID_PATTERN = r"^(greenhouse|lever|ashby|jsearch|web):[^:]+:.+$"
+JOB_ID_PATTERN = r"^(greenhouse|lever|ashby|workable|recruitee|gem|jsearch|web):[^:]+:.+$"
 COMPANY_SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
 
 

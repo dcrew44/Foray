@@ -40,7 +40,7 @@ from apps.jobs.registry import (
     upsert_company,
 )
 from apps.jobs.sources.js import IA, JS_WS, js_trim
-from apps.jobs.sources.jsearch import DiscoveredBoard
+from apps.jobs.sources.jsearch import BOARD_LINK_PATTERNS, DiscoveredBoard
 from apps.jobs.sources.types import BoardSource
 from apps.jobs.verify import VerifyOutcome, find_board, slug_candidates, verify_board
 
@@ -56,14 +56,15 @@ ATS_PATTERNS: list[tuple[BoardSource, re.Pattern[str]]] = [
     ),
     ("lever", re.compile(r"jobs\.lever\.co/([a-z0-9_-]+)", IA)),
     ("ashby", re.compile(r"jobs\.ashbyhq\.com/([a-z0-9_-]+)", IA)),
+    *BOARD_LINK_PATTERNS,
 ]
 
 # ATS platforms we recognise but cannot read through an API. These become careers-page
 # companies for the extractor rather than being discarded: a Workday board is still a board.
 UNSUPPORTED_ATS = re.compile(
     r"(?:myworkdayjobs\.com|icims\.com|taleo\.net|successfactors\.com|smartrecruiters\.com"
-    r"|workable\.com|breezy\.hr|jazzhr\.com|bamboohr\.com|jobs\.gem\.com|jobvite\.com"
-    r"|recruitee\.com|teamtailor\.com|paylocity\.com|dover\.com|rippling(?:ats)?\.com"
+    r"|breezy\.hr|jazzhr\.com|bamboohr\.com|jobvite\.com"
+    r"|teamtailor\.com|paylocity\.com|dover\.com|rippling(?:ats)?\.com"
     r"|pinpointhq\.com|applytojob\.com)",
     IA,
 )

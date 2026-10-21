@@ -115,7 +115,7 @@ export function AddCompany({ onAdded }: { onAdded: (company: CompanyRow) => void
           <p className="text-muted-foreground text-[13px]">
             Looking for a job board for{" "}
             <span className="text-foreground font-medium">{search.query}</span>: checking its
-            careers page, then Greenhouse, Lever and Ashby. This can take half a minute.
+            careers page, then the job boards Foray reads. This can take half a minute.
           </p>
           <RunCard compact runId={search.runId} />
         </div>

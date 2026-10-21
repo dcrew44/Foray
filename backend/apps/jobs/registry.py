@@ -296,7 +296,7 @@ def find_companies_by_names(names: Sequence[str]) -> FoundCompanies:
                        OR regexp_replace(lower(coalesce(ats_slug, '')), '[^a-z0-9]+', '', 'g') = %s
                        OR (%s AND domain = %s))
                 ORDER BY
-                    CASE WHEN source_type IN ('greenhouse', 'lever', 'ashby') THEN 0 ELSE 1 END,
+                    CASE WHEN source_type <> 'careers_page' THEN 0 ELSE 1 END,
                     created_at
                 LIMIT 1
                 """,

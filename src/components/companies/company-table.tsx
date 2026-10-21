@@ -83,6 +83,12 @@ function boardUrl(row: CompanyRow): string | null {
       return `https://jobs.lever.co/${row.atsSlug}`;
     case "ashby":
       return `https://jobs.ashbyhq.com/${row.atsSlug}`;
+    case "workable":
+      return `https://apply.workable.com/${row.atsSlug}`;
+    case "recruitee":
+      return `https://${row.atsSlug}.recruitee.com`;
+    case "gem":
+      return `https://jobs.gem.com/${row.atsSlug}`;
     default:
       return null;
   }

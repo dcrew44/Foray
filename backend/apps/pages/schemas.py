@@ -63,7 +63,9 @@ __all__ = [
 ]
 
 ProviderId = Literal["openai", "google", "anthropic", "deepseek", "compat"]
-JobSourceName = Literal["greenhouse", "lever", "ashby", "jsearch", "web"]
+JobSourceName = Literal[
+    "greenhouse", "lever", "ashby", "workable", "recruitee", "gem", "jsearch", "web"
+]
 
 
 # Every stage with its count, zeros included (`countByStage`).

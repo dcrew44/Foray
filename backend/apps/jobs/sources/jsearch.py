@@ -122,10 +122,21 @@ def jsearch_budget() -> dict[str, Any]:
 
 # --- normalisation -------------------------------------------------------------------------------
 
+# Boards whose links look the same everywhere they appear; discovery reads them too. A Workable
+# job link (`apply.workable.com/j/<code>`) does not name its account, and the bare hosts are not
+# boards.
+BOARD_LINK_PATTERNS: list[tuple[BoardSource, re.Pattern[str]]] = [
+    ("workable", re.compile(r"apply\.workable\.com/(?!j/|api/)([a-z0-9_-]+)", IA)),
+    ("workable", re.compile(r"//(?!apply\.|www\.)([a-z0-9-]+)\.workable\.com", IA)),
+    ("recruitee", re.compile(r"//(?!www\.|app\.|api\.)([a-z0-9-]+)\.recruitee\.com", IA)),
+    ("gem", re.compile(r"jobs\.gem\.com/([a-z0-9_-]+)", IA)),
+]
+
 _ATS_IN_LINK: list[tuple[BoardSource, re.Pattern[str]]] = [
     ("greenhouse", re.compile(r"(?:boards|job-boards)\.greenhouse\.io/([a-z0-9_-]+)", IA)),
     ("lever", re.compile(r"jobs\.lever\.co/([a-z0-9_-]+)", IA)),
     ("ashby", re.compile(r"jobs\.ashbyhq\.com/([a-z0-9_-]+)", IA)),
+    *BOARD_LINK_PATTERNS,
 ]
 _NOT_SLUG = re.compile(r"[^a-z0-9]+")
 _EDGE_DASH = re.compile(r"^-|-\Z")
@@ -151,7 +162,7 @@ def _period_of(value: Any) -> SalaryPeriod | None:
 
 
 def ats_from_apply_options(job: dict[str, Any]) -> DiscoveredBoard | None:
-    """A board we could read directly, if an apply link points at Greenhouse, Lever or Ashby:
+    """A board we could read directly, if an apply link points at one we have an adapter for:
     every such result is an invitation to stop paying for that company."""
     links = [job.get("job_apply_link")] + [
         option.get("apply_link") for option in job.get("apply_options") or []

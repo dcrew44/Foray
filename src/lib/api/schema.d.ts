@@ -1166,7 +1166,7 @@ export interface components {
          * SourceType
          * @enum {string}
          */
-        SourceType: "greenhouse" | "lever" | "ashby" | "careers_page";
+        SourceType: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "careers_page";
         /** CompanyStatusIn */
         CompanyStatusIn: {
             /**
@@ -1662,7 +1662,7 @@ export interface components {
              * Source
              * @enum {string}
              */
-            source: "greenhouse" | "lever" | "ashby" | "jsearch" | "web";
+            source: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "jsearch" | "web";
         };
         /** MatchDetail */
         MatchDetail: {

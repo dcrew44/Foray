@@ -24,7 +24,7 @@ pre-migration commit of `main` still runs it against the untouched `foray` datab
 | Autonomy | **Per-run toggle**: `approve_each` (default) or `autopilot`; approvals surface in chat and in the activity feed |
 | Stack | **Django backend, Next.js frontend.** Python 3.14: Django 6.1 with django-ninja 1.7 (the JSON API, sessions, the ORM) on uvicorn, and one procrastinate 3.10 worker process. Next.js 16 only renders: server components read one Django page endpoint each, client components call Django through a typed client, and `/api/*` is rewritten to Django. Types flow from Django's OpenAPI schema into TypeScript (`pnpm api:types`) |
 | LLM | **Multi-provider, no default vendor.** pydantic-ai 2.54 models (OpenAI, Google, DeepSeek, Anthropic, plus an OpenAI-compatible slot); the model for each *purpose* is an env setting, and `LLM_DEFAULT` is required at boot |
-| Fetching | **Hybrid: code fetches, agents decide where.** Deterministic adapters (Greenhouse, Lever, Ashby, JSearch) + an agent-managed company registry + an LLM extraction fallback for career pages, all through one guarded HTTP client |
+| Fetching | **Hybrid: code fetches, agents decide where.** Deterministic adapters (Greenhouse, Lever, Ashby, Workable, Recruitee, Gem, JSearch) + an agent-managed company registry + an LLM extraction fallback for career pages, all through one guarded HTTP client |
 | Browser | Phase 1 uses headless Chromium (Playwright for Python, in the worker) only to render PDFs. Phase 2 adds a Playwright persistent profile per user behind a `BrowserProvider` interface |
 | Outreach | Gmail OAuth send + reply tracking; Apollo/Hunter for recruiter emails (Phase 3) |
 | Hosting | **Local first, cloud-ready.** Four processes, the same in dev and prod: Postgres, Next, Django (api), the worker. Postgres runs in Docker Compose; web, api and worker run natively in dev (`pnpm dev:all`); one `Dockerfile` (a `backend` image for api, worker and migrate, a `web` image) and a `prod` compose profile run the same containers |
@@ -310,7 +310,7 @@ Defined now so later phases are additive, not a rewrite.
 
 | Interface | Phase 1 | Later |
 |---|---|---|
-| Board adapters | `greenhouse`, `lever`, `ashby` share one protocol: `fetch_board(client, slug) -> list[NormalizedJob]`, raising `BoardNotFound` on a 404 | more boards |
+| Board adapters | `greenhouse`, `lever`, `ashby`, `workable`, `recruitee`, `gem` share one protocol: `fetch_board(client, slug) -> list[NormalizedJob]`, raising `BoardNotFound` on a 404 | more boards |
 | Other sources | `jsearch` and `careers_page` are plain functions with the same `NormalizedJob` output | — |
 | `Storage` | `LocalStorage` (`apps/core/storage.py`: `put`, `open`, `delete`, `exists`) | S3 / Blob behind the same four methods |
 | `ResumeRenderer` | future work: today there is one renderer, the HTML template in headless Chromium | `latex` via tectonic, compared side by side |

@@ -2,8 +2,8 @@
 
 Adapters normalise; models hold data. There is no source branching outside
 `sources/<source>.py` (invariant 3): if scoring or the UI ever needs to know which ATS a job came
-from in order to read a field, that field belongs here instead. The three board adapters share
-one shape (`BoardAdapter`); JSearch and careers pages are plain functions with the same
+from in order to read a field, that field belongs here instead. The board adapters share one
+shape (`BoardAdapter`); JSearch and careers pages are plain functions with the same
 `NormalizedJob` output.
 """
 
@@ -24,8 +24,10 @@ if TYPE_CHECKING:
 
 log = logging.getLogger("foray.jobs")
 
-type JobSourceId = Literal["greenhouse", "lever", "ashby", "jsearch", "web"]
-type BoardSource = Literal["greenhouse", "lever", "ashby"]
+type JobSourceId = Literal[
+    "greenhouse", "lever", "ashby", "workable", "recruitee", "gem", "jsearch", "web"
+]
+type BoardSource = Literal["greenhouse", "lever", "ashby", "workable", "recruitee", "gem"]
 type RemoteKind = Literal["remote", "hybrid", "onsite", "unknown"]
 type SalaryPeriod = Literal["year", "month", "hour"]
 

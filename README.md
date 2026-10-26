@@ -309,3 +309,7 @@ for byte. Run `pnpm check` before committing.
   for every send.
 - **Phase 4: SaaS hardening.** Usage billing off the ledger, per-user company follows,
   hosted browsers, retention policy.
+
+## License
+
+[MIT](LICENSE)

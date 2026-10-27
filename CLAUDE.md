@@ -26,7 +26,7 @@ worker.
 | `pnpm api:types` | export `backend/openapi.json` and regenerate `src/lib/api/schema.d.ts` from it |
 | `pnpm check` | lint, typecheck, test, `api:types`, then fails if the generated files changed; run it before committing |
 | `pnpm llm:smoke [purpose …]` | one call per configured purpose, to check keys and pricing (`LLM_FAKE=1` for $0) |
-| `pnpm llm:bakeoff` | compare models on fixed fixtures (cost, latency, schema failures, agreement) |
+| `pnpm llm:bakeoff` | `--purpose p --models a:b@effort,… --reference c:d [--out f.json]`: compare models for one purpose on fixed fixtures (`score` and `evaluate` so far) by cost, latency, schema failures and agreement with the reference; real calls, ledgered as `bakeoff` |
 | `pnpm db:backup-legacy` / `db:import-legacy` / `db:verify-import` / `db:mark-cutover` | the one-off, read-only import of the old TypeScript app's `foray` database into `foray_app`; marking the cutover makes `--replace` and `reset_app_db` refuse |
 | `pnpm docker:prod` | `docker compose --profile prod up --build`; it wants :3000 too, so stop `dev:all` first |
 
@@ -66,6 +66,19 @@ issues are choices the user makes. Read them with `gh issue list` / `gh issue vi
 close them from commits with `Fixes #<n>`, and file follow-ups you notice as issues rather
 than leaving them in chat. DESIGN.md keeps the reasons; issues keep the work.
 
+An issue reads like the ones already there:
+
+- **Title**: sentence case, saying what to do ("Wrap short posting fields before they reach a
+  model").
+- **Body**: a few short paragraphs, no headings: what is wrong, with files and names in
+  backticks; the measurements that decide it, when there are any; then the fix. Link related
+  issues by number.
+- **Last line**: `Done when …`, naming the check that closes it.
+- **Labels and milestone**: one or more of `backend`, `frontend`, `llm`, `sources`, `matching`,
+  `tooling`, `decision` and GitHub's `bug`, `enhancement`, `documentation`; a milestone when
+  the issue belongs to one. Write the body to a file and pass it with `gh issue create
+  --body-file`.
+
 ## Boundaries
 
 - **The frontend imports no server module.** Next reaches the backend only over HTTP: a page
@@ -97,6 +110,13 @@ than leaving them in chat. DESIGN.md keeps the reasons; issues keep the work.
   `apps/llm/reasoning.py`. The ledger is a wrapper on the model (`apps/llm/ledger.py`), so
   every request is recorded; attribute it with `llm_context(user_id=…, run_id=…,
   conversation_id=…)`, which `run_step` and the chat view already set.
+- **A new model** needs a price in `apps/llm/pricing.py` (an unpriced one costs $0 in the
+  ledger) and, when pydantic-ai doesn't know its name, a profile from `reasoning.py`
+  (`openai_profile`, `anthropic_profile`). An unknown name silently loses reasoning, effort
+  or caching; `gpt-6.1-terra` and `claude-haiku-5-5` both did. Pin what reaches the wire in
+  `tests/llm/test_wire.py`, try it without touching `.env` by setting the purpose in the
+  process environment (`LLM_SCORE=anthropic:claude-haiku-5-5 pnpm llm:smoke score`), and
+  bake it off before configuring it.
 - **Heavy work is a run**, never inline in a request: `lifecycle.start_run(user_id, kind,
   input=…, dedupe_key=…, task=…)` inserts the run and defers its first job in one
   transaction, and the endpoint answers `202`. Every defer goes through `defer_in_tx` (or `defer_step` for
@@ -224,8 +244,10 @@ training data. Read the installed source (`backend/.venv/lib/python3.14/site-pac
 - **pydantic-ai 2.54**: `Agent(model, instructions=…, output_type=…, deps_type=…)`;
   `run_stream_events(...)` is an async context manager, not an iterator; models compose as
   `WrapperModel` subclasses; the unified `thinking` setting is silently dropped for DeepSeek
-  (which is why `reasoning.py` sends its own switch); the UI stream comes from
-  `pydantic_ai.ui.vercel_ai` (`VercelAIEventStream`, subclassed in `apps/chat/uistream.py`).
+  (which is why `reasoning.py` sends its own switch); a model's profile is picked by name
+  prefix, so one newer than the pin gets the defaults (see "A new model"); the UI stream
+  comes from `pydantic_ai.ui.vercel_ai` (`VercelAIEventStream`, subclassed in
+  `apps/chat/uistream.py`).
 - **django-ninja 1.7**: an operation dumps with an explicit `by_alias=False` unless its
   router was built with `by_alias=True`, so always use `core.router.router()`; answer `202`
   with `ninja.Status(202, body)` (a tuple logs a deprecation warning); component names are

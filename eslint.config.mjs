@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // The Django backend: Python, linted by ruff. Its .venv holds vendored JavaScript.
     "backend/**",
+    // Session worktrees: whole checkouts, build output and .venv included. Each lints itself
+    // with its own copy of this file, where these patterns are relative to its own root.
+    ".claude/worktrees/**",
   ]),
 
   // --- Server-only API helper ----------------------------------------------

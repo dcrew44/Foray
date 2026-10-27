@@ -280,7 +280,7 @@ def test_uses_the_rate_in_force_at_the_time() -> None:
         1_000, model_ref="deepseek:deepseek-flash", at=datetime(2026, 9, 24, 18, tzinfo=UTC)
     )
     peak = estimate_eval_cost(
-        1_000, model_ref="deepseek:deepseek-flash", at=datetime(2026, 9, 24, 10, tzinfo=UTC)
+        1_000, model_ref="deepseek:deepseek-flash", at=datetime(2026, 9, 24, 8, tzinfo=UTC)
     )
     assert off_peak.usd is not None and peak.usd is not None
     assert off_peak.usd / peak.usd == pytest.approx(0.5, abs=1e-3)

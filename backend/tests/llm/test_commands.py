@@ -14,8 +14,29 @@ from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart, User
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from apps.llm import registry
-from apps.llm.bakeoff import RUBRIC, ScoredFixture, score_agreement, scoring_prompt, scoring_sample
-from apps.llm.management.commands.llm_bakeoff import console_table, js_round, to_fixed
+from apps.llm.bakeoff import (
+    RUBRIC,
+    EvaluatedFixture,
+    ScoredFixture,
+    evaluation_checks,
+    evaluation_sample,
+    percentile,
+    rank_correlation,
+    recommendation_agreement,
+    sample_candidate,
+    score_agreement,
+    score_checks,
+    scoring_prompt,
+    scoring_sample,
+)
+from apps.llm.management.commands.llm_bakeoff import (
+    COLUMNS,
+    console_table,
+    js_round,
+    split_spec,
+    to_fixed,
+    valid_spec,
+)
 from apps.llm.models import LlmCall
 from foray.env import PURPOSES
 from tests.factories import make_job, make_llm_call
@@ -172,20 +193,23 @@ def test_bakeoff_prints_the_table_and_ledgers_its_calls(monkeypatch: pytest.Monk
     assert (code, err) == (0, "")
     lines = out.splitlines()
     assert lines[0].startswith("┌─────────┬")
-    assert lines[1].split("│")[1:-1] == [
-        " (index) ",
-        " model                     ",
-        " cost      ",
-        " per500  ",
-        " latency ",
-        " reasoningShare ",
-        " schemaFail ",
-        " agreement ",
+    assert [cell.strip() for cell in lines[1].split("│")[1:-1]] == [
+        "(index)",
+        "model",
+        "cost",
+        "per500",
+        "p50",
+        "p90",
+        "reasoningShare",
+        "schemaFail",
+        "agreement",
+        "checks",
     ]
     luna = [cell.strip() for cell in lines[3].split("│")[1:-1]]
     flash = [cell.strip() for cell in lines[4].split("│")[1:-1]]
-    assert luna[1] == "'openai:gpt-5.6-luna'" and luna[6] == "'0/3'" and luna[7] == "'1.00'"
-    assert flash[1] == "'deepseek:deepseek-flash'" and flash[7] != "'1.00'"
+    assert luna[1] == "'openai:gpt-5.6-luna'" and luna[7] == "'0/3'" and luna[8] == "'1.00'"
+    assert flash[1] == "'deepseek:deepseek-flash'" and flash[8] != "'1.00'"
+    assert luna[4].endswith("s'") and luna[9].startswith("'bands ")
     rows = ledger()
     assert len(rows) == 9  # reference, then two models, three postings each
     assert {(r["label"], r["user_id"]) for r in rows} == {("bakeoff", None)}
@@ -221,6 +245,8 @@ def test_bakeoff_usage_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     assert run("llm_bakeoff", "--purpose", "score")[0] == 2
     code, _, err = run("llm_bakeoff", "--purpose", "score", "--models", "gpt-5")
     assert (code, err.strip()) == (2, 'Not a "provider:model" reference: gpt-5.')
+    code, _, err = run("llm_bakeoff", "--purpose", "score", "--models", "openai:gpt-6-luna@max")
+    assert (code, err.strip()) == (2, 'Not a "provider:model" reference: openai:gpt-6-luna@max.')
     code, _, err = run("llm_bakeoff", "--purpose", "tailor", "--models", "openai:gpt-5.6-luna")
     assert code == 1 and 'No fixtures for "tailor" yet.' in err
     code, _, err = run("llm_bakeoff", "--purpose", "score", "--models", "acme:model-1")
@@ -240,7 +266,7 @@ def test_bakeoff_under_llm_fake_runs_only_fakes(env: Any, monkeypatch: pytest.Mo
     )
     assert (code, err) == (0, "")
     cells = [cell.strip() for cell in out.splitlines()[3].split("│")[1:-1]]
-    assert cells[1:3] == ["'fake:score'", "'$0.0000'"] and cells[6:] == ["'0/3'", "'1.00'"]
+    assert cells[1:3] == ["'fake:score'", "'$0.0000'"] and cells[7:9] == ["'0/3'", "'1.00'"]
     rows = ledger()
     assert len(rows) == 6
     assert {(r["provider"], r["label"], r["cost_usd"]) for r in rows} == {
@@ -248,11 +274,131 @@ def test_bakeoff_under_llm_fake_runs_only_fakes(env: Any, monkeypatch: pytest.Mo
     }
 
 
+def engineering_jobs() -> None:
+    for index in range(3):
+        make_job(title=f"Backend Engineer {index}", description_text="Python and Postgres. " * 100)
+    make_job(title="Account Executive", description_text="Quota and pipeline. " * 100)
+    make_job(title="Staff Backend Engineer", description_text="Python. " * 300)  # off level
+    make_job(
+        title="Backend Engineer", locations=["Zurich"], description_text="Go and Kubernetes. " * 100
+    )
+    make_job(
+        title="Backend Engineer",
+        locations=["Austin, TX"],
+        remote="remote",
+        description_text="Go and Kubernetes. " * 100,
+    )
+
+
+def test_evaluation_sample_reads_engineering_postings_in_full() -> None:
+    engineering_jobs()
+    sample = evaluation_sample()
+    assert len(sample) == 4 and all("Engineer" in posting.title for _, posting in sample)
+    assert {p.locations[0] for _, p in sample} == {"San Francisco, CA", "Austin, TX"}  # or remote
+    assert [job_id for job_id, _ in sample] == [job_id for job_id, _ in evaluation_sample()]
+    candidate = sample_candidate()
+    # Every item the resume text shows carries its id, which is what an evaluation cites.
+    assert candidate.fact_ids and any(f"[{f}]" in candidate.resume_text for f in candidate.fact_ids)
+
+
+def test_bakeoff_evaluates_with_fakes_and_writes_its_outputs(env: Any, tmp_path: Any) -> None:
+    env(llm_fake=True)
+    engineering_jobs()
+    out_file = tmp_path / "evaluate.json"
+    code, out, err = run(
+        "llm_bakeoff",
+        "--purpose",
+        "evaluate",
+        "--models",
+        "fake:evaluate",
+        "--reference",
+        "fake:evaluate",
+        "--out",
+        str(out_file),
+    )
+    assert (code, err) == (0, "")
+    cells = [cell.strip() for cell in out.splitlines()[3].split("│")[1:-1]]
+    assert cells[1] == "'fake:evaluate'" and cells[7:9] == ["'0/4'", "'1.00'"]
+    assert cells[9].startswith("'cited ") and cells[9].endswith(", Δscore 0'")
+    written = json.loads(out_file.read_text())
+    assert list(written) == ["reference fake:evaluate", "fake:evaluate"]
+    assert {"job_id", "score", "recommendation", "cited", "evaluation"} <= set(
+        written["fake:evaluate"][0]
+    )
+    assert len(ledger()) == 8
+
+
+def test_evaluation_agreement_is_the_shared_verdict() -> None:
+    def item(job_id: str, score: int, recommendation: str, cited: int = 1) -> EvaluatedFixture:
+        return EvaluatedFixture(job_id, score, recommendation, 2, cited, {})
+
+    reference = [item("j1", 90, "strong"), item("j2", 60, "maybe")]
+    candidate = [item("j1", 80, "apply", cited=2), item("j2", 64, "maybe", cited=0)]
+    assert recommendation_agreement(candidate, reference) == 0.5
+    assert recommendation_agreement(candidate, []) == 0
+    assert evaluation_checks(candidate, reference) == "cited 50%, Δscore 7"
+    assert evaluation_checks(candidate, None) == "cited 50%"
+
+
+def test_a_model_may_carry_its_own_effort(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert split_spec("deepseek:deepseek-flash@low") == ("deepseek:deepseek-flash", "low")
+    assert split_spec("openai:gpt-6-luna") == ("openai:gpt-6-luna", None)
+    assert valid_spec("openai:gpt-6-luna@none") and not valid_spec("openai:gpt-6-luna@max")
+    jobs_for_the_sample()
+    efforts: list[str] = []
+    real = registry.build_stack
+
+    def build_stack(purpose: Any, ref: str, *, effort: Any = None, **rest: Any) -> Any:
+        efforts.append(f"{ref}@{effort}")
+        return real(purpose, ref, effort=effort, **rest)
+
+    monkeypatch.setattr(registry, "build_stack", build_stack)
+    monkeypatch.setattr(registry, "base_model", lambda ref: FunctionModel(score_by_hash(0)))
+    code, out, err = run(
+        "llm_bakeoff",
+        "--purpose",
+        "score",
+        "--models",
+        "openai:gpt-6-luna@low,openai:gpt-6-luna",
+        "--reasoning",
+        "none",
+    )
+    assert (code, err) == (0, "")
+    assert sorted(efforts) == ["openai:gpt-6-luna@low", "openai:gpt-6-luna@none"]
+    assert "'openai:gpt-6-luna@low'" in out and "'$0.0" in out  # priced as gpt-6-luna
+
+
+def test_scoring_sample_is_mostly_engineering_roles() -> None:
+    for index in range(6):
+        make_job(title=f"Backend Engineer {index}", description_text="Python. " * 300)
+        make_job(title=f"Account Executive {index}", description_text="Quota. " * 300)
+    sample = scoring_sample(limit=5)
+    titles = [p.title for p in sample]
+    assert sum("Engineer" in t for t in titles) == 3 and len(titles) == 5
+
+
+def test_score_checks_compare_bands_and_order() -> None:
+    reference = [ScoredFixture("j1", 90), ScoredFixture("j2", 60), ScoredFixture("j3", 10)]
+    same_order = [ScoredFixture("j1", 72), ScoredFixture("j2", 50), ScoredFixture("j3", 5)]
+    assert score_checks(same_order, reference) == "bands 2/3, rank 1.00"
+    assert score_checks(same_order, None) == "—"
+    assert rank_correlation([1, 2, 3], [3, 2, 1]) == pytest.approx(-1)
+    assert rank_correlation([1, 1, 1], [1, 2, 3]) == 0
+
+
+def test_percentile_is_nearest_rank() -> None:
+    assert percentile([], 0.5) == 0
+    assert percentile([300, 100, 200], 0.5) == 200
+    assert percentile(list(range(1, 11)), 0.9) == 9
+    assert percentile([5], 0.9) == 5
+
+
 def test_scoring_sample_and_prompt() -> None:
     jobs_for_the_sample()
     sample = scoring_sample()
     assert [p.id for p in sample] == sorted(p.id for p in sample)  # a stable order
     assert len(sample) == 3 and all(p.title != "Too short" for p in sample)
+    assert [p.id for p in scoring_sample()] == [p.id for p in sample]
     prompt = scoring_prompt(sample[0])
     assert prompt.startswith(f"<posting>\nTitle: {sample[0].title}\nCompany: {sample[0].company}\n")
     assert "Location: San Francisco, CA (hybrid)\n\nPython and Postgres." in prompt
@@ -275,23 +421,8 @@ def test_agreement_and_formatting() -> None:
         and to_fixed(0, 2) == "0.00"
     )
     assert (js_round(2.5), js_round(-2.5), js_round(92.4)) == (3, -2, 92)
-    table = console_table(
-        [
-            {
-                c: "x"
-                for c in (
-                    "model",
-                    "cost",
-                    "per500",
-                    "latency",
-                    "reasoningShare",
-                    "schemaFail",
-                    "agreement",
-                )
-            }
-        ]
-    )
-    assert (
-        table.splitlines()[3]
-        == "│ 0       │ 'x'   │ 'x'  │ 'x'    │ 'x'     │ 'x'            │ 'x'        │ 'x'       │"
+    table = console_table([dict.fromkeys(COLUMNS, "x")])
+    assert table.splitlines()[3] == (
+        "│ 0       │ 'x'   │ 'x'  │ 'x'    │ 'x' │ 'x' │ 'x'            │ 'x'        │ 'x'       "
+        "│ 'x'    │"
     )

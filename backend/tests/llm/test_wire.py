@@ -43,9 +43,26 @@ OPENAI["xhigh"] = "xhigh"
 
 
 @pytest.mark.parametrize("effort", EFFORTS)
-async def test_openai(effort: Effort) -> None:
-    body = await send("openai:gpt-5.6-luna", effort)
+@pytest.mark.parametrize(
+    "ref", ["openai:gpt-5.6-luna", "openai:gpt-6-luna", "openai:gpt-6.1-terra"]
+)
+async def test_openai(ref: str, effort: Effort) -> None:
+    body = await send(ref, effort)
     assert body["reasoning"]["effort"] == OPENAI[effort]
+
+
+async def test_an_openai_model_pydantic_ai_does_not_know_borrows_a_profile() -> None:
+    """pydantic-ai 2.54 has no profile for gpt-6.1-terra and would treat it as a non-reasoning
+    model, sending no `reasoning` at all; it borrows gpt-6-luna's reasoning switches instead."""
+    from pydantic_ai.models.openai import OpenAIResponsesModel
+    from pydantic_ai.providers.openai import OpenAIProvider
+
+    bare = OpenAIResponsesModel("gpt-6.1-terra", provider=OpenAIProvider(api_key="x"))
+    assert not bare.profile.get("openai_supports_reasoning")
+    model = registry.build_base_model("openai:gpt-6.1-terra")
+    assert model.profile.get("openai_supports_reasoning")
+    assert model.profile.get("openai_supports_reasoning_effort_none")
+    assert reasoning.openai_profile("gpt-6-luna") is None  # known ones keep their own
 
 
 async def test_openai_minimal_sends_low() -> None:
@@ -74,9 +91,13 @@ async def test_deepseek(effort: Effort) -> None:
     if effort == "none":
         assert body["thinking"] == {"type": "disabled"}
         assert "reasoning_effort" not in body
+        assert body["tool_choice"] == "required"  # forcing the output tool keeps a score reliable
     else:
         assert body["thinking"] == {"type": "enabled"}
         assert body["reasoning_effort"] == DEEPSEEK[effort]
+        # "Thinking mode does not support this tool_choice": while it thinks, DeepSeek takes the
+        # output tool only when offered, which pydantic-ai knows for `deepseek-v4-*` ids alone.
+        assert body["tool_choice"] == "auto"
 
 
 async def test_deepseek_none_produces_thinking_disabled() -> None:

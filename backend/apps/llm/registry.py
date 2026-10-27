@@ -109,14 +109,18 @@ def build_base_model(ref: str, *, http_client: Any = None) -> Model:
 
             # `openai:` is the Responses API, as the AI SDK uses.
             return OpenAIResponsesModel(
-                name, provider=OpenAIProvider(api_key=_key("openai"), http_client=http_client)
+                name,
+                provider=OpenAIProvider(api_key=_key("openai"), http_client=http_client),
+                profile=reasoning.openai_profile(name),
             )
         case "deepseek":
             from pydantic_ai.models.openai import OpenAIChatModel
             from pydantic_ai.providers.deepseek import DeepSeekProvider
 
             return OpenAIChatModel(
-                name, provider=DeepSeekProvider(api_key=_key("deepseek"), http_client=http_client)
+                name,
+                provider=DeepSeekProvider(api_key=_key("deepseek"), http_client=http_client),
+                profile=reasoning.deepseek_profile(name),
             )
         case "anthropic":
             from pydantic_ai.models.anthropic import AnthropicModel

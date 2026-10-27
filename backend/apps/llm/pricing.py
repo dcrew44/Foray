@@ -1,4 +1,5 @@
-"""List prices per million tokens, checked 2026-09-17 (design §8.9; a port of `pricing.ts`).
+"""List prices per million tokens (design §8.9; a port of `pricing.ts`). OpenAI and DeepSeek were
+re-checked 2026-10-26 against their own price pages; Google and Anthropic date from 2026-09-17.
 
 These exist so the ledger can attribute real dollars per purpose and per model, and so an
 approval card can quote a cost before the user says yes. Rates change: `manage.py llm_bakeoff`
@@ -42,17 +43,22 @@ class Rate:
     reasoning: float | None = None
 
 
+EVERY_DAY = frozenset(range(7))
+WEEKDAYS = frozenset(range(5))  # `datetime.weekday()`: Monday is 0
+
+
 @dataclass(frozen=True, slots=True)
 class Band:
     from_hour_utc: int  # inclusive
     to_hour_utc: int  # exclusive; wraps past midnight when smaller than from_hour_utc
     rate: Rate
+    days_utc: frozenset[int] = EVERY_DAY  # the UTC weekdays the band applies on
 
 
 @dataclass(frozen=True, slots=True)
 class TimeBandedRate:
     """DeepSeek bills different rates by time of day, in UTC. The off-peak window is a real lever
-    for bulk scoring: a nightly re-score costs half what the same run costs at midday."""
+    for bulk scoring: the same run costs half as much in the evening or at the weekend."""
 
     bands: tuple[Band, ...]
     fallback: Rate
@@ -60,19 +66,39 @@ class TimeBandedRate:
 
 type Pricing = Rate | TimeBandedRate
 
-# Keyed by `provider:model`, the same string shape as the LLM_* settings.
+# DeepSeek's peak is 09:00-12:00 and 14:00-18:00 Beijing time on weekdays; every other hour,
+# weekends and Chinese public holidays are off-peak at half price. A holiday's peak hours bill as
+# peak here, which errs toward over-reporting cost rather than under-reporting it.
+_DEEPSEEK_PEAK_HOURS = ((1, 4), (6, 10))
+
+
+def _deepseek(*, peak: Rate) -> TimeBandedRate:
+    return TimeBandedRate(
+        bands=tuple(Band(start, end, peak, WEEKDAYS) for start, end in _DEEPSEEK_PEAK_HOURS),
+        fallback=Rate(
+            input=peak.input / 2,
+            output=peak.output / 2,
+            cached_input=None if peak.cached_input is None else peak.cached_input / 2,
+        ),
+    )
+
+
+# Keyed by `provider:model`, the same string shape as the LLM_* settings. OpenAI's GPT-6 rates are
+# for prompts under 272K tokens (above that every token bills at about double; Foray's prompts are
+# a few thousand), and their cache writes are the 30-minute retention pydantic-ai asks for.
 PRICING: dict[str, Pricing] = {
     # --- cheap tier ---------------------------------------------------------------------------
-    "deepseek:deepseek-flash": TimeBandedRate(
-        # Off-peak is 16:30-00:30 UTC; we approximate on hour boundaries, which errs toward
-        # over-reporting cost rather than under-reporting it.
-        bands=(Band(17, 0, Rate(input=0.15, output=0.6, cached_input=0.015)),),
-        fallback=Rate(input=0.3, output=1.2, cached_input=0.03),
-    ),
+    # `deepseek-flash` is DeepSeek-V4.1-Flash-1017 since 2026-10-17, at the same price.
+    "deepseek:deepseek-flash": _deepseek(peak=Rate(input=0.3, output=1.2, cached_input=0.006)),
+    "openai:gpt-6-luna": Rate(input=0.1, output=0.5, cached_input=0.01, cache_write=0.125),
     "openai:gpt-5.6-luna": Rate(input=0.2, output=1.2, cached_input=0.02, cache_write=0.25),
     "google:gemini-3.8-flash": Rate(input=0.75, output=3.75, cached_input=0.19),
     "anthropic:claude-haiku-4-5": Rate(input=1, output=5, cached_input=0.1, cache_write=1.25),
     # --- strong tier --------------------------------------------------------------------------
+    "deepseek:deepseek-v4-pro": _deepseek(peak=Rate(input=1.32, output=3.96, cached_input=0.044)),
+    "openai:gpt-6.1-terra": Rate(input=1, output=5, cached_input=0.05, cache_write=1.25),
+    "openai:gpt-6.1-sol": Rate(input=2, output=10, cached_input=0.1, cache_write=2.5),
+    "openai:gpt-6-sol": Rate(input=2, output=10, cached_input=0.2, cache_write=2.5),
     "openai:gpt-5.6-terra": Rate(input=2, output=12, cached_input=0.2, cache_write=2.5),
     "google:gemini-3.1-pro-preview": Rate(input=2, output=12, cached_input=0.5),
     "anthropic:claude-sonnet-5": Rate(input=2, output=10, cached_input=0.2, cache_write=2.5),
@@ -100,9 +126,11 @@ def rate_for(ref: str, at: datetime | None = None) -> Rate | None:
         return None
     if isinstance(pricing, Rate):
         return pricing
-    hour = (at or datetime.now(UTC)).astimezone(UTC).hour
+    when = (at or datetime.now(UTC)).astimezone(UTC)
     for band in pricing.bands:
-        if _hour_in_band(hour, band.from_hour_utc, band.to_hour_utc):
+        if when.weekday() in band.days_utc and _hour_in_band(
+            when.hour, band.from_hour_utc, band.to_hour_utc
+        ):
             return band.rate
     return pricing.fallback
 

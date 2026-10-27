@@ -422,8 +422,9 @@ async def evaluate_match(
 
 # Output tokens one evaluation is assumed to spend, reasoning included. Measured 2026-09-24 over
 # eight evaluations on gpt-5.6-terra at medium effort: 1,370-2,126 output tokens, $0.019-0.030
-# each. Output is most of the bill, so this sits above the average: a quote that comes in under
-# is fine, one that comes in over is not.
+# each; on 2026-10-26, gpt-6.1-terra at low and medium averaged 1,063 (at most 1,811). Output is
+# most of the bill, so this sits above the average: a quote that comes in under is fine, one that
+# comes in over is not.
 EVAL_OUTPUT_TOKENS = 1_800
 SCHEMA_OVERHEAD_TOKENS = 400  # the JSON schema and message framing a structured call adds
 CHARS_PER_TOKEN = 4

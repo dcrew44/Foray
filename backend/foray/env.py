@@ -245,7 +245,7 @@ FIX = {
     "llm_compat_base_url": "set it to the provider's http(s) base URL, or leave it empty",
     "trusted_proxy_hops": "set it to 0, 1 or 2",
     "app_timezone": "set it to an IANA time zone name such as UTC or America/Los_Angeles",
-    "llm_default": 'set it to "provider:model", e.g. openai:gpt-5.6-luna (see .env.example)',
+    "llm_default": 'set it to "provider:model", e.g. openai:gpt-6-luna (see .env.example)',
     "llm_monthly_budget_usd": "set it to a positive number of dollars, e.g. 90",
     "llm_fake_fail": f"list purposes separated by commas, from: {', '.join(PURPOSES)}",
     "llm_fake_delay_ms": "set it to a whole number of milliseconds from 0 to 60000",
@@ -255,7 +255,7 @@ FIX = {
     "db_pool_max": "set it to a whole number from 4 to 50",
 }
 for _p in PURPOSES:
-    FIX[f"llm_{_p}"] = 'set it to "provider:model", e.g. openai:gpt-5.6-luna, or leave it empty'
+    FIX[f"llm_{_p}"] = 'set it to "provider:model", e.g. openai:gpt-6-luna, or leave it empty'
     FIX[f"llm_reasoning_{_p}"] = "set it to none, minimal, low, medium, high or xhigh"
 for _provider in PROVIDER_CREDENTIAL:
     FIX[f"llm_rpm_{_provider}"] = "set it to a positive whole number of requests per minute"

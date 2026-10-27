@@ -8,11 +8,13 @@ from decimal import Decimal
 
 import pytest
 
-from apps.llm.pricing import cost_usd, is_priced, rate_for, to_column
+from apps.llm import pricing
+from apps.llm.pricing import Band, Rate, TimeBandedRate, cost_usd, is_priced, rate_for, to_column
 
-PEAK = datetime(2026, 9, 18, 16, 0, tzinfo=UTC)  # inside DeepSeek's peak window
+PEAK = datetime(2026, 9, 18, 8, 0, tzinfo=UTC)  # a Friday, inside DeepSeek's 06:00-10:00 window
 OFF_PEAK = datetime(2026, 9, 18, 20, 0, tzinfo=UTC)
-AFTER_MIDNIGHT = datetime(2026, 9, 18, 2, 0, tzinfo=UTC)  # off-peak only if the band wrapped
+BETWEEN_WINDOWS = datetime(2026, 9, 18, 5, 0, tzinfo=UTC)  # after 01:00-04:00, before 06:00
+WEEKEND = datetime(2026, 9, 19, 8, 0, tzinfo=UTC)  # Saturday at the weekday peak hour
 
 
 # --- rate_for ------------------------------------------------------------------------------------
@@ -28,14 +30,33 @@ def test_picks_deepseek_band_by_utc_hour() -> None:
         rate_for("deepseek:deepseek-flash", PEAK),
         rate_for("deepseek:deepseek-flash", OFF_PEAK),
     )
-    assert peak is not None and peak.input == 0.3
-    assert off_peak is not None and off_peak.input == 0.15
+    assert peak is not None and (peak.input, peak.output, peak.cached_input) == (0.3, 1.2, 0.006)
+    assert off_peak is not None
+    assert (off_peak.input, off_peak.output, off_peak.cached_input) == (0.15, 0.6, 0.003)
 
 
-def test_a_band_that_wraps_past_midnight_is_one_window() -> None:
-    # 17:00-00:00 does not contain 02:00, so this must fall back to peak.
-    rate = rate_for("deepseek:deepseek-flash", AFTER_MIDNIGHT)
-    assert rate is not None and rate.input == 0.3
+@pytest.mark.parametrize("at", [BETWEEN_WINDOWS, WEEKEND, datetime(2026, 9, 18, 10, tzinfo=UTC)])
+def test_deepseek_is_off_peak_outside_its_weekday_windows(at: datetime) -> None:
+    rate = rate_for("deepseek:deepseek-flash", at)
+    assert rate is not None and rate.input == 0.15
+
+
+def test_deepseek_pro_has_the_same_hours() -> None:
+    peak, off_peak = (
+        rate_for("deepseek:deepseek-v4-pro", PEAK),
+        rate_for("deepseek:deepseek-v4-pro", OFF_PEAK),
+    )
+    assert peak is not None and (peak.input, peak.output) == (1.32, 3.96)
+    assert off_peak is not None and (off_peak.input, off_peak.output) == (0.66, 1.98)
+
+
+def test_a_band_that_wraps_past_midnight_is_one_window(monkeypatch: pytest.MonkeyPatch) -> None:
+    night = Rate(input=1, output=1)
+    banded = TimeBandedRate(bands=(Band(17, 0, night),), fallback=Rate(input=2, output=2))
+    monkeypatch.setitem(pricing.PRICING, "compat:banded", banded)
+    assert rate_for("compat:banded", datetime(2026, 9, 18, 23, tzinfo=UTC)) == night
+    # 17:00-00:00 does not contain 02:00, so this must fall back.
+    assert rate_for("compat:banded", datetime(2026, 9, 18, 2, tzinfo=UTC)) == banded.fallback
 
 
 def test_a_flat_rate_ignores_the_hour() -> None:
@@ -49,6 +70,10 @@ def test_band_reads_the_utc_hour_of_an_aware_time() -> None:
     local = datetime(2026, 9, 18, 13, 0, tzinfo=ZoneInfo("America/Los_Angeles"))
     rate = rate_for("deepseek:deepseek-flash", local)
     assert rate is not None and rate.input == 0.15
+    # Thursday 23:30 in Los Angeles is Friday 06:30 UTC: the weekday is read in UTC too.
+    thursday_night = datetime(2026, 9, 17, 23, 30, tzinfo=ZoneInfo("America/Los_Angeles"))
+    rate = rate_for("deepseek:deepseek-flash", thursday_night)
+    assert rate is not None and rate.input == 0.3
 
 
 # --- cost_usd ------------------------------------------------------------------------------------
@@ -81,10 +106,17 @@ def test_cache_writes_bill_at_the_input_rate_where_not_priced_separately() -> No
 
 
 @pytest.mark.parametrize(
-    ("ref", "rate"), [("openai:gpt-5.6-luna", 0.25), ("openai:gpt-5.6-terra", 2.5)]
+    ("ref", "rate"),
+    [
+        ("openai:gpt-5.6-luna", 0.25),
+        ("openai:gpt-5.6-terra", 2.5),
+        ("openai:gpt-6-luna", 0.125),
+        ("openai:gpt-6.1-terra", 1.25),
+    ],
 )
 def test_gpt_5_6_cache_writes_bill_at_one_and_a_quarter_times_input(ref: str, rate: float) -> None:
-    """OpenAI bills GPT-5.6 cache writes at 1.25x the uncached input rate; pydantic-ai reports
+    """OpenAI bills GPT-5.6 and GPT-6 cache writes at 1.25x the uncached input rate (30-minute
+    retention); pydantic-ai reports
     them as `cache_write_tokens`, so they must not fall back to the input rate."""
     assert cost_usd(ref, cache_write_tokens=1_000_000) == pytest.approx(rate, abs=1e-10)
     # The review's example request: 1,000 uncached, 3,000 written, 1,000 read, 300 out.

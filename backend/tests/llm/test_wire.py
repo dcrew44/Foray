@@ -153,6 +153,47 @@ async def test_anthropic_adaptive_model(effort: Effort) -> None:
         assert body["output_config"]["effort"] == expected
 
 
+@pytest.mark.parametrize("effort", EFFORTS)
+async def test_anthropic_haiku_5_5(effort: Effort) -> None:
+    body = await send("anthropic:claude-haiku-5-5", effort)
+    assert body["max_tokens"] == 128_000
+    if effort == "none":
+        # Omitting `thinking` would leave Haiku 5.5 thinking at medium: it is on by default.
+        assert body["thinking"] == {"type": "disabled"}
+        assert "effort" not in body.get("output_config", {})
+        assert body["tool_choice"]["type"] == "any"  # forcing the output tool keeps scores reliable
+    else:
+        assert body["thinking"] == {"type": "adaptive"}
+        expected = "low" if effort == "minimal" else effort
+        assert body["output_config"]["effort"] == expected
+        # A forced tool call would skip the thinking, so the answer comes as schema-constrained
+        # JSON (structured outputs) instead of through the output tool.
+        assert body["output_config"]["format"]["type"] == "json_schema"
+        assert "tool_choice" not in body
+
+
+async def test_haiku_5_5_needs_a_profile_of_its_own() -> None:
+    """pydantic-ai 2.54 has no profile for Haiku 5.5: it would send budget-style thinking (a 400)
+    and, at effort none, no `thinking` at all, which leaves Haiku 5.5's default thinking on."""
+    from pydantic_ai.models.anthropic import AnthropicModel
+    from pydantic_ai.providers.anthropic import AnthropicProvider
+
+    bare = AnthropicModel("claude-haiku-5-5", provider=AnthropicProvider(api_key="x"))
+    assert not bare.profile.get("anthropic_supports_adaptive_thinking")
+    assert not bare.profile.get("thinking_enabled_by_default")
+    model = registry.build_base_model("anthropic:claude-haiku-5-5")
+    assert model.profile.get("anthropic_supports_adaptive_thinking")
+    assert model.profile.get("thinking_enabled_by_default")
+    assert reasoning.anthropic_profile("claude-sonnet-5") is None  # known ones keep their own
+
+
+async def test_haiku_5_5_never_gets_sampling_settings() -> None:
+    """Haiku 5.5 rejects a non-default `temperature` whether or not it thinks."""
+    with pytest.warns(UserWarning, match="Sampling parameters"):
+        body = await send("anthropic:claude-haiku-5-5", "none", temperature=0.2)
+    assert "temperature" not in body
+
+
 async def test_anthropic_haiku_drops_temperature_when_thinking() -> None:
     """pydantic-ai still sends `temperature` to Haiku 4.5 with thinking on; the API rejects it."""
     assert "temperature" not in await send("anthropic:claude-haiku-4-5", "low", temperature=0.2)

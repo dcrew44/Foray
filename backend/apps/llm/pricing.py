@@ -1,5 +1,6 @@
 """List prices per million tokens (design §8.9; a port of `pricing.ts`). OpenAI and DeepSeek were
-re-checked 2026-10-26 against their own price pages; Google and Anthropic date from 2026-09-17.
+re-checked 2026-10-26 against their own price pages, and Claude Haiku 5.5 added 2026-10-27; the
+rest of Google and Anthropic date from 2026-09-17.
 
 These exist so the ledger can attribute real dollars per purpose and per model, and so an
 approval card can quote a cost before the user says yes. Rates change: `manage.py llm_bakeoff`
@@ -93,6 +94,9 @@ PRICING: dict[str, Pricing] = {
     "openai:gpt-6-luna": Rate(input=0.1, output=0.5, cached_input=0.01, cache_write=0.125),
     "openai:gpt-5.6-luna": Rate(input=0.2, output=1.2, cached_input=0.02, cache_write=0.25),
     "google:gemini-3.8-flash": Rate(input=0.75, output=3.75, cached_input=0.19),
+    # Haiku 5.5's rates are for prompts up to 100K tokens ($0.50 / $2.50 above that); its cache
+    # writes are the 5-minute kind.
+    "anthropic:claude-haiku-5-5": Rate(input=0.1, output=0.5, cached_input=0.01, cache_write=0.125),
     "anthropic:claude-haiku-4-5": Rate(input=1, output=5, cached_input=0.1, cache_write=1.25),
     # --- strong tier --------------------------------------------------------------------------
     "deepseek:deepseek-v4-pro": _deepseek(peak=Rate(input=1.32, output=3.96, cached_input=0.044)),

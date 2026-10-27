@@ -129,6 +129,7 @@ def build_base_model(ref: str, *, http_client: Any = None) -> Model:
             return AnthropicModel(
                 name,
                 provider=AnthropicProvider(api_key=_key("anthropic"), http_client=http_client),
+                profile=reasoning.anthropic_profile(name),
             )
         case "google":
             from google.genai.types import HttpRetryOptions

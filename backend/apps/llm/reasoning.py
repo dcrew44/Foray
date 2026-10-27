@@ -23,9 +23,11 @@ wire.
 
 pydantic-ai also has to know a model by name. An OpenAI model missing from its profiles is
 treated as a non-reasoning model, and the `thinking` setting and prompt caching are dropped
-without a word; `openai_profile()` fills that in. DeepSeek rejects a forced tool call while it
-thinks, and pydantic-ai only knows that for ids starting `deepseek-v4-`, which the current
-`deepseek-flash` does not; `deepseek_profile()` says so for every DeepSeek model.
+without a word; `openai_profile()` fills that in. An unknown Anthropic model gets budget-style
+thinking, which Claude Haiku 5.5 rejects, and no `thinking` at all at effort none, which leaves
+Haiku 5.5's default thinking on; `anthropic_profile()` fills that in. DeepSeek rejects a forced
+tool call while it thinks, and pydantic-ai only knows that for ids starting `deepseek-v4-`, which
+the current `deepseek-flash` does not; `deepseek_profile()` says so for every DeepSeek model.
 """
 
 from __future__ import annotations
@@ -43,6 +45,7 @@ from foray.env import Effort, Purpose
 __all__ = [
     "DEFAULT_EFFORT",
     "Quirks",
+    "anthropic_profile",
     "apply_quirks",
     "deepseek_profile",
     "effort_for",
@@ -121,6 +124,34 @@ def openai_profile(name: str) -> ModelProfile | None:
 
     known: dict[str, Any] = dict(OpenAIProvider.model_profile(sibling) or {})
     return cast(ModelProfile, {key: known[key] for key in _BORROWED if key in known})
+
+
+# Anthropic models pydantic-ai 2.54 has no profile for. No known sibling matches Haiku 5.5 (Opus 5
+# is closest but differs on fast mode and thinking-block binding), so its keys are spelled out:
+# adaptive thinking only, on by default; effort low ... max, default medium; `disabled` thinking
+# only at effort high or below; sampling settings rejected; structured outputs; 128K output;
+# thinking blocks bound to the prefix that produced them (platform.claude.com/docs/en/about-claude/
+# models, the Haiku 5.5 migration notes).
+ANTHROPIC_PROFILES: dict[str, dict[str, Any]] = {
+    "claude-haiku-5-5": {
+        "thinking_enabled_by_default": True,
+        "supports_json_schema_output": True,
+        "anthropic_supports_adaptive_thinking": True,
+        "anthropic_supports_effort": True,
+        "anthropic_supports_xhigh_effort": True,
+        "anthropic_disallows_budget_thinking": True,
+        "anthropic_disallows_sampling_settings": True,
+        "anthropic_disallows_top_effort_when_thinking_disabled": True,
+        "anthropic_binds_thinking_blocks": True,
+        "anthropic_max_output_tokens": 128_000,
+    },
+}
+
+
+def anthropic_profile(name: str) -> ModelProfile | None:
+    """The profile keys an Anthropic model needs and pydantic-ai lacks; None for those it knows."""
+    keys = ANTHROPIC_PROFILES.get(name)
+    return None if keys is None else cast(ModelProfile, dict(keys))
 
 
 def deepseek_profile(name: str) -> ModelProfile:

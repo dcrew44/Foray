@@ -26,6 +26,9 @@ data/
 /storage.*/
 /backups/
 
+# private notes: a clone of the private dcrew44/foray-notes repo
+/notes/
+
 # test output
 coverage/
 test-results/

@@ -56,6 +56,15 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
   `src/lib/api/`: `server.ts` (`django()`, `getMe()` for server components), `client.ts`
   (`api` and `call()` for client components), `types.ts` and `chat-types.ts` (friendly names
   over the generated `schema.d.ts`), `auth.ts`.
+- `notes/` (git-ignored): a clone of the private `dcrew44/foray-notes` repo, for research and
+  strategy that isn't public. It may be absent; nothing in the app depends on it.
+
+## Roadmap and bugs
+
+GitHub issues on `dcrew44/Foray` are the tracker; milestones are the roadmap, and `decision`
+issues are choices the user makes. Read them with `gh issue list` / `gh issue view <n>`,
+close them from commits with `Fixes #<n>`, and file follow-ups you notice as issues rather
+than leaving them in chat. DESIGN.md keeps the reasons; issues keep the work.
 
 ## Boundaries
 

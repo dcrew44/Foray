@@ -13,9 +13,9 @@ from django.core.management import CommandError, call_command
 from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart, UserPromptPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from apps.accounts.schemas import SAMPLE_PREFERENCES
 from apps.llm import registry
 from apps.llm.bakeoff import (
-    RUBRIC,
     EvaluatedFixture,
     ScoredFixture,
     evaluation_checks,
@@ -24,9 +24,9 @@ from apps.llm.bakeoff import (
     rank_correlation,
     recommendation_agreement,
     sample_candidate,
+    sample_resume,
     score_agreement,
     score_checks,
-    scoring_prompt,
     scoring_sample,
 )
 from apps.llm.management.commands.llm_bakeoff import (
@@ -38,6 +38,7 @@ from apps.llm.management.commands.llm_bakeoff import (
     valid_spec,
 )
 from apps.llm.models import LlmCall
+from apps.matching.fast_score import posting_prompt, score_instructions
 from foray.env import PURPOSES
 from tests.factories import make_job, make_llm_call
 from tests.llm.vendors import Vendor, patch_base_models
@@ -368,13 +369,16 @@ def test_a_model_may_carry_its_own_effort(monkeypatch: pytest.MonkeyPatch) -> No
     assert "'openai:gpt-6-luna@low'" in out and "'$0.0" in out  # priced as gpt-6-luna
 
 
-def test_scoring_sample_is_mostly_engineering_roles() -> None:
+def test_scoring_sample_is_mostly_roles_the_candidate_could_want() -> None:
     for index in range(6):
         make_job(title=f"Backend Engineer {index}", description_text="Python. " * 300)
+        make_job(
+            title=f"Backend Engineer {index}", locations=["Zurich"], description_text="Go. " * 300
+        )
         make_job(title=f"Account Executive {index}", description_text="Quota. " * 300)
     sample = scoring_sample(limit=5)
-    titles = [p.title for p in sample]
-    assert sum("Engineer" in t for t in titles) == 3 and len(titles) == 5
+    plausible = [p for p in sample if "Engineer" in p.title and p.locations != ["Zurich"]]
+    assert len(plausible) == 3 and len(sample) == 5
 
 
 def test_score_checks_compare_bands_and_order() -> None:
@@ -393,17 +397,40 @@ def test_percentile_is_nearest_rank() -> None:
     assert percentile([5], 0.9) == 5
 
 
-def test_scoring_sample_and_prompt() -> None:
+def test_scoring_sample_is_stable() -> None:
     jobs_for_the_sample()
     sample = scoring_sample()
     assert [p.id for p in sample] == sorted(p.id for p in sample)  # a stable order
     assert len(sample) == 3 and all(p.title != "Too short" for p in sample)
     assert [p.id for p in scoring_sample()] == [p.id for p in sample]
-    prompt = scoring_prompt(sample[0])
-    assert prompt.startswith(f"<posting>\nTitle: {sample[0].title}\nCompany: {sample[0].company}\n")
-    assert "Location: San Francisco, CA (hybrid)\n\nPython and Postgres." in prompt
-    assert prompt.endswith("\n</posting>")
-    assert RUBRIC.startswith("You triage job postings for a candidate.")
+
+
+def test_the_scoring_fixture_sends_the_production_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The rubric, the sample candidate and each posting exactly as a search sends them, so the
+    # fixture measures the task the product sets, for the person the evaluate fixture judges.
+    jobs_for_the_sample()
+    seen: list[tuple[str | None, str]] = []
+    scorer = score_by_hash(0)
+
+    def recording(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        prompt = next(
+            p.content
+            for m in messages
+            for p in getattr(m, "parts", [])
+            if isinstance(p, UserPromptPart)
+        )
+        seen.append((info.instructions, str(prompt)))
+        return scorer(messages, info)
+
+    monkeypatch.setattr(registry, "base_model", lambda ref: FunctionModel(recording))
+    code, _, err = run(
+        "llm_bakeoff", "--purpose", "score", "--models", "openai:gpt-6-luna", "--reasoning", "none"
+    )
+    assert (code, err) == (0, "")
+    assert {instructions for instructions, _ in seen} == {
+        score_instructions(SAMPLE_PREFERENCES, None, sample_resume())
+    }
+    assert [prompt for _, prompt in seen] == [posting_prompt(p) for p in scoring_sample()]
 
 
 def test_agreement_and_formatting() -> None:

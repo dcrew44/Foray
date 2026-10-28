@@ -41,43 +41,42 @@ from apps.matching.deep_eval import (
     eval_prompt,
     sanitize_deep_eval,
 )
-from apps.matching.fast_score import MAX_DESCRIPTION_CHARS
+from apps.matching.fast_score import (
+    ScorePosting,
+    load_postings,
+    posting_prompt,
+    score_instructions,
+)
 from apps.matching.schemas import DeepEval, FastScore
 from apps.resumes import schema
 from apps.resumes.text import resume_to_text
 from foray.env import Effort, Purpose
 
-# The scoring fixture's fixed prompt: a simplified rubric and a hard-coded candidate, so the
-# same request reaches every model.
-RUBRIC = """You triage job postings for a candidate. Score 0-100, where 85+ is
-squarely what they asked for, 55-69 is plausible, and below 30 is clearly wrong.
-Be decisive: a middling score for everything is useless triage.
-fit_reasons: at most three short concrete phrases."""
-
-CANDIDATE = """<candidate>
-Senior backend engineer, six years of experience in Node.js, TypeScript,
-Python and PostgreSQL. Has owned a billing service end to end and led a
-migration off a monolith. Wants senior backend roles in the San Francisco Bay
-Area or remote, minimum $190k base. US citizen. Dealbreakers: on-call more than
-one week a month, full return-to-office.
-</candidate>"""
+# Both fixtures send the production prompts for one fixed person, the sample candidate that
+# `create_test_user --with-resume` uses (a mid-level backend engineer in Oakland, open to
+# hybrid): every model and every run sees the same resume, nobody's real one leaves the building
+# for a bake-off, and a fixture measures the task the product actually sets.
+SAMPLE_RESUME_PATH = Path(apps.accounts.__file__).resolve().parent / "sample_resume.json"
 
 SAMPLE_SIZE = 20
 # Most of the sample is roles the candidate could plausibly want: a model is chosen on how it
 # ranks the postings near the shortlist, and every model agrees that a sales role is a 5.
 RELEVANT_SHARE = 0.6
-# The titles both fixtures treat as relevant to their (backend engineer) candidates.
 ENGINEERING_TITLES = r"(software|backend|platform|infrastructure|data|full[- ]?stack) engineer"
-
-
-@dataclass(frozen=True, slots=True)
-class Posting:
-    id: str
-    title: str
-    company: str
-    locations: list[str]
-    remote: str
-    description: str | None
+OFF_LEVEL_TITLES = (
+    r"(staff|principal|lead|manager|director|intern|new grad|head of|distinguished|architect)"
+)
+BAY_AREA = (
+    r"(san francisco|bay area|oakland|berkeley|emeryville|palo alto|mountain view|san jose"
+    r"|sunnyvale|menlo park|redwood city|san mateo)"
+)
+# What the sample candidate could plausibly want: an engineering role at a plausible level, in
+# the Bay Area or remote. Filters `spread_jobs`, which annotates `places`.
+PLAUSIBLE = (
+    Q(title__iregex=ENGINEERING_TITLES)
+    & ~Q(title__iregex=OFF_LEVEL_TITLES)
+    & (Q(remote=Remote.REMOTE) | Q(places__iregex=BAY_AREA))
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,39 +126,39 @@ def spread_jobs() -> QuerySet[Job]:
         Job.objects.annotate(
             description_length=Length("description_text"),
             spread=Func(F("id"), function="MD5", output_field=TextField()),
+            places=Func(
+                F("locations"), Value(" "), function="array_to_string", output_field=TextField()
+            ),
         )
         .filter(description_text__isnull=False, description_length__range=(1500, 12000))
         .order_by("spread", "id")
     )
 
 
-def scoring_sample(limit: int = SAMPLE_SIZE) -> list[Posting]:
-    """A stable sample of real postings, mostly engineering roles (`RELEVANT_SHARE`). Sync."""
-    fields = ("id", "title", "company_name", "locations", "remote", "description_text")
+def sample_resume() -> schema.Resume:
+    resume = schema.Resume.read(json.loads(SAMPLE_RESUME_PATH.read_text()))
+    if resume is None:  # pragma: no cover - the sample is checked in
+        raise RuntimeError(f"{SAMPLE_RESUME_PATH} is not a readable resume")
+    return resume
+
+
+def scoring_sample(limit: int = SAMPLE_SIZE) -> list[ScorePosting]:
+    """A stable sample of real postings, mostly ones the sample candidate could plausibly want
+    (`RELEVANT_SHARE`), loaded as the fast scorer loads them. Sync."""
     relevant = list(
         spread_jobs()
-        .filter(title__iregex=ENGINEERING_TITLES)
-        .values_list(*fields)[: math.ceil(limit * RELEVANT_SHARE)]
+        .filter(PLAUSIBLE)
+        .values_list("id", flat=True)[: math.ceil(limit * RELEVANT_SHARE)]
     )
     rest = list(
-        spread_jobs()
-        .exclude(title__iregex=ENGINEERING_TITLES)
-        .values_list(*fields)[: limit - len(relevant)]
+        spread_jobs().exclude(PLAUSIBLE).values_list("id", flat=True)[: limit - len(relevant)]
     )
-    return [Posting(*row) for row in sorted([*relevant, *rest])]
+    return load_postings(sorted([*relevant, *rest]))
 
 
-def scoring_prompt(posting: Posting) -> str:
-    description = (posting.description or "")[:MAX_DESCRIPTION_CHARS]
-    return (
-        "<posting>\n"
-        f"Title: {posting.title}\n"
-        f"Company: {posting.company}\n"
-        f"Location: {' | '.join(posting.locations) or 'unstated'} ({posting.remote})\n"
-        "\n"
-        f"{description}\n"
-        "</posting>"
-    )
+def scoring_instructions() -> str:
+    """The rubric and the sample candidate, as a search with no request of its own sends them."""
+    return score_instructions(SAMPLE_PREFERENCES, None, sample_resume())
 
 
 async def run_scoring_fixture(
@@ -170,6 +169,7 @@ async def run_scoring_fixture(
     guard's refusal is the exception: it says nothing about the model, so it ends the run
     (`llm_bakeoff` exits 1 with its sentence, design §8.6)."""
     sample = await db(scoring_sample, limit)
+    instructions = scoring_instructions()
     stack = registry.build_stack("score", model_ref, effort=effort)
     result = FixtureResult()
     started = time.perf_counter()
@@ -179,8 +179,8 @@ async def run_scoring_fixture(
             answer = await structured_result(
                 "score",
                 FastScore,
-                instructions=f"{RUBRIC}\n\n{CANDIDATE}",
-                prompt=scoring_prompt(posting),
+                instructions=instructions,
+                prompt=posting_prompt(posting),
                 model=stack,
             )
         except BudgetExceeded:
@@ -254,21 +254,10 @@ def score_agreement(
 
 # --- evaluate ------------------------------------------------------------------------------------
 
-# The evaluation fixture reads full postings against the sample candidate that
-# `create_test_user --with-resume` uses: a fixed person, so every model and every run sees the
-# same resume, and nobody's real one leaves the building for a bake-off.
-SAMPLE_RESUME_PATH = Path(apps.accounts.__file__).resolve().parent / "sample_resume.json"
-# Only roles the sample candidate (a mid-level backend engineer in Oakland, open to hybrid) could
-# plausibly want: an evaluation runs on postings the fast pass ranked highly, and agreeing that a
-# staff role in Zurich is a skip says nothing about a model.
+# Only roles the sample candidate could plausibly want (`PLAUSIBLE`): an evaluation runs on
+# postings the fast pass ranked highly, and agreeing that a staff role in Zurich is a skip says
+# nothing about a model.
 EVAL_SAMPLE_SIZE = 8
-OFF_LEVEL_TITLES = (
-    r"(staff|principal|lead|manager|director|intern|new grad|head of|distinguished|architect)"
-)
-BAY_AREA = (
-    r"(san francisco|bay area|oakland|berkeley|emeryville|palo alto|mountain view|san jose"
-    r"|sunnyvale|menlo park|redwood city|san mateo)"
-)
 
 
 @dataclass(frozen=True, slots=True)
@@ -282,9 +271,7 @@ class EvaluatedFixture:
 
 
 def sample_candidate() -> EvalCandidate:
-    resume = schema.Resume.read(json.loads(SAMPLE_RESUME_PATH.read_text()))
-    if resume is None:  # pragma: no cover - the sample is checked in
-        raise RuntimeError(f"{SAMPLE_RESUME_PATH} is not a readable resume")
+    resume = sample_resume()
     return EvalCandidate(
         resume_id="sample",
         resume_version=1,
@@ -298,17 +285,7 @@ def sample_candidate() -> EvalCandidate:
 def evaluation_sample(limit: int = EVAL_SAMPLE_SIZE) -> list[tuple[str, EvalPosting]]:
     """Engineering postings at a plausible level, in the Bay Area or remote, in `spread_jobs`
     order. Sync."""
-    jobs = (
-        spread_jobs()
-        .annotate(
-            places=Func(
-                F("locations"), Value(" "), function="array_to_string", output_field=TextField()
-            )
-        )
-        .filter(title__iregex=ENGINEERING_TITLES)
-        .exclude(title__iregex=OFF_LEVEL_TITLES)
-        .filter(Q(remote=Remote.REMOTE) | Q(places__iregex=BAY_AREA))[:limit]
-    )
+    jobs = spread_jobs().filter(PLAUSIBLE)[:limit]
     return [
         (
             job.id,

@@ -1,8 +1,8 @@
 """The strong-tier pass: one posting, read in full, against the whole resume (design §9.4;
 `map/llm.md` §13; a port of `src/lib/ranking/deep-eval.ts`).
 
-Where the fast score triages hundreds of postings on a truncated description, this reads the top
-few properly and has to show its working: every matched requirement names the resume items it
+Where the fast score triages hundreds of postings with a number and three reasons, this reads the
+top few properly and has to show its working: every matched requirement names the resume items it
 rests on, by id, so a claim can be traced to the bullet that says so, and tailoring later reuses
 the evidence. It costs a few cents a posting on a strong model, which is why a search asks
 before running it, and why the approval quotes a price from the prompt this module builds.

@@ -20,6 +20,9 @@ Conventions:
   the research's two TypeScript reference turns (`ts-turn{1,2}`), moved here from
   `docs/migration/prototypes/` in step H2 (not written by the capture script).
 - `auth/better_auth_hashes.json` are real Better Auth hashes of test passwords (not secrets).
+- The TypeScript is gone, so a deliberate change to a Python builder now re-pins its golden in
+  the same commit. Re-pinned so far: `prompts/fast_score/integral_salary_long_description.json`
+  (the 12,000-character cap and its cut note, #34).
 - Library versions: ai 7.0.106, better-auth 1.7.5,
   unpdf 1.8.1, mammoth 1.12.3.
 

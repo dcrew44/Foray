@@ -2,7 +2,7 @@
 `src/lib/ranking/fast-score.ts`).
 
 It runs over every posting the prefilter kept, hundreds per run, so the unit cost is what
-matters. Three things keep it down: a small output schema, a truncated description, and a prompt
+matters. Three things keep it down: a small output schema, a capped description, and a prompt
 whose expensive half (the rubric and the candidate) is identical across every call in a run, so
 providers that cache prompt prefixes charge for it once. Its job is triage, not judgement:
 anything needing real reasoning about a posting belongs in the deep evaluation.
@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 from apps.accounts.schemas import Preferences
 from apps.core.db import db
-from apps.core.jsonio import js_json, js_num
+from apps.core.jsonio import js_json, js_locale, js_num
 from apps.jobs.models import Job
 from apps.llm.budget import BudgetExceeded
 from apps.llm.structured import structured
@@ -48,8 +48,9 @@ __all__ = [
 
 log = logging.getLogger("foray.matching")
 
-# How much of a posting the cheap pass reads.
-MAX_DESCRIPTION_CHARS = 4_000
+# How much of a posting the cheap pass reads: the deep review's cap, which shows 99.5% of
+# engineering postings whole. At 4,000 the requirements were often what got cut (#34).
+MAX_DESCRIPTION_CHARS = 12_000
 # Below this, a match is archived rather than shown.
 DEFAULT_SCORE_THRESHOLD = 55
 # Concurrent scoring calls. Each takes about two seconds regardless, so this is what decides how
@@ -146,13 +147,20 @@ def posting_prompt(posting: ScorePosting) -> str:
         if posting.description is not None
         else "(no description)"
     )
+    # Said as the deep review says it, so a requirement past the cut reads as unseen rather than
+    # as one the posting doesn't make.
+    cut = (
+        f"\n[Description cut at {js_locale(MAX_DESCRIPTION_CHARS)} characters.]"
+        if posting.description is not None and len(posting.description) > MAX_DESCRIPTION_CHARS
+        else ""
+    )
     return (
         "<posting>\n"
         f"Title: {posting.title}\n"
         f"Company: {posting.company}\n"
         f"Location: {location} ({posting.remote})\n"
         f"Pay: {_pay(posting)}\n\n"
-        f"{description}\n"
+        f"{description}{cut}\n"
         "</posting>"
     )
 

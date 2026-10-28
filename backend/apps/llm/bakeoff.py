@@ -41,6 +41,7 @@ from apps.matching.deep_eval import (
     eval_prompt,
     sanitize_deep_eval,
 )
+from apps.matching.fast_score import MAX_DESCRIPTION_CHARS
 from apps.matching.schemas import DeepEval, FastScore
 from apps.resumes import schema
 from apps.resumes.text import resume_to_text
@@ -65,7 +66,6 @@ SAMPLE_SIZE = 20
 # Most of the sample is roles the candidate could plausibly want: a model is chosen on how it
 # ranks the postings near the shortlist, and every model agrees that a sales role is a 5.
 RELEVANT_SHARE = 0.6
-MAX_DESCRIPTION_CHARS = 4000
 # The titles both fixtures treat as relevant to their (backend engineer) candidates.
 ENGINEERING_TITLES = r"(software|backend|platform|infrastructure|data|full[- ]?stack) engineer"
 

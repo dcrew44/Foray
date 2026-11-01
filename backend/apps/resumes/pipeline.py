@@ -52,6 +52,7 @@ from apps.core.db import db
 from apps.core.errors import UserFacingError
 from apps.core.storage import StorageError, sha256_hex, storage, storage_key
 from apps.jobs.models import Job
+from apps.llm.untrusted import one_line
 from apps.matching import queries as match_queries
 from apps.matching.models import JobMatch
 from apps.resumes import render as rendering
@@ -258,7 +259,7 @@ def accept_upload(user_id: str, data: bytes, filename: str, kind: DocumentType) 
 
 
 def _label(job: Job) -> str:
-    return f"{job.title} at {job.company_name}"
+    return f"{one_line(job.title)} at {one_line(job.company_name)}"
 
 
 def start_tailor_run(

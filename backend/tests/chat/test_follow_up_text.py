@@ -2,7 +2,8 @@
 `src/test/unit/follow-up.test.ts`).
 
 `describe_update` is ported verbatim: every golden case gives the same label and text, byte for
-byte. Its kind names now come from `runs/catalogue.py`, which adds the two kinds TS lacked.
+byte, but for `ALLOWED_DIFFS`. Its kind names now come from `runs/catalogue.py`, which adds the
+two kinds TS lacked.
 """
 
 from __future__ import annotations
@@ -17,6 +18,27 @@ from apps.chat.follow_up import ApprovalView, EventView, ProposedRole, RunView, 
 
 GOLDEN = Path(__file__).resolve().parents[1] / "goldens" / "strings" / "describe_update.json"
 CASES: list[dict[str, Any]] = json.loads(GOLDEN.read_text())
+
+# #30, the one declared difference: the roles a gate asks about are third-party text (titles,
+# companies, places and the reviews' headlines), so their list is wrapped. It opens after its
+# lead-in and closes before the line that follows it.
+ROLE_LIST_LEADS = ("(fast score in brackets):\n", "verdict:\n")
+AFTER_ROLE_LIST = "\nThe approval card above already lists"
+
+
+def _declared(text: str) -> str:
+    for lead in ROLE_LIST_LEADS:
+        if f"{lead}- " in text:
+            assert text.count(AFTER_ROLE_LIST) == 1
+            text = text.replace(f"{lead}- ", f'{lead}<untrusted source="job postings">\n- ')
+            text = text.replace(AFTER_ROLE_LIST, f"\n</untrusted>{AFTER_ROLE_LIST}")
+    return text
+
+
+def test_every_declared_difference_is_used() -> None:
+    texts = [case["output"]["text"] for case in CASES]
+    for lead in ROLE_LIST_LEADS:
+        assert any(f"{lead}- " in text for text in texts), lead
 
 
 def _update(given: dict[str, Any]) -> tuple[str, str]:
@@ -41,7 +63,7 @@ def test_every_golden_case_is_present() -> None:
 def test_describe_update_matches_the_golden(case: dict[str, Any]) -> None:
     label, text = _update(case["input"])
     assert label == case["output"]["label"]
-    assert text == case["output"]["text"]
+    assert text == _declared(case["output"]["text"])
 
 
 def _search(**output: Any) -> RunView:

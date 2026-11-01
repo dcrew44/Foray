@@ -58,6 +58,7 @@ from apps.core.ids import generate_message_id
 from apps.core.jsonio import js_num
 from apps.core.queue import defer_in_tx
 from apps.llm.context import llm_context
+from apps.llm.untrusted import one_line, untrusted
 from apps.matching.brief import describe_brief, parse_brief
 from apps.matching.queries import get_match_rows
 from apps.resumes.text import js_trim
@@ -172,12 +173,17 @@ RULES: Final = (
 
 
 def _role_lines(roles: Sequence[ProposedRole]) -> str:
-    return "\n".join(
-        f"- {role.title} at {role.company}"
-        + (f" ({js_num(role.score)})" if role.score is not None else "")
-        + (f", {role.locations}" if role.locations else "")
-        + (f": {role.headline}" if role.headline else "")
-        for role in roles
+    """The roles a gate asks about. Titles, companies, places and headlines came from postings
+    or were written about them, so the list is wrapped as third-party text (#30)."""
+    return untrusted(
+        "\n".join(
+            f"- {one_line(role.title)} at {one_line(role.company)}"
+            + (f" ({js_num(role.score)})" if role.score is not None else "")
+            + (f", {one_line(role.locations)}" if role.locations else "")
+            + (f": {one_line(role.headline)}" if role.headline else "")
+            for role in roles
+        ),
+        "job postings",
     )
 
 

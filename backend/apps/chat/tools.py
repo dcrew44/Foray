@@ -52,6 +52,7 @@ from apps.jobs import registry as company_registry
 from apps.jobs.models import Company, Job
 from apps.jobs.sources.types import js_iso
 from apps.llm.structured import structured
+from apps.llm.untrusted import neutralize, one_line
 from apps.matching import queries as match_queries
 from apps.matching import search
 from apps.matching.brief import clean_brief, describe_brief
@@ -960,7 +961,9 @@ def _get_job(user_id: str, wanted: str) -> Output:
         if own is not None
         else None,
         # Third-party text: wrapped, so the agent reads it as data (§7.2).
-        "description": None if text is None else UNTRUSTED_JOB.format(text[:DESCRIPTION_MAX]),
+        "description": None
+        if text is None
+        else UNTRUSTED_JOB.format(neutralize(text[:DESCRIPTION_MAX])),
     }
 
 
@@ -1102,7 +1105,7 @@ async def answer_approval(ctx: Ctx, args: AnswerApprovalInput) -> Output:
 
 def _label(user_id: str, match_id: uuid.UUID) -> str | None:
     rows = match_queries.get_match_rows(user_id, [match_id])
-    return f"{rows[0].title} at {rows[0].company}" if rows else None
+    return f"{one_line(rows[0].title)} at {one_line(rows[0].company)}" if rows else None
 
 
 def _move(user_id: str, args: MoveJobStageInput) -> Output:
@@ -1143,7 +1146,7 @@ def _evaluate(user_id: str, conversation_id: uuid.UUID | None, wanted: str) -> O
     except (NoResumeError, UnknownMatchError) as error:
         return failure(str(error), matchId=str(match.id))
     row = started.matches[0]
-    label = f"{row.title} at {row.company}"
+    label = f"{one_line(row.title)} at {one_line(row.company)}"
     if started.reused:
         message = f"{label} is already being evaluated; the card shows its progress."
     else:

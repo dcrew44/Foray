@@ -35,7 +35,15 @@ ALLOWED_DIFFS = {
     "untrusted_paragraph": "§7.2: one rule on text inside <untrusted …> tags",
     "no_resume_keeps_preferences": "§7.1: without a resume the prompt still carries the "
     "preferences or interview block, so answers given before the upload are not re-asked",
+    "on_the_card": "#31: chat has no answer_approval; the user starts and answers on the card",
 }
+
+# What `prompt.ON_THE_CARD` replaced.
+TS_APPROVAL_LINE = (
+    "- list_pending_approvals shows decisions a run is waiting on; answer_approval records the\n"
+    "  user's decision when they give it in chat (approve all, a subset of item ids, or skip).\n"
+    "  Never approve on their behalf without them saying so."
+)
 
 
 def _cases(builder: str) -> list[dict[str, Any]]:
@@ -70,6 +78,9 @@ def as_typescript(text: str, case: dict[str, Any]) -> str:
     # untrusted_paragraph
     assert text.count(prompt.UNTRUSTED) == 1
     text = text.replace(prompt.UNTRUSTED, "")
+    # on_the_card
+    assert text.count(prompt.ON_THE_CARD) == 1
+    text = text.replace(prompt.ON_THE_CARD, TS_APPROVAL_LINE)
     # no_resume_keeps_preferences
     if not given["hasProfile"]:
         section = prompt.preferences_section(

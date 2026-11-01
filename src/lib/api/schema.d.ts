@@ -827,7 +827,7 @@ export interface components {
          * ApprovalKind
          * @enum {string}
          */
-        ApprovalKind: "deep_eval_batch" | "shortlist_proposal";
+        ApprovalKind: "deep_eval_batch" | "shortlist_proposal" | "run_start";
         /**
          * Level
          * @enum {string}
@@ -2101,21 +2101,6 @@ export interface components {
         };
         /** ListPendingApprovalsInput */
         ListPendingApprovalsInput: Record<string, never>;
-        /** AnswerApprovalInput */
-        AnswerApprovalInput: {
-            /**
-             * Approval Id
-             * @description The approval's id.
-             */
-            approval_id: string;
-            /** Approve */
-            approve: boolean;
-            /**
-             * Item Ids
-             * @description With approve=true: only these items. Null means every item. Ignored when declining.
-             */
-            item_ids: string[] | null;
-        };
         /** MoveJobStageInput */
         MoveJobStageInput: {
             /**
@@ -2545,13 +2530,6 @@ export interface components {
         ListPendingApprovalsOutput: {
             /** Approvals */
             approvals: components["schemas"]["PendingApprovalView"][];
-        };
-        /** AnswerApprovalOutput */
-        AnswerApprovalOutput: {
-            /** Ok */
-            ok: boolean;
-            /** Message */
-            message: string;
         };
         /** MoveJobStageOutput */
         MoveJobStageOutput: {

@@ -440,12 +440,10 @@ def test_a_gate_follow_up_names_the_proposed_roles(monkeypatch: pytest.MonkeyPat
     roles = [line for line in lines if line.startswith("- ")]
     assert roles[0].startswith("- Platform Engineer at ") and "(77)" in roles[0]
     assert roles[1].startswith("- Data Engineer at ") and "(81)" in roles[1]  # trimmed title
-    # The update names the approval, so a "yes" in chat answers it without guessing an id.
-    assert any(
-        line.startswith(f'The pending approval is "{approval.id}" (deep_eval_batch: ')
-        and "pass that id to answer_approval" in line
-        for line in lines
-    )
+    # The roles are third-party text (#30), and the user answers on the card (#31).
+    assert lines[lines.index(roles[0]) - 1] == '<untrusted source="job postings">'
+    assert "They answer on the card above; you cannot answer it for them." in notice_text
+    assert "answer_approval" not in notice_text
     label = (messages_of(conversation)[0].metadata or {})["label"]
     assert label == "Search paused for your go-ahead"
 

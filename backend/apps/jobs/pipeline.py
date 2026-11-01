@@ -77,6 +77,8 @@ from apps.runs.catalogue import (
     EventKind,
     Level,
     RunKind,
+    RunStartPayload,
+    RunStatus,
 )
 from apps.runs.models import Run
 
@@ -260,10 +262,21 @@ def start_add(
     return Started(run, reused, message)
 
 
+NAMES_START_DETAIL = (
+    "Looks for each company's job board and registers the ones whose postings it can read. "
+    "Names it cannot verify are left out."
+)
+
+
 def start_names(
-    user_id: str, names: Sequence[str], *, conversation_id: Id | None = None
+    user_id: str,
+    names: Sequence[str],
+    *,
+    conversation_id: Id | None = None,
+    confirm: bool = False,
 ) -> Started:
-    """Start one `company_discovery` run that looks up each name (chat's discover_companies)."""
+    """Start one `company_discovery` run that looks up each name (chat's discover_companies).
+    With `confirm` (the chat agent's start), it waits for the user's go-ahead first (#31)."""
     cleaned = list(dict.fromkeys(name for name in (js_trim(n) for n in names) if name))
     if not cleaned:
         raise ApiError(400, NAMES_MISSING)
@@ -282,11 +295,23 @@ def start_names(
         conversation_id=conversation_id,
         dedupe_key=f"add:names:{key}",
         task=ADD_TASK,
+        gate=lifecycle.StartGate(
+            title=f"Look up job boards for {join_names(cleaned)}",
+            payload=RunStartPayload(detail=NAMES_START_DETAIL),
+        )
+        if confirm
+        else None,
     )
-    message = (
-        f"Looking for job boards for {len(cleaned)} companies: {', '.join(cleaned)}. "
-        "Progress will appear in the activity feed."
-    )
+    if run.status == RunStatus.AWAITING_APPROVAL:  # only ever a start waiting on its gate
+        message = (
+            f"Looking up job boards for {len(cleaned)} companies ({', '.join(cleaned)}) is "
+            "waiting for the user's go-ahead on its card."
+        )
+    else:
+        message = (
+            f"Looking for job boards for {len(cleaned)} companies: {', '.join(cleaned)}. "
+            "Progress will appear in the activity feed."
+        )
     return Started(run, reused, message)
 
 

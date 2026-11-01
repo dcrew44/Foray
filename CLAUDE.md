@@ -137,6 +137,12 @@ An issue reads like the ones already there:
 - Approval gates use the continuation pattern described in DESIGN.md: a step that needs a
   decision calls `approvals.request_approval(...)` and returns; `decide()` defers the
   continuation in the same transaction.
+- **The chat agent asks; the user starts.** A chat tool that starts work which spends passes
+  `confirm=True` to its starter, which puts the run behind a `run_start` gate
+  (`lifecycle.StartGate`, a kind in `catalogue.START_STEP`); no chat tool answers an approval.
+- **Third-party text reaches a model wrapped.** Posting text in a prompt goes through
+  `apps/llm/untrusted.py` (`untrusted()`, `one_line()`), and a new chat tool that returns
+  posting fields lists their paths in `chat/model_view.POSTING_FIELDS`.
 - **A search follows its request.** The search pipeline reads the effective preferences,
   `apply_brief(saved, brief)` (`apps/matching/brief.py`), never the saved preferences
   directly: a request for entry-level roles at one company overrides level, roles, places,

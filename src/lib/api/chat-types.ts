@@ -46,7 +46,7 @@ export type ToolFailure = { ok: false; message: string };
 
 type T<I, O> = { input: I; output: O | ToolFailure };
 
-/** The 16 chat tools (§7.2), by name. */
+/** The 15 chat tools (§7.2), by name. */
 export type ForayTools = {
   get_profile_summary: T<S["GetProfileSummaryInput"], S["GetProfileSummaryOutput"]>;
   get_resume: T<S["GetResumeInput"], S["GetResumeOutput"]>;
@@ -60,7 +60,6 @@ export type ForayTools = {
   list_jobs: T<S["ListJobsInput"], S["ListJobsOutput"]>;
   get_job: T<S["GetJobInput"], S["GetJobOutput"]>;
   list_pending_approvals: T<S["ListPendingApprovalsInput"], S["ListPendingApprovalsOutput"]>;
-  answer_approval: T<S["AnswerApprovalInput"], S["AnswerApprovalOutput"]>;
   move_job_stage: T<S["MoveJobStageInput"], S["MoveJobStageOutput"]>;
   evaluate_job: T<S["EvaluateJobInput"], S["MatchRunOutput"]>;
   tailor_resume: T<S["TailorResumeInput"], S["MatchRunOutput"]>;

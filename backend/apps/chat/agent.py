@@ -3,13 +3,15 @@
 - **Model:** `model("chat")`, the wrapped stack of §8.3, so chat now gets the purpose's reasoning
   setting, the rate limiter and the budget guard (the TS agent bypassed both).
 - **Instructions:** `prompt.system_prompt(...)`, built by the caller from the user's stored state.
-- **Tools:** the 16 of `tools.CHAT_TOOLSET`, registered once at import. The user comes from
+- **Tools:** the 15 of `tools.CHAT_TOOLSET`, registered once at import. The user comes from
   `RunContext.deps` (`ChatDeps`), so the model has no way to name another user.
 - **Read-only follow-ups:** `FollowUpTools` offers only `FOLLOW_UP_TOOLS` when `deps.follow_up`.
   Every tool stays registered, so history that used the others still converts.
 - **Step cap:** `StepCap(n)` hides every tool on the last allowed request, which forces a final
   text answer instead of ending on a bare tool result; `UsageLimits(request_limit=n)` is the hard
   backstop. `n` is 8 for chat and 4 for follow-ups (§7.8).
+- **Posting fields:** `model_view.PostingFields` wraps the third-party values in tool results
+  (titles, companies, review text) in the copy each request sends (#30).
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ from pydantic_ai.capabilities import AbstractCapability
 from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.toolsets import AbstractToolset
 
+from apps.chat.model_view import PostingFields
 from apps.chat.tools import CHAT_TOOLSET, FOLLOW_UP_TOOLS, TOOL_RETRIES
 from apps.llm.registry import model
 
@@ -103,7 +106,7 @@ def build_agent(
         instructions=instructions,
         deps_type=ChatDeps,
         toolsets=[toolset],
-        capabilities=[FollowUpTools(), StepCap(steps_for(follow_up))],
+        capabilities=[FollowUpTools(), StepCap(steps_for(follow_up)), PostingFields()],
         retries={"tools": TOOL_RETRIES},
     )
     return agent

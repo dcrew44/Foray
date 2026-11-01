@@ -635,8 +635,13 @@ def test_catalogue_lists_every_event_kind_with_its_default_level() -> None:
 
 def test_approval_kinds_have_payloads_and_continuations() -> None:
     kinds = set(catalogue.ApprovalKind.values)
-    assert kinds == set(catalogue.PAYLOAD_MODELS) == set(catalogue.APPROVAL_NEXT_STEP)
-    assert set(catalogue.APPROVAL_NEXT_STEP.values()) == set(catalogue.NextStep.values)
+    assert kinds == set(catalogue.PAYLOAD_MODELS)
+    # A pipeline's gates name their continuation; a `run_start` gate continues into its run's
+    # first step, whichever kind it is (#31).
+    assert set(catalogue.APPROVAL_NEXT_STEP) == kinds - {catalogue.ApprovalKind.RUN_START}
+    assert set(catalogue.START_STEP) <= set(catalogue.RunKind.values)
+    steps = {*catalogue.APPROVAL_NEXT_STEP.values(), *catalogue.START_STEP.values()}
+    assert steps == set(catalogue.NextStep.values)
 
 
 def test_catalogue_enums_are_schema_ready() -> None:

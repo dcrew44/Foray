@@ -127,7 +127,7 @@ fails too), so a row cannot outlive its proof.
 
 | # | Invariant | Enforced by | Proved by |
 |---|---|---|---|
-| R1 | A run row and its first job commit together, or neither does, in every process | `runs.lifecycle.start_run` (one transaction, savepoint insert, `defer_in_tx` on Django's connection); `test_register` bans every other defer | `runs/test_lifecycle.py::test_start_is_atomic`, `runs/test_defer_in_tx.py::test_rollback_leaves_no_job_under_worker_connector` |
+| R1 | A run row and its first job commit together, or neither does, in every process. A gated start (R19) commits its run with its pending approval instead, and the first job commits with the user's yes (R6) | `runs.lifecycle.start_run` (one transaction, savepoint insert, `defer_in_tx` on Django's connection); `test_register` bans every other defer | `runs/test_lifecycle.py::test_start_is_atomic`, `runs/test_defer_in_tx.py::test_rollback_leaves_no_job_under_worker_connector` |
 | R2 | At most one active run per `(user, dedupe_key)` | partial unique index `runs_one_active_per_key` | `runs/test_lifecycle.py::test_one_active_run_per_key_under_concurrency` |
 | R3 | An active run (`queued`, `running`) is always held by a `todo`/`doing` job with `lock = 'run:<id>'`. Otherwise the reaper fails it within 2 minutes. An `awaiting_approval` run with no pending approval and no live job is failed after 10 minutes | `run_step` lock convention; `runs.reaper.reap()` | `runs/test_reaper.py::test_reaper_fails_orphaned_runs`, `::test_reaper_spares_live_continuation`, `::test_reaper_fails_lost_continuation` |
 | R4 | A run finishes only through `complete()`, `fail()` or `cancel()`. Each is conditional on an active status and emits exactly one terminal event, which is the run's last event | `runs.lifecycle` | `runs/test_lifecycle.py::test_one_terminal_event_per_run`, `::test_cancel_beats_late_complete`, `::test_handler_that_forgets_to_finish_fails` |
@@ -144,6 +144,8 @@ fails too), so a row cannot outlive its proof.
 | R15 | A search follows its request (`apply_brief`) | `matching.brief.apply_brief` used by every search reader | `matching/test_brief.py` (ported), `matching/test_search_pipeline.py::test_brief_overrides_saved_preferences` |
 | R16 | The legacy database and the legacy file tree are never modified, and no Django process ever writes to a legacy-looking database | `legacy.importer` (read-only session, copy-only files); `env.py` name check and `core.guards.assert_app_database` | `legacy/test_import.py::test_import_leaves_legacy_untouched`, `core/test_guards.py::test_migrate_refuses_legacy_target`, `legacy/test_import.py::test_refuses_swapped_urls` |
 | R17 | Every run kind ends with `run.*`, and `FOLLOW_UP_KINDS` is the same set in Python and TS | `runs.lifecycle`; generated constant check | `runs/test_lifecycle.py::test_every_kind_finishes_with_run_event`, `chat/test_follow_up_db.py::test_follow_up_kinds_match_frontend` |
+| R18 | Third-party text reaches a model wrapped: every prompt that carries a posting wraps all of it, short fields included, in `<untrusted …>` with any copy of the tag defanged inside, and the chat model reads the posting fields of tool results wrapped | `llm.untrusted`; `chat.model_view.PostingFields` | `llm/test_untrusted.py::test_the_fast_score_prompt`, `::test_the_deep_eval_prompt`, `::test_the_tailor_prompt`, `chat/test_chat_view.py::test_the_model_reads_posting_fields_wrapped` |
+| R19 | The chat agent can neither start paid work nor answer an approval: the runs it asks for wait behind a `run_start` approval that only the user answers, and a no or a lapse cancels them before they run | `runs.lifecycle.start_run(gate=…)`; `runs.approvals.decide()` and `expire_lapsed()`; no chat tool answers an approval | `runs/test_start_gate.py::test_a_gated_start_waits_and_defers_nothing`, `::test_a_no_cancels_the_run_before_it_ever_ran`, `chat/test_chat_view.py::test_approvals_are_listed_in_chat_and_answered_only_on_their_cards` |
 
 `manage.py acceptance_checks` re-checks the database-level rows (R3, R4, R10, and the ledger's
 attribution) against live data after a browser rehearsal. Its run-level lines cover only runs
@@ -217,7 +219,7 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
   A lane that loses the database (a Postgres restart) is started again with a backoff instead
   of ending the process, and the prod containers restart unless stopped by hand.
 - **Agents**: a pydantic-ai `Agent` drives chat, built per turn with the chat purpose's model
-  stack and 16 tools, and streamed to the browser in the AI SDK's UI-message protocol, which
+  stack and 15 tools, and streamed to the browser in the AI SDK's UI-message protocol, which
   `useChat` reads unchanged. Search / rank / tailor / discovery are plain procrastinate
   pipelines with approval gates, not agent loops, and Phase 2's form filling won't be one
   either: one model call plans the answers and a deterministic fill enters them.
@@ -228,11 +230,14 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
   `chat.followup` so an open chat merges it in; the app toasts it anywhere else.
 - **Approval gate pattern** (the durable-workflow substitute reused by every later phase): a
   step that reaches a gate writes an `approvals` row naming its continuation task, emits
-  `approval.requested`, sets the run to `awaiting_approval`, and returns. Deciding — from the
-  UI or a chat tool — moves the run back to `running` and defers the continuation in the same
+  `approval.requested`, sets the run to `awaiting_approval`, and returns. Deciding — on its
+  card, in the chat or on a page — moves the run back to `running` and defers the continuation in the same
   transaction, so a decision and its job commit together or not at all. In `autopilot` the
   same path auto-approves with `decided_via: 'autopilot'`. Unanswered approvals expire 7 days
-  later through a per-minute sweep.
+  later through a per-minute sweep. A run the chat agent starts (a search, a deep review,
+  tailoring, a company lookup) opens behind a `run_start` gate before its first step: the
+  user's yes defers that step, a no or a lapse cancels the run, and autopilot never answers
+  it. No chat tool answers an approval; the user answers every one on its card (R19).
 - **The one async rule.** Ninja operations are sync (each request runs in its own thread);
   the chat view is the one async endpoint. Async code reaches the database only through
   `await db(fn, …)`, which runs a sync function on a pooled thread and returns its connection,
@@ -463,7 +468,7 @@ adds its own table or column when it is built, and nothing is reserved for it.
 | Cross-source duplicates | a normalized `dedupe_key` (company, title, primary location) at ingest, then the prefilter's one-role-one-match collapse (invariant 14) |
 | Fetching what users and models type | one guarded HTTP client refuses private, loopback and metadata addresses on every request and redirect hop, caps response sizes, and sends a caller's API key only to the origin it was meant for |
 | Data reachable from the network | Postgres publishes 5432 on loopback only and `next dev` listens on 127.0.0.1; `SIGNUP_OPEN=false` once the owner's account exists; every `.env.*` but the template is git-ignored |
-| Prompt injection through postings | a posting's full text is wrapped in `<untrusted>`; short posting fields (titles, companies, headlines) reach the model unwrapped, follow-ups and a re-sent notice get read-only tools, and write tools have no structural confirmation yet |
+| Prompt injection through postings | every prompt that carries posting text (scoring, deep review, tailoring, careers pages, follow-up notices) wraps all of it, short fields included, in `<untrusted source=…>`, defangs any copy of the tag inside, and says the block is data (`apps/llm/untrusted.py`); the chat model reads the posting fields of tool results wrapped too, while the cards keep the plain values (`apps/chat/model_view.py`); follow-ups and a re-sent notice get read-only tools; the chat agent cannot answer an approval, and the work that spends (a search, a deep review, tailoring, a company lookup) waits behind a `run_start` approval the user answers on its card (R19). Cheaper writes (preferences, a pipeline stage, adding one company, stopping a run) still act on the model's say-so |
 | API drift vs. model training data | `AGENTS.md` and the vendored AI SDK skills for the frontend; pydantic-ai pinned exactly (it ships several times a week), Django and ninja pinned; golden and contract tests pin prompts, wire bodies and the UI-stream protocol |
 | Tailoring fabrication | fact-grounded prompt + verifier with evidence ids; the user sees every change in the tailor panel, and once Phase 2 lands a tailored resume goes out only with an automated application, whose `apply_submit` approval shows it |
 | Container/native drift | the same `env.py` validation and migrations in both; the containerized check is the guard |

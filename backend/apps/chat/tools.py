@@ -1,4 +1,4 @@
-"""The chat agent's 16 tools (design §7.2; a port of `src/lib/agents/tools/*.ts`).
+"""The chat agent's 15 tools (design §7.2; a port of `src/lib/agents/tools/*.ts`).
 
 - **Who.** Every tool reads the user from `RunContext.deps` (`agent.ChatDeps`), so the model has
   no way to name another user.
@@ -18,6 +18,11 @@
 - **Runs** a tool starts carry `conversation=deps.conversation_id`, so they report back in this
   chat (R7, R17). That now includes `add_company` and `discover_companies`, whose
   `company_discovery` runs posted nothing back before.
+- **The user starts what spends** (#31). `start_search_run`, `discover_companies`,
+  `evaluate_job` and `tailor_resume` start their run behind a `run_start` gate
+  (`lifecycle.StartGate`): the run card shows it, and nothing runs until the user presses
+  Start. No tool answers an approval: the user answers every one on its card, so text injected
+  through a posting can neither start paid work nor approve it.
 
 `FOLLOW_UP_TOOLS` are the read-only six a follow-up turn may call (`agent.FollowUpTools`).
 """
@@ -52,6 +57,7 @@ from apps.jobs import registry as company_registry
 from apps.jobs.models import Company, Job
 from apps.jobs.sources.types import js_iso
 from apps.llm.structured import structured
+from apps.llm.untrusted import neutralize, one_line
 from apps.matching import queries as match_queries
 from apps.matching import search
 from apps.matching.brief import clean_brief, describe_brief
@@ -64,8 +70,8 @@ from apps.resumes.queries import latest_base_resume, latest_base_resume_row
 from apps.resumes.text import RESUME_SECTIONS, js_trim, resume_to_text
 from apps.runs import approvals as approval_service
 from apps.runs import lifecycle
-from apps.runs.catalogue import ApprovalKind, CompanyAddInput, RunKind, RunStatus, StoredDecision
-from apps.runs.models import Approval, Run
+from apps.runs.catalogue import CompanyAddInput, RunKind, RunStatus
+from apps.runs.models import Run
 
 __all__ = [
     "CHAT_TOOLSET",
@@ -272,15 +278,6 @@ class ListPendingApprovalsInput(_Input):
     pass
 
 
-class AnswerApprovalInput(_Input):
-    approval_id: str = Field(description="The approval's id.")
-    approve: bool
-    item_ids: list[str] | None = Field(
-        description="With approve=true: only these items. Null means every item. Ignored when "
-        "declining."
-    )
-
-
 class MoveJobStageInput(_Input):
     id: str = Field(description="A matchId or jobId.")
     stage: StageName
@@ -456,11 +453,6 @@ class ListPendingApprovalsOutput(_Output):
     approvals: list[PendingApprovalView]
 
 
-class AnswerApprovalOutput(_Output):
-    ok: bool
-    message: str
-
-
 class MoveJobStageOutput(_Output):
     ok: bool
     match_id: str | None
@@ -490,7 +482,6 @@ OUTPUT_MODELS: Final[dict[str, type[ApiModel]]] = {
     "list_jobs": ListJobsOutput,
     "get_job": GetJobOutput,
     "list_pending_approvals": ListPendingApprovalsOutput,
-    "answer_approval": AnswerApprovalOutput,
     "move_job_stage": MoveJobStageOutput,
     "evaluate_job": MatchRunOutput,
     "tailor_resume": MatchRunOutput,
@@ -654,8 +645,8 @@ def proposal_prompt(description: str, count: int) -> str:
 
 @chat_tool(
     "Find and register several companies matching a description, e.g. 'AI infrastructure "
-    "startups in SF hiring new grads'. Runs in the background; progress appears in the activity "
-    "feed."
+    "startups in SF hiring new grads'. It names candidates now; looking up their boards waits "
+    "for the user to press Start on the card it shows, then runs in the background."
 )
 async def discover_companies(ctx: Ctx, args: DiscoverCompaniesInput) -> Output:
     # The model proposes names (the agent thinking, so it stays in the turn); discovery decides
@@ -670,7 +661,11 @@ async def discover_companies(ctx: Ctx, args: DiscoverCompaniesInput) -> Output:
     if not names:
         return failure("Could not think of matching companies.")
     started = await db(
-        company_pipeline.start_names, _user(ctx), names, conversation_id=_conversation(ctx)
+        company_pipeline.start_names,
+        _user(ctx),
+        names,
+        conversation_id=_conversation(ctx),
+        confirm=True,
     )
     value = CompanyAddInput.read(started.run.input)
     return {
@@ -709,11 +704,13 @@ ALREADY_WAITING: Final = (
     "A search is already waiting on the user's go-ahead; this is its card. Do not start another."
 )
 ALREADY_RUNNING: Final = "A search is already running; this is its card. Do not start another."
-STARTED_AUTOPILOT: Final = (
-    "Search started on autopilot. It will score, evaluate and shortlist without stopping."
+READY_AUTOPILOT: Final = (
+    "Search ready on autopilot. It starts when the user presses Start on its card, then scores, "
+    "evaluates and shortlists without stopping."
 )
-STARTED_APPROVE_EACH: Final = (
-    "Search started. It will pause for approval before the deep evaluation and before shortlisting."
+READY_APPROVE_EACH: Final = (
+    "Search ready. It starts when the user presses Start on its card, then pauses for approval "
+    "before the deep evaluation and before shortlisting."
 )
 
 
@@ -747,6 +744,7 @@ def _start_search(
         hints=hints.dump(),
         mode=mode,
         conversation_id=conversation_id,
+        confirm=True,
     )
     run = started.run
     if started.reused:  # one active search per user (R2): its card comes back
@@ -764,7 +762,7 @@ def _start_search(
         "runId": str(run.id),
         "mode": mode,
         "searchingFor": describe_brief(hints),
-        "message": STARTED_AUTOPILOT if mode == "autopilot" else STARTED_APPROVE_EACH,
+        "message": READY_AUTOPILOT if mode == "autopilot" else READY_APPROVE_EACH,
     }
 
 
@@ -774,8 +772,8 @@ def _start_search(
     "this time: fill companies, roles, seniority, locations, remote and focus from their "
     "request, and leave a field null to use their saved preference. These apply to this search "
     "only and never change saved preferences (use update_profile_preferences for lasting "
-    "changes). Returns a run id immediately; the chat shows a live card for it. Refuses if "
-    "essential preferences are not yet known."
+    "changes). Returns a run id immediately; the chat shows its card, and the search starts "
+    "when the user presses Start there. Refuses if essential preferences are not yet known."
 )
 async def start_search_run(ctx: Ctx, args: StartSearchRunInput) -> Output:
     return await db(_start_search, _user(ctx), _conversation(ctx), args)
@@ -960,7 +958,9 @@ def _get_job(user_id: str, wanted: str) -> Output:
         if own is not None
         else None,
         # Third-party text: wrapped, so the agent reads it as data (§7.2).
-        "description": None if text is None else UNTRUSTED_JOB.format(text[:DESCRIPTION_MAX]),
+        "description": None
+        if text is None
+        else UNTRUSTED_JOB.format(neutralize(text[:DESCRIPTION_MAX])),
     }
 
 
@@ -1005,96 +1005,11 @@ def _pending(user_id: str) -> Output:
     "List what is waiting on the user's answer. deep_eval_batch: a search paused before "
     "deep-evaluating its best roles with the strong model — items are the roles, estimate is "
     "the cost in USD. shortlist_proposal: roles the deep evaluation recommends, waiting to be "
-    "moved onto the shortlist. Answer one with answer_approval once the user decides."
+    "moved onto the shortlist. run_start: work you asked for, waiting for the user to start it. "
+    "The user answers each one on its card; you cannot answer it for them."
 )
 async def list_pending_approvals(ctx: Ctx, args: ListPendingApprovalsInput) -> Output:
     return await db(_pending, _user(ctx))
-
-
-def match_items(payload: Any, ids: Sequence[str]) -> list[str]:
-    """The payload item ids a set of model-supplied ids refers to, in payload order (a job id
-    stands for its match id)."""
-    wanted = {js_trim(i) for i in ids}
-    return [
-        item["matchId"]
-        for item in _payload_items(payload)
-        if isinstance(item, Mapping)
-        and isinstance(item.get("matchId"), str)
-        and (item.get("matchId") in wanted or item.get("jobId") in wanted)
-    ]
-
-
-def confirmation(approval: Approval) -> str:
-    """What the agent is told after a decision (`approvals.ts`'s `confirmation`)."""
-    decision = StoredDecision.read(approval.decision) or StoredDecision(approved=False)
-    total = len(_payload_items(approval.payload))
-    chosen = len(decision.item_ids) if decision.item_ids is not None else total
-    count = (
-        f"{chosen} {'role' if chosen == 1 else 'roles'}"
-        if chosen == total
-        else f"{chosen} of {total} roles"
-    )
-    if approval.kind == ApprovalKind.DEEP_EVAL_BATCH:
-        return (
-            f"Approved deep evaluation of {count}. It runs in the background; the search card "
-            "shows progress, and the shortlist proposal follows."
-            if decision.approved
-            else "Skipped the deep evaluation. The search will wrap up without it."
-        )
-    if approval.kind == ApprovalKind.SHORTLIST_PROPOSAL:
-        return (
-            f"Approved: shortlisting {count}."
-            if decision.approved
-            else "Left the shortlist as it was. The search will wrap up."
-        )
-    return "Approved." if decision.approved else "Declined."
-
-
-def _answer(user_id: str, args: AnswerApprovalInput) -> Output:
-    parsed = lifecycle.as_uuid(args.approval_id)
-    approval = (
-        Approval.objects.for_user(user_id).filter(id=parsed).first() if parsed is not None else None
-    )
-    if approval is None:
-        return failure(
-            "No approval with that id. Call list_pending_approvals for the current ones."
-        )
-    decision: dict[str, Any] = {"approved": args.approve}
-    if args.approve and args.item_ids is not None:
-        # Ids that match nothing would count as a rejection, an irreversible answer the user
-        # never gave, so that is refused instead.
-        chosen = match_items(approval.payload, args.item_ids)
-        if not chosen:
-            return failure(
-                "None of those ids are items of this approval, so nothing was answered. Use the "
-                "matchId values from list_pending_approvals."
-            )
-        decision["itemIds"] = chosen
-    try:
-        result = approval_service.decide(user_id, approval.id, decision, "chat")  # R6
-    except Exception:
-        log.exception("chat: deciding approval %s failed", approval.id)
-        return failure("Could not resume the run just now; the request is still open. Try again.")
-    if not result.ok or result.approval is None:
-        if result.outcome == "already_decided":
-            return failure("That request was already answered, so nothing changed.")
-        if result.outcome == "expired":
-            return failure("That request has expired and can no longer be answered.")
-        return failure("No approval with that id.")
-    return {"ok": True, "message": confirmation(result.approval)}
-
-
-@chat_tool(
-    "Answer a pending approval (from list_pending_approvals) with the user's decision. Only "
-    "call this after the user has clearly said yes or no to it in this conversation — never "
-    "decide for them, and ask if it is ambiguous. approve=true with item_ids approves just "
-    "those items (each item's matchId; a jobId also works); item_ids=null approves all of them. "
-    "approve=false declines the whole request. Approving deep evaluation spends a few cents per "
-    "role; the paused search then resumes in the background. An approval can only be answered "
-    "once."
-)
-async def answer_approval(ctx: Ctx, args: AnswerApprovalInput) -> Output:
-    return await db(_answer, _user(ctx), args)
 
 
 # --- one role ------------------------------------------------------------------------------------
@@ -1102,7 +1017,7 @@ async def answer_approval(ctx: Ctx, args: AnswerApprovalInput) -> Output:
 
 def _label(user_id: str, match_id: uuid.UUID) -> str | None:
     rows = match_queries.get_match_rows(user_id, [match_id])
-    return f"{rows[0].title} at {rows[0].company}" if rows else None
+    return f"{one_line(rows[0].title)} at {one_line(rows[0].company)}" if rows else None
 
 
 def _move(user_id: str, args: MoveJobStageInput) -> Output:
@@ -1139,19 +1054,22 @@ def _evaluate(user_id: str, conversation_id: uuid.UUID | None, wanted: str) -> O
     limit = throttle.EVALUATE  # shared with POST /api/matches/{id}/evaluate (§4.5)
     throttle.throttle(f"evaluate:{user_id}", limit.limit, limit.window_s)
     try:
-        started = start_match_evaluation(user_id, [match.id], conversation_id=conversation_id)
+        started = start_match_evaluation(
+            user_id, [match.id], conversation_id=conversation_id, confirm=True
+        )
     except (NoResumeError, UnknownMatchError) as error:
         return failure(str(error), matchId=str(match.id))
     row = started.matches[0]
-    label = f"{row.title} at {row.company}"
-    if started.reused:
-        message = f"{label} is already being evaluated; the card shows its progress."
-    else:
+    label = f"{one_line(row.title)} at {one_line(row.company)}"
+    if started.run.status == RunStatus.AWAITING_APPROVAL:
         cost = cost_phrase(estimate_eval_cost(1).per_item_usd)
         message = (
-            f"Evaluating {label} in the background{f' ({cost})' if cost else ''}. "
-            "The card shows progress; the result is saved on the role."
+            f"A deep review of {label}{f' ({cost})' if cost else ''} is waiting for the user's "
+            "go-ahead on its card. Once they start it, it takes about half a minute and the "
+            "result is saved on the role."
         )
+    else:
+        message = f"{label} is already being evaluated; the card shows its progress."
     return {"ok": True, "runId": str(started.run.id), "matchId": str(match.id), "message": message}
 
 
@@ -1159,8 +1077,9 @@ def _evaluate(user_id: str, conversation_id: uuid.UUID | None, wanted: str) -> O
     "Deep-evaluate one role against the user's full resume with the strong model: a 0–100 "
     "score, a recommendation (strong / apply / maybe / skip), the requirements they meet with "
     "evidence from their resume, gaps, seniority/location/salary fit, risks and talking points. "
-    "Costs a few cents and runs in the background for about half a minute; the chat shows a "
-    "live card, and get_job returns the result once it is done. Accepts a matchId or jobId. If "
+    "Costs a few cents, so it starts only when the user presses Start on the card it shows, "
+    "then runs for about half a minute; get_job returns the result once it is done. Accepts a "
+    "matchId or jobId. If "
     "get_job already shows a deep evaluation, only re-run it when the user asks or their resume "
     "changed."
 )
@@ -1172,7 +1091,8 @@ async def evaluate_job(ctx: Ctx, args: EvaluateJobInput) -> Output:
     "Tailor the user's resume to one job: select, reorder and reword what their resume already "
     "says for that posting, verify every line against the original, and render a PDF. Never "
     "adds skills or experience. Accepts a match id or a job id (from list_jobs or get_job). "
-    "Takes about a minute; returns a run id immediately and the chat shows its progress."
+    "Returns a run id immediately; it starts when the user presses Start on its card, then "
+    "takes about a minute."
 )
 async def tailor_resume(ctx: Ctx, args: TailorResumeInput) -> Output:
     # start_tailor_run counts `tailor:<user>` itself, shared with the endpoint.
@@ -1181,6 +1101,7 @@ async def tailor_resume(ctx: Ctx, args: TailorResumeInput) -> Output:
         _user(ctx),
         args.id,
         conversation_id=_conversation(ctx),
+        confirm=True,
     )
     return started.as_dict()
 
@@ -1200,7 +1121,6 @@ INPUT_MODELS.update(
         "list_jobs": ListJobsInput,
         "get_job": GetJobInput,
         "list_pending_approvals": ListPendingApprovalsInput,
-        "answer_approval": AnswerApprovalInput,
         "move_job_stage": MoveJobStageInput,
         "evaluate_job": EvaluateJobInput,
         "tailor_resume": TailorResumeInput,

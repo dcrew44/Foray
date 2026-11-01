@@ -10,6 +10,11 @@ and defers the continuation at once; it waits on the run's lock until the curren
 Every decision defers the continuation, a "no" included: the continuation is what finishes the
 run, and it treats anything but `approved`/`auto_approved` as a no (`is_approved`).
 
+The one exception is a `run_start` gate (#31), which a run started by the chat agent waits behind
+before its first step (`lifecycle.start_run(gate=...)`). A yes defers that first step, which
+knows nothing of the gate; a no or a lapse cancels the run in the same transaction, since there
+is no step yet to finish it. Autopilot never answers one: it is the user's own go-ahead.
+
 Exactly once: the run row and then the approval row are locked (`select_for_update`, always in
 that order, as `lifecycle.cancel` does), so a second concurrent decision sees a decided row.
 """
@@ -20,7 +25,6 @@ import logging
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import timedelta
 from typing import Any, Literal, cast
 
 from django.db import connection, transaction
@@ -30,6 +34,7 @@ from django.db.models.functions import Now
 from apps.runs import events, lifecycle, step
 from apps.runs.catalogue import (
     APPROVAL_NEXT_STEP,
+    APPROVAL_TTL,
     ApprovalKind,
     ApprovalStatus,
     DecidedVia,
@@ -60,8 +65,6 @@ __all__ = [
 log = logging.getLogger("foray.runs")
 
 type Id = str | uuid.UUID
-
-APPROVAL_TTL = timedelta(days=7)
 
 
 # --- pure helpers (ported from approvals.ts) -----------------------------------------------------
@@ -145,7 +148,7 @@ def describe_decision(approval: Approval, decision: StoredDecision) -> str:
             if decision.approved
             else "Left the shortlist as it was."
         )
-    return f"Approved: {approval.title}." if decision.approved else f"Declined: {approval.title}."
+    return f"Approved: {approval.title}." if decision.approved else declined_message(approval)
 
 
 def decision_reply(approval: Approval) -> str:
@@ -156,6 +159,8 @@ def decision_reply(approval: Approval) -> str:
             return "Skipped the deep evaluation."
         if approval.kind == ApprovalKind.SHORTLIST_PROPOSAL:
             return "Left the shortlist as it was."
+        if approval.kind == ApprovalKind.RUN_START:
+            return "Not started."
         return "Declined."
     total = len(payload_item_ids(approval.payload))
     chosen = len(stored.item_ids) if stored.item_ids is not None else total
@@ -163,11 +168,17 @@ def decision_reply(approval: Approval) -> str:
         return f"Approved. Deep-evaluating {_roles(chosen)} in the background."
     if approval.kind == ApprovalKind.SHORTLIST_PROPOSAL:
         return f"Approved. Shortlisting {_roles(chosen)}."
+    if approval.kind == ApprovalKind.RUN_START:
+        return "Started."
     return "Approved."
 
 
 def lapsed_message(approval: Approval) -> str:
     return f"No answer within a week, so this lapsed: {approval.title}."
+
+
+def declined_message(approval: Approval) -> str:
+    return f"Declined: {approval.title}."
 
 
 # --- raising a gate ------------------------------------------------------------------------------
@@ -196,6 +207,11 @@ def _resume(run_id: Id, phase: str | None = None) -> bool:
 
 
 def _defer_continuation(approval: Approval) -> int:
+    if approval.kind == ApprovalKind.RUN_START:
+        # The run's first step, deferred as `start_run` would have: it never reads the gate.
+        return step.defer_step(
+            approval.next_step, approval.run_id, queueing_lock=f"approval:{approval.id}"
+        )
     return step.defer_step(
         approval.next_step,
         approval.run_id,
@@ -314,6 +330,10 @@ def _expire(approval: Approval, run: Run) -> None:
     approval.decided_via = DecidedVia.EXPIRY
     approval.decided_at = Now()  # evaluated by the database, read back with RETURNING
     approval.save(update_fields=["status", "decided_via", "decided_at"])
+    if approval.kind == ApprovalKind.RUN_START:
+        # Nothing ran: the run ends here, with the lapse as its one terminal event.
+        lifecycle.cancel(run.user_id, run.id, message=lapsed_message(approval))
+        return
     if not _resume(run.id):
         return
     _defer_continuation(approval)
@@ -371,6 +391,11 @@ def decide(user_id: str, approval_id: Id, decision: Mapping[str, Any], via: str)
         approval.decided_via = via
         approval.decided_at = Now()  # evaluated by the database, read back with RETURNING
         approval.save(update_fields=["status", "decision", "decided_via", "decided_at"])
+        if approval.kind == ApprovalKind.RUN_START and not stored.approved:
+            # A start the user turned down: the run never ran, and `run.cancelled` (emitted
+            # last) is both the decision's record and the run's one terminal event.
+            lifecycle.cancel(user_id, run.id, message=declined_message(approval), level=Level.INFO)
+            return DecideResult("decided", approval)
         _resume(run.id, CONTINUATION_PHASE.get(approval.next_step) if stored.approved else None)
         _defer_continuation(approval)
         events.emit(

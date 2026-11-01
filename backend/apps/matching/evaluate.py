@@ -31,12 +31,14 @@ from django.db import connection
 from apps.core.db import db
 from apps.core.errors import UserFacingError
 from apps.llm.budget import BudgetExceeded
+from apps.llm.untrusted import one_line
 from apps.matching import queries
 from apps.matching.brief import parse_brief
 from apps.matching.deep_eval import (
     EvalCandidate,
     MatchEvaluation,
     NoResumeError,
+    estimate_eval_cost,
     evaluate_match,
     load_eval_candidate,
 )
@@ -390,13 +392,41 @@ class EvaluationStart:
     matches: list[MatchRow]
 
 
+START_DETAIL = (
+    "Reads the posting in full against your resume with the stronger model, and quotes the "
+    "evidence for every requirement."
+)
+
+
+def start_gate(matches: Sequence[MatchRow]) -> lifecycle.StartGate:
+    """The go-ahead a deep review the chat agent asked for waits on (#31), with its price."""
+    estimate = estimate_eval_cost(len(matches))
+    first = matches[0]
+    return lifecycle.StartGate(
+        title=f"Deep-review {one_line(first.title)} at {one_line(first.company)}"
+        if len(matches) == 1
+        else f"Deep-review {roles(len(matches))}",
+        payload=catalogue.RunStartPayload(
+            detail=START_DETAIL,
+            estimate=catalogue.CostEstimate(
+                usd=estimate.usd, per_item_usd=estimate.per_item_usd, model=estimate.model
+            ),
+        ),
+    )
+
+
 def start_match_evaluation(
-    user_id: str, match_ids: Sequence[Any], *, conversation_id: uuid.UUID | str | None = None
+    user_id: str,
+    match_ids: Sequence[Any],
+    *,
+    conversation_id: uuid.UUID | str | None = None,
+    confirm: bool = False,
 ) -> EvaluationStart:
     """Starts a `rank_deep` run for specific matches of this user (others are ignored). Asking
     for matches already being evaluated returns that run rather than paying twice. Raises
     `UnknownMatchError` when none of the ids is one of the user's matches, and `NoResumeError`
-    when there is no resume to evaluate against. Sync."""
+    when there is no resume to evaluate against. Sync. With `confirm` (the chat agent's start),
+    the run waits for the user's go-ahead first (#31)."""
     matches = queries.get_match_rows(user_id, match_ids)
     if not matches:
         raise UnknownMatchError()
@@ -411,6 +441,7 @@ def start_match_evaluation(
         conversation_id=conversation_id,
         dedupe_key=f"evaluate:{key}",
         task=MATCH_EVALUATE_TASK,
+        gate=start_gate(matches) if confirm else None,
     )
     return EvaluationStart(run=run, reused=reused, matches=matches)
 

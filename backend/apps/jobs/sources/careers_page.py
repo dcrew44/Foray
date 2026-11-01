@@ -40,6 +40,7 @@ from apps.jobs.sources.dedupe import content_hash, dedupe_key, sha1_hex, web_job
 from apps.jobs.sources.normalize import detect_remote, parse_salary, primary_location
 from apps.jobs.sources.types import NormalizedJob
 from apps.llm.structured import structured
+from apps.llm.untrusted import untrusted
 
 MAX_LISTING_PAGES = 5  # listing pages read per company
 MAX_POSTINGS = 50  # posting pages opened per company
@@ -78,10 +79,7 @@ class ExtractedListing(BaseModel):
 
 def listing_prompt(company_name: str, url: str, text: str) -> str:
     """The per-page half of the extraction prompt; `text` is already capped."""
-    return (
-        f"Careers page for {company_name} at {url}.\n\n"
-        f'<untrusted source="careers page">\n{text}\n</untrusted>'
-    )
+    return f"Careers page for {company_name} at {url}.\n\n{untrusted(text, 'careers page')}"
 
 
 async def extract_listing(company_name: str, url: str, text: str) -> ExtractedListing:

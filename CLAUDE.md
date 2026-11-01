@@ -63,7 +63,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 
 GitHub issues on `dcrew44/Foray` are the tracker; milestones are the roadmap, and `decision`
 issues are choices the user makes. Read them with `gh issue list` / `gh issue view <n>`,
-close them from commits with `Fixes #<n>`, and file follow-ups you notice as issues rather
+close them from pull requests with `Fixes #<n>`, and file follow-ups you notice as issues rather
 than leaving them in chat. DESIGN.md keeps the reasons; issues keep the work.
 
 An issue reads like the ones already there:
@@ -262,6 +262,7 @@ training data. Read the installed source (`backend/.venv/lib/python3.14/site-pac
 
 ## Workflow
 
-Build autonomously; commit each working step to `main` with the step's "Done" check
-actually verified. Stop and ask only for things the user must do (API keys, starting
-Docker Desktop, creating accounts) or at a genuine fork not covered by the plan.
+Build autonomously on a branch, one per piece of work (`claude/<name>`), and open a pull
+request once its "Done" check is actually verified; never commit to `main` directly. Stop
+and ask only for things the user must do (API keys, starting Docker Desktop, creating
+accounts) or at a genuine fork not covered by the plan.

@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint && cd backend && uv run ruff check && uv run ruff format --check",
-    "typecheck": "tsc --noEmit && cd backend && uv run pyright",
+    "typecheck": "next typegen && tsc --noEmit && cd backend && uv run pyright",
     "test": "pnpm test:web && pnpm test:api",
     "test:web": "vitest run",
     "test:api": "cd backend && uv run pytest",

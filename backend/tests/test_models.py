@@ -353,7 +353,13 @@ def test_sample_resume_round_trips_byte_for_byte() -> None:
 
 
 def test_stored_keys_keep_todays_spelling() -> None:
-    assert list(Settings().dump()) == ["defaultMode", "scoreThreshold", "deepEvalTopN"]
+    assert list(Settings().dump()) == [
+        "defaultMode",
+        "scoreThreshold",
+        "deepEvalTopN",
+        "watchEnabled",
+        "watchDailyReviews",
+    ]
     assert list(Preferences().dump()) == [
         "target_roles",
         "seniority",
@@ -551,6 +557,7 @@ RUN_KINDS = {
     "profile_import",
     "company_discovery",
     "company_refresh",
+    "watch",
 }
 
 # `map/worker.md` §19 (copied here: docs/migration/ goes away in step 13). Where §19 gives two

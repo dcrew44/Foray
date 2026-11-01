@@ -25,7 +25,7 @@ from django.conf import settings as django_settings
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest
-from pydantic import BeforeValidator, ConfigDict, Field, model_validator
+from pydantic import BeforeValidator, ConfigDict, Field, StrictBool, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from apps.accounts import profile
@@ -150,10 +150,11 @@ def _json_number(value: Any) -> Any:
 # The bounds first, so the JSON schema states them as minimum/maximum.
 ScoreThreshold = Annotated[int, Field(ge=0, le=100), BeforeValidator(_json_number)]
 DeepEvalTopN = Annotated[int, Field(ge=0, le=60), BeforeValidator(_json_number)]
+WatchDailyReviews = Annotated[int, Field(ge=0, le=60), BeforeValidator(_json_number)]
 
 
 class SettingsPatch(ApiModel):
-    """Any subset of the three settings. Unknown keys and nulls are refused."""
+    """Any subset of the settings. Unknown keys and nulls are refused."""
 
     # `SettingsSchema.partial().strict()` in the TypeScript action.
     model_config = ConfigDict(extra="forbid")
@@ -161,6 +162,8 @@ class SettingsPatch(ApiModel):
     default_mode: AutonomyMode | SkipJsonSchema[None] = None
     score_threshold: ScoreThreshold | SkipJsonSchema[None] = None
     deep_eval_top_n: DeepEvalTopN | SkipJsonSchema[None] = None
+    watch_enabled: StrictBool | SkipJsonSchema[None] = None
+    watch_daily_reviews: WatchDailyReviews | SkipJsonSchema[None] = None
 
     @model_validator(mode="after")
     def _no_nulls(self) -> SettingsPatch:
@@ -175,6 +178,8 @@ class SettingsOut(ApiModel):
     default_mode: AutonomyMode
     score_threshold: int
     deep_eval_top_n: int
+    watch_enabled: bool
+    watch_daily_reviews: int
 
 
 class SettingsSaved(ApiModel):

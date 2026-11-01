@@ -23,7 +23,7 @@ pre-migration commit of `main` still runs it against the untouched `foray` datab
 | Topic | Decision |
 |---|---|
 | Audience | **Self-hosted open source (MIT).** Each install runs its own copy with its own accounts and API keys (once OpenRouter is a provider, one key covers every model), so nobody holds other people's resumes or mail tokens. Every domain row still carries `user_id` and every query is user-scoped, so a hosted version stays possible |
-| Autonomy | **Per-run toggle**: `approve_each` (default) or `autopilot`; approvals surface in chat and in the activity feed |
+| Autonomy | **Per-run toggle**: `approve_each` (default) or `autopilot`; approvals surface in chat and in the activity feed. **Watching new postings is the exception** (#5): it deep-reviews without asking, within a daily cap the user sets (`watchDailyReviews`, default 10, about 7¢ a day) and the deep-review limit, so a strong posting is announced the cycle it arrives |
 | Stack | **Django backend, Next.js frontend.** Python 3.14: Django 6.1 with django-ninja 1.7 (the JSON API, sessions, the ORM) on uvicorn, and one procrastinate 3.10 worker process. Next.js 16 only renders: server components read one Django page endpoint each, client components call Django through a typed client, and `/api/*` is rewritten to Django. Types flow from Django's OpenAPI schema into TypeScript (`pnpm api:types`) |
 | LLM | **Multi-provider, no default vendor.** pydantic-ai 2.54 models (OpenAI, Google, DeepSeek, Anthropic, plus an OpenAI-compatible slot); the model for each *purpose* is an env setting, and `LLM_DEFAULT` is required at boot |
 | Fetching | **Hybrid: code fetches, agents decide where.** Deterministic adapters (Greenhouse, Lever, Ashby, Workable, Recruitee, Gem, JSearch) + an agent-managed company registry + an LLM extraction fallback for career pages, all through one guarded HTTP client |
@@ -146,6 +146,7 @@ fails too), so a row cannot outlive its proof.
 | R17 | Every run kind ends with `run.*`, and `FOLLOW_UP_KINDS` is the same set in Python and TS | `runs.lifecycle`; generated constant check | `runs/test_lifecycle.py::test_every_kind_finishes_with_run_event`, `chat/test_follow_up_db.py::test_follow_up_kinds_match_frontend` |
 | R18 | Third-party text reaches a model wrapped: every prompt that carries a posting wraps all of it, short fields included, in `<untrusted …>` with any copy of the tag defanged inside, and the chat model reads the posting fields of tool results wrapped | `llm.untrusted`; `chat.model_view.PostingFields` | `llm/test_untrusted.py::test_the_fast_score_prompt`, `::test_the_deep_eval_prompt`, `::test_the_tailor_prompt`, `chat/test_chat_view.py::test_the_model_reads_posting_fields_wrapped` |
 | R19 | The chat agent can neither start paid work nor answer an approval: the runs it asks for wait behind a `run_start` approval that only the user answers, and a no or a lapse cancels them before they run | `runs.lifecycle.start_run(gate=…)`; `runs.approvals.decide()` and `expire_lapsed()`; no chat tool answers an approval | `runs/test_start_gate.py::test_a_gated_start_waits_and_defers_nothing`, `::test_a_no_cancels_the_run_before_it_ever_ran`, `chat/test_chat_view.py::test_approvals_are_listed_in_chat_and_answered_only_on_their_cards` |
+| R20 | A watch announces a match at most once, and never one a search made: it works only on the matches it created, and announces only those it reviewed itself | `matching.queries.insert_new_matches`; `matching.watch.run_watch` | `matching/test_watch.py::test_a_second_watch_reads_only_what_arrived_since_and_never_announces_twice`, `::test_a_search_s_matches_are_the_search_s` |
 
 `manage.py acceptance_checks` re-checks the database-level rows (R3, R4, R10, and the ledger's
 attribution) against live data after a browser rehearsal. Its run-level lines cover only runs
@@ -297,6 +298,20 @@ A search is one run that moves through phases, pausing at two gates in `approve_
 7. **gate: shortlist** — matches the review recommends; approving moves them to
    Shortlisted (phase `shortlisting`)
 8. complete, with the best matches linked from the run card and the count of strong ones
+
+**Watching new postings** (#5, `apps/matching/watch.py`). Between searches, strong roles used
+to sit unscored in the mirror for a week. After every scheduled refresh the cron defers
+`watch.fan_out`, which starts a `watch` run for each user who is watching (resume, complete
+preferences, no search queued or running, budget left). A watch is the pipeline above with no
+request, no refresh and no gates, over the postings first seen since the previous completed
+watch (less ten minutes; never more than a week back). It works only on the matches it creates
+plus those earlier watches of the week left unfinished, so a search's matches stay the search's
+and nothing is announced twice (R20). Deep reviews run within the daily cap, counted from the
+ledger over 24 hours. A watch that reviewed something `strong` or `apply` completes linked to the
+user's "New matches" chat, so the usual follow-up posts there, and Home lists the week's such
+matches under "New this week"; a quiet watch completes at debug level and stays out of the
+feeds. Announced matches stay in `found`: the user shortlists. The worker must be running for any
+of this; in dev that means `pnpm dev:all`, whose worker runs the missed tick when it starts.
 
 Tailoring is separate and on demand: the strong model reorders, selects and rephrases
 only what the base resume says; a verifier (deterministic rules plus a cheap-model

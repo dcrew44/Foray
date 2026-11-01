@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { SaveBar, useUnsavedChanges } from "@/components/profile/form-controls";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { api, call } from "@/lib/api/client";
 import type { Settings } from "@/lib/api/types";
 import { formatUsd } from "@/lib/format";
@@ -15,9 +16,10 @@ import { cn } from "@/lib/utils";
 
 /**
  * How the agents behave by default: whether a search stops to ask before it
- * spends, where the archive line sits, and how many matches earn the strong
- * model's full read. The settings live on the user, so they can always be
- * saved, resume or not.
+ * spends, where the archive line sits, how many matches earn the strong
+ * model's full read, and whether Foray checks new postings on its own after
+ * each scheduled refresh (and how many it may review a day without asking).
+ * The settings live on the user, so they can always be saved, resume or not.
  */
 
 type AutonomyMode = Settings["defaultMode"];
@@ -52,21 +54,35 @@ export function BehaviourForm({
     mode: initial.defaultMode,
     threshold: clamp(initial.scoreThreshold, 30, 80),
     topN: clamp(initial.deepEvalTopN, 0, 40),
+    watch: initial.watchEnabled,
+    daily: clamp(initial.watchDailyReviews, 0, 30),
   };
   const [mode, setMode] = useState<AutonomyMode>(baseline.mode);
   const [threshold, setThreshold] = useState(baseline.threshold);
   const [topN, setTopN] = useState(baseline.topN);
+  const [watch, setWatch] = useState(baseline.watch);
+  const [daily, setDaily] = useState(baseline.daily);
   const [pending, startTransition] = useTransition();
 
   const dirty =
-    mode !== baseline.mode || threshold !== baseline.threshold || topN !== baseline.topN;
+    mode !== baseline.mode ||
+    threshold !== baseline.threshold ||
+    topN !== baseline.topN ||
+    watch !== baseline.watch ||
+    daily !== baseline.daily;
 
   function save() {
     if (!dirty || pending) return;
     startTransition(async () => {
       const result = await call(
         api.PATCH("/api/settings", {
-          body: { defaultMode: mode, scoreThreshold: threshold, deepEvalTopN: topN },
+          body: {
+            defaultMode: mode,
+            scoreThreshold: threshold,
+            deepEvalTopN: topN,
+            watchEnabled: watch,
+            watchDailyReviews: daily,
+          },
         }),
       );
       if (!result.ok) {
@@ -84,11 +100,14 @@ export function BehaviourForm({
     setMode(baseline.mode);
     setThreshold(baseline.threshold);
     setTopN(baseline.topN);
+    setWatch(baseline.watch);
+    setDaily(baseline.daily);
   }
 
   useUnsavedChanges(dirty, save);
 
   const perSearch = reviewCost != null ? reviewCost * topN : null;
+  const perDay = reviewCost != null ? reviewCost * daily : null;
 
   return (
     <div className="space-y-4">
@@ -175,6 +194,44 @@ export function BehaviourForm({
           min={0}
           onChange={setTopN}
           value={topN}
+        />
+
+        <div className="grid gap-x-8 gap-y-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="min-w-0 space-y-1">
+            <p className="text-[13.5px] font-medium" id="watch-label">
+              Check new postings on my own
+            </p>
+            <p className="text-muted-foreground text-[12.5px] leading-snug">
+              After each board refresh, every six hours while the worker runs, Foray scores what
+              arrived and tells you in a New matches chat when something is worth applying to.
+            </p>
+          </div>
+          <Switch aria-labelledby="watch-label" checked={watch} onCheckedChange={setWatch} />
+        </div>
+
+        <SliderRow
+          disabled={!watch}
+          hint={
+            !watch
+              ? "Turn on checking new postings to choose this."
+              : daily === 0
+                ? "New postings are scored but never reviewed in full, so nothing is announced."
+                : perDay != null
+                  ? `Without asking, within the deep-review limit above. About ${formatUsd(perDay)} a day at most.`
+                  : "Without asking, within the deep-review limit above."
+          }
+          id="daily-reviews"
+          label={
+            <>
+              Deep review up to{" "}
+              <span className="text-display tabular text-[15px]">{daily}</span> new{" "}
+              {daily === 1 ? "match" : "matches"} a day
+            </>
+          }
+          max={30}
+          min={0}
+          onChange={setDaily}
+          value={daily}
         />
       </fieldset>
 

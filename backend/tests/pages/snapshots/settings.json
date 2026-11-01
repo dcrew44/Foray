@@ -52,7 +52,9 @@
   "settings": {
     "deepEvalTopN": "number",
     "defaultMode": "string",
-    "scoreThreshold": "number"
+    "scoreThreshold": "number",
+    "watchDailyReviews": "number",
+    "watchEnabled": "boolean"
   },
   "spend": {
     "calls": "number",

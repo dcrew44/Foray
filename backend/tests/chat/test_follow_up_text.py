@@ -101,6 +101,21 @@ def test_the_promised_phrases() -> None:
     assert "They answer on the card above; you cannot answer it for them." in gate.text
 
 
+def test_a_watch_reports_its_new_matches() -> None:
+    """#5: only a watch with something to announce reports to chat, in the "New matches" chat."""
+    update = describe_update(
+        RunView(id="run-7", kind="watch", input={"prompt": "Check new postings"}, output={}),
+        EventView("run.completed", "2 roles look worth applying to, from 9 new postings."),
+        None,
+    )
+    assert update.label == "New matches"
+    assert update.text.startswith("[Automatic update about run run-7, not written by the user]")
+    assert "Its result: 2 roles look worth applying to, from 9 new postings." in update.text
+    assert 'Call list_jobs with run_id "run-7"' in update.text
+    assert "applying early" in update.text
+    assert "can only look things up" in update.text
+
+
 def test_only_the_number_zero_is_an_empty_search() -> None:
     for candidates in (False, "0", None):
         update = describe_update(

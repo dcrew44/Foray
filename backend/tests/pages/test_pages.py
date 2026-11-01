@@ -217,6 +217,8 @@ def test_home_page() -> None:
         "defaultMode": "approve_each",
         "scoreThreshold": 55,
         "deepEvalTopN": 15,
+        "watchEnabled": True,
+        "watchDailyReviews": 10,
     }
     assert body["counts"] == {
         "found": 1,
@@ -231,6 +233,8 @@ def test_home_page() -> None:
         str(graph.matches["found"].id),
         str(graph.matches["shortlisted"].id),
     ]
+    # Reviewed strong or apply this week and still waiting: the shortlisted one has no review.
+    assert [row["matchId"] for row in body["newThisWeek"]] == [str(graph.matches["found"].id)]
     assert body["spend"] == {"usd": pytest.approx(0.225), "calls": 3}
     assert body["waiting"] == {"approvals": 1, "running": 1}
     assert body["suggestions"] == [
@@ -639,6 +643,8 @@ def test_settings_page() -> None:
         "defaultMode": "approve_each",
         "scoreThreshold": 55,
         "deepEvalTopN": 15,
+        "watchEnabled": True,
+        "watchDailyReviews": 10,
     }
     assert body["spend"] == {
         "usd": pytest.approx(0.225),

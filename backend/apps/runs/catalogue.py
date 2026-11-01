@@ -20,7 +20,7 @@ it for the next serial step.
 
 Dedupe keys (`runs.dedupe_key`, one active run per key, R2): `search`; `evaluate:<sha1 of the
 sorted match ids>`; `tailor:<matchId>`; `render:<resumeId>`; `import:<documentId>`;
-`add:<normalised query>`; `refresh:<slug>` or `refresh:stale`.
+`add:<normalised query>`; `refresh:<slug>` or `refresh:stale`; `watch`.
 
 **Approvals.** `PAYLOAD_MODELS` gives each approval kind's payload; `StoredDecision` is
 `approvals.decision`; `APPROVAL_NEXT_STEP` names the continuation a decision defers. A
@@ -57,6 +57,7 @@ class RunKind(models.TextChoices):
     PROFILE_IMPORT = "profile_import"
     COMPANY_DISCOVERY = "company_discovery"
     COMPANY_REFRESH = "company_refresh"
+    WATCH = "watch"
 
 
 class RunStatus(models.TextChoices):
@@ -237,6 +238,7 @@ KIND_TITLE: dict[str, str] = {
     RunKind.PROFILE_IMPORT: "Profile import",
     RunKind.COMPANY_DISCOVERY: "Company discovery",
     RunKind.COMPANY_REFRESH: "Board refresh",
+    RunKind.WATCH: "New postings",
 }
 
 # `run_step` fails a run with `FAILURE_PREFIX[kind] + <short error>` (§9.2). Search and deep
@@ -249,6 +251,7 @@ FAILURE_PREFIX: dict[str, str] = {
     RunKind.PROFILE_IMPORT: "Could not read that resume: ",
     RunKind.COMPANY_DISCOVERY: "Could not add that company: ",
     RunKind.COMPANY_REFRESH: "The refresh failed: ",
+    RunKind.WATCH: "Checking new postings failed: ",
 }
 
 # The follow-up notice: "<name> has finished" (§7.7).
@@ -260,6 +263,7 @@ FOLLOW_UP_KIND_NAME: dict[str, str] = {
     RunKind.PROFILE_IMPORT: "reading a resume",
     RunKind.COMPANY_DISCOVERY: "company discovery",
     RunKind.COMPANY_REFRESH: "a board refresh",
+    RunKind.WATCH: "checking new postings",
 }
 
 # The follow-up label: "<title> finished" / "<title> stopped" (§7.7).
@@ -271,6 +275,7 @@ FOLLOW_UP_KIND_TITLE: dict[str, str] = {
     RunKind.PROFILE_IMPORT: "Resume import",
     RunKind.COMPANY_DISCOVERY: "Discovery",
     RunKind.COMPANY_REFRESH: "Board refresh",
+    RunKind.WATCH: "New matches",
 }
 
 # `stats.phase`, in order (§9.4). `shortlisting` (search) and `starting` (tailor) are now written.
@@ -293,6 +298,7 @@ PHASES: dict[str, tuple[str, ...]] = {
     RunKind.PROFILE_IMPORT: ("reading", "extracting", "saving", "done"),
     RunKind.COMPANY_DISCOVERY: ("discovering", "refreshing", "done"),
     RunKind.COMPANY_REFRESH: ("waiting", "refreshing", "done"),
+    RunKind.WATCH: ("starting", "filtering", "scoring", "evaluating", "done"),
 }
 
 # The documented keys of `runs.stats` (`map/worker.md` §9.10, §11.3).
@@ -341,6 +347,20 @@ STATS_KEYS: dict[str, tuple[str, ...]] = {
     RunKind.PROFILE_IMPORT: ("phase",),
     RunKind.COMPANY_DISCOVERY: ("phase",),
     RunKind.COMPANY_REFRESH: ("phase",),
+    RunKind.WATCH: (
+        "phase",
+        "candidates",
+        "matches",
+        "newMatches",
+        "scored",
+        "autoArchived",
+        "scoringFailed",
+        "toEvaluate",
+        "evaluated",
+        "evaluationFailed",
+        "notReviewed",
+        "announced",  # 0 marks a quiet watch, which the activity feed leaves out
+    ),
 }
 
 # --- runs.input ----------------------------------------------------------------------------------
@@ -404,6 +424,20 @@ class CompanyRefreshInput(JsonModel):
     name: str | None = None  # its name, stored at start for the activity page
     stale: bool = False  # every active board not fetched in 2 h
     prompt: str
+
+
+class WatchInput(DefaultedJsonModel):
+    # A watch scores the postings first seen in its window (#5). The fan-out passes `since` only
+    # to widen the window by hand (`watch_now --days`); the step fills in the rest.
+    model_config = CAMEL
+
+    prompt: str | None = None  # "Check new postings", for the activity page
+    since: str | None = None  # ISO: postings first seen after this
+    until: str | None = None  # ISO: the database clock when the step started
+    preferences: dict[str, Any] | None = None  # the saved preferences the criteria came from
+    criteria: dict[str, Any] | None = None  # `DerivedCriteria`, reused while preferences hold
+    candidate_job_ids: list[str] | None = None  # what the prefilter chose
+    new_job_ids: list[str] | None = None  # the matches this watch created: its own work
 
 
 # --- runs.output ---------------------------------------------------------------------------------
@@ -517,6 +551,21 @@ class CompanyRefreshOutput(JsonModel):
     message: str
 
 
+class WatchOutput(JsonModel):
+    model_config = CAMEL
+
+    candidates: int  # new postings that passed the prefilter
+    new_matches: int
+    scored: int
+    auto_archived: int
+    evaluated: int
+    strong: int
+    apply: int
+    not_reviewed: int  # scored over the threshold but held back by the daily cap
+    announced_match_ids: list[str]  # reviewed strong or apply by this watch, best first
+    message: str
+
+
 # --- events.data ---------------------------------------------------------------------------------
 
 
@@ -536,6 +585,7 @@ INPUT_MODELS: dict[str, type[JsonModel]] = {
     RunKind.PROFILE_IMPORT: ImportInput,
     RunKind.COMPANY_DISCOVERY: CompanyAddInput,
     RunKind.COMPANY_REFRESH: CompanyRefreshInput,
+    RunKind.WATCH: WatchInput,
 }
 
 # A kind may have more than one output shape; `read_output` tries them in order.
@@ -547,6 +597,7 @@ OUTPUT_MODELS: dict[str, tuple[type[JsonModel], ...]] = {
     RunKind.PROFILE_IMPORT: (ImportOutput,),
     RunKind.COMPANY_DISCOVERY: (CompanyAddOutput, CompanyNamesOutput),
     RunKind.COMPANY_REFRESH: (CompanyRefreshOutput,),
+    RunKind.WATCH: (WatchOutput,),
 }
 
 

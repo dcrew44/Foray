@@ -39,6 +39,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 | `worker` | the worker itself (what `dev:worker` runs, without the reload) |
 | `acceptance_checks [--since ISO]` | re-check the database-level invariants after a rehearsal; exits 1 on any FAIL |
 | `debug_sleep <seconds>` | a job that sleeps, for checking lock recovery after a `kill -9` (DEBUG only) |
+| `watch_now [--email e] [--days N] [--fan-out]` | a watch over the newest postings now instead of after the next six-hourly refresh; `--days` widens its window, `--fan-out` starts every watching user's (DEBUG only) |
 
 ## Layout
 
@@ -151,6 +152,11 @@ An issue reads like the ones already there:
   `FOLLOW_UP_KINDS` (`apps/runs/catalogue.py`, mirrored in `src/lib/chat/follow-up-kinds.ts`;
   a test keeps them equal) when the run has a conversation. Follow-up turns get read-only
   tools only (`FOLLOW_UP_TOOLS` in `apps/chat/tools.py`).
+- **A watch runs unasked** (`apps/matching/watch.py`), after every scheduled refresh, so it stays
+  quiet: its progress is debug-level, one that finds nothing completes at debug level with
+  `announced: 0` (Activity, toasts and Home leave it out), and one that finds something links
+  the "New matches" chat as it completes (`lifecycle.complete(conversation_id=…)`) to report
+  there. It works only on matches it created, so it never touches a search's.
 - **The API**: routers come from `apps.core.router.router()` (camelCase on the wire, snake_case
   in Python); output schemas extend `ApiModel`. Mutations answer `{ok: true, message}` (`202`
   when work was queued); expected failures raise `ApiError(status, message)` or name their

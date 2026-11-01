@@ -64,6 +64,10 @@ class Settings(DefaultedJsonModel):
     score_threshold: int = Field(default=55, ge=0, le=100)
     # How many of the best fast-scored matches get the strong-model review.
     deep_eval_top_n: int = Field(default=15, ge=0, le=60)
+    # Score the postings each scheduled refresh brings in, and announce the strong ones (#5).
+    watch_enabled: bool = True
+    # The most deep reviews watching may spend in 24 hours, without asking.
+    watch_daily_reviews: int = Field(default=10, ge=0, le=60)
 
 
 # Complete preferences for throwaway users: `create_test_user --with-resume` and

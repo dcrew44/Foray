@@ -16,7 +16,7 @@ import json
 import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Literal
 
 from django.db import connection, transaction
@@ -42,12 +42,15 @@ __all__ = [
     "ensure_match",
     "get_match_by_job",
     "get_match_rows",
+    "insert_new_matches",
     "is_shortlist_candidate",
+    "job_ids_for_matches",
     "latest_matched_at",
     "list_matches",
     "list_shortlist_candidates",
     "matches_needing_evaluation",
     "move_matches_from_stage",
+    "recent_recommended",
     "resolve_match",
     "resolve_or_create_match",
     "save_deep_eval",
@@ -214,6 +217,15 @@ def get_match_rows(user_id: str, match_ids: Sequence[Any]) -> list[MatchRow]:
     return [_row(match) for match in rows]
 
 
+def job_ids_for_matches(user_id: str, match_ids: Any) -> list[str]:
+    """The postings of these matches (malformed and foreign ids ignored), in input order."""
+    ids = valid_uuids(match_ids) if isinstance(match_ids, list | tuple) else []
+    if not ids:
+        return []
+    found = dict(JobMatch.objects.for_user(user_id).filter(id__in=ids).values_list("id", "job_id"))
+    return [found[uuid.UUID(match_id)] for match_id in ids if uuid.UUID(match_id) in found]
+
+
 def get_match_by_job(user_id: str, job_id: str) -> JobMatch | None:
     """The user's match for a posting, if Foray has matched them to it."""
     return JobMatch.objects.for_user(user_id).filter(job_id=job_id).first()
@@ -269,6 +281,17 @@ def count_new_since(user_id: str, since: datetime) -> dict[str, int]:
         .annotate(score=Coalesce("deep_score", "fast_score"))
     )
     return {"total": rows.count(), "strong": rows.filter(score__gte=80).count()}
+
+
+def recent_recommended(user_id: str, *, days: int = 7, limit: int = 6) -> list[MatchRow]:
+    """Matches made in the last `days` that the deep review called worth applying to and that
+    are still waiting on the user (found or shortlisted), best first: Home's "New this week"."""
+    rows = _rows(user_id).filter(
+        stage__in=("found", "shortlisted"),
+        recommendation__in=("strong", "apply"),
+        created_at__gte=Now() - timedelta(days=days),
+    )
+    return [_row(match) for match in rows.order_by(*_BEST_FIRST)[:limit]]
 
 
 def latest_matched_at(user_id: str) -> datetime | None:
@@ -347,7 +370,13 @@ def upsert_matches(user_id: str, job_ids: Sequence[str]) -> int:
     applied to must not be dragged back to `found` by a later search seeing it again. The count
     comes from `RETURNING`, so a concurrent insert is not counted twice (bug #44).
     """
-    created = 0
+    return len(insert_new_matches(user_id, job_ids))
+
+
+def insert_new_matches(user_id: str, job_ids: Sequence[str]) -> list[str]:
+    """`upsert_matches`, returning the postings whose match this call created, in input order.
+    A watch works only on these: a match a search already made is the search's (#5)."""
+    created: set[str] = set()
     unique = list(dict.fromkeys(job_ids))
     for offset in range(0, len(unique), UPSERT_BATCH):
         batch = unique[offset : offset + UPSERT_BATCH]
@@ -358,11 +387,11 @@ def upsert_matches(user_id: str, job_ids: Sequence[str]) -> int:
                 "(id, user_id, job_id, stage, stage_changed_at, created_at, updated_at) "
                 "SELECT new.id, %s, new.job_id, 'found', now(), now(), now() "
                 "FROM unnest(%s::uuid[], %s::text[]) AS new(id, job_id) "
-                "ON CONFLICT (user_id, job_id) DO NOTHING RETURNING id",
+                "ON CONFLICT (user_id, job_id) DO NOTHING RETURNING job_id",
                 [user_id, ids, batch],
             )
-            created += len(cursor.fetchall())
-    return created
+            created.update(row[0] for row in cursor.fetchall())
+    return [job_id for job_id in unique if job_id in created]
 
 
 def unscored_job_ids(user_id: str, job_ids: Sequence[str]) -> list[str]:

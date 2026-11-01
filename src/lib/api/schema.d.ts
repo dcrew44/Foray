@@ -799,6 +799,10 @@ export interface components {
             scoreThreshold: number;
             /** Deepevaltopn */
             deepEvalTopN: number;
+            /** Watchenabled */
+            watchEnabled: boolean;
+            /** Watchdailyreviews */
+            watchDailyReviews: number;
         };
         /** SettingsSaved */
         SettingsSaved: {
@@ -810,7 +814,7 @@ export interface components {
         };
         /**
          * SettingsPatch
-         * @description Any subset of the three settings. Unknown keys and nulls are refused.
+         * @description Any subset of the settings. Unknown keys and nulls are refused.
          */
         SettingsPatch: {
             /**
@@ -822,6 +826,10 @@ export interface components {
             scoreThreshold?: number;
             /** Deepevaltopn */
             deepEvalTopN?: number;
+            /** Watchenabled */
+            watchEnabled?: boolean;
+            /** Watchdailyreviews */
+            watchDailyReviews?: number;
         };
         /**
          * ApprovalKind
@@ -934,7 +942,7 @@ export interface components {
          * RunKind
          * @enum {string}
          */
-        RunKind: "search" | "rank_deep" | "tailor" | "resume_render" | "profile_import" | "company_discovery" | "company_refresh";
+        RunKind: "search" | "rank_deep" | "tailor" | "resume_render" | "profile_import" | "company_discovery" | "company_refresh" | "watch";
         /**
          * RunStatus
          * @enum {string}
@@ -1438,6 +1446,8 @@ export interface components {
             counts: components["schemas"]["StageCounts"];
             /** Best */
             best: components["schemas"]["MatchRow"][];
+            /** Newthisweek */
+            newThisWeek: components["schemas"]["MatchRow"][];
             spend: components["schemas"]["HomeSpend"];
             waiting: components["schemas"]["HomeWaiting"];
             /** Suggestions */
@@ -1511,6 +1521,16 @@ export interface components {
              * @default 15
              */
             deepEvalTopN: number;
+            /**
+             * Watchenabled
+             * @default true
+             */
+            watchEnabled: boolean;
+            /**
+             * Watchdailyreviews
+             * @default 10
+             */
+            watchDailyReviews: number;
         };
         /** Slot */
         Slot: {
@@ -2076,7 +2096,7 @@ export interface components {
         ListJobsInput: {
             /**
              * Run Id
-             * @description Only the roles this search run found.
+             * @description Only the roles this search run found, or this watch run announced.
              */
             run_id: string | null;
             /** Limit */

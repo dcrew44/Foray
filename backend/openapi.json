@@ -1772,12 +1772,22 @@
           "deepEvalTopN": {
             "title": "Deepevaltopn",
             "type": "integer"
+          },
+          "watchEnabled": {
+            "title": "Watchenabled",
+            "type": "boolean"
+          },
+          "watchDailyReviews": {
+            "title": "Watchdailyreviews",
+            "type": "integer"
           }
         },
         "required": [
           "defaultMode",
           "scoreThreshold",
-          "deepEvalTopN"
+          "deepEvalTopN",
+          "watchEnabled",
+          "watchDailyReviews"
         ],
         "title": "SettingsOut",
         "type": "object"
@@ -1806,7 +1816,7 @@
       },
       "SettingsPatch": {
         "additionalProperties": false,
-        "description": "Any subset of the three settings. Unknown keys and nulls are refused.",
+        "description": "Any subset of the settings. Unknown keys and nulls are refused.",
         "properties": {
           "defaultMode": {
             "enum": [
@@ -1826,6 +1836,16 @@
             "maximum": 60,
             "minimum": 0,
             "title": "Deepevaltopn",
+            "type": "integer"
+          },
+          "watchEnabled": {
+            "title": "Watchenabled",
+            "type": "boolean"
+          },
+          "watchDailyReviews": {
+            "maximum": 60,
+            "minimum": 0,
+            "title": "Watchdailyreviews",
             "type": "integer"
           }
         },
@@ -2125,7 +2145,8 @@
           "resume_render",
           "profile_import",
           "company_discovery",
-          "company_refresh"
+          "company_refresh",
+          "watch"
         ],
         "title": "RunKind",
         "type": "string"
@@ -3653,6 +3674,13 @@
             "title": "Best",
             "type": "array"
           },
+          "newThisWeek": {
+            "items": {
+              "$ref": "#/components/schemas/MatchRow"
+            },
+            "title": "Newthisweek",
+            "type": "array"
+          },
           "spend": {
             "$ref": "#/components/schemas/HomeSpend"
           },
@@ -3675,6 +3703,7 @@
           "onboarding",
           "counts",
           "best",
+          "newThisWeek",
           "spend",
           "waiting",
           "suggestions",
@@ -3844,6 +3873,18 @@
             "maximum": 60,
             "minimum": 0,
             "title": "Deepevaltopn",
+            "type": "integer"
+          },
+          "watchEnabled": {
+            "default": true,
+            "title": "Watchenabled",
+            "type": "boolean"
+          },
+          "watchDailyReviews": {
+            "default": 10,
+            "maximum": 60,
+            "minimum": 0,
+            "title": "Watchdailyreviews",
             "type": "integer"
           }
         },
@@ -5715,7 +5756,7 @@
                 "type": "null"
               }
             ],
-            "description": "Only the roles this search run found.",
+            "description": "Only the roles this search run found, or this watch run announced.",
             "title": "Run Id"
           },
           "limit": {

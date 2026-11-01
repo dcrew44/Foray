@@ -22,6 +22,7 @@ from __future__ import annotations
 import re
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 from django.db import connection, transaction
@@ -510,15 +511,21 @@ def prefilter_jobs(
     criteria: DerivedCriteria,
     companies: CompanyFilter | None = None,
     limit: int = DEFAULT_LIMIT,
+    *,
+    first_seen_after: datetime | None = None,
 ) -> PrefilterResult:
     """Selects the postings worth scoring for one user. Sync (run it through `db()`).
 
     `preferences` are the effective ones (saved, with this search's brief applied). Every clause
     is over a normalized column rather than free text, which is what makes it cheap enough to run
-    over the whole mirror.
+    over the whole mirror. `first_seen_after` narrows it to the postings that arrived since then
+    (a watch's window).
     """
     params: list[Any] = []
     conditions = ["j.is_active"]
+    if first_seen_after is not None:
+        conditions.append("j.first_seen_at > %s")
+        params.append(first_seen_after)
 
     company = _company_clause(companies, params)
     if company is not None:

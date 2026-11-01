@@ -29,7 +29,7 @@ from apps.runs.catalogue import (
     RunStatus,
 )
 from apps.runs.models import Approval, Event, Run
-from tests.factories import make_approval, make_run, make_user
+from tests.factories import make_approval, make_conversation, make_run, make_user
 from tests.queue import run_deferred
 from tests.runs import support
 from tests.runs.support import event_kinds, jobs, refresh
@@ -240,6 +240,24 @@ def test_complete_and_fail_write_what_the_ui_reads() -> None:
     assert (failed.status, failed.error) == ("failed", "Tailoring failed: boom")
     event = _last_event(failed.id)
     assert (event.kind, event.level, event.message) == ("run.failed", "error", failed.error)
+
+
+@pytest.mark.django_db
+def test_complete_can_link_a_chat_that_then_hears_back() -> None:
+    """A watch links its "New matches" chat as it completes (#5): the same transaction's
+    `run.completed` then defers the chat follow-up, as for a run started from that chat."""
+    user = make_user()
+    conversation = make_conversation(user)
+    run = make_run(user, kind="watch", status="running")
+    assert lifecycle.complete(run.id, None, "Found 2.", conversation_id=conversation.id)
+    assert refresh(run).conversation_id == conversation.id
+    [follow_up] = jobs(task_name="chat.follow_up")
+    assert follow_up["args"] == {"event_id": _last_event(run.id).id}
+    # Without one, a run keeps the chat it had (none here, so nothing is deferred).
+    plain = make_run(user, status="running")
+    assert lifecycle.complete(plain.id, None, "Done.")
+    assert refresh(plain).conversation_id is None
+    assert len(jobs(task_name="chat.follow_up")) == 1
 
 
 @pytest.mark.django_db

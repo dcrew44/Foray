@@ -1,0 +1,123 @@
+# CI: what `pnpm check` and `pnpm build` do locally, on every pull request and push to main.
+# No secrets: settings_test.py ignores the environment and blocks non-loopback connections, so
+# no job here reads a key, reaches a provider or spends. Real-model checks (llm:smoke, bakeoff)
+# stay local.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 7 * * *' # nightly, so a broken upstream image or browser shows up without a push
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+  PYDANTIC_AI_NO_BANNER: '1'
+  FORAY_TEST_DATABASE_URL: postgres://foray:foray@localhost:5432/foray_app
+
+jobs:
+  # Lint, typecheck, both test suites and the generated-files check. One job, because the
+  # contract tests run the installed `ai` package from inside pytest.
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: foray
+          POSTGRES_PASSWORD: foray
+          POSTGRES_DB: foray_app
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U foray -d foray_app"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          working-directory: backend
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --locked
+        working-directory: backend
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:web
+      - name: pnpm test:api (strict register, fresh database, no slow tests)
+        run: uv run pytest --create-db -m "not slow"
+        working-directory: backend
+        env:
+          FORAY_REGISTER_STRICT: '1'
+      - name: Generated API types are committed
+        # export_openapi_schema boots settings.py, which validates the environment; a fake
+        # model needs no key. Nothing here connects to the database.
+        run: |
+          pnpm api:types
+          git diff --exit-code backend/openapi.json src/lib/api/schema.d.ts
+        env:
+          DATABASE_URL: postgres://foray:foray@localhost:5432/foray_app
+          SECRET_KEY: ci-secret-key-0123456789-0123456789-0123456789-abc
+          DEBUG: 'true'
+          LLM_FAKE: '1'
+          LLM_DEFAULT: openai:gpt-5.6-luna
+
+  # The production frontend build: route and server/client boundary errors tsc misses.
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  # The PDF tests (`-m slow`), with Playwright's own Chromium as the worker image has it.
+  slow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: foray
+          POSTGRES_PASSWORD: foray
+          POSTGRES_DB: foray_app
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U foray -d foray_app"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          working-directory: backend
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --locked
+        working-directory: backend
+      - run: uv run playwright install --with-deps chromium
+        working-directory: backend
+      - run: uv run pytest --create-db -m slow
+        working-directory: backend

@@ -299,16 +299,23 @@ for byte. Run `pnpm check` before committing.
 
 ## Roadmap
 
+The roadmap is the [milestones](https://github.com/dcrew44/Foray/milestones); the reasons
+behind it are in [DESIGN.md](DESIGN.md).
+
 - **Phase 1: find, rank, tailor.** Done, and running on the Django backend since
   October 2026.
-- **Deployment.** Next up: the same four containers in the cloud behind a TLS front,
-  with object storage for documents and sign-up closed until it's ready.
-- **Phase 2: apply.** A browser agent that fills in applications on the common applicant
-  tracking systems and submits only with your approval of the filled form.
-- **Phase 3: outreach.** Recruiter email over Gmail, with reply tracking and an approval
-  for every send.
-- **Phase 4: SaaS hardening.** Usage billing off the ledger, per-user company follows,
-  hosted browsers, retention policy.
+- **Better matches, sooner.** Every match leads with its verdict and why, new strong
+  matches reach you soon after they're posted, and listings get legitimacy checks.
+- **Model choice.** Pick the model for each purpose and each chat, with OpenRouter as a
+  provider.
+- **Career coach.** For strong matches Foray coaches and you write: what's missing, what to
+  put first and what to change.
+- **Applying in two lanes.** For strong matches you write and submit while Foray fills the
+  form. For matches worth applying to but not strong, Foray applies from your own browser
+  and waits for your approval of each filled form. No cloud browser and no CAPTCHA solving.
+- **Warm paths.** A referral or a named contact before any cold email.
+- **Ready for other people.** Self-hosted with your own API keys, plus a hosted mirror of
+  job postings that installs sync from.
 
 ## License
 

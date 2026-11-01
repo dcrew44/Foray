@@ -10,7 +10,7 @@ user prompt, and plays one short plan per kind of request:
 | "set up" (Home's "Answer in chat") | `get_profile_summary`, then the interview's question |
 | labelled answers, `Roles: …; Level: …` | `update_profile_preferences`, then a sentence |
 | "find" / "search" | `start_search_run`, then a sentence |
-| "yes" / "approve" | `list_pending_approvals`, `answer_approval` (the first), a sentence |
+| "yes" / "approve" | `list_pending_approvals`, then a sentence pointing to the card |
 | "add <name>" | `add_company`, then a sentence |
 | "matches" / "jobs" | `list_jobs` with every argument null, then a sentence |
 | "resume" | `get_resume`, then a sentence |
@@ -232,26 +232,22 @@ def _plan(prompt: str) -> Plan:
             result = done.get("start_search_run")
             if _get(result, "ok") is False:
                 return str(_get(result, "message") or "The search could not start.")
-            return "I started a search. I will report back here when it needs you or is done."
+            return (
+                "The search is ready: press Start on its card, and I will report back here when "
+                "it needs you or is done."
+            )
 
         return Plan((("start_search_run", lambda done: search_args),), started)
 
     if APPROVE.search(prompt):
 
-        def answer(done: Done) -> dict[str, Any] | None:
+        def pointed(done: Done) -> str:
             approvals = _get(done.get("list_pending_approvals"), "approvals")
-            if not isinstance(approvals, list) or not approvals:
-                return None
-            return {"approval_id": _get(approvals[0], "id"), "approve": True, "item_ids": None}
-
-        def answered(done: Done) -> str:
-            if "answer_approval" in done:
-                return str(_get(done["answer_approval"], "message") or "Answered.")
+            if isinstance(approvals, list) and approvals:
+                return "That one is answered on its card: use its buttons above."
             return "Nothing is waiting on you."
 
-        return Plan(
-            (("list_pending_approvals", lambda done: {}), ("answer_approval", answer)), answered
-        )
+        return Plan((("list_pending_approvals", lambda done: {}),), pointed)
 
     added = ADD.search(prompt)
     if added:

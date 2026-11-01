@@ -58,7 +58,6 @@ SNAKE_CASE_COMPONENTS: dict[str, str] = {
     "ListJobsInput": TOOL_ARGUMENTS,
     "GetJobInput": TOOL_ARGUMENTS,
     "ListPendingApprovalsInput": TOOL_ARGUMENTS,
-    "AnswerApprovalInput": TOOL_ARGUMENTS,
     "MoveJobStageInput": TOOL_ARGUMENTS,
     "EvaluateJobInput": TOOL_ARGUMENTS,
     "TailorResumeInput": TOOL_ARGUMENTS,

@@ -3,7 +3,7 @@
 - **Model:** `model("chat")`, the wrapped stack of §8.3, so chat now gets the purpose's reasoning
   setting, the rate limiter and the budget guard (the TS agent bypassed both).
 - **Instructions:** `prompt.system_prompt(...)`, built by the caller from the user's stored state.
-- **Tools:** the 16 of `tools.CHAT_TOOLSET`, registered once at import. The user comes from
+- **Tools:** the 15 of `tools.CHAT_TOOLSET`, registered once at import. The user comes from
   `RunContext.deps` (`ChatDeps`), so the model has no way to name another user.
 - **Read-only follow-ups:** `FollowUpTools` offers only `FOLLOW_UP_TOOLS` when `deps.follow_up`.
   Every tool stays registered, so history that used the others still converts.

@@ -236,6 +236,24 @@ def search_inputs(
     return chosen_prompt, hints, chosen_mode
 
 
+# What a search will do, on the go-ahead card of one the chat agent asked for (#31).
+START_DETAIL: dict[str, str] = {
+    Mode.APPROVE_EACH: "Refreshes the job boards, then filters and scores what it finds. It asks "
+    "you again before the deep review and before shortlisting.",
+    Mode.AUTOPILOT: "Refreshes the job boards and scores what it finds, then deep-reviews and "
+    "shortlists the best on autopilot, without asking again.",
+}
+
+
+def start_gate(hints: Any, mode: str) -> lifecycle.StartGate:
+    """The go-ahead a search the chat agent asked for waits on."""
+    scope = describe_brief(parse_brief(hints))
+    return lifecycle.StartGate(
+        title=f"Start a search ({scope})" if scope else "Start a search",
+        payload=catalogue.RunStartPayload(detail=START_DETAIL[mode]),
+    )
+
+
 def start_search(
     user_id: str,
     *,
@@ -243,10 +261,12 @@ def start_search(
     hints: Any = None,
     mode: str = Mode.APPROVE_EACH,
     conversation_id: uuid.UUID | str | None = None,
+    confirm: bool = False,
 ) -> SearchStart:
     """Insert a queued search and defer `search.run` in one transaction (R1). One active search
     per user (R2): while one is active, that run comes back with `reused=True`. Sync. The
-    caller has checked `assert_can_search`."""
+    caller has checked `assert_can_search`. With `confirm` (the chat agent's start), the search
+    waits for the user's go-ahead instead (`lifecycle.StartGate`, #31)."""
     run, reused = lifecycle.start_run(
         user_id,
         RunKind.SEARCH,
@@ -255,6 +275,7 @@ def start_search(
         conversation_id=conversation_id,
         dedupe_key=DEDUPE_KEY,
         task=SEARCH_TASK,
+        gate=start_gate(hints, mode) if confirm else None,
     )
     return SearchStart(run=run, reused=reused)
 

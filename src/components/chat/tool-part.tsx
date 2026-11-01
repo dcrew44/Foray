@@ -55,7 +55,6 @@ const COPY: Record<ForayToolName, { running: string; done: string }> = {
   evaluate_job: { running: "Starting a deep review", done: "Started a deep review" },
   tailor_resume: { running: "Starting on a tailored resume", done: "Started a tailored resume" },
   list_pending_approvals: { running: "Checking what's waiting on you", done: "Checked what's waiting on you" },
-  answer_approval: { running: "Recording your decision", done: "Recorded your decision" },
 };
 
 function copyFor(name: string) {
@@ -147,6 +146,8 @@ export function ToolPart({ part }: { part: ToolPartView }) {
         />
       );
     case "answer_approval":
+      // A decision the agent recorded before chat lost the tool (#31): the user now answers
+      // every approval on its card.
       return (
         <ActivityLine
           icon={<CircleCheck className="text-success size-3.5" />}

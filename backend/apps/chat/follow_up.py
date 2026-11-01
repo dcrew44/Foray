@@ -9,9 +9,11 @@ agent's reply to it, written with read-only tools so it can show results but nev
 
 The user's own turn always has priority, and the follow-up never waits inside a worker slot:
 
-1. **Skip** a cancelled run, a decision already answered, a deleted chat, or an event already
-   reported (`messages_one_notice_per_event`). A skip emits `chat.followup {skipped, reason}`.
-   A decision is checked again when posting (step 4): the card can answer it meanwhile.
+1. **Skip** a cancelled run, a decision already answered, a deleted chat, an event already
+   reported (`messages_one_notice_per_event`), or a run waiting for the user to start it (the
+   turn that asked for it already shows its card, #31). A skip emits `chat.followup {skipped,
+   reason}`. A decision is checked again when posting (step 4): the card can answer it
+   meanwhile.
 2. **Yield** to a streaming turn: while `turn_started_at` is younger than 200 s the task
    re-defers itself in 4 s and returns (a marker older than the 180 s turn timeout belongs to a
    dead process and is ignored). An event more than 5 minutes old is skipped as `stale`.
@@ -138,13 +140,10 @@ class ApprovalView:
     kind: str
     title: str
     payload: Any
-    id: Any = None  # named in the update, so a later "yes" in chat answers the right approval
 
     @classmethod
     def of(cls, approval: Approval) -> ApprovalView:
-        return cls(
-            kind=approval.kind, title=approval.title, payload=approval.payload, id=approval.id
-        )
+        return cls(kind=approval.kind, title=approval.title, payload=approval.payload)
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +162,9 @@ class Update:
     label: str  # the divider's text, e.g. "Search finished"
     text: str
 
+
+# #31: no tool answers an approval. The TypeScript said "Do not answer the approval yourself."
+ON_THE_CARD: Final = "They answer on the card above; you cannot answer it for them."
 
 RULES: Final = (
     "Keep it short and conversational: a few sentences, no headings. Do not repeat what the "
@@ -215,18 +217,6 @@ def _what(run: RunView) -> str:
     return FOLLOW_UP_KIND_NAME.get(run.kind) or "background work"
 
 
-def _approval_line(approval: ApprovalView) -> str | None:
-    """Which approval is waiting, by id. Without it the model guessed an id when the user then
-    answered in chat (deviations/step-10.md §10); the TypeScript update had no id, so the goldens
-    (built without one) are unchanged."""
-    if approval.id is None:
-        return None
-    return (
-        f'The pending approval is "{approval.id}" ({approval.kind}: {approval.title}). When the '
-        "user answers it in chat, pass that id to answer_approval; never guess one."
-    )
-
-
 def describe_update(
     run: RunView,
     event: EventView,
@@ -256,8 +246,7 @@ def describe_update(
                 "The approval card above already lists these roles, so do not call list_jobs. In "
                 "two or three sentences, say what stands out: which look strongest and why, and "
                 "anything that gives you pause. Then ask whether to go ahead with the deep "
-                "review. Do not answer the approval yourself.",
-                _approval_line(approval),
+                f"review. {ON_THE_CARD}",
                 RULES,
             ]
             return Update("Search paused for your go-ahead", "\n".join(x for x in lines if x))
@@ -285,8 +274,7 @@ def describe_update(
                         "The approval card above already lists these roles, so do not call "
                         "list_jobs. Say which look best and why, grounded in the reviews (get_job "
                         "has the evidence if you need more), then ask whether to shortlist them. "
-                        "Do not answer the approval yourself.",
-                        _approval_line(approval),
+                        f"{ON_THE_CARD}",
                         RULES,
                     ]
                     if line
@@ -302,8 +290,7 @@ def describe_update(
                 for line in [
                     head,
                     f"{what} is paused, waiting for the user: {waiting_on}.",
-                    "Say what it needs and ask.",
-                    _approval_line(approval) if approval is not None else None,
+                    f"Say what it needs and ask. {ON_THE_CARD}",
                     RULES,
                 ]
                 if line
@@ -417,7 +404,7 @@ def proposed_roles(user_id: str, approval: Approval) -> list[ProposedRole]:
 
 @dataclass(frozen=True, slots=True)
 class Skip:
-    reason: str  # cancelled | decided | gone | duplicate | stale
+    reason: str  # cancelled | decided | asked | gone | duplicate | stale
     user_id: str
     conversation_id: uuid.UUID | None
     run_id: uuid.UUID
@@ -481,6 +468,8 @@ def load(event_id: int) -> Loaded | Skip | Wait | None:
         approval is None or approval.status != ApprovalStatus.PENDING
     ):
         return skip("decided")  # answered from the card, most likely
+    if approval is not None and approval.kind == ApprovalKind.RUN_START:
+        return skip("asked")  # the turn that asked for the run shows its go-ahead card
     already = Message.objects.for_user(user_id).filter(
         conversation_id=conversation.id, run_update_event_id=event.id
     )

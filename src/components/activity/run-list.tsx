@@ -82,7 +82,9 @@ function RunRow({
     run.status === "failed"
       ? (run.error ?? "Stopped with an error")
       : run.status === "cancelled"
-        ? "Stopped before it finished"
+        ? run.startedAt
+          ? "Stopped before it finished"
+          : "Not started"
         : runOutcome(run);
   const took = duration(run);
   const started = timeAgo(run.startedAt ?? run.createdAt);

@@ -23,7 +23,9 @@ sorted match ids>`; `tailor:<matchId>`; `render:<resumeId>`; `import:<documentId
 `add:<normalised query>`; `refresh:<slug>` or `refresh:stale`.
 
 **Approvals.** `PAYLOAD_MODELS` gives each approval kind's payload; `StoredDecision` is
-`approvals.decision`; `APPROVAL_NEXT_STEP` names the continuation a decision defers.
+`approvals.decision`; `APPROVAL_NEXT_STEP` names the continuation a decision defers. A
+`run_start` approval is the gate a run started by the chat agent waits behind before it does
+anything (#31): its continuation is the run's own first step, `START_STEP[kind]`.
 
 **Events.** `EventKind` lists every kind `map/worker.md` §19 catalogues, each with its
 `DEFAULT_LEVEL` (callers pass `level=` where a kind's level varies). `events.kind` has no CHECK,
@@ -35,6 +37,7 @@ follow-up emits.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any, Literal
 
 from django.db import models
@@ -78,6 +81,7 @@ class Mode(models.TextChoices):
 class ApprovalKind(models.TextChoices):
     DEEP_EVAL_BATCH = "deep_eval_batch"
     SHORTLIST_PROPOSAL = "shortlist_proposal"
+    RUN_START = "run_start"
 
 
 class ApprovalStatus(models.TextChoices):
@@ -100,6 +104,11 @@ class NextStep(models.TextChoices):
 
     SEARCH_EVALUATE = "search.evaluate"
     SEARCH_SHORTLIST = "search.shortlist"
+    # A `run_start` gate's continuation: the first step of the run it holds.
+    SEARCH_RUN = "search.run"
+    MATCH_EVALUATE = "match.evaluate"
+    RESUME_TAILOR = "resume.tailor"
+    COMPANY_ADD = "company.add"
 
 
 class Level(models.TextChoices):
@@ -601,15 +610,34 @@ class ShortlistPayload(JsonModel):
     items: list[ShortlistItem]
 
 
+class RunStartPayload(JsonModel):
+    # `run_start`: what the run will do, in a sentence, and what it costs when that is known.
+    detail: str
+    estimate: CostEstimate | None = None
+
+
 PAYLOAD_MODELS: dict[str, type[JsonModel]] = {
     ApprovalKind.DEEP_EVAL_BATCH: DeepEvalBatchPayload,
     ApprovalKind.SHORTLIST_PROPOSAL: ShortlistPayload,
+    ApprovalKind.RUN_START: RunStartPayload,
 }
 
+# The gates a running pipeline raises, and the continuation each defers.
 APPROVAL_NEXT_STEP: dict[str, NextStep] = {
     ApprovalKind.DEEP_EVAL_BATCH: NextStep.SEARCH_EVALUATE,
     ApprovalKind.SHORTLIST_PROPOSAL: NextStep.SEARCH_SHORTLIST,
 }
+
+# The run kinds the chat agent starts behind a `run_start` gate, and the first step a yes defers.
+START_STEP: dict[str, NextStep] = {
+    RunKind.SEARCH: NextStep.SEARCH_RUN,
+    RunKind.RANK_DEEP: NextStep.MATCH_EVALUATE,
+    RunKind.TAILOR: NextStep.RESUME_TAILOR,
+    RunKind.COMPANY_DISCOVERY: NextStep.COMPANY_ADD,
+}
+
+# How long a pending approval waits before it lapses.
+APPROVAL_TTL = timedelta(days=7)
 
 
 class StoredDecision(JsonModel):

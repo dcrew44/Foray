@@ -65,7 +65,10 @@ function describe(run: LiveRun, workerOnline: boolean): string {
     return workerOnline ? "Starting…" : "Waiting for the worker to start";
   }
   if (run.status === "awaiting_approval") return "Waiting for your go-ahead";
-  if (run.status === "cancelled") return "Stopped. Everything found so far was kept.";
+  // A run that never started was turned down (or lapsed) at its go-ahead.
+  if (run.status === "cancelled") {
+    return run.startedAt ? "Stopped. Everything found so far was kept." : "Not started.";
+  }
   if (run.status === "failed") return run.error ?? "Stopped with an error.";
 
   if (run.status === "completed") {
@@ -190,6 +193,8 @@ export function RunCard({
 
   const active = isActiveRun(run);
   const approval = live.approvals.find((item) => item.runId === run.id);
+  // Work the chat asked for waits here for the user's Start before its first step.
+  const waitingToStart = run.status === "awaiting_approval" && !run.startedAt;
   const steps = run.kind === "search" ? SEARCH_STEPS : run.kind === "tailor" ? TAILOR_STEPS : null;
   const workerOnline = live.worker?.online ?? true;
 
@@ -225,7 +230,7 @@ export function RunCard({
         </div>
       </div>
 
-      {steps && (active || run.status === "completed") && (
+      {steps && (active || run.status === "completed") && !waitingToStart && (
         <StepTrack phase={String(run.stats?.phase ?? "")} status={run.status} steps={steps} />
       )}
 
@@ -238,7 +243,7 @@ export function RunCard({
       {!compact && run.status === "completed" && <RunResults run={run} />}
 
       {run.kind === "search" && (run.status === "failed" || run.status === "cancelled") && (
-        <RunAgain runId={run.id} />
+        <RunAgain ran={Boolean(run.startedAt)} runId={run.id} />
       )}
 
       {active && !approval && (
@@ -276,7 +281,7 @@ export function RunCard({
  * review skips what is already reviewed, so a new run picks up where this one
  * stopped rather than paying twice.
  */
-function RunAgain({ runId }: { runId: string }) {
+function RunAgain({ runId, ran }: { runId: string; ran: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [started, setStarted] = useState<string | null>(null);
@@ -293,7 +298,7 @@ function RunAgain({ runId }: { runId: string }) {
   return (
     <div className="flex items-center justify-between gap-3 border-t px-4 py-2.5">
       <span className="text-muted-foreground text-[12.5px]">
-        Work already done is kept; a new run picks up the rest.
+        {ran ? "Work already done is kept; a new run picks up the rest." : "Nothing ran. You can start this search here."}
       </span>
       <Button
         disabled={pending}

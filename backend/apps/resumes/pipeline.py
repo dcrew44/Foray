@@ -84,6 +84,8 @@ from apps.runs.catalogue import (
     RenderInput,
     RenderOutput,
     RunKind,
+    RunStartPayload,
+    RunStatus,
     TailorInput,
     TailorOutput,
 )
@@ -262,11 +264,22 @@ def _label(job: Job) -> str:
     return f"{one_line(job.title)} at {one_line(job.company_name)}"
 
 
+TAILOR_START_DETAIL = (
+    "Selects, reorders and rewords what your resume already says for this posting, checks every "
+    "line against your original, and renders a PDF. It never adds skills or experience."
+)
+
+
 def start_tailor_run(
-    user_id: str, match_or_job_id: str, *, conversation_id: Id | None = None
+    user_id: str,
+    match_or_job_id: str,
+    *,
+    conversation_id: Id | None = None,
+    confirm: bool = False,
 ) -> Started:
     """Starts tailoring for a match (or a job). Counted against `tailor:<user>` first, so the
-    endpoint and the chat tool share one count; over the limit it raises `ApiError(429)`."""
+    endpoint and the chat tool share one count; over the limit it raises `ApiError(429)`. With
+    `confirm` (the chat agent's start), the run waits for the user's go-ahead first (#31)."""
     throttle.throttle(f"tailor:{user_id}", throttle.TAILOR.limit, throttle.TAILOR.window_s)
     if latest_base_resume_row(user_id) is None:
         return Started(False, NO_RESUME_TO_TAILOR, refusal="no_resume")
@@ -283,8 +296,19 @@ def start_tailor_run(
         conversation_id=conversation_id,
         dedupe_key=f"tailor:{match.id}",
         task=TAILOR_TASK,
+        gate=lifecycle.StartGate(
+            title=f"Tailor your resume for {label}",
+            payload=RunStartPayload(detail=TAILOR_START_DETAIL),
+        )
+        if confirm
+        else None,
     )
-    if reused:
+    if run.status == RunStatus.AWAITING_APPROVAL:  # only ever a start waiting on its gate
+        message = (
+            f"Tailoring your resume for {label} is waiting for the user's go-ahead on its card. "
+            "Once they start it, it takes about a minute."
+        )
+    elif reused:
         message = f"Already tailoring your resume for {label}. It will be ready in about a minute."
     else:
         message = (

@@ -1835,7 +1835,8 @@
       "ApprovalKind": {
         "enum": [
           "deep_eval_batch",
-          "shortlist_proposal"
+          "shortlist_proposal",
+          "run_start"
         ],
         "title": "ApprovalKind",
         "type": "string"
@@ -5807,42 +5808,6 @@
         "title": "ListPendingApprovalsInput",
         "type": "object"
       },
-      "AnswerApprovalInput": {
-        "additionalProperties": false,
-        "properties": {
-          "approval_id": {
-            "description": "The approval's id.",
-            "title": "Approval Id",
-            "type": "string"
-          },
-          "approve": {
-            "title": "Approve",
-            "type": "boolean"
-          },
-          "item_ids": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "With approve=true: only these items. Null means every item. Ignored when declining.",
-            "title": "Item Ids"
-          }
-        },
-        "required": [
-          "approval_id",
-          "approve",
-          "item_ids"
-        ],
-        "title": "AnswerApprovalInput",
-        "type": "object"
-      },
       "MoveJobStageInput": {
         "additionalProperties": false,
         "properties": {
@@ -7028,25 +6993,6 @@
           "approvals"
         ],
         "title": "ListPendingApprovalsOutput",
-        "type": "object"
-      },
-      "AnswerApprovalOutput": {
-        "additionalProperties": false,
-        "properties": {
-          "ok": {
-            "title": "Ok",
-            "type": "boolean"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          }
-        },
-        "required": [
-          "ok",
-          "message"
-        ],
-        "title": "AnswerApprovalOutput",
         "type": "object"
       },
       "MoveJobStageOutput": {

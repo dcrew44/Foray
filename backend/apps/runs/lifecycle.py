@@ -4,6 +4,7 @@ Every function is sync, runs in one transaction and makes every status change co
 late finish can never overwrite the user's Stop. `emit()` is always the last statement (§9.5).
 
 ```
+(start, gated) ──▶ awaiting_approval     (a run the chat agent started waits for the user)
 queued ──claim──▶ running
 running ──request_approval (approve_each)──▶ awaiting_approval
 awaiting_approval ──decide / expire (continuation deferred, same transaction)──▶ running
@@ -17,6 +18,11 @@ awaiting_approval ──reaper: no pending approval and no live job for 10 min�
 A run finishes only through `complete()`, `fail()` or `cancel()`. Each acts on an active run
 only and emits exactly one terminal event (`run.completed`, `run.failed`, `run.cancelled`), the
 run's last (R4, R17).
+
+A **gated start** (`start_run(..., gate=StartGate(...))`, #31) is how the chat agent starts work:
+the run is inserted `awaiting_approval` behind a pending `run_start` approval, and nothing is
+deferred. The user's yes defers the run's first step (`approvals.decide`); a no or a lapse
+cancels the run before it ever ran. The model can ask for a run; only the user can start one.
 """
 
 from __future__ import annotations
@@ -25,6 +31,7 @@ import json
 import logging
 import uuid
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from django.db import IntegrityError, connection, transaction
@@ -35,6 +42,9 @@ from apps.core.choices import JsonModel
 from apps.runs import events, step
 from apps.runs.catalogue import (
     ACTIVE,
+    APPROVAL_TTL,
+    START_STEP,
+    ApprovalKind,
     ApprovalStatus,
     EventKind,
     Level,
@@ -47,6 +57,7 @@ from apps.runs.models import Approval, Run
 __all__ = [
     "ABANDONED",
     "STOPPED",
+    "StartGate",
     "cancel",
     "claim",
     "complete",
@@ -102,6 +113,42 @@ def _runs(reason: str):  # every user's runs, for system code
 # --- starting ------------------------------------------------------------------------------------
 
 
+@dataclass(frozen=True, slots=True)
+class StartGate:
+    """The go-ahead a run waits for before its first step: the `run_start` approval's title (an
+    imperative, as every approval title is: "Tailor your resume for …") and payload
+    (`catalogue.RunStartPayload`)."""
+
+    title: str
+    payload: Any
+
+
+def _task_name(task: Task[Any, Any, Any] | str) -> str:
+    return task if isinstance(task, str) else task.name
+
+
+def _raise_start_gate(run: Run, gate: StartGate, task: Task[Any, Any, Any] | str) -> None:
+    """Inside `start_run`'s transaction: the pending `run_start` approval and its event."""
+    approval = Approval.objects.create_for(
+        run.user_id,
+        run=run,
+        kind=ApprovalKind.RUN_START,
+        title=gate.title,
+        payload=dump(gate.payload),
+        status=ApprovalStatus.PENDING,
+        expires_at=Now() + APPROVAL_TTL,
+        next_step=_task_name(task),
+    )
+    events.emit(
+        run.user_id,
+        EventKind.APPROVAL_REQUESTED,
+        f"Waiting for your go-ahead: {gate.title}.",
+        run_id=run.id,
+        approval_id=approval.id,
+        data={"kind": ApprovalKind.RUN_START},
+    )
+
+
 def start_run(
     user_id: str,
     kind: str,
@@ -112,14 +159,21 @@ def start_run(
     dedupe_key: str | None,
     task: Task[Any, Any, Any] | str,
     task_kwargs: Mapping[str, Any] | None = None,
+    gate: StartGate | None = None,
 ) -> tuple[Run, bool]:
     """Insert a queued run and defer its first job in one transaction: commit gives both, a
     rollback neither (R1). Returns `(run, reused)`: when an active run already holds
-    `(user, dedupe_key)`, that run comes back with `reused=True` and nothing is written (R2)."""
+    `(user, dedupe_key)`, that run comes back with `reused=True` and nothing is written (R2).
+
+    With a `gate`, the run is inserted `awaiting_approval` behind a pending `run_start` approval
+    instead, and `approval.requested` is emitted; nothing is deferred until the user says yes
+    (#31). That emit ends the transaction, so a gated start is never called inside another."""
     if kind not in RunKind.values:
         raise ValueError(f"{kind!r} is not a run kind")
     if mode not in Mode.values:
         raise ValueError(f"{mode!r} is not a run mode")
+    if gate is not None and (START_STEP.get(kind) != _task_name(task) or task_kwargs):
+        raise ValueError(f"A {kind} run cannot start behind a gate with {_task_name(task)!r}")
     value = dump(input)
     # The other starter may finish between our failed insert and the read; then insert again.
     for _ in range(3):
@@ -130,7 +184,7 @@ def start_run(
                         user_id,
                         kind=kind,
                         mode=mode,
-                        status=RunStatus.QUEUED,
+                        status=RunStatus.QUEUED if gate is None else RunStatus.AWAITING_APPROVAL,
                         input=value,
                         conversation_id=conversation_id,
                         dedupe_key=dedupe_key,
@@ -147,6 +201,9 @@ def start_run(
                 if existing is not None:
                     return existing, True
                 continue
+            if gate is not None:
+                _raise_start_gate(run, gate, task)
+                return run, False
             step.defer_step(
                 task, run.id, queueing_lock=step.run_lock(run.id), **(task_kwargs or {})
             )
@@ -244,11 +301,12 @@ def fail(run_id: Id, message: str) -> bool:
     return True
 
 
-def cancel(user_id: str, run_id: Id) -> bool:
+def cancel(user_id: str, run_id: Id, *, message: str = STOPPED, level: str = Level.WARN) -> bool:
     """Stop the user's run (§9.9): cancelled, its pending approvals expired, its queued job
     cancelled and its running job asked to abort (procrastinate cancels the asyncio task, so
     in-flight model calls stop), then `run.cancelled`, emitted here and only here. False when
-    the run is not the user's or is no longer active."""
+    the run is not the user's or is no longer active. A gated start that is turned down or
+    lapses ends here too, with its own `message`."""
     run_uuid = as_uuid(run_id)
     if run_uuid is None:
         return False
@@ -268,7 +326,7 @@ def cancel(user_id: str, run_id: Id) -> bool:
                 "WHERE j.lock = %s AND j.status IN ('todo', 'doing')",
                 [step.run_lock(run.id)],
             )
-        events.emit(user_id, EventKind.RUN_CANCELLED, STOPPED, run_id=run.id, level=Level.WARN)
+        events.emit(user_id, EventKind.RUN_CANCELLED, message, run_id=run.id, level=level)
     return True
 
 

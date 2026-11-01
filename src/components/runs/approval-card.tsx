@@ -23,6 +23,10 @@ import { cn } from "@/lib/utils";
  * Marigold marks it as the user's move. Every item starts selected — the
  * common answer is "yes, all of them" — and unticking narrows the approval
  * rather than refusing it.
+ *
+ * A `run_start` approval has no items: it is work the chat agent asked for
+ * (a search, a deep review, tailoring, a company lookup), which runs only
+ * once the user presses Start here. Its payload says what it will do.
  */
 
 type Item = {
@@ -37,17 +41,44 @@ type Item = {
 
 type Estimate = { usd: number | null; perItemUsd: number | null; model: string } | null;
 
-const COPY: Record<string, { lead: string; approve: (n: number) => string; skip: string }> = {
+type Copy = {
+  lead: string;
+  approve: (n: number) => string;
+  skip: string;
+  approved: string;
+  skipped: string;
+};
+
+const COPY: Record<string, Copy> = {
   deep_eval_batch: {
     lead: "Foray will read each of these postings in full against your resume with the stronger model, quoting the evidence for every requirement.",
     approve: (n) => `Review ${n} ${n === 1 ? "role" : "roles"}`,
     skip: "Skip review",
+    approved: "Approved. Foray is on it.",
+    skipped: "Skipped.",
   },
   shortlist_proposal: {
     lead: "The deep review recommends applying to these. Shortlisted roles move to the Shortlisted column on your board.",
     approve: (n) => `Shortlist ${n}`,
     skip: "Not now",
+    approved: "Approved. Foray is on it.",
+    skipped: "Skipped.",
   },
+  run_start: {
+    lead: "The chat asked for this. Nothing runs until you start it.",
+    approve: () => "Start",
+    skip: "Don't start",
+    approved: "Started.",
+    skipped: "Not started.",
+  },
+};
+
+const FALLBACK: Copy = {
+  lead: "Foray is waiting for your decision before it continues.",
+  approve: () => "Approve",
+  skip: "Decline",
+  approved: "Approved. Foray is on it.",
+  skipped: "Declined.",
 };
 
 const PREVIEW = 6;
@@ -64,11 +95,8 @@ export function ApprovalCard({
     [approval.payload],
   );
   const estimate = (approval.payload.estimate as Estimate) ?? null;
-  const copy = COPY[approval.kind] ?? {
-    lead: "Foray is waiting for your decision before it continues.",
-    approve: () => "Approve",
-    skip: "Decline",
-  };
+  const copy = COPY[approval.kind] ?? FALLBACK;
+  const detail = typeof approval.payload.detail === "string" ? approval.payload.detail : null;
 
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(
@@ -80,8 +108,13 @@ export function ApprovalCard({
 
   const visible = expanded ? items : items.slice(0, PREVIEW);
   const count = selected.size;
+  // An approval without items (a run_start) is a plain yes or no.
+  const nothingChosen = items.length > 0 && count === 0;
+  // The price of what is ticked; an approval without items quotes its whole estimate.
   const cost =
-    estimate?.perItemUsd != null ? estimate.perItemUsd * count : estimate?.usd ?? null;
+    items.length > 0 && estimate?.perItemUsd != null
+      ? estimate.perItemUsd * count
+      : (estimate?.usd ?? null);
 
   function decide(approved: boolean) {
     startTransition(async () => {
@@ -99,7 +132,7 @@ export function ApprovalCard({
         toast.error(result.message);
         return;
       }
-      setDecided(approved && count > 0 ? "approved" : "skipped");
+      setDecided(approved && !nothingChosen ? "approved" : "skipped");
     });
   }
 
@@ -107,7 +140,7 @@ export function ApprovalCard({
     return (
       <div className={cn("text-muted-foreground flex items-center gap-2 rounded-xl border px-4 py-3 text-[13.5px]", className)}>
         <Check className="text-success size-4" />
-        {decided === "approved" ? "Approved. Foray is on it." : "Skipped."}
+        {decided === "approved" ? copy.approved : copy.skipped}
       </div>
     );
   }
@@ -121,6 +154,7 @@ export function ApprovalCard({
     >
       <div className="space-y-1 px-4 pt-3.5 pb-3">
         <p className="text-[14.5px] font-semibold">{approval.title}</p>
+        {detail && <p className="text-foreground/75 text-[13px] leading-relaxed">{detail}</p>}
         <p className="text-foreground/75 text-[13px] leading-relaxed">{copy.lead}</p>
       </div>
 
@@ -173,13 +207,13 @@ export function ApprovalCard({
       )}
 
       <div className="flex flex-wrap items-center gap-2 px-4 py-3">
-        <Button disabled={pending || count === 0} onClick={() => decide(true)} size="sm">
+        <Button disabled={pending || nothingChosen} onClick={() => decide(true)} size="sm">
           {copy.approve(count)}
         </Button>
         <Button disabled={pending} onClick={() => decide(false)} size="sm" variant="ghost">
           {copy.skip}
         </Button>
-        {approval.kind === "deep_eval_batch" && cost != null && (
+        {(approval.kind === "deep_eval_batch" || approval.kind === "run_start") && cost != null && (
           <span className="text-muted-foreground ml-auto text-[12.5px]">
             About {formatUsd(cost)}
             {estimate?.model ? ` on ${estimate.model.split(":").pop()}` : ""}

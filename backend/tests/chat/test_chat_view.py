@@ -691,7 +691,7 @@ def test_the_step_cap_ends_in_text(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
     user = make_user()
     chat_id = uuid.uuid4()
     sent = run(turn_for(user, chat_id))
-    assert offered == [16] * 7 + [0]
+    assert offered == [15] * 7 + [0]
     assert sent.error_texts == []
     assert sent.types[-2:] == ["finish-step", "finish"]
     reply = reply_of(chat_id)
@@ -1392,7 +1392,6 @@ def test_the_toolset_is_the_designs() -> None:
             "list_jobs",
             "get_job",
             "list_pending_approvals",
-            "answer_approval",
             "move_job_stage",
             "evaluate_job",
             "tailor_resume",
@@ -1557,7 +1556,15 @@ def test_discover_companies_proposes_in_the_turn_and_registers_in_a_run(
     assert found["queued"] == ["Linear", "Vercel"]
     run_row = Run.objects.for_user(user.pk).get(id=found["runId"])
     assert run_row.conversation_id == chat.id and run_row.input["names"] == ["Linear", "Vercel"]
-    assert found["message"].startswith("Looking for job boards for 2 companies: Linear, Vercel.")
+    # #31: the lookup waits for the user's go-ahead; nothing is deferred until then.
+    assert run_row.status == "awaiting_approval" and deferred("company.add") == []
+    gate = Approval.objects.for_user(user.pk).get(run=run_row)
+    assert (gate.kind, gate.status) == ("run_start", "pending")
+    assert gate.title == "Look up job boards for Linear and Vercel"
+    assert found["message"] == (
+        "Looking up job boards for 2 companies (Linear, Vercel) is waiting for the user's "
+        "go-ahead on its card."
+    )
 
     def nothing(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         from pydantic_ai.messages import ToolCallPart
@@ -1591,17 +1598,24 @@ def test_start_search_run_refuses_starts_and_reuses() -> None:
     )
     assert started["ok"] is True and started["mode"] == "approve_each"
     assert started["searchingFor"] == "Entry-level roles at Anthropic"
-    assert started["message"].startswith("Search started. It will pause for approval")
+    assert started["message"].startswith("Search ready. It starts when the user presses Start")
     run_row = Run.objects.for_user(user.pk).get(id=started["runId"])
     assert run_row.conversation_id == chat.id
     assert run_row.input["hints"]["companies"] == ["Anthropic"]
+    # #31: the search waits for the user's go-ahead; nothing is deferred until then.
+    assert run_row.status == "awaiting_approval" and deferred("search.run") == []
+    gate = Approval.objects.for_user(user.pk).get(run=run_row)
+    assert (gate.kind, gate.next_step) == ("run_start", "search.run")
+    assert gate.title == "Start a search (Entry-level roles at Anthropic)"
+    assert gate.payload["detail"].startswith("Refreshes the job boards")
     again = call_tool("start_search_run", user, chat.id, prompt="again", **search_args)
     assert again == {
         "ok": True,
         "runId": started["runId"],
         "mode": "approve_each",
         "alreadyRunning": True,
-        "message": "A search is already running; this is its card. Do not start another.",
+        "message": "A search is already waiting on the user's go-ahead; this is its card. Do not "
+        "start another.",
     }
 
 
@@ -1682,43 +1696,18 @@ def test_job_tools() -> None:
     }
 
 
-def test_approval_tools_answer_through_the_one_decision(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_approvals_are_listed_in_chat_and_answered_only_on_their_cards() -> None:
     user = make_user()
     run_row = make_run(user, status="awaiting_approval")
     approval = make_approval(user, run=run_row)
-    item = approval.payload["items"][0]
     listing = call_tool("list_pending_approvals", user)
     [pending] = listing["approvals"]
     assert (pending["id"], pending["runId"]) == (str(approval.id), str(run_row.id))
     assert pending["items"] == approval.payload["items"]
     assert pending["estimate"]["usd"] == 0.02
-
-    nothing = call_tool(
-        "answer_approval", user, approval_id=str(approval.id), approve=True, item_ids=["nope"]
-    )
-    assert nothing["ok"] is False and nothing["message"].startswith("None of those ids")
-    answered = call_tool(
-        "answer_approval",
-        user,
-        approval_id=str(approval.id),
-        approve=True,
-        item_ids=[item["jobId"]],
-    )
-    assert answered == {
-        "ok": True,
-        "message": "Approved deep evaluation of 1 role. It runs in the background; the search "
-        "card shows progress, and the shortlist proposal follows.",
-    }
-    decided = Approval.objects.for_user(user.pk).get(id=approval.id)
-    assert (decided.status, decided.decided_via) == ("approved", "chat")
-    assert decided.decision == {"approved": True, "itemIds": [item["matchId"]]}
-    again = call_tool(
-        "answer_approval", user, approval_id=str(approval.id), approve=False, item_ids=None
-    )
-    assert again["message"] == "That request was already answered, so nothing changed."
-    assert call_tool("answer_approval", user, approval_id="garbage", approve=True, item_ids=None)[
-        "message"
-    ].startswith("No approval with that id.")
+    # #31: no tool answers an approval, so text injected through a posting cannot approve one.
+    assert "answer_approval" not in CHAT_TOOLSET.tools
+    assert not any("approval_id" in INPUT_MODELS[name].model_fields for name in TOOL_NAMES)
 
 
 def test_role_tools(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1754,20 +1743,34 @@ def test_role_tools(monkeypatch: pytest.MonkeyPatch) -> None:
     ready = make_user(with_resume=True)
     chat = make_conversation(ready)
     target = make_job(title="Platform Engineer")
+    label = f"Platform Engineer at {target.company_name}"
     evaluating = call_tool("evaluate_job", ready, chat.id, id=target.id)
     assert evaluating["ok"] is True
-    assert evaluating["message"].startswith(
-        f"Evaluating Platform Engineer at {target.company_name}"
-    )
+    assert evaluating["message"].startswith(f"A deep review of {label}")
+    assert "is waiting for the user's go-ahead on its card" in evaluating["message"]
     evaluation = Run.objects.for_user(ready.pk).get(id=evaluating["runId"])
+    # #31: what spends waits for the user's go-ahead; nothing is deferred until then.
     assert (evaluation.kind, evaluation.conversation_id) == ("rank_deep", chat.id)
+    assert evaluation.status == "awaiting_approval"
+    gate = Approval.objects.for_user(ready.pk).get(run=evaluation)
+    assert (gate.kind, gate.next_step) == ("run_start", "match.evaluate")
+    assert gate.title == f"Deep-review {label}"
+    assert gate.payload["estimate"]["model"]  # the card quotes the configured model's price
     reused = call_tool("evaluate_job", ready, chat.id, id=target.id)
-    assert reused["runId"] == evaluating["runId"]
-    assert reused["message"].endswith("is already being evaluated; the card shows its progress.")
+    assert (reused["runId"], reused["message"]) == (evaluating["runId"], evaluating["message"])
+    Run.objects.unscoped("tests").filter(id=evaluation.id).update(status="running")
+    running = call_tool("evaluate_job", ready, chat.id, id=target.id)
+    assert running["message"].endswith("is already being evaluated; the card shows its progress.")
     tailoring = call_tool("tailor_resume", ready, chat.id, id=target.id)
     tailor_run = Run.objects.for_user(ready.pk).get(id=tailoring["runId"])
     assert (tailor_run.kind, tailor_run.conversation_id) == ("tailor", chat.id)
+    assert tailor_run.status == "awaiting_approval"
+    assert Approval.objects.for_user(ready.pk).get(run=tailor_run).title == (
+        f"Tailor your resume for {label}"
+    )
+    assert tailoring["message"].startswith(f"Tailoring your resume for {label} is waiting")
     assert tailoring["matchId"] == evaluating["matchId"]
+    assert deferred("match.evaluate") == deferred("resume.tailor") == []
 
 
 def test_evaluate_job_is_throttled_with_the_endpoint() -> None:

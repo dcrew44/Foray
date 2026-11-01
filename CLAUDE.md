@@ -233,6 +233,11 @@ not the only check.
   Chromium or Chrome; `-m "not slow"` skips them.
 - `FORAY_REGISTER_STRICT=1` makes `tests/test_register.py` fail when a test that DESIGN.md's
   invariant register names does not exist. Run the full suite with it before committing.
+- **CI** (`.github/workflows/`): `ci.yml` runs `check` (lint, typecheck, both suites with
+  `FORAY_REGISTER_STRICT=1` and `-m "not slow"`, then the `api:types` drift check), `build`
+  and `slow` on every pull request, push to `main` and nightly; `docker.yml` builds both image
+  targets when an image input changes. CI has no secrets and no `.env`, so a step that boots
+  `settings.py` outside pytest sets its own variables (see the `api:types` step).
 - Vitest covers only the frontend's pure helpers (`src/test/unit/*.test.ts`: formatting, the sign-in `next` guard, the upload size check).
 
 ## API drift warning

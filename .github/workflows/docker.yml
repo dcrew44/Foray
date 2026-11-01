@@ -1,0 +1,47 @@
+# Both production images build (nothing is pushed yet). On pull requests only when something the
+# images are made from changes; always on main and nightly, which also catches a broken base image.
+# Built from the Dockerfile directly: compose wants a .env, which CI does not have.
+
+name: Docker
+
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - .dockerignore
+      - package.json
+      - pnpm-lock.yaml
+      - backend/pyproject.toml
+      - backend/uv.lock
+      - .github/workflows/docker.yml
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        target: [backend, web]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}

@@ -1,0 +1,22 @@
+# Weekly update PRs. pydantic-ai is pinned exactly on purpose and moves by hand (#12).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: uv
+    directory: /backend
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: pydantic-ai-slim
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]

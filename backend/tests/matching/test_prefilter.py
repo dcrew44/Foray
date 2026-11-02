@@ -254,6 +254,24 @@ def test_one_match_per_role_best_copy_newest_first() -> None:
 
 
 @pytest.mark.django_db
+def test_a_watch_window_keeps_the_postings_first_seen_since() -> None:
+    user = make_user()
+    acme = make_company(name="Acme")
+    now = timezone.now()
+    make_job(company=acme, title="Software Engineer, Old", first_seen_at=now - timedelta(days=2))
+    fresh = make_job(company=acme, title="Software Engineer, New", first_seen_at=now)
+    since = now - timedelta(hours=1)
+
+    found = prefilter_jobs(user.pk, BAY, SWE, first_seen_after=since)
+    assert found.job_ids == [fresh.id]
+    # The window comes first among the parameters, and every other clause still applies.
+    make_job(company=acme, title="Account Executive", first_seen_at=now)
+    make_job(company=acme, title="Software Engineer, Austin", first_seen_at=now, **NOT_BAY)
+    assert prefilter_jobs(user.pk, BAY, SWE, first_seen_after=since).job_ids == [fresh.id]
+    assert len(prefilter_jobs(user.pk, BAY, SWE).job_ids) == 2
+
+
+@pytest.mark.django_db
 def test_known_and_dismissed_roles() -> None:
     user = make_user()
     acme = make_company(name="Acme")

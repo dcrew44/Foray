@@ -250,8 +250,10 @@ function announce(event: LiveEvent, navigate: (href: string) => void) {
       return;
     // Every run kind ends with run.completed or run.failed, tailoring and
     // rendering included, so these two are the outcome toasts. A company
-    // discovery's news rides on its own run.completed.
+    // discovery's news rides on its own run.completed. A watch that found
+    // nothing completes at debug level and is not worth a toast.
     case "run.completed":
+      if (event.level === "debug") return;
       toast.success(event.message, { id: outcomeToastId(event) });
       return;
     case "run.failed":

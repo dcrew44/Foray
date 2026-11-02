@@ -30,8 +30,9 @@ import { cn } from "@/lib/utils";
 export function AttentionPanel() {
   const { approvals, runs } = useLive();
 
+  // A watch checks new postings every six hours unasked; Activity shows it, Home does not.
   const active = Object.values(runs)
-    .filter(isActiveRun)
+    .filter((run) => isActiveRun(run) && run.kind !== "watch")
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   // Approvals render inside their run's card; only orphans get their own.

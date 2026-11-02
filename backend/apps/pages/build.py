@@ -227,7 +227,13 @@ def _waiting(user_id: str) -> HomeWaiting:
         .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=Now()))
         .count()
     )
-    running = Run.objects.for_user(user_id).filter(status__in=ACTIVE_RUN_STATUSES).count()
+    # A watch runs every six hours unasked: Home does not call that "searching right now".
+    running = (
+        Run.objects.for_user(user_id)
+        .filter(status__in=ACTIVE_RUN_STATUSES)
+        .exclude(kind=RunKind.WATCH)
+        .count()
+    )
     return HomeWaiting(approvals=approvals, running=running)
 
 
@@ -241,6 +247,7 @@ def home_page(user: User) -> HomePage:
         onboarding=onboarding,
         counts=counts,
         best=best,
+        new_this_week=match_queries.recent_recommended(user.pk, limit=BEST_LIMIT),
         spend=_month_spend_brief(user.pk, month_start()),
         waiting=waiting,
         suggestions=home_suggestions(onboarding, best),
@@ -389,6 +396,10 @@ def run_target(
                 name = value.get("name")
                 return name if isinstance(name, str) else None
             return "Boards not fetched lately" if value.get("stale") else None
+        case RunKind.WATCH:
+            output = run.output if isinstance(run.output, dict) else {}
+            message = output.get("message")
+            return message if isinstance(message, str) else None
         case _:
             return None
 
@@ -449,7 +460,12 @@ def describe_runs(user_id: str, runs: Sequence[Run]) -> list[RunSummary]:
 
 
 def activity_page(user: User) -> ActivityPage:
-    runs = list(Run.objects.for_user(user.pk).order_by("-created_at", "-id")[:ACTIVITY_LIMIT])
+    # A watch that found nothing is left out: four a day would push everything else off.
+    runs = list(
+        Run.objects.for_user(user.pk)
+        .exclude(kind=RunKind.WATCH, status=RunStatus.COMPLETED, stats__announced=0)
+        .order_by("-created_at", "-id")[:ACTIVITY_LIMIT]
+    )
     return ActivityPage(runs=describe_runs(user.pk, runs))
 
 

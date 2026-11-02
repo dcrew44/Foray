@@ -309,6 +309,8 @@ def _default_input(kind: str) -> dict[str, Any]:
             return catalogue.CompanyRefreshInput(
                 stale=True, prompt="Refresh boards not fetched lately"
             ).dump(exclude_none=True)
+        case RunKind.WATCH:
+            return catalogue.WatchInput(prompt="Check new postings").dump(exclude_none=True)
         case _:
             raise ValueError(f"Unknown run kind {kind!r}")
 

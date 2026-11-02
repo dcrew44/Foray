@@ -259,19 +259,25 @@ def complete(
     *,
     level: str = Level.INFO,
     stats: Mapping[str, Any] | None = None,
+    conversation_id: Id | None = None,
 ) -> bool:
     """Finish an active run as completed (phase `done`) and emit `run.completed` with the output
-    as its data. False, with nothing written, when the run had already finished."""
+    as its data. False, with nothing written, when the run had already finished.
+
+    `conversation_id` links the run to a chat as it finishes, so `emit()` reports back there: a
+    watch that found something posts into the user's "New matches" chat (#5)."""
     value = dump(output)
     with transaction.atomic():
         with connection.cursor() as cursor:
             cursor.execute(
                 "UPDATE runs SET status = 'completed', output = %s::jsonb, error = NULL, "
-                "stats = stats || %s::jsonb, finished_at = now(), updated_at = now() "
+                "stats = stats || %s::jsonb, finished_at = now(), updated_at = now(), "
+                "conversation_id = coalesce(%s::uuid, conversation_id) "
                 f"WHERE id = %s AND status IN {_ACTIVE_SQL} RETURNING user_id",
                 [
                     None if value is None else jsonb(value),
                     jsonb({"phase": "done", **(stats or {})}),
+                    None if conversation_id is None else str(conversation_id),
                     str(run_id),
                 ],
             )

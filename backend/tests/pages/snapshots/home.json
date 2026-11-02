@@ -70,6 +70,36 @@
     "detail": "null",
     "headline": "string"
   },
+  "newThisWeek": [
+    {
+      "applyUrl": "string",
+      "company": "string",
+      "createdAt": "string",
+      "deepScore": "number",
+      "fastScore": "number",
+      "headline": "string",
+      "isActive": "boolean",
+      "jobId": "string",
+      "locations": [
+        "string"
+      ],
+      "matchId": "string",
+      "postedAt": "string",
+      "recommendation": "string",
+      "remote": "string",
+      "salaryCurrency": "string",
+      "salaryMax": "number",
+      "salaryMin": "number",
+      "salaryPeriod": "string",
+      "score": "number",
+      "stage": "string",
+      "stageChangedAt": "string",
+      "tailoredResumeId": "string",
+      "title": "string",
+      "url": "string",
+      "userRating": "null"
+    }
+  ],
   "onboarding": {
     "hasResume": "boolean",
     "preferences": {
@@ -211,7 +241,9 @@
     "settings": {
       "deepEvalTopN": "number",
       "defaultMode": "string",
-      "scoreThreshold": "number"
+      "scoreThreshold": "number",
+      "watchDailyReviews": "number",
+      "watchEnabled": "boolean"
     }
   },
   "spend": {

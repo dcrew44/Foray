@@ -8,16 +8,26 @@
 | `search.evaluate` | background | 60 min | gate 1's continuation: deep evaluation, then gate 2 |
 | `search.shortlist` | background | 10 min | gate 2's continuation: shortlisting, then complete |
 | `match.evaluate` | interactive | 30 min | a `rank_deep` run: evaluation on demand |
+| `watch.run` | background | 30 min | a `watch` run: the new postings, reviewed and announced |
+| `watch.fan_out` | system | 5 min | a watch per watching user, after each scheduled refresh |
 
-Every one holds `lock="run:<id>"` and `retry=0` (they call models: R11). A continuation's job
-carries `run_id` and `approval_id` (step 4's contract, `deviations/step-4.md` §2).
+Every run step holds `lock="run:<id>"` and `retry=0` (they call models: R11). A continuation's
+job carries `run_id` and `approval_id` (step 4's contract, `deviations/step-4.md` §2).
+`watch.fan_out` has no run: it only starts watches (`watch.start_watches`).
 """
 
 from __future__ import annotations
 
-from apps.matching import evaluate, search
+import asyncio
+import logging
+
+from apps.core.db import db
+from apps.core.queue import app
+from apps.matching import evaluate, search, watch
 from apps.runs.models import Run
 from apps.runs.step import TASKS, run_step
+
+log = logging.getLogger("foray.matching")
 
 
 @run_step("search.run", queue=TASKS["search.run"].lane, timeout_s=TASKS["search.run"].timeout_s)
@@ -54,3 +64,17 @@ async def search_shortlist(run: Run, approval_id: str) -> None:
 async def match_evaluate(run: Run) -> None:
     """Deep-evaluate specific matches on demand."""
     await evaluate.run_match_evaluation(run)
+
+
+@run_step(watch.WATCH_TASK, queue=TASKS["watch.run"].lane, timeout_s=TASKS["watch.run"].timeout_s)
+async def watch_run(run: Run) -> None:
+    """Score the postings first seen since the last watch, review the best, announce (#5)."""
+    await watch.run_watch(run)
+
+
+@app.task(name=watch.FAN_OUT_TASK, queue=TASKS["watch.fan_out"].lane)
+async def watch_fan_out(timestamp: int | None = None) -> None:
+    """A watch for every user who is watching; deferred by the scheduled refresh. No run."""
+    async with asyncio.timeout(TASKS["watch.fan_out"].timeout_s):
+        started = await db(watch.start_watches)
+    log.info("watch: started %d", started)

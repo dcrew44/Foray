@@ -308,8 +308,9 @@ watch (less ten minutes; never more than a week back). It works only on the matc
 plus those earlier watches of the week left unfinished, so a search's matches stay the search's
 and nothing is announced twice (R20). Deep reviews run within the daily cap, counted from the
 ledger over 24 hours. A watch that reviewed something `strong` or `apply` completes linked to the
-user's "New matches" chat, so the usual follow-up posts there, and Home lists the week's such
-matches under "New this week"; a quiet watch completes at debug level and stays out of the
+user's "New matches" chat, so the usual follow-up posts there, and Home lists such matches on
+postings first seen in the last week under "New this week" (by `first_seen_at`, not when the
+match was made, so a search's month-old postings stay out); a quiet watch completes at debug level and stays out of the
 feeds. Announced matches stay in `found`: the user shortlists. The worker must be running for any
 of this; in dev that means `pnpm dev:all`, whose worker runs the missed tick when it starts.
 

@@ -58,7 +58,7 @@ export default async function HomePage() {
 
             {newThisWeek.length > 0 && (
               <Section
-                description="Posted lately and reviewed in full as worth applying to. Early applications get read."
+                description="Arrived in the last week and reviewed in full as worth applying to. Early applications get read."
                 title="New this week"
               >
                 <div className="-mx-3">

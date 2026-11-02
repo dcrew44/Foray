@@ -284,12 +284,14 @@ def count_new_since(user_id: str, since: datetime) -> dict[str, int]:
 
 
 def recent_recommended(user_id: str, *, days: int = 7, limit: int = 6) -> list[MatchRow]:
-    """Matches made in the last `days` that the deep review called worth applying to and that
-    are still waiting on the user (found or shortlisted), best first: Home's "New this week"."""
+    """Matches on postings first seen in the last `days` that the deep review called worth
+    applying to and that are still waiting on the user (found or shortlisted), best first: Home's
+    "New this week". It goes by the posting's `first_seen_at`, the clock a watch's window uses,
+    not the match's: a search this week also matches postings that have been up for a month."""
     rows = _rows(user_id).filter(
         stage__in=("found", "shortlisted"),
         recommendation__in=("strong", "apply"),
-        created_at__gte=Now() - timedelta(days=days),
+        job__first_seen_at__gte=Now() - timedelta(days=days),
     )
     return [_row(match) for match in rows.order_by(*_BEST_FIRST)[:limit]]
 

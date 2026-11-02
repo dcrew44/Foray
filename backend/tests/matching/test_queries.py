@@ -80,10 +80,9 @@ def test_new_this_week_is_recent_reviewed_and_still_waiting() -> None:
     make_match(user, fast_score=60, deep_score=60)  # maybe: not announced
     make_match(user, fast_score=95)  # never reviewed
     make_match(user, stage="applied", fast_score=90, deep_score=90)  # already acted on
-    stale = make_match(user, fast_score=90, deep_score=90)
-    JobMatch.objects.for_user(user.pk).filter(id=stale.id).update(
-        created_at=timezone.now() - timedelta(days=8)
-    )
+    # Matched today, but the posting has been in the mirror for a month: not new this week.
+    old_posting = make_job(first_seen_at=timezone.now() - timedelta(days=30))
+    make_match(user, job=old_posting, fast_score=90, deep_score=90)
     rows = recent_recommended(user.pk)
     assert [row.match_id for row in rows] == [strong.id, apply.id]
     assert [row.recommendation for row in rows] == ["strong", "apply"]

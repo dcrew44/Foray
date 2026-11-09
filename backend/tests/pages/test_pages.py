@@ -66,7 +66,7 @@ BUDGETS = {
     "activity": 6,
     "chat": 3,
     "companies": 3,
-    "profile": 5,
+    "profile": 6,  # one more than before #21: the saved answers
     "settings": 6,
 }
 # The session row and the user row, read before any endpoint runs.
@@ -666,6 +666,7 @@ def test_profile_page() -> None:
         "slots",
         "base",
         "render",
+        "answers",
     }
     assert (body["hasResume"], body["ready"]) == (True, True)
     assert body["resume"]["basics"]["name"]

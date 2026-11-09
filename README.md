@@ -93,6 +93,11 @@ threshold, how many matches get a deep review, model spend this month, model
 configuration, worker status and appearance (dark by default, light, or follow the
 system).
 
+The Profile page also keeps your **application answers**: the questions forms keep asking
+(work authorization, sponsorship, pay, start date, links, the voluntary disclosures),
+answered once. Foray fills a form only from these, never writes one for you, and leaves
+roles you could not be hired for out of your searches.
+
 <table>
   <tr>
     <td><img src="docs/screenshots/profile.png" alt="Profile: the resume as structured facts"></td>

@@ -58,7 +58,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
   headers).
 - `backend/apps/<app>/`: `core` (the `db()` bridge, `defer_in_tx`, scoping, errors, the router
   factory, the HTTP client, storage, throttles), `accounts`, `llm`, `jobs` (with
-  `sources/<source>.py`), `matching`, `resumes`, `runs`, `chat`, `pages`, `legacy`. An app
+  `sources/<source>.py`), `matching`, `resumes`, `applications`, `runs`, `chat`, `pages`, `legacy`. An app
   keeps its models and services, and as it needs them `api.py` (its routers), `tasks.py` (its
   procrastinate tasks), `fakes.py` (its `LLM_FAKE` answers) and `management/commands/`.
 - `backend/tests/`: pytest, one folder per app, plus `fixtures/`, `goldens/` and `contract/`.
@@ -198,6 +198,13 @@ An issue reads like the ones already there:
   `seed.json` holds only boards seen in a public index or a licensed list (#28). Boards found
   in bulk go through `board_candidates` and `candidates.grow`, which registers one only after
   its board answered with postings.
+- **A form is answered only from saved answers** (`apps/applications/answers.py`, #21):
+  `classify(label)` says which shared question a form's label asks, `plan(saved, label,
+  options)` gives the answer and where it came from. No model writes an answer about
+  sponsorship, pay or years of experience; a voluntary disclosure nobody answered is declined;
+  anything else nobody answered is `missing` and waits for the user. A new shared question is
+  an `AnswerKind`, a `CATALOGUE` entry and a pattern in `_PATTERNS` (narrower questions first).
+  The four work-status answers also filter searches (`work_status`, read by the prefilter).
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

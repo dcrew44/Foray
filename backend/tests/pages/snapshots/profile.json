@@ -1,4 +1,29 @@
 {
+  "answers": [
+    {
+      "answer": "null",
+      "group": "string",
+      "hint": "string",
+      "input": "string",
+      "kind": "string",
+      "options": [
+        {
+          "label": "string",
+          "value": "string"
+        }
+      ],
+      "question": "string"
+    },
+    {
+      "answer": "null",
+      "group": "string",
+      "hint": "string",
+      "input": "string",
+      "kind": "string",
+      "options": [],
+      "question": "string"
+    }
+  ],
   "base": {
     "createdAt": "string",
     "version": "number"

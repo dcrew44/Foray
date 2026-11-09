@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { PageBody, Section } from "@/components/foray/primitives";
 import { RefreshOn } from "@/components/live/refresh-on";
+import { AnswersForm } from "@/components/profile/answers-form";
 import { PageNav, type PageNavItem } from "@/components/profile/page-nav";
 import { PreferencesForm } from "@/components/profile/preferences-form";
 import { ProfileEditor } from "@/components/profile/profile-editor";
@@ -68,6 +69,23 @@ export default async function ProfilePage() {
     </div>
   );
 
+  const answered = page.answers.filter((item) => item.answer).length;
+  const answersSection = (
+    <div className="scroll-mt-20 lg:scroll-mt-8" id="answers" key="answers">
+      <Section
+        description="The questions application forms keep asking, answered once. Foray fills a form only from what you save here, and never writes one of these answers for you."
+        title="Application answers"
+      >
+        <AnswersForm initial={page.answers} key={JSON.stringify(page.answers)} />
+      </Section>
+    </div>
+  );
+  const answersNav: PageNavItem = {
+    id: "answers",
+    label: "Application answers",
+    detail: answered > 0 ? String(answered) : undefined,
+  };
+
   if (!page.hasResume) {
     return (
       <PageBody>
@@ -81,7 +99,10 @@ export default async function ProfilePage() {
           </p>
           <ResumeDropzone className="mt-6" hasResume={false} />
         </div>
-        <div className="mt-16 max-w-3xl">{preferencesSection}</div>
+        <div className="mt-16 max-w-3xl space-y-16">
+          {preferencesSection}
+          {answersSection}
+        </div>
       </PageBody>
     );
   }
@@ -143,14 +164,15 @@ export default async function ProfilePage() {
           {preferencesFirst
             ? [preferencesSection, resumeSection]
             : [resumeSection, preferencesSection]}
+          {answersSection}
         </div>
         <aside className="hidden xl:block">
           <PageNav
             className="sticky top-10"
             items={
               preferencesFirst
-                ? [preferencesNav, ...resumeNav]
-                : [...resumeNav, preferencesNav]
+                ? [preferencesNav, ...resumeNav, answersNav]
+                : [...resumeNav, preferencesNav, answersNav]
             }
           />
         </aside>

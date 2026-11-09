@@ -514,6 +514,17 @@ Ashby and Lever.
     answers sent, and the time.
   - **Restraint in the backend:** per-employer and daily caps on the automated lane.
 
+  Built so far: **saved answers** (#21, `apps/applications/answers.py`). The questions forms
+  share are a catalogue (work authorization, sponsorship, citizenship, clearance, pay, start
+  date, links, the voluntary disclosures) that the Profile page asks once. A form field is
+  classified by its label and answered only from what the user saved: an unanswered question
+  is `missing` and waits for them, an unanswered voluntary disclosure is declined, and a
+  question of the employer's own is kept under its words so the next employer who asks it is
+  answered too. The same answers decide eligibility: someone who said they need sponsorship
+  is not shown postings that say they will not sponsor or are for citizens only, and someone
+  who said they hold no clearance is not shown postings that require one. Only an answer the
+  user gave rules anything out.
+
   It adds the `applications` and `application_answers` tables, the `apply` and
   `career_page_scan` run kinds and the `apply_submit` approval. Tests use local replicas of
   the forms; a real application is submitted only on the user's explicit yes.

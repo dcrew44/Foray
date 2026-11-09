@@ -498,6 +498,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/answers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save answers */
+        put: operations["apps_applications_api_put_answers"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversations": {
         parameters: {
             query?: never;
@@ -1376,6 +1393,29 @@ export interface components {
             /** Matchid */
             matchId: string;
         };
+        /** AnswerIn */
+        AnswerIn: {
+            kind: components["schemas"]["AnswerKind"];
+            /** Answer */
+            answer: string;
+            /**
+             * Question
+             * @default
+             */
+            question: string;
+        };
+        /**
+         * AnswerKind
+         * @description The questions application forms share. `custom` is any other question, kept under the
+         *     question's own words.
+         * @enum {string}
+         */
+        AnswerKind: "work_authorization" | "sponsorship" | "citizenship" | "clearance" | "salary" | "start_date" | "years_experience" | "relocation" | "location" | "phone" | "linkedin" | "github" | "website" | "how_heard" | "previously_employed" | "over_18" | "pronouns" | "gender" | "race" | "hispanic" | "veteran" | "disability" | "custom";
+        /** AnswersIn */
+        AnswersIn: {
+            /** Answers */
+            answers: components["schemas"]["AnswerIn"][];
+        };
         /** ConversationItem */
         ConversationItem: {
             /**
@@ -1873,6 +1913,13 @@ export interface components {
             /** P90S */
             p90S: number;
         };
+        /** AnswerOption */
+        AnswerOption: {
+            /** Value */
+            value: string;
+            /** Label */
+            label: string;
+        };
         /** BaseVersion */
         BaseVersion: {
             /** Version */
@@ -1906,6 +1953,33 @@ export interface components {
             slots: components["schemas"]["Slot"][];
             base: components["schemas"]["BaseVersion"] | null;
             render: components["schemas"]["LatestRender"] | null;
+            /** Answers */
+            answers: components["schemas"]["SavedAnswer"][];
+        };
+        /**
+         * SavedAnswer
+         * @description One of the questions application forms share (#21), with the user's answer if any.
+         */
+        SavedAnswer: {
+            kind: components["schemas"]["AnswerKind"];
+            /** Question */
+            question: string;
+            /**
+             * Input
+             * @enum {string}
+             */
+            input: "yes_no" | "choice" | "text";
+            /** Options */
+            options: components["schemas"]["AnswerOption"][];
+            /**
+             * Group
+             * @enum {string}
+             */
+            group: "work" | "logistics" | "links" | "disclosures" | "custom";
+            /** Hint */
+            hint: string;
+            /** Answer */
+            answer: string | null;
         };
         /** AggregatorUsage */
         AggregatorUsage: {
@@ -3362,6 +3436,30 @@ export interface operations {
                 };
                 content: {
                     "text/html": string;
+                };
+            };
+        };
+    };
+    apps_applications_api_put_answers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswersIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
                 };
             };
         };

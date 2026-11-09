@@ -41,6 +41,7 @@ def test_every_per_user_table_is_user_owned() -> None:
         "JobMatch",
         "LlmCall",
         "Message",
+        "Notification",
         "Resume",
         "Run",
     }

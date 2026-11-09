@@ -84,13 +84,29 @@ only when the board answered with postings (`manage.py find_boards`, `grow_regis
 
 ![Companies: boards with their open roles and freshness](docs/screenshots/companies.png)
 
+### New matches on your phone
+
+Between searches Foray scores the postings each board check brings in and announces the
+strong ones in a "New matches" chat. To hear about them away from the app, install the
+[ntfy](https://ntfy.sh) app on your phone, subscribe to a topic with a name only you know
+(anyone who knows the name can read it), and paste the name into **Settings, Phone
+notifications**. Each announced match is then sent once: the company, the title, the verdict,
+how long the posting has been up, and a link to the match. Quiet hours (22:00 to 08:00 on
+your own clock, unless you change them) hold a notification until they end, and **Send a
+test notification** checks the whole path. Nothing is sent without a topic.
+
+Foray publishes to `NTFY_SERVER` (the public ntfy.sh by default; your own ntfy server works
+if it is reachable from the internet on port 80 or 443). The worker does the sending, so it
+has to be running, and the link in a notification opens `PUBLIC_ORIGIN`, so set that to an
+address your phone can reach.
+
 ### Your profile and settings
 
 Your resume becomes structured facts that every score, review and tailored resume is
 judged against; you can edit them, and each save keeps the version before so tailored
 resumes can still cite what they were built from. Settings hold autonomy, the archive
-threshold, how many matches get a deep review, model spend this month, model
-configuration, worker status and appearance (dark by default, light, or follow the
+threshold, how many matches get a deep review, phone notifications, model spend this month,
+model configuration, worker status and appearance (dark by default, light, or follow the
 system).
 
 The Profile page also keeps your **application answers**: the questions forms keep asking

@@ -6,6 +6,7 @@
 | `approvals.expire` | every minute | `approvals:expire` |
 | `maintenance.prune` | daily 03:17 | `maintenance:prune` |
 | `companies.refresh_scheduled` | every 15 minutes | `company-refresh:cron` |
+| `notify.send` | every minute | `notify:sweep` |
 
 - **No periodic task has a `lock`**, only a `queueing_lock` (one waiting copy at most;
   procrastinate's deferrer catches the `AlreadyEnqueued`). A periodic holding a lock could lock
@@ -47,6 +48,8 @@ SCHEDULE: tuple[Periodic, ...] = (
     Periodic("approvals.expire", "* * * * *", "approvals:expire"),
     Periodic("maintenance.prune", "17 3 * * *", "maintenance:prune"),
     Periodic("companies.refresh_scheduled", "*/15 * * * *", "company-refresh:cron"),
+    # Phone notifications that quiet hours held or an earlier attempt failed (#59).
+    Periodic("notify.send", "* * * * *", "notify:sweep"),
 )
 
 

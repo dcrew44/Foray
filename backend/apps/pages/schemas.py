@@ -398,3 +398,4 @@ class SettingsPage(ApiModel):
     aggregator: AggregatorUsage
     purposes: list[PurposeModel]
     providers: ProviderKeys
+    ntfy_server: str  # `NTFY_SERVER`: where the user's phone subscribes to their topic (#59)

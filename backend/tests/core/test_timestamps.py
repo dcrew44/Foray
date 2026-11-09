@@ -120,6 +120,8 @@ STAMPED_COLUMNS = {
     "messages.created_at",
     "messages.updated_at",
     "llm_calls.created_at",
+    "notifications.created_at",
+    "notifications.updated_at",
 }
 
 

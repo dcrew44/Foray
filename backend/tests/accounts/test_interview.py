@@ -224,6 +224,9 @@ def test_onboarding_without_a_resume(django_assert_max_num_queries: Any) -> None
         "deepEvalTopN",
         "watchEnabled",
         "watchDailyReviews",
+        "ntfyTopic",
+        "quietHoursStart",
+        "quietHoursEnd",
     }
     assert set(wire["progress"]) == {
         "filled",
@@ -391,6 +394,10 @@ def test_patch_settings_merges_partial_updates(signed_in: Any) -> None:
             "deepEvalTopN": 15,
             "watchEnabled": True,
             "watchDailyReviews": 10,
+            "ntfyTopic": "",
+            "quietHoursStart": "22:00",
+            "quietHoursEnd": "08:00",
+            "timeZone": "UTC",
         },
     }
     second = client.patch(
@@ -403,11 +410,72 @@ def test_patch_settings_merges_partial_updates(signed_in: Any) -> None:
         "deepEvalTopN": 0,
         "watchEnabled": False,
         "watchDailyReviews": 10,
+        "ntfyTopic": "",
+        "quietHoursStart": "22:00",
+        "quietHoursEnd": "08:00",
     }
-    assert second.json()["settings"] == saved
+    # The time zone is the user's column, not one of the stored settings.
+    assert second.json()["settings"] == {**saved, "timeZone": "UTC"}
     user.refresh_from_db()
     assert user.settings == saved
     assert client.patch("/api/settings", {}).json()["settings"]["scoreThreshold"] == 70
+
+
+@pytest.mark.django_db
+def test_patch_settings_saves_the_phone_notification_settings(signed_in: Any) -> None:
+    """#59: the ntfy topic, quiet hours, and the browser's time zone they are read in."""
+    client, user = signed_in(settings={"scoreThreshold": 40})
+    response = client.patch(
+        "/api/settings",
+        {
+            "ntfyTopic": "  foray-Avery_7f3k \n",  # pasted with its whitespace
+            "quietHoursStart": "23:30",
+            "quietHoursEnd": "06:45",
+            "timeZone": "America/Los_Angeles",
+        },
+    )
+    assert response.status_code == 200, response.content
+    saved = response.json()["settings"]
+    assert saved["ntfyTopic"] == "foray-Avery_7f3k"
+    assert (saved["quietHoursStart"], saved["quietHoursEnd"]) == ("23:30", "06:45")
+    assert saved["timeZone"] == "America/Los_Angeles"
+    user.refresh_from_db()
+    assert user.timezone == "America/Los_Angeles"
+    assert user.settings["ntfyTopic"] == "foray-Avery_7f3k"
+    assert "timeZone" not in user.settings and user.settings["scoreThreshold"] == 40
+
+    # An empty topic turns notifications off; nothing else moves, the zone included.
+    cleared = client.patch("/api/settings", {"ntfyTopic": ""}).json()["settings"]
+    assert cleared["ntfyTopic"] == "" and cleared["quietHoursStart"] == "23:30"
+    assert cleared["timeZone"] == "America/Los_Angeles"
+
+
+@pytest.mark.django_db
+def test_patch_settings_names_what_is_wrong_with_a_topic_or_a_time(signed_in: Any) -> None:
+    client, user = signed_in(settings={"ntfyTopic": "kept"})
+    topic = "A topic is up to 64 letters, digits, hyphens and underscores, with no spaces."
+    hours = "Quiet hours are two times of day, such as 22:00 and 08:00."
+    general = "Those settings are out of range. Check the values and try again."
+    for body, message in (
+        ({"ntfyTopic": "two words"}, topic),
+        ({"ntfyTopic": "https://ntfy.sh/mine"}, topic),
+        ({"ntfyTopic": "x" * 65}, topic),
+        ({"ntfyTopic": "naïve"}, topic),
+        ({"ntfyTopic": 7}, topic),
+        ({"ntfyTopic": None}, general),  # "" clears a topic; null is refused like any setting
+        ({"quietHoursStart": "24:00"}, hours),
+        ({"quietHoursEnd": "8:00"}, hours),
+        ({"quietHoursEnd": "08:60"}, hours),
+        ({"quietHoursStart": "22:00\n"}, hours),
+        ({"timeZone": "Mars/Olympus_Mons"}, general),
+        ({"timeZone": ""}, general),
+        ({"timeZone": "../../etc/passwd"}, general),
+    ):
+        response = client.patch("/api/settings", body)
+        assert response.status_code == 400, body
+        assert response.json() == {"ok": False, "message": message}, body
+    user.refresh_from_db()
+    assert user.settings == {"ntfyTopic": "kept"} and user.timezone == "UTC"
 
 
 @pytest.mark.django_db

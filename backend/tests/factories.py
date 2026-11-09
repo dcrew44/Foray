@@ -39,6 +39,7 @@ from apps.jobs.models import BoardCandidate, Company, Job
 from apps.llm.models import LlmCall
 from apps.matching.models import JobMatch
 from apps.matching.schemas import DeepEval, EvalGap, FastScore, MatchedRequirement
+from apps.notifications.models import Notification
 from apps.resumes.models import Document, Resume
 from apps.runs import catalogue
 from apps.runs.catalogue import ApprovalKind, ApprovalStatus, RunKind
@@ -468,6 +469,22 @@ def make_message(
     fields.setdefault("parts", [{"type": "text", "text": text}])
     return Message.objects.create_for(
         conversation.user_id, conversation=conversation, role=role, **fields
+    )
+
+
+# --- notifications -------------------------------------------------------------------------------
+
+
+def make_notification(
+    user: User, *, match: JobMatch | None = None, channel: str = "ntfy", **fields: Any
+) -> Notification:
+    """A phone notification waiting to be sent, due now, for `match` (by default a new match
+    the deep review called strong, as a watch would have announced)."""
+    return Notification.objects.create_for(
+        user.pk,
+        match=match if match is not None else make_match(user, fast_score=88, deep_score=86),
+        channel=channel,
+        **fields,
     )
 
 

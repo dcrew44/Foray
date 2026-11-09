@@ -30,6 +30,8 @@ export type SkillItem = S["SkillItem"];
 export type Preferences = S["Preferences"];
 export type Slot = S["Slot"];
 export type Settings = S["Settings"];
+/** The settings as the Settings page and `PATCH /api/settings` give them: with `timeZone`. */
+export type SavedSettings = S["SettingsOut"];
 
 // Run outputs and event data. `LiveRun.output` and `LiveEvent.data` are open objects; these are
 // the shapes the components that started a run read from its ending event.
@@ -41,3 +43,5 @@ export type CompanyAddOutput = S["CompanyAddOutput"];
 export type DiscoveryStep = S["DiscoveryStep"];
 /** `worker.ping`'s data: the job that answered Settings' Test, and the worker's pid. */
 export type WorkerPingData = S["WorkerPingData"];
+/** `notification.test`'s data: the job that tried the test notification, and whether it was sent. */
+export type NotificationTestData = S["NotificationTestData"];

@@ -328,13 +328,19 @@ def save_preferences(user_id: str, preferences: Preferences) -> Preferences:
     return normalized
 
 
-def update_settings(user_id: str, patch: dict[str, Any]) -> Settings:
+def update_settings(
+    user_id: str, patch: dict[str, Any], *, time_zone: str | None = None
+) -> Settings:
     """Merge a partial update (field names as keys, already validated) into the stored settings
     and store the full result. Raises pydantic's `ValidationError` if the merge is out of
-    range."""
+    range. `time_zone` (an IANA name, already validated) replaces `users.timezone`: Settings
+    sends the browser's with the quiet hours, which are read on that clock (#59)."""
     with transaction.atomic():
         row = User.objects.select_for_update().only("settings").get(pk=user_id)
         current = Settings.read(row.settings)
         merged = Settings.model_validate({**current.model_dump(), **patch})
-        User.objects.filter(pk=user_id).update(settings=merged.dump(), updated_at=Now())
+        changes: dict[str, Any] = {"settings": merged.dump(), "updated_at": Now()}
+        if time_zone is not None:
+            changes["timezone"] = time_zone
+        User.objects.filter(pk=user_id).update(**changes)
     return merged

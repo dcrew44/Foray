@@ -252,6 +252,23 @@ export function formatLag(seconds: number): string {
   return plural(Math.round(hours / 24), "day");
 }
 
+/** A stored time of day ("22:00", "08:30") as people say it: "10:00 pm", "8:30 am". */
+export function clockLabel(value: string): string {
+  const [hours = 0, minutes = 0] = value.split(":").map(Number);
+  const hour = hours % 12 === 0 ? 12 : hours % 12;
+  return `${hour}:${String(minutes).padStart(2, "0")} ${hours < 12 ? "am" : "pm"}`;
+}
+
+/** Every half hour of the day as "HH:MM", plus `extra` in its place when it is not one. */
+export function clockOptions(extra?: string): string[] {
+  const options = Array.from(
+    { length: 48 },
+    (_, index) => `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`,
+  );
+  if (extra && /^\d{2}:\d{2}$/.test(extra) && !options.includes(extra)) options.push(extra);
+  return options.sort();
+}
+
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count.toLocaleString()} ${count === 1 ? one : many}`;
 }

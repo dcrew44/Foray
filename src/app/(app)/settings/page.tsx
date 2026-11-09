@@ -4,6 +4,7 @@ import { PageBody, PageHeader, Section, SignalDot, Stat } from "@/components/for
 import { PageNav } from "@/components/profile/page-nav";
 import { BehaviourForm } from "@/components/settings/behaviour-form";
 import { AppearanceForm } from "@/components/settings/appearance-form";
+import { NotificationsForm } from "@/components/settings/notifications-form";
 import { SignOutButton } from "@/components/settings/sign-out-button";
 import {
   AggregatorMeter,
@@ -37,9 +38,10 @@ const EFFORT_LABEL: Record<ReasoningEffort, string> = {
 const PROVIDERS: ProviderId[] = ["openai", "anthropic", "google", "deepseek", "compat"];
 
 /**
- * How the agents behave for the user, what they have cost this month, what
- * they run on, and whether the worker is up. One read of Django's settings
- * page; provider keys never leave the server, only which ones are set.
+ * How the agents behave for the user, where new matches are sent, what they
+ * have cost this month, what they run on, and whether the worker is up. One
+ * read of Django's settings page; provider keys never leave the server, only
+ * which ones are set.
  */
 export default async function SettingsPage() {
   const page = await django<S["SettingsPage"]>("/api/pages/settings");
@@ -78,6 +80,15 @@ export default async function SettingsPage() {
                 reviewCost={review.perItemUsd}
                 reviewModel={review.perItemUsd != null ? (review.model.split(":").pop() ?? null) : null}
               />
+            </Section>
+          </div>
+
+          <div className="scroll-mt-20 lg:scroll-mt-8" id="notifications">
+            <Section
+              description="When Foray finds a strong match on its own, it can tell your phone as well as the New matches chat."
+              title="Phone notifications"
+            >
+              <NotificationsForm initial={settings} server={page.ntfyServer} />
             </Section>
           </div>
 
@@ -268,6 +279,7 @@ export default async function SettingsPage() {
             className="sticky top-10"
             items={[
               { id: "behaviour", label: "How Foray works for you" },
+              { id: "notifications", label: "Phone notifications" },
               { id: "usage", label: "Spend this month", detail: formatUsd(total.usd) },
               { id: "models", label: "Models" },
               { id: "worker", label: "Worker" },

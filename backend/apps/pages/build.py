@@ -16,11 +16,12 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, cast
 
+from django.conf import settings
 from django.db.models import Avg, Count, F, Q, Sum
 from django.db.models.functions import Now, TruncDate
 from django.utils import timezone
 
-from apps.accounts.api import SettingsOut
+from apps.accounts.api import settings_out
 from apps.accounts.models import User
 from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
@@ -773,7 +774,7 @@ def settings_page(user: User) -> SettingsPage:
         )
     return SettingsPage(
         user=SettingsUser(name=user.name, email=user.email),
-        settings=SettingsOut(**Settings.read(user.settings).model_dump()),
+        settings=settings_out(Settings.read(user.settings), user.timezone),
         review=ReviewCost(per_item_usd=review.per_item_usd, model=review.model),
         spend=MonthSpend(
             usd=float(total_usd),
@@ -803,4 +804,5 @@ def settings_page(user: User) -> SettingsPage:
         ),
         purposes=purposes,
         providers=ProviderKeys(present=cast(Any, registry.configured_providers())),
+        ntfy_server=settings.ENV.ntfy_server,
     )

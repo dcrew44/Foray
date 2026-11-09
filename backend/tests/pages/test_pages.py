@@ -226,6 +226,9 @@ def test_home_page() -> None:
         "deepEvalTopN": 15,
         "watchEnabled": True,
         "watchDailyReviews": 10,
+        "ntfyTopic": "",
+        "quietHoursStart": "22:00",
+        "quietHoursEnd": "08:00",
     }
     assert body["counts"] == {
         "found": 1,
@@ -859,6 +862,10 @@ def test_settings_page() -> None:
         "deepEvalTopN": 15,
         "watchEnabled": True,
         "watchDailyReviews": 10,
+        "ntfyTopic": "",
+        "quietHoursStart": "22:00",
+        "quietHoursEnd": "08:00",
+        "timeZone": "UTC",  # `users.timezone`: the clock quiet hours are read on
     }
     assert body["spend"] == {
         "usd": pytest.approx(0.225),
@@ -903,6 +910,7 @@ def test_settings_page() -> None:
     assert body["review"]["model"] == "openai:gpt-5.6-terra"
     assert body["review"]["perItemUsd"] > 0
     assert body["providers"] == {"present": ["openai", "google", "anthropic", "deepseek"]}
+    assert body["ntfyServer"] == "https://ntfy.sh"  # where the phone subscribes (#59)
 
 
 def test_settings_page_shows_key_presence_only(settings: Any) -> None:

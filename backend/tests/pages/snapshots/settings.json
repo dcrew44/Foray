@@ -28,6 +28,7 @@
     }
   ],
   "monthStart": "string",
+  "ntfyServer": "string",
   "providers": {
     "present": [
       "string"
@@ -52,7 +53,11 @@
   "settings": {
     "deepEvalTopN": "number",
     "defaultMode": "string",
+    "ntfyTopic": "string",
+    "quietHoursEnd": "string",
+    "quietHoursStart": "string",
     "scoreThreshold": "number",
+    "timeZone": "string",
     "watchDailyReviews": "number",
     "watchEnabled": "boolean"
   },

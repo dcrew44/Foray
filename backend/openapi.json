@@ -1166,6 +1166,33 @@
         ]
       }
     },
+    "/api/notifications/test": {
+      "post": {
+        "operationId": "apps_notifications_api_post_test",
+        "summary": "Send a test notification",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTestOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "notifications"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/pages/home": {
       "get": {
         "operationId": "apps_pages_api_home",
@@ -1817,6 +1844,22 @@
           "watchDailyReviews": {
             "title": "Watchdailyreviews",
             "type": "integer"
+          },
+          "ntfyTopic": {
+            "title": "Ntfytopic",
+            "type": "string"
+          },
+          "quietHoursStart": {
+            "title": "Quiethoursstart",
+            "type": "string"
+          },
+          "quietHoursEnd": {
+            "title": "Quiethoursend",
+            "type": "string"
+          },
+          "timeZone": {
+            "title": "Timezone",
+            "type": "string"
           }
         },
         "required": [
@@ -1824,7 +1867,11 @@
           "scoreThreshold",
           "deepEvalTopN",
           "watchEnabled",
-          "watchDailyReviews"
+          "watchDailyReviews",
+          "ntfyTopic",
+          "quietHoursStart",
+          "quietHoursEnd",
+          "timeZone"
         ],
         "title": "SettingsOut",
         "type": "object"
@@ -1884,6 +1931,27 @@
             "minimum": 0,
             "title": "Watchdailyreviews",
             "type": "integer"
+          },
+          "ntfyTopic": {
+            "pattern": "^[A-Za-z0-9_-]{0,64}$",
+            "title": "Ntfytopic",
+            "type": "string"
+          },
+          "quietHoursStart": {
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Quiethoursstart",
+            "type": "string"
+          },
+          "quietHoursEnd": {
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Quiethoursend",
+            "type": "string"
+          },
+          "timeZone": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Timezone",
+            "type": "string"
           }
         },
         "title": "SettingsPatch",
@@ -3768,6 +3836,29 @@
         "title": "ConversationDeletedOut",
         "type": "object"
       },
+      "NotificationTestOut": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "jobId": {
+            "title": "Jobid",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "jobId"
+        ],
+        "title": "NotificationTestOut",
+        "type": "object"
+      },
       "HomeHeadline": {
         "properties": {
           "headline": {
@@ -4023,6 +4114,24 @@
             "minimum": 0,
             "title": "Watchdailyreviews",
             "type": "integer"
+          },
+          "ntfyTopic": {
+            "default": "",
+            "pattern": "^[A-Za-z0-9_-]{0,64}$",
+            "title": "Ntfytopic",
+            "type": "string"
+          },
+          "quietHoursStart": {
+            "default": "22:00",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Quiethoursstart",
+            "type": "string"
+          },
+          "quietHoursEnd": {
+            "default": "08:00",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Quiethoursend",
+            "type": "string"
           }
         },
         "title": "Settings",
@@ -5689,6 +5798,10 @@
           },
           "providers": {
             "$ref": "#/components/schemas/ProviderKeys"
+          },
+          "ntfyServer": {
+            "title": "Ntfyserver",
+            "type": "string"
           }
         },
         "required": [
@@ -5702,7 +5815,8 @@
           "monthStart",
           "aggregator",
           "purposes",
-          "providers"
+          "providers",
+          "ntfyServer"
         ],
         "title": "SettingsPage",
         "type": "object"
@@ -7679,6 +7793,24 @@
         "title": "Stage",
         "type": "string"
       },
+      "NotificationTestData": {
+        "properties": {
+          "jobId": {
+            "title": "Jobid",
+            "type": "integer"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "jobId",
+          "sent"
+        ],
+        "title": "NotificationTestData",
+        "type": "object"
+      },
       "EventKind": {
         "enum": [
           "run.started",
@@ -7718,7 +7850,8 @@
           "company.not-found",
           "company.refresh.done",
           "worker.ping",
-          "chat.followup"
+          "chat.followup",
+          "notification.test"
         ],
         "title": "EventKind",
         "type": "string"

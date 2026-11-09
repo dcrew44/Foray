@@ -44,6 +44,12 @@ class Command(BaseCommand):
             help="register a board even when nothing it lists is a software role",
         )
         parser.add_argument("--retry", action="store_true", help="also ask those that failed")
+        parser.add_argument(
+            "--from",
+            dest="place",
+            default="",
+            help="only candidates found in this place, e.g. list:owner/repo",
+        )
         parser.add_argument("--write-seed", action="store_true", help="rewrite the seed list")
 
     def handle(self, *args: Any, **options: Any) -> None:
@@ -83,6 +89,7 @@ class Command(BaseCommand):
                 matching=options["matching"],
                 any_board=options["any_board"],
                 retry=options["retry"],
+                place=options["place"],
                 progress=progress,
             )
 

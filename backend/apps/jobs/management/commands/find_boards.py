@@ -2,8 +2,9 @@
 
 From Common Crawl's index (`--crawl CC-MAIN-2026-43`, or `--latest 2` for the newest two), or
 from a file somebody already made (`--file candidates.tsv`: `source<TAB>id`, optionally followed
-by how many crawls it was seen in and the newest of them; `--found-in list:owner/repo` says
-where a file that is not from a crawl came from). Nothing is asked of any board here; that is
+by how many crawls it was seen in and the newest of them; or `--urls anything.yml`, which takes
+every board URL in a text file; `--found-in list:owner/repo` says where a file that is not from
+a crawl came from). Nothing is asked of any board here; that is
 `grow_registry`.
 """
 
@@ -11,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import re
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +23,8 @@ from apps.core.http import HttpClient
 from apps.jobs import crawl_index
 from apps.jobs.candidates import Seen, add_candidates, candidate_counts, seen_in_urls
 
+_URL = re.compile(r"https?://[^\s\"'<>)\]]+")
+
 
 class Command(BaseCommand):
     help = "Collect board ids from Common Crawl's index, or a file, as registry candidates."
@@ -30,14 +34,23 @@ class Command(BaseCommand):
         parser.add_argument("--latest", type=int, default=0, help="the newest N crawls")
         parser.add_argument(
             "--sources",
-            default="greenhouse,ashby,lever,workday",
+            default="greenhouse,ashby,lever,workday,gem,workable,recruitee",
             help="which boards to look for in a crawl",
         )
         parser.add_argument("--file", help="a TSV of candidates instead of a crawl")
+        parser.add_argument(
+            "--urls", help="any text file: every board URL in it is a candidate (with --found-in)"
+        )
         parser.add_argument("--found-in", help="where a file's rows came from (not a crawl)")
 
     def handle(self, *args: Any, **options: Any) -> None:
-        if options["file"]:
+        if options["urls"]:
+            if not options["found_in"]:
+                raise CommandError("Say where the file came from: --found-in list:owner/repo")
+            urls = _URL.findall(Path(options["urls"]).read_text(errors="replace"))
+            added = add_candidates(seen_in_urls(urls, options["found_in"]))
+            self.stdout.write(f"{added} boards among {len(urls)} URLs in {options['urls']}")
+        elif options["file"]:
             added = add_candidates(_from_file(Path(options["file"]), options["found_in"]))
             self.stdout.write(f"{added} candidates from {options['file']}")
         else:

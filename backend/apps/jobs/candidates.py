@@ -165,6 +165,12 @@ def board_in_url(url: str) -> tuple[str, str] | None:
         source, slug = "lever", (segments[0] if segments else None)
     elif host == "api.lever.co" and segments[:2] == ["v0", "postings"]:
         source, slug = "lever", (segments[2] if len(segments) > 2 else None)
+    elif host == "jobs.gem.com":
+        source, slug = "gem", (segments[0] if segments else None)
+    elif host == "apply.workable.com":
+        source, slug = "workable", (segments[0] if segments else None)
+    elif host.endswith(".recruitee.com") and host.count(".") == 2:
+        source, slug = "recruitee", host.split(".")[0]
     elif host in ("jobs.smartrecruiters.com", "careers.smartrecruiters.com"):
         source = "smartrecruiters"
         first = segments[0].lower() if segments else ""
@@ -180,7 +186,7 @@ def board_in_url(url: str) -> tuple[str, str] | None:
     if slug is None:
         return None
     slug = slug.strip()
-    if source in ("greenhouse", "ashby"):
+    if source in ("greenhouse", "ashby", "gem", "workable", "recruitee"):
         slug = slug.lower()
     if slug.lower() in _NOT_BOARDS or not _SLUG.match(slug):
         return None
@@ -238,6 +244,15 @@ def add_candidates(sightings: Iterable[Seen]) -> int:
     with transaction.atomic(), connection.cursor() as cursor:
         for start in range(0, len(rows), BATCH):
             cursor.executemany(_UPSERT, rows[start : start + BATCH])
+        # A board read out of one crawl at a time has been seen in as many as it names.
+        cursor.execute(
+            """
+            UPDATE board_candidates b SET seen = crawls.n
+            FROM (SELECT id, count(*) AS n FROM board_candidates, unnest(found_in) AS place
+                  WHERE place LIKE 'commoncrawl:%%' GROUP BY id) AS crawls
+            WHERE crawls.id = b.id AND crawls.n > b.seen
+            """
+        )
     return len(rows)
 
 
@@ -267,12 +282,15 @@ def link_known() -> int:
 
 
 def next_candidates(
-    sources: Sequence[str], limit: int, *, retry: bool = False
+    sources: Sequence[str], limit: int, *, retry: bool = False, place: str = ""
 ) -> list[BoardCandidate]:
     """The candidates to ask next: never asked (and with `retry` those whose question failed),
-    newest-seen first, then most-often seen. Sync."""
+    newest-seen first, then most-often seen; only those found in `place` when one is given.
+    Sync."""
     statuses = [CandidateStatus.NEW, *([CandidateStatus.ERROR] if retry else [])]
     rows = BoardCandidate.objects.filter(status__in=statuses, source_type__in=list(sources))
+    if place:
+        rows = rows.filter(found_in__contains=[place])
     return list(rows.order_by("-newest", "-seen", "ats_slug")[:limit])
 
 
@@ -428,12 +446,13 @@ async def grow(
     matching: str = "",
     any_board: bool = False,
     retry: bool = False,
+    place: str = "",
     progress: Callable[[GrowSummary], None] | None = None,
 ) -> GrowSummary:
     """Asks up to `limit` candidates' boards and registers the ones that answer with postings,
     a software role among them unless `any_board` (see the module docstring)."""
     await db(link_known)
-    candidates = await db(next_candidates, sources, limit, retry=retry)
+    candidates = await db(next_candidates, sources, limit, retry=retry, place=place)
     summary = GrowSummary()
     gates: dict[str, asyncio.Semaphore] = {}
 

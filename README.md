@@ -3,7 +3,7 @@
 **An AI job-search agent that does the legwork and leaves the decisions to you.**
 
 Upload your resume, say what you want in plain words (*"senior backend roles in the Bay
-Area, ideally payments"*), and Foray goes to work in the background: it searches 400+
+Area, ideally payments"*), and Foray goes to work in the background: it searches 3,000+
 company job boards plus an aggregator, scores every posting against your actual resume,
 deep-reviews the best with evidence quoted from your experience, proposes a shortlist, and
 tailors your resume to a specific role, fact-checking every line before it renders a PDF.
@@ -82,7 +82,7 @@ pages without a known board fall back to LLM extraction. The starter list
 (`pnpm seed:companies`) is Foray's own: board ids read out of Common Crawl's index and kept
 only when the board answered with postings (`manage.py find_boards`, `grow_registry`).
 
-![Companies: 400+ boards with their open roles and freshness](docs/screenshots/companies.png)
+![Companies: boards with their open roles and freshness](docs/screenshots/companies.png)
 
 ### Your profile and settings
 
@@ -198,7 +198,7 @@ cp .env.example .env     # set SECRET_KEY, LLM_DEFAULT and that provider's API k
 pnpm db:up               # Postgres 18 in Docker
 pnpm db:create           # the foray_app database
 pnpm db:migrate
-pnpm seed:companies      # 400+ verified company job boards (add --fetch to fill the mirror now)
+pnpm seed:companies      # 3,200 company job boards, each checked live (add --fetch to fill the mirror now)
 pnpm dev:all             # web on :3000, api on :8000, and the background worker
 ```
 
@@ -324,3 +324,8 @@ behind it are in [DESIGN.md](DESIGN.md).
 ## License
 
 [MIT](LICENSE)
+
+The list of boards in `backend/apps/jobs/seed.json` is Foray's own: board ids read out of the
+[Common Crawl](https://commoncrawl.org) index, and those named in
+[ambicuity/New-Grad-Jobs](https://github.com/ambicuity/New-Grad-Jobs) (MIT), each kept only
+after its board answered with postings. Every entry says where it was seen (`foundIn`).

@@ -693,6 +693,27 @@ async def test_one_pass_reads_only_so_many_postings_of_a_source(
     # A board still being read is due again at the next tick, whatever it lists.
     assert poll_interval(waiting, await sync_to_async(database_now)()) == HOT_INTERVAL
 
+    # A third board finds the pass's catch-up budget spent: it is not even listed, and not
+    # recorded as fetched, so it is first in line next pass.
+    late = await sync_to_async(make_company)(
+        slug="late", source_type="workday", ats_slug="late.wd1.myworkdayjobs.com/Careers"
+    )
+    third = Board(late, {n: "a" for n in range(21, 24)})
+    async with mock_client(routes({})) as client:
+        client.take("catch-up:workday", refresh.SOURCE_POSTINGS_PER_PASS, 4)
+        outcome = await refresh._refresh_listed(client, late, third.adapter, force=False)
+    assert (outcome.unchanged, third.listings, third.read) == (True, 0, [])
+    assert (await Company.objects.aget(id=late.id)).last_fetched_at is None
+
+    # A board already followed has its own budget: the backlog cannot starve a new posting.
+    async with mock_client(routes({})) as client:
+        client.take("catch-up:workday", refresh.SOURCE_POSTINGS_PER_PASS, 4)
+        await refresh._refresh_listed(client, late, third.adapter, force=True)  # read it whole
+        third.open[24] = "a"
+        followed = await Company.objects.aget(id=late.id)
+        await refresh._refresh_listed(client, followed, third.adapter, force=False)
+    assert 24 in third.read
+
     # The next pass has a budget of its own, and the board goes on from where it stopped.
     async with mock_client(routes({})) as client:
         await refresh._refresh_listed(client, waiting, second.adapter, force=False)

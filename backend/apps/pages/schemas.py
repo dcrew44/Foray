@@ -153,6 +153,9 @@ class MatchDetail(ApiModel):
     stage: StageName
     deep_eval: DeepEval | None
     fast_eval: FastScore | None
+    # The line the page leads with, as the match's row has it (`matching/verdict.py`, #38).
+    reason: str | None
+    blocker: str | None
     tailored_resume_id: uuid.UUID | None
     notes: str | None
     created_at: datetime

@@ -2456,6 +2456,28 @@
             ],
             "title": "Headline"
           },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "blocker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocker"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -2595,6 +2617,8 @@
           "score",
           "recommendation",
           "headline",
+          "reason",
+          "blocker",
           "title",
           "company",
           "locations",
@@ -4701,6 +4725,28 @@
               }
             ]
           },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "blocker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocker"
+          },
           "tailoredResumeId": {
             "anyOf": [
               {
@@ -4762,6 +4808,8 @@
           "stage",
           "deepEval",
           "fastEval",
+          "reason",
+          "blocker",
           "tailoredResumeId",
           "notes",
           "createdAt",

@@ -28,6 +28,7 @@ from apps.core.router import ApiModel
 from apps.jobs import registry
 from apps.jobs.models import Job
 from apps.matching.models import JobMatch, Stage
+from apps.matching.verdict import blocker_for, reason_for
 
 __all__ = [
     "ALL_STAGES",
@@ -116,7 +117,10 @@ class MatchRow(ApiModel):
     deep_score: int | None
     score: int | None  # the deep score when there is one, else the fast score: what the UI ranks
     recommendation: Recommendation | None  # the deep evaluation's verdict, when one exists
-    headline: str | None  # one line on why it fits: the deep summary, else the first fast reason
+    headline: str | None  # the deep summary, whole, else the first fast reason
+    # What a row leads with beside the verdict (`matching/verdict.py`, #38).
+    reason: str | None  # one line of why: the summary's first sentence, else the first fast reason
+    blocker: str | None  # the review's first disqualifying gap; unreviewed, the first hard miss
     title: str
     company: str
     locations: list[str]
@@ -159,6 +163,8 @@ def _row(match: Any) -> MatchRow:
         score=match.score,
         recommendation=recommendation,
         headline=match.headline,
+        reason=reason_for(match.deep_eval, match.fast_eval),
+        blocker=blocker_for(match.deep_eval, match.fast_eval),
         title=job.title,
         company=job.company_name,
         locations=list(job.locations),

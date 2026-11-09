@@ -1043,6 +1043,10 @@ export interface components {
             recommendation: ("strong" | "apply" | "maybe" | "skip") | null;
             /** Headline */
             headline: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Blocker */
+            blocker: string | null;
             /** Title */
             title: string;
             /** Company */
@@ -1789,6 +1793,10 @@ export interface components {
             stage: "found" | "shortlisted" | "applied" | "interviewing" | "offer" | "rejected" | "archived";
             deepEval: components["schemas"]["DeepEval"] | null;
             fastEval: components["schemas"]["FastScore"] | null;
+            /** Reason */
+            reason: string | null;
+            /** Blocker */
+            blocker: string | null;
             /** Tailoredresumeid */
             tailoredResumeId: string | null;
             /** Notes */

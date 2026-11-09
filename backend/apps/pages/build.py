@@ -41,6 +41,7 @@ from apps.matching.deep_eval import estimate_eval_cost
 from apps.matching.models import JobMatch
 from apps.matching.queries import ALL_STAGES, OPEN_STAGES, MatchRow
 from apps.matching.schemas import DeepEval, FastScore
+from apps.matching.verdict import blocker_for, reason_for
 from apps.pages.schemas import (
     ActivityPage,
     AggregatorUsage,
@@ -352,6 +353,8 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
             stage=cast(Any, match.stage),
             deep_eval=DeepEval.read(match.deep_eval),
             fast_eval=FastScore.read(match.fast_eval),
+            reason=reason_for(match.deep_eval, match.fast_eval),
+            blocker=blocker_for(match.deep_eval, match.fast_eval),
             tailored_resume_id=match.tailored_resume_id,
             notes=match.notes,
             created_at=match.created_at,

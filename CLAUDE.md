@@ -231,6 +231,12 @@ An issue reads like the ones already there:
 - Tokens live in `src/app/globals.css`; never hardcode colors. `signal` (marigold) means
   only "agents working" or "waiting on the user"; `destructive` only errors; match fit uses
   the `fit-0..5` pine scale via `ScoreChip`.
+- **A match leads with its verdict.** One vocabulary names a fit: the recommendation labels,
+  or "Not reviewed" for a match with only a triage score (`verdictLabel`, `VerdictPill`).
+  `fitLevel` steps the pine scale on the rubric bands and takes whether the score was
+  reviewed. The line of why and the blocker come from Django on every row and on the match
+  page (`reason`, `blocker`; `apps/matching/verdict.py`) and are drawn by `Why` and `Blocker`
+  (`src/components/matches/verdict.tsx`); never derive them in the frontend.
 - Build pages from `src/components/foray/primitives.tsx` (`PageBody`, `PageHeader`,
   `Section`, `EmptyState`, `ScoreChip`, `CompanyMark`, …) and format with `src/lib/format.ts`.
 - Sentence case; no all-caps labels, no "A · B · C" meta strings, no "→" in buttons.

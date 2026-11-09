@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { RecommendationPill, ScoreChip } from "@/components/foray/primitives";
+import { ScoreChip, VerdictPill } from "@/components/foray/primitives";
 import type { MatchRow } from "@/lib/api/types";
 import {
   formatLocation,
@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { ClosedMark } from "./job-signals";
 import { moveMatch } from "./match-api";
 import { CLOSED_STAGES as CLOSED, OPEN_STAGES as OPEN } from "./stages";
+import { Why } from "./verdict";
 
 /**
  * The pipeline as a board. Dragging a card moves the match; the move shows
@@ -53,6 +54,8 @@ export type BoardMatch = Pick<
   | "score"
   | "deepScore"
   | "recommendation"
+  | "reason"
+  | "blocker"
   | "salaryMin"
   | "salaryMax"
   | "salaryCurrency"
@@ -230,15 +233,20 @@ function Card({ match, dragging = false }: { match: BoardMatch; dragging?: boole
           <p className="text-foreground/75 mt-0.5 truncate text-[12.5px]">{match.company}</p>
         </div>
       </div>
+      {/* What the card leads with: the verdict, one line of why, any blocker. */}
+      <div className="mt-2.5 space-y-1.5">
+        <VerdictPill recommendation={match.recommendation} reviewed={match.deepScore != null} />
+        <Why blocker={match.blocker} clamp={2} reason={match.reason} />
+      </div>
       <div className="text-muted-foreground mt-2.5 flex items-center gap-1 text-[12px]">
         <MapPin className="size-3 shrink-0 opacity-60" />
         <span className="truncate">{formatLocation(match.locations, match.remote)}</span>
         {!match.isActive && <ClosedMark className="ml-auto" />}
       </div>
-      {(match.recommendation || salary || match.tailoredResumeId) && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <RecommendationPill value={match.recommendation} />
-          {salary && <span className="text-muted-foreground tabular text-[12px]">{salary}</span>}
+      {(salary || match.postedAt || match.tailoredResumeId) && (
+        <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+          {salary && <span className="tabular">{salary}</span>}
+          {match.postedAt && <span>{timeAgo(match.postedAt)}</span>}
           {match.tailoredResumeId && (
             <span className="text-primary ml-auto inline-flex items-center gap-1 text-[11.5px]" title="Tailored resume ready">
               <FileText className="size-3" />
@@ -246,9 +254,6 @@ function Card({ match, dragging = false }: { match: BoardMatch; dragging?: boole
             </span>
           )}
         </div>
-      )}
-      {match.postedAt && !match.recommendation && !salary && (
-        <p className="text-muted-foreground mt-1.5 text-[11.5px]">{timeAgo(match.postedAt)}</p>
       )}
     </Link>
   );

@@ -31,7 +31,7 @@ from apps.matching.schemas import DeepEval, FastScore
 from apps.resumes.schema import Resume, fact_ids
 from apps.resumes.text import resume_to_text
 from apps.runs.models import Approval, Event, Run
-from tests.factories import make_company, make_job, sample_resume_data
+from tests.factories import make_company, make_job, sample_deep_eval, sample_resume_data
 from tests.queue import run_deferred
 
 
@@ -94,6 +94,10 @@ async def test_fast_scores_are_stable_per_posting_and_spread() -> None:
         assert first == again
         assert 40 <= first.score <= 99
         assert first.fit_reasons == [f"Fake triage of {title}: no model was called."]
+        # A missed hard requirement only where the default threshold archives the match (#38).
+        assert first.hard_requirement_misses == (
+            [f"A fake hard requirement of {title}"] if first.score < 55 else []
+        )
         scores[title] = first.score
     assert len(set(scores.values())) > 1
 
@@ -130,9 +134,27 @@ async def test_deep_reviews_cite_the_resume_and_agree_with_their_band() -> None:
     )
     assert 50 <= review.score <= 99
     assert review.recommendation == matching_fakes.recommendation_for(review.score)
+    assert [gap.model_dump() for gap in review.gaps] == matching_fakes.fake_gaps(
+        review.score, "Backend Engineer"
+    )
     # The resume text's first item is its first role.
     assert review.matched_requirements[0].fact_ids == [resume.work[0].id]
     assert "Backend Engineer at Acme" in review.summary
+
+
+def test_fake_gaps_follow_the_rubrics_bands() -> None:
+    """So a rehearsal shows every row a match can lead with (#38): a strong review has no gap,
+    an "apply" a learnable one, and every other "maybe" a blocker beside it."""
+
+    def severities(score: int) -> list[str]:
+        return [gap["severity"] for gap in matching_fakes.fake_gaps(score, "Role")]
+
+    assert [severities(score) for score in (99, 85)] == [[], []]
+    assert [severities(score) for score in (84, 70, 69, 51)] == [["learnable"]] * 4
+    assert [severities(score) for score in (68, 50)] == [["learnable", "disqualifying"]] * 2
+    for score in range(50, 100):
+        gaps = matching_fakes.fake_gaps(score, "Role")
+        assert DeepEval.model_validate({**sample_deep_eval(score), "gaps": gaps})
 
 
 async def test_other_output_types_fall_through_to_the_schema_default() -> None:

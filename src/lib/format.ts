@@ -42,31 +42,95 @@ export const RECOMMENDATION_LABEL: Record<RecommendationId, string> = {
   skip: "Skip",
 };
 
-/** Which step of the pine scale a score sits on. 0 means unscored. */
-export function fitLevel(score: number | null | undefined): 0 | 1 | 2 | 3 | 4 | 5 {
-  if (score == null) return 0;
-  if (score >= 90) return 5;
-  if (score >= 80) return 4;
-  if (score >= 70) return 3;
-  if (score >= 55) return 2;
-  return 1;
+/** What a match says in place of a verdict while it has only its triage score. */
+export const NOT_REVIEWED = "Not reviewed";
+
+export function isRecommendation(value: string | null | undefined): value is RecommendationId {
+  return value != null && Object.hasOwn(RECOMMENDATION_LABEL, value);
 }
 
-export function fitWord(score: number | null | undefined): string {
-  switch (fitLevel(score)) {
-    case 5:
-      return "Excellent fit";
-    case 4:
-      return "Strong fit";
-    case 3:
-      return "Good fit";
-    case 2:
-      return "Possible fit";
-    case 1:
-      return "Weak fit";
-    default:
-      return "Not scored yet";
-  }
+/**
+ * The verdict a match leads with, and the only words that name a fit: the deep review's
+ * recommendation, or that there is no review yet.
+ */
+export function verdictLabel(recommendation: string | null | undefined): string {
+  return isRecommendation(recommendation) ? RECOMMENDATION_LABEL[recommendation] : NOT_REVIEWED;
+}
+
+/**
+ * Which step of the pine scale a score sits on. 0 means unscored.
+ *
+ * The steps are the bands the two rubrics score in (`RUBRIC` in
+ * `backend/apps/matching/deep_eval.py` and `fast_score.py`), so a chip's green and the verdict
+ * beside it agree. A deep review's bands are its recommendations: strong from 85, apply from
+ * 70, maybe from 50, skip below. Triage gives no verdict and has five bands: 85, 70, 55, 30.
+ */
+export function fitLevel(
+  score: number | null | undefined,
+  reviewed = false,
+): 0 | 1 | 2 | 3 | 4 | 5 {
+  if (score == null) return 0;
+  if (score >= 85) return 5;
+  if (score >= 70) return 4;
+  if (reviewed) return score >= 50 ? 3 : 1;
+  if (score >= 55) return 3;
+  return score >= 30 ? 2 : 1;
+}
+
+/** The pine step each verdict sits on: `fitLevel` of every reviewed score in its band. */
+export const RECOMMENDATION_LEVEL: Record<RecommendationId, 1 | 3 | 4 | 5> = {
+  strong: 5,
+  apply: 4,
+  maybe: 3,
+  skip: 1,
+};
+
+/**
+ * "7 of 9 requirements met (2 partly), 1 learnable gap": how much of what the posting asks a
+ * deep review found in the resume. The total is every requirement the review weighed, met or
+ * not; a partial match counts as met and is said. Null when the review listed none.
+ */
+export function requirementsLine(evaluation: {
+  matched_requirements?: { strength?: string }[] | null;
+  gaps?: { severity?: string }[] | null;
+}): string | null {
+  const met = evaluation.matched_requirements ?? [];
+  const gaps = evaluation.gaps ?? [];
+  const total = met.length + gaps.length;
+  if (total === 0) return null;
+
+  const partly = met.filter((item) => item.strength === "partial").length;
+  const blockers = gaps.filter((gap) => gap.severity === "disqualifying").length;
+  const learnable = gaps.length - blockers;
+  return [
+    `${met.length} of ${plural(total, "requirement")} met${partly ? ` (${partly} partly)` : ""}`,
+    gaps.length === 0 && "no gaps",
+    learnable > 0 && plural(learnable, "learnable gap"),
+    blockers > 0 && plural(blockers, "blocker"),
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+/**
+ * Models sometimes leave the resume's bracketed fact ids in prose meant for
+ * people ("… dropped events by 94% [3d98…]"). They are for the machine.
+ */
+export function stripFactIds(text: string | null | undefined): string {
+  return (text ?? "").replace(/\s*\[[0-9a-f]{8}-[0-9a-f-]{27,}\]/gi, "").trim();
+}
+
+/**
+ * What a review's summary goes on to say after the sentence the match leads with, so a page
+ * showing both never says that sentence twice. The whole summary when it does not open with it.
+ */
+export function summaryRest(
+  summary: string | null | undefined,
+  reason: string | null | undefined,
+): string {
+  const text = (summary ?? "").replace(/\s+/g, " ").trim();
+  const lead = (reason ?? "").replace(/\s+/g, " ").trim();
+  return lead && text.startsWith(lead) ? text.slice(lead.length).trim() : text;
 }
 
 export function formatSalary(input: {

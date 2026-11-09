@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { EmptyState, RecommendationPill, ScoreChip } from "@/components/foray/primitives";
+import { EmptyState, ScoreChip, VerdictPill } from "@/components/foray/primitives";
 import { Input } from "@/components/ui/input";
 import {
   formatLocation,
@@ -21,17 +21,20 @@ import type { BoardMatch } from "./board";
 import { ClosedMark } from "./job-signals";
 import { moveMatch } from "./match-api";
 import { ALL_STAGES as STAGES } from "./stages";
+import { Why } from "./verdict";
 
 /**
  * The same matches as a sortable, filterable list — for when the question is
- * "which of these" rather than "where is each".
+ * "which of these" rather than "where is each". Each row leads with its verdict,
+ * one line of why and any blocker.
  */
 
+/** The rubric bands a score can clear: plausible, worth applying, strong. */
 const MIN_SCORES = [
   { label: "Any fit", value: 0 },
   { label: "55+", value: 55 },
   { label: "70+", value: 70 },
-  { label: "80+", value: 80 },
+  { label: "85+", value: 85 },
 ];
 
 export function MatchTable({
@@ -165,18 +168,29 @@ export function MatchTable({
             </thead>
             <tbody className="divide-y">
               {rows.map((match) => (
-                <tr className="hover:bg-muted/30" key={match.matchId}>
-                  <td className="py-2.5 pl-4">
+                // Rows run to several lines, so cells hang from the top; the chip and the
+                // stage select, taller than a line of text, sit a little higher to centre on the title.
+                <tr className="hover:bg-muted/30 [&>td]:align-top" key={match.matchId}>
+                  <td className="pt-1.5 pb-2.5 pl-4">
                     <ScoreChip evaluated={match.deepScore != null} score={match.score} size="sm" />
                   </td>
                   <td className="py-2.5 pr-4">
                     <Link className="group block min-w-0" href={`/matches/${match.matchId}`}>
-                      <span className="block truncate font-medium group-hover:underline">{match.title}</span>
-                      <span className="text-muted-foreground flex items-center gap-2 truncate text-[12.5px]">
-                        {match.company}
-                        <RecommendationPill className="hidden xl:inline-flex" value={match.recommendation} />
+                      {/* The verdict ends the title's line, so verdicts read down the list as a
+                          column; on a phone it drops under the title instead of squeezing it. */}
+                      <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
+                        <span className="min-w-0 truncate font-medium group-hover:underline">{match.title}</span>
+                        <VerdictPill
+                          className="shrink-0 sm:ml-auto"
+                          recommendation={match.recommendation}
+                          reviewed={match.deepScore != null}
+                        />
+                      </span>
+                      <span className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-2 text-[12.5px]">
+                        <span className="truncate">{match.company}</span>
                         {!match.isActive && <ClosedMark />}
                       </span>
+                      <Why blocker={match.blocker} className="mt-1" reason={match.reason} />
                     </Link>
                   </td>
                   <td className="text-muted-foreground hidden truncate py-2.5 pr-4 xl:table-cell">
@@ -185,7 +199,7 @@ export function MatchTable({
                   <td className="tabular hidden py-2.5 pr-4 whitespace-nowrap md:table-cell">
                     {formatSalary(match) ?? <span className="text-muted-foreground">Not stated</span>}
                   </td>
-                  <td className="py-2.5 pr-4">
+                  <td className="pt-1.5 pb-2.5 pr-4">
                     <select
                       aria-label={`Stage for ${match.title}`}
                       className="hover:border-border h-7 rounded-md border border-transparent bg-transparent px-1.5 text-[13px]"

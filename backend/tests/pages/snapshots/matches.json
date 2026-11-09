@@ -11,6 +11,7 @@
   "matches": [
     {
       "applyUrl": "string",
+      "blocker": "null",
       "company": "string",
       "createdAt": "string",
       "deepScore": "number",
@@ -23,6 +24,7 @@
       ],
       "matchId": "string",
       "postedAt": "string",
+      "reason": "string",
       "recommendation": "string",
       "remote": "string",
       "salaryCurrency": "string",
@@ -39,6 +41,7 @@
     },
     {
       "applyUrl": "null",
+      "blocker": "null",
       "company": "string",
       "createdAt": "string",
       "deepScore": "null",
@@ -51,6 +54,7 @@
       ],
       "matchId": "string",
       "postedAt": "string",
+      "reason": "string",
       "recommendation": "null",
       "remote": "string",
       "salaryCurrency": "null",

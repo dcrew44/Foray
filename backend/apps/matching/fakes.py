@@ -10,10 +10,11 @@ into every band, so both gates have something to propose.
     the chat agent set them, else the saved target roles, lowercased.
   - `FastScore`: a score from 40 to 99 derived from a stable hash of the posting's title,
     company and location lines (the prompt carries no job id), with the fit reasons naming the
-    posting.
+    posting, and a missed hard requirement on the scores the default threshold archives.
 - `evaluate` (`DeepEval`): a templated review whose score (50 to 99) comes from the same kind of
   hash, with the recommendation in the band the rubric gives that score, citing the resume's
-  first item when there is one.
+  first item when there is one. Its gaps follow the band too (`fake_gaps`), so a rehearsal shows
+  every row a match can lead with (#38): no gap, a learnable one, a blocker.
 
 Each override answers only its own output type (told apart by the output schema's properties)
 and returns None for anything else, so the schema-driven default still answers the rest.
@@ -37,6 +38,7 @@ __all__ = [
     "fast_score_reply",
     "fake_deep_score",
     "fake_fast_score",
+    "fake_gaps",
     "recommendation_for",
 ]
 
@@ -124,18 +126,33 @@ def fast_score_reply(messages: list[ModelMessage], info: AgentInfo) -> dict[str,
         return None
     prompt = fake.latest_user_text(messages)
     title = _line(prompt, "Title") or "this role"
+    score = fake_fast_score(prompt)
     return {
-        "score": fake_fast_score(prompt),
+        "score": score,
         "fit_reasons": [f"Fake triage of {title}: no model was called."],
         "red_flags": [],
         "seniority": "unclear",
-        "hard_requirement_misses": [],
+        # The rubric's "probably wrong" band, which the default threshold archives.
+        "hard_requirement_misses": [f"A fake hard requirement of {title}"] if score < 55 else [],
     }
 
 
 # --- evaluate ------------------------------------------------------------------------------------
 
 _FACT_ID = re.compile(r"^\[([^\]\n]+)\] ", re.MULTILINE)
+
+
+def fake_gaps(score: int, title: str) -> list[dict[str, str]]:
+    """The gaps the rubric pairs with a score's band: none for a strong match, a learnable one
+    below that, and for every other "maybe" a disqualifying one beside it."""
+    if score >= 85:
+        return []
+    note = "A fake gap: no model read the posting."
+    gaps = [{"gap": f"A tool {title} names in passing", "severity": "learnable", "note": note}]
+    if score < 70 and score % 2 == 0:
+        blocker = f"A fake hard requirement of {title}"
+        gaps.append({"gap": blocker, "severity": "disqualifying", "note": note})
+    return gaps
 
 
 def deep_eval_reply(messages: list[ModelMessage], info: AgentInfo) -> dict[str, Any] | None:
@@ -155,7 +172,7 @@ def deep_eval_reply(messages: list[ModelMessage], info: AgentInfo) -> dict[str, 
                 "strength": "partial",
             }
         ],
-        "gaps": [],
+        "gaps": fake_gaps(score, title),
         "seniority_fit": "unclear",
         "location_fit": "unclear",
         "salary_fit": "unstated",

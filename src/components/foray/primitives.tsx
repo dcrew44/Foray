@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
 import {
   fitLevel,
-  fitWord,
   initials,
+  isRecommendation,
   nameHue,
+  NOT_REVIEWED,
   RECOMMENDATION_LABEL,
-  type RecommendationId,
+  RECOMMENDATION_LEVEL,
 } from "@/lib/format";
 
 /**
@@ -70,13 +71,14 @@ const FIT_CLASS = [
   "bg-fit-5 text-fit-5-foreground",
 ] as const;
 
-export function fitClass(score: number | null | undefined) {
-  return FIT_CLASS[fitLevel(score)];
+export function fitClass(score: number | null | undefined, reviewed = false) {
+  return FIT_CLASS[fitLevel(score, reviewed)];
 }
 
 /**
  * A match score as a chip whose green deepens with fit. The number is set in
- * the display face; unscored shows a quiet dash rather than a zero.
+ * the display face; unscored shows a quiet dash rather than a zero. A score a
+ * deep review gave carries a pine dot at every size; a triage score has none.
  */
 export function ScoreChip({
   score,
@@ -96,53 +98,79 @@ export function ScoreChip({
     lg: "size-12 rounded-xl text-[20px]",
     xl: "size-[72px] rounded-2xl text-[32px]",
   }[size];
+  const mark = { sm: "size-1.5", md: "size-2", lg: "size-2.5", xl: "size-3" }[size];
 
   return (
     <span
       className={cn(
         "text-display relative inline-flex shrink-0 items-center justify-center tabular leading-none",
         dims,
-        fitClass(score),
+        fitClass(score, evaluated),
         className,
       )}
-      title={score == null ? "Not scored yet" : `${fitWord(score)} (${score})`}
+      title={
+        score == null
+          ? "Not scored yet"
+          : evaluated
+            ? `Scored ${score} by a deep review`
+            : `Scored ${score} by triage, not reviewed yet`
+      }
     >
       {score == null ? "–" : score}
-      {evaluated && size !== "sm" && (
+      {evaluated && (
         <span
-          aria-label="Deep-evaluated"
-          className="absolute -right-0.5 -bottom-0.5 size-2 rounded-full bg-signal ring-2 ring-background"
-        />
+          className={cn(
+            "bg-primary ring-background absolute -right-0.5 -bottom-0.5 rounded-full ring-2",
+            mark,
+          )}
+        >
+          <span className="sr-only">, reviewed</span>
+        </span>
       )}
     </span>
   );
 }
 
-const RECOMMENDATION_CLASS: Record<RecommendationId, string> = {
-  strong: "bg-fit-5 text-fit-5-foreground",
-  apply: "bg-fit-3 text-fit-3-foreground",
-  maybe: "bg-secondary text-secondary-foreground",
-  skip: "bg-muted text-muted-foreground",
-};
+const PILL =
+  "inline-flex h-5 items-center rounded-full px-2 text-[11.5px] font-medium whitespace-nowrap";
 
+/** A deep review's recommendation, on the pine step its band of scores sits on. */
 export function RecommendationPill({
   value,
   className,
 }: {
-  value: RecommendationId | string | null | undefined;
+  value: string | null | undefined;
   className?: string;
 }) {
-  if (!value || !(value in RECOMMENDATION_LABEL)) return null;
-  const id = value as RecommendationId;
+  if (!isRecommendation(value)) return null;
   return (
-    <span
-      className={cn(
-        "inline-flex h-5 items-center rounded-full px-2 text-[11.5px] font-medium whitespace-nowrap",
-        RECOMMENDATION_CLASS[id],
-        className,
-      )}
-    >
-      {RECOMMENDATION_LABEL[id]}
+    <span className={cn(PILL, FIT_CLASS[RECOMMENDATION_LEVEL[value]], className)}>
+      {RECOMMENDATION_LABEL[value]}
+    </span>
+  );
+}
+
+/**
+ * The verdict a match leads with: the review's recommendation, or "Not reviewed"
+ * for a match that has only its triage score. A reviewed match whose verdict was
+ * not kept (an old stored card) says nothing rather than the wrong thing.
+ */
+export function VerdictPill({
+  recommendation,
+  reviewed,
+  className,
+}: {
+  recommendation: string | null | undefined;
+  reviewed: boolean;
+  className?: string;
+}) {
+  if (isRecommendation(recommendation)) {
+    return <RecommendationPill className={className} value={recommendation} />;
+  }
+  if (reviewed) return null;
+  return (
+    <span className={cn(PILL, "text-muted-foreground border border-dashed", className)}>
+      {NOT_REVIEWED}
     </span>
   );
 }

@@ -1,13 +1,26 @@
 import { CircleAlert, CircleCheck, CircleDashed, Quote } from "lucide-react";
 
-import { RecommendationPill, ScoreChip } from "@/components/foray/primitives";
-import { fitWord } from "@/lib/format";
+import { ScoreChip } from "@/components/foray/primitives";
+import {
+  NOT_REVIEWED,
+  requirementsLine,
+  stripFactIds as clean,
+  summaryRest,
+  verdictLabel,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+import { Blocker } from "./verdict";
 
 /**
  * Why a match fits, as the two scoring passes judged it. Server-rendered: the
  * evaluation is data at rest, and nothing here needs the client.
+ *
+ * Both lead with what the match's row leads with: the verdict, one line of why
+ * and any blocker (`reason` and `blocker` come from Django with the match).
  */
+
+type Lead = { reason?: string | null; blocker?: string | null };
 
 type Requirement = {
   requirement: string;
@@ -59,14 +72,6 @@ const FIT_WORDS: Record<string, Record<string, { label: string; tone: "good" | "
   },
 };
 
-/**
- * Models sometimes leave the resume's bracketed fact ids in prose meant for
- * people ("… dropped events by 94% [3d98…]"). They are for the machine.
- */
-function clean(text: string | undefined | null): string {
-  return (text ?? "").replace(/\s*\[[0-9a-f]{8}-[0-9a-f-]{27,}\]/gi, "").trim();
-}
-
 const TONE_CLASS = {
   good: "bg-fit-2 text-fit-2-foreground",
   warn: "bg-signal-soft text-signal-foreground",
@@ -74,7 +79,11 @@ const TONE_CLASS = {
   neutral: "bg-muted text-muted-foreground",
 };
 
-export function DeepEvaluation({ evaluation }: { evaluation: DeepEvalView }) {
+export function DeepEvaluation({
+  evaluation,
+  reason,
+  blocker,
+}: { evaluation: DeepEvalView } & Lead) {
   const fits = (["seniority_fit", "location_fit", "salary_fit"] as const)
     .map((key) => {
       const value = evaluation[key];
@@ -84,21 +93,26 @@ export function DeepEvaluation({ evaluation }: { evaluation: DeepEvalView }) {
 
   const requirements = evaluation.matched_requirements ?? [];
   const gaps = evaluation.gaps ?? [];
+  // The sentence the row leads with, then whatever else the summary says.
+  const lead = clean(reason);
+  const rest = summaryRest(clean(evaluation.summary), lead);
+  const met = requirementsLine(evaluation);
 
   return (
     <div className="space-y-8">
       <div className="flex items-start gap-5">
         <ScoreChip evaluated score={evaluation.score ?? null} size="xl" />
         <div className="min-w-0 space-y-2 pt-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-display text-[20px]">{fitWord(evaluation.score)}</span>
-            <RecommendationPill value={evaluation.recommendation} />
-          </div>
-          {evaluation.summary && (
+          <p className="text-display text-[20px]">{verdictLabel(evaluation.recommendation)}</p>
+          {(lead || rest) && (
             <p className="text-foreground/85 max-w-[68ch] text-[14.5px] leading-relaxed">
-              {clean(evaluation.summary)}
+              {lead && <span className="text-foreground font-medium">{lead}</span>}
+              {lead && rest && " "}
+              {rest}
             </p>
           )}
+          <Blocker className="max-w-[68ch] text-[14px] leading-relaxed" text={blocker} />
+          {met && <p className="text-muted-foreground text-[13.5px]">{met}</p>}
           {fits.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               {fits.map((fit) => (
@@ -195,13 +209,22 @@ export function DeepEvaluation({ evaluation }: { evaluation: DeepEvalView }) {
   );
 }
 
-export function FastEvaluation({ evaluation }: { evaluation: FastEvalView }) {
+export function FastEvaluation({
+  evaluation,
+  reason,
+  blocker,
+}: { evaluation: FastEvalView } & Lead) {
+  const lead = clean(reason);
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-5">
         <ScoreChip score={evaluation.score ?? null} size="xl" />
-        <div className="min-w-0 space-y-1 pt-1">
-          <p className="text-display text-[20px]">{fitWord(evaluation.score)}</p>
+        <div className="min-w-0 space-y-2 pt-1">
+          <p className="text-display text-[20px]">{NOT_REVIEWED}</p>
+          {lead && (
+            <p className="max-w-[68ch] text-[14.5px] leading-relaxed font-medium">{lead}</p>
+          )}
+          <Blocker className="max-w-[68ch] text-[14px] leading-relaxed" text={blocker} />
           <p className="text-muted-foreground max-w-[60ch] text-[13.5px] leading-relaxed">
             From the quick triage pass. A deep review reads the whole posting against your
             resume and quotes the evidence for every requirement.

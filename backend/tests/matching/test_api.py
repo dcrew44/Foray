@@ -155,6 +155,8 @@ ROW_KEYS = {
     "score",
     "recommendation",
     "headline",
+    "reason",
+    "blocker",
     "title",
     "company",
     "locations",
@@ -187,6 +189,8 @@ def test_matches_by_id_best_first_own_only(signed_in: Any) -> None:
     assert (rows[0]["score"], rows[0]["recommendation"]) == (91, "strong")
     assert rows[0]["headline"] == sample_deep_eval(91)["summary"]
     assert rows[1]["headline"] == "Backend work in Python"  # the first fast reason
+    assert (rows[0]["reason"], rows[0]["blocker"]) == (sample_deep_eval(91)["summary"], None)
+    assert (rows[1]["reason"], rows[1]["blocker"]) == ("Backend work in Python", None)
     assert (rows[1]["salaryMin"], rows[1]["salaryMax"]) == (150000.0, None)
     assert rows[1]["stageChangedAt"].endswith("Z")
     assert api.get("/api/matches").json() == {"matches": []}

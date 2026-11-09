@@ -32,6 +32,7 @@
     "url": "string"
   },
   "match": {
+    "blocker": "null",
     "createdAt": "string",
     "deepEval": {
       "gaps": [
@@ -75,6 +76,7 @@
     "fastScore": "number",
     "id": "string",
     "notes": "string",
+    "reason": "string",
     "stage": "string",
     "stageChangedAt": "string",
     "tailoredResumeId": "string"

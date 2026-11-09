@@ -50,6 +50,8 @@ from tests.factories import (
     make_resume,
     make_run,
     make_user,
+    sample_deep_eval,
+    sample_fast_eval,
 )
 from tests.pages.conftest import Graph, full_graph, get_page, signed_in
 
@@ -374,6 +376,44 @@ def test_matches_page_is_not_ready_without_a_resume() -> None:
     assert body["matches"] == []
 
 
+def test_matches_page_rows_lead_with_the_verdict(django_assert_max_num_queries: Any) -> None:
+    """Every row says its verdict, one line of why and any blocker (#38), reviewed or not, from
+    the evaluations the row query already reads: the page's budget does not move."""
+    user = make_user(with_resume=True)
+    review = {
+        **sample_deep_eval(40),
+        "summary": "The stack fits. The role needs a clearance you do not hold.",
+        "gaps": [
+            {"gap": "Kafka", "severity": "learnable", "note": "Named once."},
+            {"gap": "Active clearance", "severity": "disqualifying", "note": "Required."},
+        ],
+    }
+    triage = {**sample_fast_eval(58), "hard_requirement_misses": ["Requires 8+ years"]}
+    reviewed = make_match(user, fast_score=88, deep_score=92)
+    blocked = make_match(user, fast_score=70, deep_score=40, deep_eval=review, stage="applied")
+    fast_only = make_match(user, fast_score=75)
+    fast_blocked = make_match(user, fast_score=58, fast_eval=triage)
+    client = signed_in(user)
+    for view in ("board", "list"):
+        with django_assert_max_num_queries(BUDGETS["matches"] + AUTH_QUERIES):
+            body = get_page(client, f"/api/pages/matches?view={view}").json()
+        rows = {row["matchId"]: row for row in body["matches"]}
+        assert {
+            name: tuple(rows[str(match.id)][key] for key in ("recommendation", "reason", "blocker"))
+            for name, match in (
+                ("reviewed", reviewed),
+                ("blocked", blocked),
+                ("fast only", fast_only),
+                ("fast blocked", fast_blocked),
+            )
+        } == {
+            "reviewed": ("strong", "A close fit for a backend role on a payments team.", None),
+            "blocked": ("skip", "The stack fits.", "Active clearance"),
+            "fast only": (None, "Backend work in Python", None),
+            "fast blocked": (None, "Backend work in Python", "Requires 8+ years"),
+        }, view
+
+
 # --- one match -----------------------------------------------------------------------------------
 
 
@@ -426,6 +466,33 @@ def test_match_page_without_extras_and_with_an_unreadable_evaluation() -> None:
     assert body["tailored"] is None
     assert body["match"]["deepEval"] is None  # read leniently: unreadable is absent
     assert body["match"]["fastEval"] is None
+
+
+def test_match_page_leads_with_the_rows_verdict(django_assert_max_num_queries: Any) -> None:
+    """The page's reason and blocker are its row's (#38), reviewed or not, within the budget."""
+    user = make_user()
+    review = {
+        **sample_deep_eval(45),
+        "summary": "Close on the stack. The degree is a hard requirement.",
+        "gaps": [{"gap": "A PhD in statistics", "severity": "disqualifying", "note": "A must."}],
+    }
+    triage = {**sample_fast_eval(40), "hard_requirement_misses": ["Requires 8+ years"]}
+    reviewed = make_match(user, fast_score=70, deep_score=45, deep_eval=review, fast_eval=triage)
+    fast_only = make_match(user, fast_score=40, fast_eval=triage)
+    plain = make_match(user, fast_score=72)
+    unscored = make_match(user)
+    client = signed_in(user)
+    rows = {row.match_id: row for row in list_matches(user.pk)}
+    for match, lead in (
+        (reviewed, ("Close on the stack.", "A PhD in statistics")),
+        (fast_only, ("Backend work in Python", "Requires 8+ years")),
+        (plain, ("Backend work in Python", None)),
+        (unscored, (None, None)),
+    ):
+        with django_assert_max_num_queries(BUDGETS["match"] + AUTH_QUERIES):
+            body = get_page(client, f"/api/pages/matches/{match.id}").json()["match"]
+        assert (body["reason"], body["blocker"]) == lead
+        assert (rows[match.id].reason, rows[match.id].blocker) == lead
 
 
 def test_match_page_is_404_for_anything_not_yours() -> None:

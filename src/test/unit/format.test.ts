@@ -8,9 +8,16 @@ import {
   formatSalary,
   formatUsd,
   initials,
+  isRecommendation,
   nameHue,
   plural,
+  RECOMMENDATION_LABEL,
+  RECOMMENDATION_LEVEL,
+  requirementsLine,
+  stripFactIds,
+  summaryRest,
   timeAgo,
+  verdictLabel,
 } from "@/lib/format";
 import { clearanceLabel, levelLabel, workAuthLabel, yearsLabel } from "@/lib/job-facts";
 
@@ -81,8 +88,118 @@ describe("timeAgo", () => {
 });
 
 describe("fitLevel", () => {
-  it("maps scores onto the pine scale", () => {
-    expect([null, 20, 55, 70, 80, 90].map((score) => fitLevel(score))).toEqual([0, 1, 2, 3, 4, 5]);
+  it("steps a triage score at the fast rubric's bands: 85, 70, 55, 30", () => {
+    const scores = [null, undefined, 0, 29, 30, 54, 55, 69, 70, 84, 85, 100];
+    expect(scores.map((score) => fitLevel(score))).toEqual([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]);
+  });
+
+  it("steps a reviewed score at the deep rubric's bands: 85, 70, 50", () => {
+    const scores = [null, 0, 49, 50, 54, 69, 70, 84, 85, 100];
+    expect(scores.map((score) => fitLevel(score, true))).toEqual([0, 1, 1, 3, 3, 3, 4, 4, 5, 5]);
+  });
+
+  it("puts every verdict on the step its band of scores sits on", () => {
+    // The deep rubric: strong 85-100, apply 70-84, maybe 50-69, skip 0-49.
+    const bands = { strong: [85, 100], apply: [70, 84], maybe: [50, 69], skip: [0, 49] } as const;
+    for (const [verdict, [low, high]] of Object.entries(bands)) {
+      const level = RECOMMENDATION_LEVEL[verdict as keyof typeof bands];
+      expect([fitLevel(low, true), fitLevel(high, true)], verdict).toEqual([level, level]);
+    }
+  });
+});
+
+describe("verdictLabel", () => {
+  it("names a reviewed match by its recommendation", () => {
+    expect(["strong", "apply", "maybe", "skip"].map(verdictLabel)).toEqual([
+      "Strong fit",
+      "Worth applying",
+      "Maybe",
+      "Skip",
+    ]);
+  });
+
+  it("says a match without one has not been reviewed", () => {
+    expect([null, undefined, "", "great", "toString"].map(verdictLabel)).toEqual(
+      Array(5).fill("Not reviewed"),
+    );
+  });
+
+  it("knows a recommendation from any other string", () => {
+    expect(Object.keys(RECOMMENDATION_LABEL).every(isRecommendation)).toBe(true);
+    expect(["constructor", "Strong", "", null, undefined].some(isRecommendation)).toBe(false);
+  });
+});
+
+describe("requirementsLine", () => {
+  const strong = { strength: "strong" };
+  const partial = { strength: "partial" };
+  const learnable = { severity: "learnable" };
+  const blocker = { severity: "disqualifying" };
+
+  it("counts met requirements against all the review weighed", () => {
+    expect(
+      requirementsLine({
+        matched_requirements: [strong, strong, strong, strong, strong, partial, partial],
+        gaps: [learnable, learnable],
+      }),
+    ).toBe("7 of 9 requirements met (2 partly), 2 learnable gaps");
+    expect(requirementsLine({ matched_requirements: [strong], gaps: [learnable] })).toBe(
+      "1 of 2 requirements met, 1 learnable gap",
+    );
+  });
+
+  it("says when nothing is missing", () => {
+    expect(requirementsLine({ matched_requirements: [strong, partial], gaps: [] })).toBe(
+      "2 of 2 requirements met (1 partly), no gaps",
+    );
+    expect(requirementsLine({ matched_requirements: [strong] })).toBe(
+      "1 of 1 requirement met, no gaps",
+    );
+  });
+
+  it("counts blockers apart from learnable gaps", () => {
+    expect(
+      requirementsLine({ matched_requirements: [strong], gaps: [learnable, blocker, blocker] }),
+    ).toBe("1 of 4 requirements met, 1 learnable gap, 2 blockers");
+    expect(requirementsLine({ matched_requirements: [], gaps: [blocker] })).toBe(
+      "0 of 1 requirement met, 1 blocker",
+    );
+  });
+
+  it("is null when the review listed no requirements", () => {
+    expect(requirementsLine({ matched_requirements: [], gaps: [] })).toBeNull();
+    expect(requirementsLine({ matched_requirements: null, gaps: null })).toBeNull();
+    expect(requirementsLine({})).toBeNull();
+  });
+});
+
+describe("stripFactIds", () => {
+  it("drops the bracketed resume ids a model left in prose", () => {
+    expect(
+      stripFactIds("Dropped events by 94% [3d98a1f0-42c8-4f9d-8a69-aeafe57027b6]. Then more."),
+    ).toBe("Dropped events by 94%. Then more.");
+  });
+
+  it("keeps other brackets and reads nothing as empty", () => {
+    expect(stripFactIds("Go [preferred] and Rust")).toBe("Go [preferred] and Rust");
+    expect([stripFactIds(null), stripFactIds(undefined), stripFactIds("  ")]).toEqual(["", "", ""]);
+  });
+});
+
+describe("summaryRest", () => {
+  const summary = "A close fit.  The gaps are small.\nWorth applying.";
+
+  it("is what the summary says after the sentence the match leads with", () => {
+    expect(summaryRest(summary, "A close fit.")).toBe("The gaps are small. Worth applying.");
+    expect(summaryRest("A close fit.", "A close fit.")).toBe("");
+  });
+
+  it("is the whole summary when it does not open with that sentence", () => {
+    expect(summaryRest(summary, "Backend work in Python")).toBe(
+      "A close fit. The gaps are small. Worth applying.",
+    );
+    expect(summaryRest(summary, null)).toBe("A close fit. The gaps are small. Worth applying.");
+    expect(summaryRest(null, "A close fit.")).toBe("");
   });
 });
 

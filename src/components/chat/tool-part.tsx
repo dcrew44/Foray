@@ -236,7 +236,7 @@ function toLine(job: StoredJobCard): MatchLineData {
     salary: job.salary ?? null,
     postedAt: job.postedAt ?? null,
     stage: isStage(job.stage) ? job.stage : null,
-    headline: job.headline ?? null,
+    reason: job.headline ?? null,
   };
 }
 

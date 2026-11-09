@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import {
   CompanyMark,
-  RecommendationPill,
   ScoreChip,
+  VerdictPill,
 } from "@/components/foray/primitives";
 import type { MatchRow } from "@/lib/api/types";
 import {
@@ -15,6 +15,8 @@ import {
   type StageId,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+import { Why } from "./verdict";
 
 /**
  * One match on one line — the unit of every list in the app: Home's best
@@ -32,7 +34,9 @@ export type MatchLineData = {
   salary: string | null;
   postedAt: string | Date | null;
   stage?: StageId | null;
-  headline?: string | null;
+  /** One line of why, and what would rule it out: shown where `showReason` asks. */
+  reason?: string | null;
+  blocker?: string | null;
 };
 
 export function fromMatchRow(row: MatchRow): MatchLineData {
@@ -47,19 +51,20 @@ export function fromMatchRow(row: MatchRow): MatchLineData {
     salary: formatSalary(row),
     postedAt: row.postedAt,
     stage: row.stage,
-    headline: row.headline,
+    reason: row.reason,
+    blocker: row.blocker,
   };
 }
 
 export function MatchLine({
   match,
   showStage = false,
-  showHeadline = false,
+  showReason = false,
   className,
 }: {
   match: MatchLineData;
   showStage?: boolean;
-  showHeadline?: boolean;
+  showReason?: boolean;
   className?: string;
 }) {
   const body = (
@@ -68,7 +73,11 @@ export function MatchLine({
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-[14px] font-medium">{match.title}</span>
-          <RecommendationPill className="hidden sm:inline-flex" value={match.recommendation} />
+          <VerdictPill
+            className="hidden sm:inline-flex"
+            recommendation={match.recommendation}
+            reviewed={match.evaluated}
+          />
         </div>
         <div className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-3 text-[13px]">
           <span className="text-foreground/80 truncate">{match.company}</span>
@@ -77,10 +86,8 @@ export function MatchLine({
             <span className="truncate">{match.location}</span>
           </span>
         </div>
-        {showHeadline && match.headline && (
-          <p className="text-foreground/85 mt-1.5 line-clamp-2 text-[13px] leading-snug">
-            {match.headline}
-          </p>
+        {showReason && (
+          <Why blocker={match.blocker} className="mt-1.5 text-[13px]" clamp={2} reason={match.reason} />
         )}
       </div>
       <div className="text-muted-foreground hidden shrink-0 flex-col items-end gap-0.5 text-right text-[12.5px] sm:flex">

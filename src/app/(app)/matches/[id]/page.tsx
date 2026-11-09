@@ -114,10 +114,10 @@ export default async function MatchPage({ params }: Params) {
             title="Why it fits"
           >
             {deep ? (
-              <DeepEvaluation evaluation={deep} />
+              <DeepEvaluation blocker={match.blocker} evaluation={deep} reason={match.reason} />
             ) : fast ? (
               <div className="space-y-6">
-                <FastEvaluation evaluation={fast} />
+                <FastEvaluation blocker={match.blocker} evaluation={fast} reason={match.reason} />
                 <EvaluateButton matchId={match.id} />
               </div>
             ) : (

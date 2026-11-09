@@ -63,7 +63,7 @@ export default async function HomePage() {
               >
                 <div className="-mx-3">
                   {newThisWeek.map((row) => (
-                    <MatchLine key={row.matchId} match={fromMatchRow(row)} showHeadline />
+                    <MatchLine key={row.matchId} match={fromMatchRow(row)} showReason />
                   ))}
                 </div>
               </Section>
@@ -91,7 +91,7 @@ export default async function HomePage() {
               ) : (
                 <div className="-mx-3">
                   {best.map((row) => (
-                    <MatchLine key={row.matchId} match={fromMatchRow(row)} showHeadline />
+                    <MatchLine key={row.matchId} match={fromMatchRow(row)} showReason />
                   ))}
                 </div>
               )}

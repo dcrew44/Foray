@@ -571,6 +571,23 @@ Ashby and Lever.
   who said they hold no clearance is not shown postings that require one. Only an answer the
   user gave rules anything out.
 
+  **Prepared applications** (#60, #62, `apps/applications/prepare.py`). When a watch keeps a
+  match (its fast score clears the user's threshold) it starts that match's application at
+  once, beside the deep reviews and without waiting for them; a match page can start one too.
+  The worker reads the posting's form from its board (Greenhouse publishes every question,
+  its options and whether it is required, with the posting; for other boards only the fields
+  every form has are planned, and the browser extension reads the rest when it fills) and
+  plans each field: name, email, city and links from the newest base resume, the resume file,
+  the user's saved answers mapped onto the form's own options, a declined voluntary
+  disclosure, or `missing`. One required field with nothing to put in it makes the
+  application `needs_answers`, with the question named; otherwise it is `ready`. The Apply
+  page lists what is ready, the posting that has been up longest first, then what waits on an
+  answer with the question inline: answering it saves the answer under the question's own
+  words (and under the shared question when it says what that asks), and every open
+  application is planned again without another fetch. Each application keeps when it was
+  prepared, became ready, was opened and was sent, which is what posted-to-applied time is
+  measured from. No model is involved, and the only request is the GET that reads the form.
+
   It adds the `applications` and `application_answers` tables, the `apply` and
   `career_page_scan` run kinds and the `apply_submit` approval. Tests use local replicas of
   the forms; a real application is submitted only on the user's explicit yes.

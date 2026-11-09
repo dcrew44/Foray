@@ -35,6 +35,7 @@ from apps.core.router import router
 from apps.pages import build
 from apps.pages.schemas import (
     ActivityPage,
+    ApplyPage,
     ChatPage,
     CompaniesPage,
     HomePage,
@@ -94,6 +95,11 @@ def chat(request: HttpRequest) -> ChatPage:
 @pages.get("/companies", response=CompaniesPage, summary="Companies page")
 def companies(request: HttpRequest) -> CompaniesPage:
     return build.companies_page()
+
+
+@pages.get("/apply", response=ApplyPage, summary="Apply page")
+def apply(request: HttpRequest) -> ApplyPage:
+    return build.apply_page(_user(request))
 
 
 @pages.get("/profile", response=ProfilePage, summary="Profile page")

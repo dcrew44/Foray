@@ -31,6 +31,7 @@ from typing import Any
 import pytest
 from django.test import Client
 
+from apps.applications.models import Application, ApplicationAnswer
 from apps.chat.models import Conversation, Message
 from apps.core.ids import generate_message_id
 from apps.core.storage import storage
@@ -66,6 +67,13 @@ ROUTES: tuple[Route, ...] = (
     Route("POST", "/api/matches/{id}/evaluate", "match", {}, 202),
     Route("POST", "/api/approvals/{id}/decision", "approval", {"approved": True}),
     Route("POST", "/api/runs/{id}/cancel", "running", {}),
+    Route(
+        "POST",
+        "/api/applications/{id}/answers",
+        "application",
+        {"key": "question_1", "value": "It is the work I want."},
+    ),
+    Route("PATCH", "/api/applications/{id}", "application", {"action": "dismiss"}),
     Route("DELETE", "/api/conversations/{id}", "conversation"),
 )
 
@@ -152,6 +160,10 @@ def _state(graph: Graph) -> dict[str, Any]:
         "messages": Message.objects.for_user(user_id).count(),
         "documents": sorted(Document.objects.for_user(user_id).values_list("id", flat=True)),
         "resumes": sorted(Resume.objects.for_user(user_id).values_list("id", "version")),
+        "applications": sorted(
+            Application.objects.for_user(user_id).values_list("id", "status", "updated_at")
+        ),
+        "answers": ApplicationAnswer.objects.for_user(user_id).count(),
     }
 
 

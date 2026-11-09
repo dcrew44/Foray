@@ -104,6 +104,7 @@ TASKS: dict[str, TaskSpec] = {
     "chat.follow_up": TaskSpec(INTERACTIVE, 3 * MINUTE),
     "notify.send": TaskSpec(SYSTEM, 2 * MINUTE),
     "notify.test": TaskSpec(SYSTEM, 1 * MINUTE),
+    "application.prepare": TaskSpec(INTERACTIVE, 3 * MINUTE),
     "worker.ping": TaskSpec(SYSTEM, 1 * MINUTE),
     "maintenance.reap": TaskSpec(SYSTEM, 5 * MINUTE),
     "approvals.expire": TaskSpec(SYSTEM, 5 * MINUTE),
@@ -114,6 +115,7 @@ TASKS: dict[str, TaskSpec] = {
 # Tasks that run without a run row: their names never appear in `FAILURE_PREFIX`.
 SYSTEM_TASKS = frozenset(
     {
+        "application.prepare",
         "chat.follow_up",
         "companies.refresh_scheduled",
         "watch.fan_out",

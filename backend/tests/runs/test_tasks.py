@@ -44,6 +44,8 @@ from tests.runs.support import event_kinds, jobs, refresh, running_worker, wait_
 # maintenance tasks and the ping may retry but do not; `chat.follow_up` retries only a shutdown.
 MAY_RETRY = {"resume.render", "worker.ping", "maintenance.reap", "approvals.expire"}
 MAY_RETRY |= {"maintenance.prune"}
+# Reads a public form and plans from saved answers: no model is called (#60).
+MAY_RETRY |= {"application.prepare"}
 
 
 def _ours(name: str) -> bool:

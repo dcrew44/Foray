@@ -72,6 +72,7 @@ BUDGETS = {
     "chat": 3,
     "companies": 3,
     "profile": 6,  # one more than before #21: the saved answers
+    "apply": 2,
     "settings": 6,
 }
 # The session row and the user row, read before any endpoint runs.
@@ -86,6 +87,7 @@ PAGES = {
     "companies": "/api/pages/companies",
     "profile": "/api/pages/profile",
     "settings": "/api/pages/settings",
+    "apply": "/api/pages/apply",
 }
 
 

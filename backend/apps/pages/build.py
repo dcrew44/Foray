@@ -18,7 +18,7 @@ from typing import Any, cast
 
 from django.conf import settings
 from django.db.models import Avg, Count, F, Q, Sum
-from django.db.models.functions import Now, TruncDate
+from django.db.models.functions import Coalesce, Now, TruncDate
 from django.utils import timezone
 
 from apps.accounts.api import settings_out
@@ -26,7 +26,8 @@ from apps.accounts.models import User
 from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
 from apps.applications.answers import CATALOGUE, YES_NO
-from apps.applications.models import AnswerKind, ApplicationAnswer
+from apps.applications.models import AnswerKind, Application, ApplicationAnswer
+from apps.applications.prepare import missing_of
 from apps.core import clock
 from apps.core.jsonio import js_locale
 from apps.jobs import legitimacy, radar
@@ -47,6 +48,10 @@ from apps.pages.schemas import (
     ActivityPage,
     AggregatorUsage,
     AnswerOption,
+    ApplyAnswer,
+    ApplyItem,
+    ApplyPage,
+    ApplySent,
     BaseVersion,
     ChatPage,
     ChatSuggestion,
@@ -61,6 +66,7 @@ from apps.pages.schemas import (
     JobFacts,
     JobSignal,
     LatestRender,
+    MatchApplication,
     MatchDetail,
     MatchDetailPage,
     MatchesPage,
@@ -340,7 +346,12 @@ def _job_signals(job: Job, time_zone: str) -> list[JobSignal]:
 def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
     """One match with its posting, its tailored resume and whether a base resume exists; None
     when the match is not this user's."""
-    match = JobMatch.objects.for_user(user.pk).select_related("job").filter(id=match_id).first()
+    match = (
+        JobMatch.objects.for_user(user.pk)
+        .select_related("job", "application")
+        .filter(id=match_id)
+        .first()
+    )
     if match is None:
         return None
     job = match.job
@@ -362,6 +373,7 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
             stage_changed_at=match.stage_changed_at,
             fast_score=match.fast_score,
             deep_score=match.deep_score,
+            application=_match_application(match),
         ),
         job=JobDetail(
             title=job.title,
@@ -715,6 +727,108 @@ def profile_page(user: User) -> ProfilePage:
         if render
         else None,
         answers=saved_answers(user.pk),
+    )
+
+
+# --- /pages/apply --------------------------------------------------------------------------------
+
+APPLY_LIMIT = 200
+APPLY_SENT = 20
+
+
+def _recommendation(deep_eval: Any) -> Any:
+    """A stored review's recommendation, or None for none or one that does not read."""
+    value = deep_eval.get("recommendation") if isinstance(deep_eval, dict) else None
+    return value if value in ("strong", "apply", "maybe", "skip") else None
+
+
+def _apply_item(application: Application) -> ApplyItem:
+    match = application.match
+    job = match.job
+    return ApplyItem(
+        id=application.id,
+        match_id=match.id,
+        status=cast(Any, application.status),
+        company=job.company_name,
+        title=job.title,
+        locations=list(job.locations),
+        remote=cast(Any, job.remote),
+        posted_at=job.posted_at,
+        first_seen_at=job.first_seen_at,
+        form_source=application.form_source,
+        form_read=application.form_source == "greenhouse",
+        apply_url=application.apply_url or job.apply_url or job.url,
+        answers=[
+            ApplyAnswer.model_validate(answer)
+            for answer in application.answers
+            if isinstance(answer, dict)
+        ],
+        error=application.error,
+        fast_score=match.fast_score,
+        deep_score=match.deep_score,
+        recommendation=_recommendation(match.deep_eval),
+        prepared_at=application.prepared_at,
+    )
+
+
+def apply_page(user: User) -> ApplyPage:
+    """What is ready to send, oldest posting first, then what waits on an answer (#62). Two
+    queries: the open applications with their matches and postings, and the newest sent."""
+    opened = list(
+        Application.objects.for_user(user.pk)
+        .filter(status__in=["preparing", "needs_answers", "ready", "failed"])
+        .select_related("match__job")
+        .order_by(Coalesce("match__job__posted_at", "match__job__first_seen_at"), "id")[
+            :APPLY_LIMIT
+        ]
+    )
+    sent = (
+        Application.objects.for_user(user.pk)
+        .filter(status="submitted", submitted_at__isnull=False)
+        .select_related("match__job")
+        .order_by("-submitted_at")[:APPLY_SENT]
+    )
+
+    def of(status: str) -> list[ApplyItem]:
+        return [_apply_item(item) for item in opened if item.status == status]
+
+    return ApplyPage(
+        ready=of("ready"),
+        needs_answers=of("needs_answers"),
+        failed=of("failed"),
+        preparing=sum(1 for item in opened if item.status == "preparing"),
+        sent=[
+            ApplySent(
+                id=item.id,
+                match_id=item.match_id,
+                company=item.match.job.company_name,
+                title=item.match.job.title,
+                submitted_at=cast(datetime, item.submitted_at),
+                posted_to_applied_s=_since_posted(item),
+            )
+            for item in sent
+        ],
+    )
+
+
+def _since_posted(application: Application) -> int | None:
+    job = application.match.job
+    start = job.posted_at or job.first_seen_at
+    if application.submitted_at is None or start is None:
+        return None
+    return max(0, int((application.submitted_at - start).total_seconds()))
+
+
+def _match_application(match: JobMatch) -> MatchApplication | None:
+    try:
+        # The reverse of `Application.match`, joined by the page's own query.
+        application: Application = match.application  # pyright: ignore[reportAttributeAccessIssue]
+    except Application.DoesNotExist:
+        return None
+    return MatchApplication(
+        id=application.id,
+        status=cast(Any, application.status),
+        missing=len(missing_of(application.answers)),
     )
 
 

@@ -32,7 +32,7 @@ from django.utils import timezone
 import apps.accounts
 from apps.accounts.models import User
 from apps.accounts.schemas import SAMPLE_PREFERENCES
-from apps.applications.models import ApplicationAnswer
+from apps.applications.models import Application, ApplicationAnswer
 from apps.chat.models import Conversation, Message
 from apps.core.ids import generate_message_id
 from apps.jobs.models import BoardCandidate, Company, Job
@@ -162,6 +162,12 @@ def make_answer(
     """A saved answer to one of the questions application forms share (#21)."""
     fields.setdefault("question", "Will you now or in the future require sponsorship?")
     return ApplicationAnswer.objects.create_for(user.pk, kind=kind, answer=answer, **fields)
+
+
+def make_application(user: User, match: JobMatch | None = None, **fields: Any) -> Application:
+    """A match's application (#60), `preparing` unless told otherwise."""
+    match = match if match is not None else make_match(user)
+    return Application.objects.create_for(user.pk, match=match, **fields)
 
 
 def make_candidate(

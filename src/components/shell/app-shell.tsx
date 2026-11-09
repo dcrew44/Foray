@@ -6,6 +6,7 @@ import {
   House,
   Menu,
   MessageSquarePlus,
+  Send,
   Settings2,
   SquareKanban,
   UserRound,
@@ -46,6 +47,12 @@ const PRIMARY: NavItem[] = [
     label: "Matches",
     icon: SquareKanban,
     match: (p) => p.startsWith("/matches"),
+  },
+  {
+    href: "/apply",
+    label: "Apply",
+    icon: Send,
+    match: (p) => p.startsWith("/apply"),
   },
   {
     href: "/activity",

@@ -4,9 +4,17 @@
 whether they may work in the country, whether they need sponsorship, what pay they expect, the
 voluntary disclosures. An answer about sponsorship, pay or years of experience comes only from
 here, never from a model, and a voluntary disclosure with no saved answer is declined.
+
+`Application` is one match's application, prepared ahead of the user (#60): the form's
+questions as its board states them, the answer planned for each and where it came from, and the
+resume it would send. It is `ready` when every required field has an answer and
+`needs_answers` when one does not. Nothing here submits anything: the user's own browser fills
+the form (#22) and the user presses submit.
 """
 
 from __future__ import annotations
+
+import uuid
 
 from django.db import models
 
@@ -15,6 +23,8 @@ from apps.core.choices import choices_checks
 from apps.core.ids import new_id
 from apps.core.models import Timestamped
 from apps.core.scoping import UserOwned
+from apps.matching.models import JobMatch
+from apps.resumes.models import Document
 
 
 class AnswerKind(models.TextChoices):
@@ -72,3 +82,51 @@ class ApplicationAnswer(UserOwned, Timestamped):
 
     def __str__(self) -> str:
         return f"{self.kind}: {self.question[:40]}"
+
+
+class ApplicationStatus(models.TextChoices):
+    PREPARING = "preparing"  # queued, or its form is being read
+    NEEDS_ANSWERS = "needs_answers"  # a required question has no saved answer
+    READY = "ready"  # every required field has its answer
+    SUBMITTED = "submitted"  # the user sent it
+    DISMISSED = "dismissed"  # the user decided not to apply
+    FAILED = "failed"  # the form could not be read; `error` says why
+
+
+class Application(UserOwned, Timestamped):
+    id = models.UUIDField(primary_key=True, default=new_id, editable=False)
+    # Indexed by the (user, status) index.
+    user = models.ForeignKey(User, models.CASCADE, related_name="applications", db_index=False)
+    # One application per match.
+    match = models.OneToOneField(JobMatch, models.CASCADE, related_name="application")
+    status = models.TextField(
+        choices=ApplicationStatus.choices, default=ApplicationStatus.PREPARING
+    )
+    # Whose form it is (a `jobs.sources` name, or "" when Foray does not know the form), and
+    # where the user applies.
+    form_source = models.TextField(default="")
+    apply_url = models.TextField(default="")
+    # `forms.FormField` and `prepare.Planned` as JSON lists, in the form's own order. `questions`
+    # is empty for a form Foray cannot read ahead; the browser extension reads it when it fills.
+    questions = models.JSONField(default=list)
+    answers = models.JSONField(default=list)
+    # The rendered resume this application sends, once one is chosen and rendered.
+    document = models.ForeignKey(Document, models.SET_NULL, null=True, related_name="+")
+    error = models.TextField(default="")
+    # When each thing happened, for posted-to-applied time (#65). `prepared_at` is when the form
+    # was read; `ready_at` when the last missing answer arrived.
+    prepared_at = models.DateTimeField(null=True)
+    ready_at = models.DateTimeField(null=True)
+    opened_at = models.DateTimeField(null=True)
+    submitted_at = models.DateTimeField(null=True)
+
+    user_id: str
+    match_id: uuid.UUID
+
+    class Meta(UserOwned.Meta):
+        db_table = "applications"
+        constraints = [*choices_checks("applications", status=ApplicationStatus)]
+        indexes = [models.Index(fields=["user", "status"], name="applications_user_status")]
+
+    def __str__(self) -> str:
+        return f"{self.status}: {self.match_id}"

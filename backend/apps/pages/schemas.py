@@ -24,7 +24,7 @@ from apps.applications.models import AnswerKind
 from apps.core.router import ApiModel
 from apps.jobs.legitimacy import SignalKind
 from apps.jobs.pipeline import CompanyRow
-from apps.matching.queries import MatchRow, RemoteName, StageName
+from apps.matching.queries import MatchRow, Recommendation, RemoteName, StageName
 from apps.matching.schemas import DeepEval, FastScore
 from apps.resumes.schema import Resume
 from apps.runs.live import LiveRun
@@ -84,6 +84,9 @@ JobSourceName = Literal[
 JobLevelName = Literal["intern", "new_grad", "entry", "mid", "senior", "staff_plus", "unknown"]
 WorkAuthName = Literal["citizen_only", "us_person", "no_sponsorship", "sponsors", "unknown"]
 ClearanceName = Literal["required", "eligible", "none"]
+ApplicationStatusName = Literal[
+    "preparing", "needs_answers", "ready", "submitted", "dismissed", "failed"
+]
 
 
 # Every stage with its count, zeros included (`countByStage`).
@@ -148,6 +151,14 @@ class MatchesPage(ApiModel):
 # --- /pages/matches/{id} -------------------------------------------------------------------------
 
 
+class MatchApplication(ApiModel):
+    """The match's application, when one has been prepared or is being (#60)."""
+
+    id: uuid.UUID
+    status: ApplicationStatusName
+    missing: int  # required questions with no answer yet
+
+
 class MatchDetail(ApiModel):
     id: uuid.UUID
     stage: StageName
@@ -162,6 +173,7 @@ class MatchDetail(ApiModel):
     stage_changed_at: datetime
     fast_score: int | None
     deep_score: int | None
+    application: MatchApplication | None
 
 
 class JobFacts(ApiModel):
@@ -321,6 +333,62 @@ class ProfilePage(ApiModel):
     render: LatestRender | None
     # The shared application questions in the order the page asks them, then the user's own.
     answers: list[SavedAnswer]
+
+
+# --- /pages/apply --------------------------------------------------------------------------------
+
+
+class ApplyAnswer(ApiModel):
+    """One field of an application's form with the answer planned for it (`prepare.Planned`)."""
+
+    key: str
+    label: str
+    type: str
+    required: bool
+    options: list[str]
+    kind: str
+    value: str | None
+    source: Literal["profile", "file", "saved", "declined", "skipped", "missing"]
+
+
+class ApplyItem(ApiModel):
+    id: uuid.UUID
+    match_id: uuid.UUID
+    status: ApplicationStatusName
+    company: str
+    title: str
+    locations: list[str]
+    remote: RemoteName
+    posted_at: datetime | None
+    first_seen_at: datetime
+    form_source: str  # whose form it is; "" when Foray does not know it
+    form_read: bool  # false: only the usual fields are planned, and the page has more
+    apply_url: str
+    answers: list[ApplyAnswer]
+    error: str
+    fast_score: int | None
+    deep_score: int | None
+    recommendation: Recommendation | None
+    prepared_at: datetime | None
+
+
+class ApplySent(ApiModel):
+    id: uuid.UUID
+    match_id: uuid.UUID
+    company: str
+    title: str
+    submitted_at: datetime
+    # Seconds from the posting going up (or first being seen) to the application being sent.
+    posted_to_applied_s: int | None
+
+
+class ApplyPage(ApiModel):
+    # Oldest posting first: the one that has been up longest is the one to send first.
+    ready: list[ApplyItem]
+    needs_answers: list[ApplyItem]
+    failed: list[ApplyItem]
+    preparing: int
+    sent: list[ApplySent]  # newest first, at most 20
 
 
 # --- /pages/settings -----------------------------------------------------------------------------

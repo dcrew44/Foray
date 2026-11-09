@@ -20,12 +20,14 @@ from django.test import Client
 from django.utils import timezone
 
 from apps.accounts.models import User
+from apps.applications.models import Application
 from apps.chat.models import Conversation
 from apps.jobs.models import Company, Job
 from apps.matching.models import JobMatch
 from apps.resumes.models import Document, Resume
 from apps.runs.models import Approval, Run
 from tests.factories import (
+    make_application,
     make_approval,
     make_company,
     make_conversation,
@@ -95,6 +97,7 @@ class Graph:
     conversation: Conversation
     runs: dict[str, Run]
     approval: Approval
+    application: Application
 
     @property
     def markers(self) -> list[str]:
@@ -114,6 +117,7 @@ class Graph:
             self.tailored_pdf,
             self.conversation,
             self.approval,
+            self.application,
         ]
         return [str(row.pk) for row in rows] + [str(self.user.pk)]
 
@@ -177,6 +181,25 @@ def full_graph(
 
     conversation = make_conversation(user, title=f"{marker} chat")
     make_message(conversation, text=f"{marker} asks about backend roles")
+
+    # The shortlisted match's application: read, planned, and waiting on one answer (#60).
+    question = {
+        "key": "question_1",
+        "label": f"Why do you want to work on {marker}'s team?",
+        "type": "textarea",
+        "required": True,
+        "options": [],
+    }
+    application = make_application(
+        user,
+        matches["shortlisted"],
+        status="needs_answers",
+        form_source="greenhouse",
+        apply_url="https://job-boards.greenhouse.io/stripe/jobs/2",
+        questions=[question],
+        answers=[{**question, "kind": "custom", "value": None, "source": "missing"}],
+        prepared_at=timezone.now(),
+    )
 
     found, shortlisted = str(matches["found"].id), str(matches["shortlisted"].id)
     runs: dict[str, Run] = {}
@@ -305,4 +328,5 @@ def full_graph(
         conversation=conversation,
         runs=runs,
         approval=approval,
+        application=application,
     )

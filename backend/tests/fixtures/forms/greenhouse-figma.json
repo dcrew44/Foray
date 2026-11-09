@@ -1,0 +1,479 @@
+{
+ "absolute_url": "https://boards.greenhouse.io/figma/jobs/6241542004?gh_jid=6241542004",
+ "data_compliance": [
+  {
+   "type": "gdpr",
+   "requires_consent": false,
+   "requires_processing_consent": false,
+   "requires_retention_consent": false,
+   "retention_period": null,
+   "demographic_data_consent_applies": false
+  }
+ ],
+ "education": "education_required",
+ "internal_job_id": 5234868004,
+ "location": {
+  "name": "San Francisco, CA • New York, NY"
+ },
+ "metadata": null,
+ "id": 6241542004,
+ "updated_at": "2026-11-04T11:53:19-05:00",
+ "requisition_id": "2707",
+ "title": "PhD Intern, Software Engineer - Interaction Design (2027)",
+ "company_name": "Figma",
+ "first_published": "2026-11-04T11:53:19-05:00",
+ "language": "en",
+ "application_deadline": null,
+ "content": "&lt;p&gt;(posting text removed from this fixture)&lt;/p&gt;",
+ "departments": [
+  {
+   "id": 4016256004,
+   "name": "Early Career",
+   "child_ids": [],
+   "parent_id": null
+  }
+ ],
+ "offices": [
+  {
+   "id": 4024285004,
+   "name": "US",
+   "location": null,
+   "child_ids": [],
+   "parent_id": 4033142004
+  }
+ ],
+ "ai_disclaimer": null,
+ "include_ai_disclaimer": null,
+ "ai_opt_out_request_url": "http://app4.greenhouse.io/ai_opt_out_request/job_post/6241542004/ai_opt_out",
+ "compliance": [
+  {
+   "type": "eeoc",
+   "questions": [
+    {
+     "required": false,
+     "label": "VeteranStatus",
+     "fields": [
+      {
+       "name": "veteran_status",
+       "type": "multi_value_single_select",
+       "values": [
+        {
+         "label": "I don't wish to answer",
+         "value": "3"
+        },
+        {
+         "label": "I identify as one or more of the classifications of a protected veteran",
+         "value": "2"
+        },
+        {
+         "label": "I am not a protected veteran",
+         "value": "1"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "description": "(description removed from this fixture)"
+  },
+  {
+   "type": "eeoc",
+   "questions": [
+    {
+     "required": false,
+     "label": "Race",
+     "fields": [
+      {
+       "name": "race",
+       "type": "multi_value_single_select",
+       "values": [
+        {
+         "label": "Decline To Self Identify",
+         "value": "8"
+        },
+        {
+         "label": "Two or More Races",
+         "value": "7"
+        },
+        {
+         "label": "Native Hawaiian or Other Pacific Islander",
+         "value": "6"
+        },
+        {
+         "label": "White",
+         "value": "5"
+        },
+        {
+         "label": "Hispanic or Latino",
+         "value": "4"
+        },
+        {
+         "label": "Black or African American",
+         "value": "3"
+        },
+        {
+         "label": "Asian",
+         "value": "2"
+        },
+        {
+         "label": "American Indian or Alaskan Native",
+         "value": "1"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "required": false,
+     "label": "Gender",
+     "fields": [
+      {
+       "name": "gender",
+       "type": "multi_value_single_select",
+       "values": [
+        {
+         "label": "Decline To Self Identify",
+         "value": "3"
+        },
+        {
+         "label": "Female",
+         "value": "2"
+        },
+        {
+         "label": "Male",
+         "value": "1"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "description": "(description removed from this fixture)"
+  }
+ ],
+ "demographic_questions": null,
+ "questions": [
+  {
+   "description": null,
+   "label": "First Name",
+   "required": true,
+   "fields": [
+    {
+     "name": "first_name",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Last Name",
+   "required": true,
+   "fields": [
+    {
+     "name": "last_name",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Email",
+   "required": true,
+   "fields": [
+    {
+     "name": "email",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Phone",
+   "required": true,
+   "fields": [
+    {
+     "name": "phone",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Resume/CV",
+   "required": true,
+   "fields": [
+    {
+     "name": "resume",
+     "type": "input_file",
+     "values": []
+    },
+    {
+     "name": "resume_text",
+     "type": "textarea",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Preferred First Name",
+   "required": false,
+   "fields": [
+    {
+     "name": "question_20471321004",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": "<p>If you'd like to, please let us know your pronouns.</p>",
+   "label": "Pronouns",
+   "required": false,
+   "fields": [
+    {
+     "name": "question_20471322004",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "she/her/hers",
+       "value": 164324657004
+      },
+      {
+       "label": "he/him/his",
+       "value": 164324658004
+      },
+      {
+       "label": "they/them/theirs",
+       "value": 164324659004
+      },
+      {
+       "label": "self-describe",
+       "value": 164324660004
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "LinkedIn Profile",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471323004",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": "<p>Please share 3-4 sentences on why you want to join Figma</p>",
+   "label": "Why do you want to join Figma?",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471324004",
+     "type": "textarea",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Are you available for a full-time, onsite Summer internship (12-16 weeks) starting in May/June 2027?",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471325004",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "Yes",
+       "value": 1
+      },
+      {
+       "label": "No",
+       "value": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Are you authorized to work in the country for which you applied? ",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471326004",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "Yes",
+       "value": 1
+      },
+      {
+       "label": "No",
+       "value": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Have you ever worked for Figma before, as an employee or a contractor/consultant? ",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471327004",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "Yes",
+       "value": 1
+      },
+      {
+       "label": "No",
+       "value": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "From where do you intend to work? ",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471328004",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "San Francisco, CA",
+       "value": 164324661004
+      },
+      {
+       "label": "New York, NY",
+       "value": 164324662004
+      },
+      {
+       "label": "Open to Either",
+       "value": 164324663004
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Are you currently enrolled in a  PhD program in Computer Science, Human-Computer Interaction, Artificial Intelligence, Machine Learning,  or a related field?",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471329004",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "Yes",
+       "value": 1
+      },
+      {
+       "label": "No",
+       "value": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "When do you expect to graduate with your PhD?",
+   "required": true,
+   "fields": [
+    {
+     "name": "question_20471330004",
+     "type": "multi_value_single_select",
+     "values": [
+      {
+       "label": "I have already graduated with my PhD",
+       "value": 164324664004
+      },
+      {
+       "label": "By October 2027 or sooner",
+       "value": 164324665004
+      },
+      {
+       "label": "By October 2028 or sooner",
+       "value": 164324666004
+      },
+      {
+       "label": "By October 2029 or sooner",
+       "value": 164324667004
+      },
+      {
+       "label": "After October 2029",
+       "value": 164324668004
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "description": "<p>Anything else you'd like to share</p>",
+   "label": "Additional Information",
+   "required": false,
+   "fields": [
+    {
+     "name": "question_20471332004",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  }
+ ],
+ "location_questions": [
+  {
+   "description": null,
+   "label": "Longitude",
+   "required": true,
+   "fields": [
+    {
+     "name": "longitude",
+     "type": "input_hidden",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Latitude",
+   "required": true,
+   "fields": [
+    {
+     "name": "latitude",
+     "type": "input_hidden",
+     "values": []
+    }
+   ]
+  },
+  {
+   "description": null,
+   "label": "Location",
+   "required": true,
+   "fields": [
+    {
+     "name": "location",
+     "type": "input_text",
+     "values": []
+    }
+   ]
+  }
+ ]
+}

@@ -397,3 +397,29 @@ def test_watch_now_starts_one_watch_or_the_fan_out(settings: Any, company: Compa
 def stored_input(run: Run) -> dict[str, Any]:
     assert isinstance(run.input, dict), run.input
     return run.input
+
+
+def test_a_watch_starts_preparing_an_application_for_each_match_it_keeps(
+    company: Company, scores: FakeLLM
+) -> None:
+    """#60: what is worth a review is worth applying to, and its application is started beside
+    the reviews. What the fast score archived gets none."""
+    from apps.applications.models import Application
+
+    user = watcher()
+    post(company, STRONG, APPLY, MAYBE, LOW)
+    watch_now(user)
+
+    prepared = {
+        row.match.job.title: row.status
+        for row in Application.objects.for_user(user.pk).select_related("match__job")
+    }
+    assert prepared == {STRONG: "preparing", APPLY: "preparing", MAYBE: "preparing"}
+    assert len(deferred("application.prepare")) == 3
+
+    # A second watch over the same matches starts nothing twice.
+    post(company, "Software Engineer, Search")
+    scores.fast["Software Engineer, Search"] = 90
+    watch_now(user)
+    assert Application.objects.for_user(user.pk).count() == 4
+    assert len(deferred("application.prepare")) == 4

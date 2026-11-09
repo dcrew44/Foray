@@ -91,7 +91,8 @@ register below enforce and prove one, it names them.
 13. **One set of resume facts.** The latest base `resumes` row
     (`apps.resumes.queries.latest_base_resume`) is what scoring, deep review, tailoring and
     the chat agent read. Editor saves create a new base version; base versions are unique.
-    There is no second copy to drift. *Register: R14.*
+    There is no second copy to drift: a resume variant holds no facts of its own, only which
+    of the base's items it shows, in what order and in what words. *Register: R14.*
 14. **One role, one match.** The prefilter collapses postings to one per role (company +
     normalized title, preferring the company's own board and the newest copy) and skips
     roles the user already has a match for. The ingest dedupe key keeps locations apart
@@ -142,7 +143,7 @@ fails too), so a row cannot outlive its proof.
 | R11 | No silent re-spend: every task that can call a model has `retry=0`, and stalled jobs are failed, never retried | task registry; `runs.reaper` | `runs/test_tasks.py::test_money_tasks_never_retry` |
 | R12 | Monthly model spend is bounded by `LLM_MONTHLY_BUDGET_USD` | `llm.budget.BudgetGuard` (outermost wrapper) | `llm/test_budget.py::test_budget_guard_refuses` |
 | R13 | Streams never pin or leak pooled connections | chat view releases before streaming; all generator DB work via `db()`; generator `except`/`finally` | `chat/test_chat_view.py::test_stream_errors_leak_nothing`, `::test_live_answers_while_streams_open` |
-| R14 | One source of resume facts: the latest base resume. Base versions are unique | partial unique constraint; `resumes.queries.latest_base_resume` | `resumes/test_edits.py::test_base_versions_unique_under_race` |
+| R14 | One source of resume facts: the latest base resume. Base versions are unique. A resume variant stores no fact: it is composed from that base, so it cannot contradict it and follows its edits | partial unique constraint; `resumes.queries.latest_base_resume`; `resumes.variants.compose` over a `VariantSpec` of ids and wording | `resumes/test_edits.py::test_base_versions_unique_under_race`, `resumes/test_variants.py::test_a_variant_orders_selects_and_rewords_what_the_base_says`, `::test_a_variant_follows_the_base_when_the_base_is_edited` |
 | R15 | A search follows its request (`apply_brief`) | `matching.brief.apply_brief` used by every search reader | `matching/test_brief.py` (ported), `matching/test_search_pipeline.py::test_brief_overrides_saved_preferences` |
 | R16 | The legacy database and the legacy file tree are never modified, and no Django process ever writes to a legacy-looking database | `legacy.importer` (read-only session, copy-only files); `env.py` name check and `core.guards.assert_app_database` | `legacy/test_import.py::test_import_leaves_legacy_untouched`, `core/test_guards.py::test_migrate_refuses_legacy_target`, `legacy/test_import.py::test_refuses_swapped_urls` |
 | R17 | Every run kind ends with `run.*`, and `FOLLOW_UP_KINDS` is the same set in Python and TS | `runs.lifecycle`; generated constant check | `runs/test_lifecycle.py::test_every_kind_finishes_with_run_event`, `chat/test_follow_up_db.py::test_follow_up_kinds_match_frontend` |
@@ -271,8 +272,8 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
 - **Per-user layer** (everything else): `users` itself (which holds preferences, settings —
   default autonomy, score threshold, deep-review count — interview state and time zone; there
   is no separate profile row that might be missing), then `documents`, `resumes`,
-  `job_matches`, `runs`, `events`, `approvals`, `conversations`, `messages`, `notifications`
-  and `llm_calls`.
+  `resume_variants`, `job_matches`, `runs`, `events`, `approvals`, `conversations`,
+  `messages`, `notifications` and `llm_calls`.
   Each of these carries `user_id` (a ledger row of system work has none) and inherits
   `UserOwned`, whose manager refuses any query that is not `for_user(...)` or
   `unscoped(reason)`.
@@ -450,6 +451,38 @@ only what the base resume says; a verifier (deterministic rules plus a cheap-mod
 check) flags any claim it cannot trace to a base fact, unsupported lines are reverted
 once automatically, and the result renders to PDF in the worker.
 
+**Resume variants** (#61, `apps/resumes/variants.py`) are what an application sends: two to
+four versions of the resume, one per kind of role, kept on the Profile page (six at most). A
+variant is a name, the title words that choose it and a spec, and **it never stores a fact**.
+The spec lists, by their ids, which of the base resume's roles, projects, schools and skills it
+shows and in what order, with its own headline, summary and bullets where the user reworded
+them; `compose(base, spec)` builds the resume from the newest base every time. So employers,
+titles, dates, schools and contact details exist once (invariant 13), a variant cannot
+contradict the base, and a corrected date or a new bullet reaches every variant that did not
+reword that role. An id the base no longer has is dropped, and an item the spec does not name
+is left out: a variant is an explicit selection, which starts as everything. A new upload is
+read from scratch and gives every item a new id, so the variants made from the old file then
+select nothing; such a variant is never sent, and the Profile page says so until it is edited.
+A variant is made from the base and edited; uploading a separate file as a variant is not
+supported, because a second file would be a second set of facts.
+
+Choosing one is deterministic and asks no model. `choose_variant(variants, title)` counts, for
+each variant, the keywords the posting's title says as whole words (`data` is not in
+"Database", `data engineer` must occur as that phrase, and breaks inside a word do not count,
+so `backend` is in "Back-End Engineer"). The most keywords wins; a tie goes to the default
+variant when it is among them, else to the oldest; a title that says none gets the default;
+with no default the full base resume is sent. `resume_for(user_id, title, variant_id)` gives
+an application the choice, the composed resume and one sentence saying why ("Chosen because
+the title says “backend”."), and takes the user's own pick when they changed it.
+
+Rendering a variant (`pipeline.render_variant`) writes what it composes to as a `resumes` row
+of kind `variant`, the next version for that variant unless its newest snapshot already says
+the same, and starts the usual `resume_render` run on that row. The snapshot keeps the exact
+resume a PDF was made from, as base and tailored versions do, and the Profile page compares
+the newest printed snapshot and its file's name with what the variant composes to, and is
+called, now to say whether its PDF is current. Deleting a variant deletes its snapshots and
+leaves its PDFs on file.
+
 **PDF rendering** happens only in the worker: one Chromium per worker process, JavaScript
 off and every network request aborted, Letter format, rendered normally and again compactly
 if that saves a page. A render is reused by its `render_hash` instead of rendering again:
@@ -457,6 +490,9 @@ if that saves a page. A render is reused by its `render_hash` instead of renderi
 - a base resume's key is `sha256(html_normal | RENDER_VERSION)`;
 - a tailored resume's key is `sha256(html_normal | RENDER_VERSION | "<Name> - Resume - <Company>.pdf")`,
   so a tailored PDF always downloads under its own name, even when tailoring changed nothing;
+- a variant's key is the same with the variant's name where the company's is
+  (`"<Name> - Resume - <Variant>.pdf"`), so a variant that shows everything is still its own
+  file, and renaming a variant names its next PDF;
 
 where `html_normal` is the normal-density HTML and `RENDER_VERSION` a constant in
 `apps/resumes/render.py`, bumped whenever the template, the fitting rule or the PDF options

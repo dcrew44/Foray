@@ -9,6 +9,7 @@ import { ProfileEditor } from "@/components/profile/profile-editor";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { editableResume } from "@/components/profile/resume";
 import { ResumeDropzone } from "@/components/profile/resume-dropzone";
+import { VariantsSection } from "@/components/profile/variants-section";
 import { django } from "@/lib/api/server";
 import type { components } from "@/lib/api/schema";
 import { timeAgo } from "@/lib/format";
@@ -136,6 +137,21 @@ export default async function ProfilePage() {
     </div>
   );
 
+  // Variants are made from the resume, so there is nothing to show until it reads.
+  const variantsSection = resume && (
+    <div className="scroll-mt-20 lg:scroll-mt-8" id="variants" key="variants">
+      <Section
+        description="Two to four versions of your resume, one per kind of role. Foray picks one for each application by the posting's title, and you can change its pick. The facts always come from the resume above."
+        title="Resume variants"
+      >
+        <VariantsSection base={resume} limit={page.variantLimit} variants={page.variants} />
+      </Section>
+    </div>
+  );
+  const variantsNav: PageNavItem[] = resume
+    ? [{ id: "variants", label: "Resume variants", detail: count(page.variants.length) }]
+    : [];
+
   const preferencesNav: PageNavItem = {
     id: "preferences",
     label: "What you're looking for",
@@ -162,8 +178,8 @@ export default async function ProfilePage() {
       <div className="mt-10 xl:grid xl:grid-cols-[minmax(0,1fr)_13rem] xl:gap-16">
         <div className="min-w-0 max-w-3xl space-y-16">
           {preferencesFirst
-            ? [preferencesSection, resumeSection]
-            : [resumeSection, preferencesSection]}
+            ? [preferencesSection, resumeSection, variantsSection]
+            : [resumeSection, variantsSection, preferencesSection]}
           {answersSection}
         </div>
         <aside className="hidden xl:block">
@@ -171,8 +187,8 @@ export default async function ProfilePage() {
             className="sticky top-10"
             items={
               preferencesFirst
-                ? [preferencesNav, ...resumeNav, answersNav]
-                : [...resumeNav, preferencesNav, answersNav]
+                ? [preferencesNav, ...resumeNav, ...variantsNav, answersNav]
+                : [...resumeNav, ...variantsNav, preferencesNav, answersNav]
             }
           />
         </aside>

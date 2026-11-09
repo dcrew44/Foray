@@ -179,5 +179,43 @@
       "label": "string",
       "required": "boolean"
     }
+  ],
+  "variantLimit": "number",
+  "variants": [
+    {
+      "id": "string",
+      "isDefault": "boolean",
+      "keywords": [
+        "string"
+      ],
+      "name": "string",
+      "pdf": {
+        "current": "boolean",
+        "documentId": "string"
+      },
+      "spec": {
+        "education": [
+          "string"
+        ],
+        "headline": "null",
+        "projects": [
+          {
+            "highlights": "null",
+            "id": "string"
+          }
+        ],
+        "skills": [
+          "string"
+        ],
+        "summary": "null",
+        "work": [
+          {
+            "highlights": "null",
+            "id": "string"
+          }
+        ]
+      },
+      "updatedAt": "string"
+    }
   ]
 }

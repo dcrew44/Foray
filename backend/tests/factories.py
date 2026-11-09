@@ -40,7 +40,9 @@ from apps.llm.models import LlmCall
 from apps.matching.models import JobMatch
 from apps.matching.schemas import DeepEval, EvalGap, FastScore, MatchedRequirement
 from apps.notifications.models import Notification
-from apps.resumes.models import Document, Resume
+from apps.resumes import schema as resume_schema
+from apps.resumes.models import Document, Resume, ResumeVariant
+from apps.resumes.variants import VariantSpec, compose, full_spec
 from apps.runs import catalogue
 from apps.runs.catalogue import ApprovalKind, ApprovalStatus, RunKind
 from apps.runs.models import Approval, Event, Run
@@ -275,30 +277,61 @@ def make_document(user: User, *, kind: str = "resume_upload", **fields: Any) -> 
     return Document.objects.create_for(user.pk, kind=kind, **{**defaults, **fields})
 
 
+def make_variant(
+    user: User,
+    *,
+    name: str | None = None,
+    keywords: list[str] | None = None,
+    spec: VariantSpec | dict[str, Any] | None = None,
+    **fields: Any,
+) -> ResumeVariant:
+    """A resume variant (#61). Without a `spec` it shows everything in the sample resume, as a
+    new variant shows everything in the base."""
+    if spec is None:
+        spec = full_spec(resume_schema.Resume.model_validate(sample_resume_data()))
+    return ResumeVariant.objects.create_for(
+        user.pk,
+        name=name or f"Variant {_n()}",
+        keywords=keywords if keywords is not None else ["backend"],
+        spec=spec.dump() if isinstance(spec, VariantSpec) else spec,
+        **fields,
+    )
+
+
 def make_resume(
     user: User,
     *,
     kind: str = "base",
     match: JobMatch | None = None,
+    variant: ResumeVariant | None = None,
     version: int | None = None,
     data: dict[str, Any] | None = None,
     **fields: Any,
 ) -> Resume:
-    """A resume version: base by default (the next version for the user), or tailored for
-    `match` (the next version for the match)."""
+    """A resume version: base by default (the next version for the user), tailored for `match`
+    (the next version for the match), or a snapshot of `variant` (the next for the variant,
+    holding what it composes to from the sample resume)."""
     if kind == "tailored" and match is None:
         match = make_match(user)
+    if kind == "variant" and variant is None:
+        variant = make_variant(user)
     if version is None:
         if kind == "base":
             existing = Resume.objects.for_user(user.pk).filter(kind="base")
+        elif kind == "variant":
+            existing = Resume.objects.for_user(user.pk).filter(kind="variant", variant=variant)
         else:
             existing = Resume.objects.for_user(user.pk).filter(kind="tailored", match=match)
         latest = existing.order_by("-version").values_list("version", flat=True).first()
         version = (latest or 0) + 1
+    if data is None and variant is not None:
+        base = resume_schema.Resume.model_validate(sample_resume_data())
+        data = compose(base, VariantSpec.model_validate(variant.spec)).dump()
     return Resume.objects.create_for(
         user.pk,
         kind=kind,
         match=match,
+        variant=variant,
         version=version,
         data=data if data is not None else sample_resume_data(),
         **fields,

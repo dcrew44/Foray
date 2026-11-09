@@ -8,15 +8,21 @@
   base version is the one source of resume facts (R14, `resumes.queries.latest_base_resume`).
   `data` is `resumes.schema.Resume`; `changes` is a list of `TailorChange`; `verification` is
   `Verification`.
+- A `ResumeVariant` is a resume for one kind of role (#61): a name, the title words that choose
+  it, and a `spec` (`resumes.variants.VariantSpec`) that selects, orders and rewords the base
+  resume's items by their ids. It stores no fact, so it cannot contradict the base and follows
+  it when the base is edited. A `Resume` of kind `variant` is one composed snapshot of a
+  variant, written when it is rendered, so the exact resume a PDF was made from is kept.
 """
 
 from __future__ import annotations
 
 import uuid
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import F, Q
-from django.db.models.functions import Now
+from django.db.models.functions import Lower, Now
 
 from apps.accounts.models import User
 from apps.core.choices import choices_checks
@@ -35,6 +41,7 @@ class DocumentKind(models.TextChoices):
 class ResumeKind(models.TextChoices):
     BASE = "base"
     TAILORED = "tailored"
+    VARIANT = "variant"  # a composed snapshot of a `ResumeVariant`
 
 
 class Document(UserOwned):
@@ -50,6 +57,7 @@ class Document(UserOwned):
     # resume_pdf only: sha256(html_normal | RENDER_VERSION) for a base resume (§11.6), and
     # sha256(html_normal | RENDER_VERSION | "<Name> - Resume - <Company>.pdf") for a tailored one,
     # so it downloads under its own name even when its HTML equals the base's (step-H1.md §10).
+    # A variant's is keyed the same way, with the variant's name where the company's is.
     render_hash = models.CharField(max_length=64, null=True)  # noqa: DJ001
     text_extracted = models.TextField(null=True)  # noqa: DJ001 (the file's text, before any model)
     created_at = models.DateTimeField(db_default=Now())
@@ -72,13 +80,45 @@ class Document(UserOwned):
         return f"{self.kind}: {self.filename}"
 
 
+class ResumeVariant(UserOwned, Timestamped):
+    id = models.UUIDField(primary_key=True, default=new_id, editable=False)
+    # Indexed by the (user, lower(name)) constraint.
+    user = models.ForeignKey(User, models.CASCADE, related_name="resume_variants", db_index=False)
+    name = models.TextField()  # "Backend", "Data": also the end of its PDF's file name
+    # The role-family words that choose it, matched against a posting's title as whole words.
+    keywords = ArrayField(models.TextField(), default=list)
+    spec = models.JSONField()  # resumes.variants.VariantSpec
+    is_default = models.BooleanField(default=False)  # sent when no variant's keywords match
+
+    user_id: str
+
+    class Meta(UserOwned.Meta):
+        db_table = "resume_variants"
+        constraints = [
+            # Expressions, not field names: one "Backend" per user however it is capitalised.
+            models.UniqueConstraint(F("user"), Lower("name"), name="resume_variants_user_name"),
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=Q(is_default=True),
+                name="resume_variants_one_default",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Resume(UserOwned, Timestamped):
     id = models.UUIDField(primary_key=True, default=new_id, editable=False)
     # Indexed by the (user, kind, version) index.
     user = models.ForeignKey(User, models.CASCADE, related_name="resumes", db_index=False)
     kind = models.TextField(choices=ResumeKind.choices)
     match = models.ForeignKey(JobMatch, models.CASCADE, null=True, related_name="resumes")
-    version = models.IntegerField()  # base: per user; tailored: per match
+    # variant only: the variant this row is a snapshot of. Indexed by `resumes_variant_version`.
+    variant = models.ForeignKey(
+        ResumeVariant, models.CASCADE, null=True, related_name="snapshots", db_index=False
+    )
+    version = models.IntegerField()  # base: per user; tailored: per match; variant: per variant
     data = models.JSONField()  # resumes.schema.Resume
     # Upload provenance: the document this version was read from (new).
     source_document = models.ForeignKey(Document, models.SET_NULL, null=True, related_name="+")
@@ -88,6 +128,7 @@ class Resume(UserOwned, Timestamped):
 
     user_id: str
     match_id: uuid.UUID | None
+    variant_id: uuid.UUID | None
     source_document_id: uuid.UUID | None
     rendered_document_id: uuid.UUID | None
 
@@ -95,8 +136,9 @@ class Resume(UserOwned, Timestamped):
         db_table = "resumes"
         constraints = [
             models.CheckConstraint(
-                condition=Q(kind=ResumeKind.BASE, match__isnull=True)
-                | Q(kind=ResumeKind.TAILORED, match__isnull=False),
+                condition=Q(kind=ResumeKind.BASE, match__isnull=True, variant__isnull=True)
+                | Q(kind=ResumeKind.TAILORED, match__isnull=False, variant__isnull=True)
+                | Q(kind=ResumeKind.VARIANT, match__isnull=True, variant__isnull=False),
                 name="resumes_kind_match",
             ),
             models.UniqueConstraint(
@@ -108,6 +150,14 @@ class Resume(UserOwned, Timestamped):
                 fields=["match", "version"],
                 condition=Q(kind=ResumeKind.TAILORED),
                 name="resumes_tailored_version",
+            ),
+            # "Has a variant" is "is of kind variant" (`resumes_kind_match`). Said this way, the
+            # index also answers `variant_id = …`, which the variant's own delete asks; the
+            # foreign key has no index of its own.
+            models.UniqueConstraint(
+                fields=["variant", "version"],
+                condition=Q(variant__isnull=False),
+                name="resumes_variant_version",
             ),
             *choices_checks("resumes", kind=ResumeKind),
         ]

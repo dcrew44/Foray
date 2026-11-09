@@ -1,7 +1,7 @@
 """The tenancy sweep (design §12.3, register row R8).
 
-Two users with full object graphs (matches, resumes, documents, runs, approvals, conversations,
-events, ledger rows). Then:
+Two users with full object graphs (matches, resumes, resume variants, documents, runs,
+approvals, conversations, events, ledger rows). Then:
 
 - **Every route with a path id**, read from the OpenAPI schema, called as user B with user A's id,
   answers 404 with the envelope, and leaves A's rows exactly as they were. Each route is listed
@@ -36,7 +36,7 @@ from apps.chat.models import Conversation, Message
 from apps.core.ids import generate_message_id
 from apps.core.storage import storage
 from apps.matching.models import JobMatch
-from apps.resumes.models import Document, Resume
+from apps.resumes.models import Document, Resume, ResumeVariant
 from apps.runs.models import Approval, Event, Run
 from foray.api import api
 from tests.factories import make_company
@@ -74,6 +74,9 @@ ROUTES: tuple[Route, ...] = (
         {"key": "question_1", "value": "It is the work I want."},
     ),
     Route("PATCH", "/api/applications/{id}", "application", {"action": "dismiss"}),
+    Route("PATCH", "/api/variants/{id}", "variant", {"keywords": ["backend"], "isDefault": True}),
+    Route("POST", "/api/variants/{id}/render", "variant", {}, 202),
+    Route("DELETE", "/api/variants/{id}", "variant"),
     Route("DELETE", "/api/conversations/{id}", "conversation"),
 )
 
@@ -164,6 +167,11 @@ def _state(graph: Graph) -> dict[str, Any]:
             Application.objects.for_user(user_id).values_list("id", "status", "updated_at")
         ),
         "answers": ApplicationAnswer.objects.for_user(user_id).count(),
+        "variants": sorted(
+            ResumeVariant.objects.for_user(user_id).values_list(
+                "id", "name", "keywords", "is_default", "spec", "updated_at"
+            )
+        ),
     }
 
 

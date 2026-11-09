@@ -18,13 +18,15 @@ that spills three lines onto a second page looks careless in a way a slightly sm
 not. Page counts come from PDFium (under its lock).
 
 **Dedupe by `render_hash`** = sha256(normal-density HTML + "|" + `RENDER_VERSION`), and for a
-tailored resume also + "|" + its download name. Both are known before any render, and the
-compact variant is a function of the same resume, so one key covers whichever density the
-fitting picks. An existing `resume_pdf` document with the same `(user, render_hash)` is reused
-with no render at all. The download name is in a tailored key because the document row carries
-it: a tailored resume whose HTML equals the base's (tailoring changed nothing) still downloads as
-"… - Resume - <Company>.pdf", not as the base's "… - Resume.pdf". Bump `RENDER_VERSION` whenever
-the template, the fitting rule or the PDF options change. Rendering never touches any document's
+tailored resume or a variant also + "|" + its download name. Both are known before any render,
+and the compact density is a function of the same resume, so one key covers whichever density
+the fitting picks. An existing `resume_pdf` document with the same `(user, render_hash)` is
+reused with no render at all. The download name is in a tailored key because the document row
+carries it: a tailored resume whose HTML equals the base's (tailoring changed nothing) still
+downloads as "… - Resume - <Company>.pdf", not as the base's "… - Resume.pdf". A resume variant
+(#61) is named for itself the same way, "… - Resume - <Variant>.pdf", so one that shows
+everything the base does is still its own file. Bump `RENDER_VERSION` whenever the template,
+the fitting rule or the PDF options change. Rendering never touches any document's
 `text_extracted`.
 """
 
@@ -47,7 +49,7 @@ from playwright.async_api import Error as PlaywrightError
 
 from apps.core.db import db
 from apps.core.storage import sha256_hex, storage, storage_key
-from apps.resumes.models import Document, DocumentKind
+from apps.resumes.models import Document, DocumentKind, ResumeKind
 from apps.resumes.models import Resume as ResumeRow
 from apps.resumes.parse.pdf import PdfReadError, count_pages
 from apps.resumes.schema import Resume
@@ -252,7 +254,7 @@ async def render_fitted(resume: Resume) -> FittedPdf:
 
 def render_hash(resume: Resume, company: str | None = None) -> str:
     """The key a rendered PDF is reused by: sha256(normal-density HTML | RENDER_VERSION), plus
-    `| <download name>` for a resume tailored for `company`."""
+    `| <download name>` for a resume tailored for `company` (or a variant of that name)."""
     tailored_name = pdf_filename(resume, company) if company is not None else None
     return _hash_html(render_resume_html(resume), tailored_name)
 
@@ -270,7 +272,8 @@ _SPACES = re.compile(r"\s+")
 
 def pdf_filename(resume: Resume, company: str | None = None) -> str:
     """The download name: "Dana Reyes - Resume.pdf", or "Dana Reyes - Resume - Stripe.pdf" for a
-    tailored one, so several downloads do not all arrive as the same "Resume.pdf"."""
+    tailored one, so several downloads do not all arrive as the same "Resume.pdf". A variant
+    passes its own name where a tailored resume passes the company's."""
 
     def safe(value: str | None) -> str:
         return _SPACES.sub(" ", _UNSAFE_FILENAME.sub("", value or "")).strip()
@@ -286,13 +289,13 @@ def pdf_filename(resume: Resume, company: str | None = None) -> str:
 @dataclass(frozen=True, slots=True)
 class _Loaded:
     resume: Resume
-    company: str | None
+    label: str | None  # what the file is named for beyond the person; None for a base resume
 
 
 def _load(user_id: str, resume_id: uuid.UUID | str) -> _Loaded:
     row = (
         ResumeRow.objects.for_user(user_id)
-        .select_related("match__job")
+        .select_related("match__job", "variant")
         .filter(id=resume_id)
         .first()
     )
@@ -301,9 +304,13 @@ def _load(user_id: str, resume_id: uuid.UUID | str) -> _Loaded:
     resume = Resume.read(row.data)
     if resume is None:
         raise RenderError("The stored resume could not be read.")
-    # A tailored resume is named for the company it was written for.
-    company = row.match.job.company_name if row.kind == "tailored" and row.match else None
-    return _Loaded(resume=resume, company=company)
+    # A tailored resume is named for the company it was written for, a variant for itself.
+    label: str | None = None
+    if row.kind == ResumeKind.TAILORED and row.match:
+        label = row.match.job.company_name
+    elif row.kind == ResumeKind.VARIANT and row.variant:
+        label = row.variant.name
+    return _Loaded(resume=resume, label=label)
 
 
 def _find_rendered(user_id: str, key: str) -> Document | None:
@@ -406,13 +413,13 @@ def _read_stored(path: str) -> bytes | None:
 
 
 async def render_resume(user_id: str, resume_id: uuid.UUID | str) -> RenderResult:
-    """Renders a stored resume (base or tailored) to PDF, stores it as a `resume_pdf` document
-    and points `resumes.rendered_document` at it, unless a document with the same render hash
-    exists: then that one is reused and nothing is rendered."""
+    """Renders a stored resume (base, tailored or a variant's snapshot) to PDF, stores it as a
+    `resume_pdf` document and points `resumes.rendered_document` at it, unless a document with
+    the same render hash exists: then that one is reused and nothing is rendered."""
     loaded = await db(_load, user_id, resume_id)
-    filename = pdf_filename(loaded.resume, loaded.company)
+    filename = pdf_filename(loaded.resume, loaded.label)
     key = _hash_html(
-        render_resume_html(loaded.resume), filename if loaded.company is not None else None
+        render_resume_html(loaded.resume), filename if loaded.label is not None else None
     )
 
     existing = await db(_find_rendered, user_id, key)

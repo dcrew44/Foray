@@ -44,6 +44,7 @@ from apps.runs.models import Run
 from tests.factories import (
     make_approval,
     make_company,
+    make_document,
     make_job,
     make_llm_call,
     make_match,
@@ -52,6 +53,7 @@ from tests.factories import (
     make_user,
     sample_deep_eval,
     sample_fast_eval,
+    make_variant,
 )
 from tests.pages.conftest import Graph, full_graph, get_page, signed_in
 
@@ -71,7 +73,9 @@ BUDGETS = {
     "activity": 6,
     "chat": 3,
     "companies": 3,
-    "profile": 6,  # one more than before #21: the saved answers
+    # One more than before #21 (the saved answers), and two more for #61: the resume variants,
+    # and the newest rendered snapshot of each (not read when there are no variants).
+    "profile": 8,
     "apply": 2,
     "settings": 6,
 }
@@ -631,6 +635,7 @@ def test_activity_page_targets_and_costs() -> None:
     assert target("running") == "Avery Platform Engineer at Stripe"
     assert target("render_base") == "Your base resume"
     assert target("render_tailored") == "Tailored for Avery Backend Engineer at Stripe"
+    assert target("render_variant") == "Your Avery Backend variant"
     assert target("import") == "Avery resume.pdf"
     assert target("add") == "Avery.example"
     assert target("names") == "Linear, Retool"
@@ -671,6 +676,8 @@ def test_run_targets_for_missing_and_odd_inputs() -> None:
     assert _target("tailor", {"matchId": "unknown"}) is None
     tailored = {"r": {"kind": "tailored", "match_id": None}}
     assert _target("resume_render", {"resumeId": "r"}, resumes=tailored) == "A tailored resume"
+    variant = {"r": {"kind": "variant", "match_id": None, "variant__name": None}}
+    assert _target("resume_render", {"resumeId": "r"}, resumes=variant) == "A resume variant"
     assert _target("company_discovery", {"names": ["A", 3, "B"]}) == "A, B"
     assert _target("company_discovery", {"query": "linear.app", "names": ["A"]}) == "linear.app"
     assert _target("company_refresh", {"slug": "stripe"}) is None  # no name stored
@@ -909,6 +916,8 @@ def test_profile_page() -> None:
         "base",
         "render",
         "answers",
+        "variants",
+        "variantLimit",
     }
     assert (body["hasResume"], body["ready"]) == (True, True)
     assert body["resume"]["basics"]["name"]
@@ -917,12 +926,59 @@ def test_profile_page() -> None:
     assert body["progress"]["complete"] is True
     assert body["base"]["version"] == 1
     assert body["render"] == {"documentId": str(graph.base_pdf.pk), "version": 1}
+    [variant] = body["variants"]
+    assert variant == {
+        "id": str(graph.variant.pk),
+        "name": "Avery Backend",
+        "keywords": ["backend", "platform"],
+        "isDefault": False,
+        "spec": graph.variant.spec,
+        # Its snapshot is what it composes to from the newest base, so the PDF is current.
+        "pdf": {"documentId": str(graph.variant_pdf.pk), "current": True},
+        "updatedAt": variant["updatedAt"],
+    }
+    assert [item["id"] for item in variant["spec"]["work"]] == [
+        item["id"] for item in body["resume"]["work"]
+    ]
+    assert body["variantLimit"] == 6
+
+
+def test_profile_page_reads_any_number_of_variants_in_two_queries(
+    django_assert_max_num_queries: Any,
+) -> None:
+    """Six variants (the most a user may keep), each with two rendered snapshots, cost the page
+    no more reads than one: the newest PDF of each comes back in one query."""
+    graph = full_graph()
+    newest: dict[str, str] = {str(graph.variant.pk): str(graph.variant_pdf.pk)}
+    for name in ("Data", "Platform", "Frontend", "Mobile", "Security"):
+        variant = make_variant(graph.user, name=name, keywords=[name.lower()])
+        for _ in range(2):
+            pdf = make_document(
+                graph.user, kind="resume_pdf", filename=f"Avery Quinn - Resume - {name}.pdf"
+            )
+            make_resume(graph.user, kind="variant", variant=variant, rendered_document=pdf)
+            newest[str(variant.pk)] = str(pdf.pk)
+    # A newer snapshot that was never printed does not hide the PDF of the one before it.
+    make_resume(graph.user, kind="variant", variant=graph.variant, data={"work": []})
+    client = signed_in(graph.user)
+    with django_assert_max_num_queries(BUDGETS["profile"] + AUTH_QUERIES):
+        body = get_page(client, "/api/pages/profile").json()
+    assert [item["name"] for item in body["variants"]] == [
+        "Avery Backend",
+        "Data",
+        "Platform",
+        "Frontend",
+        "Mobile",
+        "Security",
+    ]  # oldest first
+    assert {item["id"]: item["pdf"]["documentId"] for item in body["variants"]} == newest
+    assert all(item["pdf"]["current"] for item in body["variants"])
 
 
 def test_profile_page_without_a_resume() -> None:
     body = get_page(signed_in(make_user()), "/api/pages/profile").json()
     assert (body["hasResume"], body["ready"], body["resume"]) == (False, False, None)
-    assert (body["base"], body["render"]) == (None, None)
+    assert (body["base"], body["render"], body["variants"]) == (None, None, [])
     assert set(body["preferences"]) == set(SAMPLE_PREFERENCES.dump())
     assert all(value is None for value in body["preferences"].values())
     assert len(body["slots"]) == 8

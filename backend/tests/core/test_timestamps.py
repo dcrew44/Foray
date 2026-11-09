@@ -112,6 +112,8 @@ STAMPED_COLUMNS = {
     "job_matches.stage_changed_at",
     "resumes.created_at",
     "resumes.updated_at",
+    "resume_variants.created_at",
+    "resume_variants.updated_at",
     "documents.created_at",
     "runs.created_at",
     "runs.updated_at",

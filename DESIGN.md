@@ -149,6 +149,7 @@ fails too), so a row cannot outlive its proof.
 | R18 | Third-party text reaches a model wrapped: every prompt that carries a posting wraps all of it, short fields included, in `<untrusted …>` with any copy of the tag defanged inside, and the chat model reads the posting fields of tool results wrapped | `llm.untrusted`; `chat.model_view.PostingFields` | `llm/test_untrusted.py::test_the_fast_score_prompt`, `::test_the_deep_eval_prompt`, `::test_the_tailor_prompt`, `chat/test_chat_view.py::test_the_model_reads_posting_fields_wrapped` |
 | R19 | The chat agent can neither start paid work nor answer an approval: the runs it asks for wait behind a `run_start` approval that only the user answers, and a no or a lapse cancels them before they run | `runs.lifecycle.start_run(gate=…)`; `runs.approvals.decide()` and `expire_lapsed()`; no chat tool answers an approval | `runs/test_start_gate.py::test_a_gated_start_waits_and_defers_nothing`, `::test_a_no_cancels_the_run_before_it_ever_ran`, `chat/test_chat_view.py::test_approvals_are_listed_in_chat_and_answered_only_on_their_cards` |
 | R20 | A watch announces a match at most once, and never one a search made: it works only on the matches it created, and announces only those it reviewed itself | `matching.queries.insert_new_matches`; `matching.watch.run_watch` | `matching/test_watch.py::test_a_second_watch_reads_only_what_arrived_since_and_never_announces_twice`, `::test_a_search_s_matches_are_the_search_s` |
+| R21 | A match is sent to a user's phone at most once per channel, however often a watch or a send job runs again, and never to a user who has set no topic. A send is repeated only after an attempt recorded as failed or abandoned, three attempts at most | unique `(user, match, channel)` on `notifications`; `notifications.outbox.queue_matches` (in the watch's completing transaction) and `claim` (row locks and a lease taken before any request) | `notifications/test_notify.py::test_a_watch_s_strong_match_reaches_the_phone_exactly_once`, `::test_a_second_watch_sends_only_what_is_new`, `::test_two_jobs_never_send_the_same_notification`, `::test_a_failed_send_is_retried_twice_and_then_given_up`, `::test_a_user_with_no_topic_sees_no_change` |
 
 `manage.py acceptance_checks` re-checks the database-level rows (R3, R4, R10, and the ledger's
 attribution) against live data after a browser rehearsal. Its run-level lines cover only runs
@@ -270,7 +271,8 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
 - **Per-user layer** (everything else): `users` itself (which holds preferences, settings —
   default autonomy, score threshold, deep-review count — interview state and time zone; there
   is no separate profile row that might be missing), then `documents`, `resumes`,
-  `job_matches`, `runs`, `events`, `approvals`, `conversations`, `messages` and `llm_calls`.
+  `job_matches`, `runs`, `events`, `approvals`, `conversations`, `messages`, `notifications`
+  and `llm_calls`.
   Each of these carries `user_id` (a ledger row of system work has none) and inherits
   `UserOwned`, whose manager refuses any query that is not `for_user(...)` or
   `unscoped(reason)`.
@@ -418,6 +420,30 @@ postings first seen in the last week under "New this week" (by `first_seen_at`, 
 match was made, so a search's month-old postings stay out); a quiet watch completes at debug level and stays out of the
 feeds. Announced matches stay in `found`: the user shortlists. The worker must be running for any
 of this; in dev that means `pnpm dev:all`, whose worker runs the missed tick when it starts.
+
+**To a phone** (#59, `apps/notifications/`). The chat is read only with Foray open, and a
+posting found at 2 p.m. is no use at 9 p.m., so what a watch announces is also published to the
+user's [ntfy](https://ntfy.sh) topic: the company and title, the verdict, how long the posting
+has been up, and a link to the match. ntfy needs no account with Foray and no app of ours: the
+user subscribes to a topic name only they know and pastes it into Settings. The server is the
+install's (`NTFY_SERVER`, the public ntfy.sh by default) and never a user's value, so the one
+guarded HTTP client's rules hold; a self-hosted ntfy therefore has to resolve to a public
+address for now. `finish_watch` queues one `notifications` row per announced match in the
+transaction that completes the watch (`outbox.queue_matches`, before `emit()`), and nothing at
+all for a user with no topic. The `notify.send` job deferred with it, and a sweep of the same
+task every minute, send what is due. `(user, match, channel)` is unique, and the sender leases
+the rows it claims (it moves `send_after` ahead and counts the attempt before any request goes
+out), so a second watch, a job delivered twice or two jobs at once never send a match twice
+(R21). Everything else is decided when a row is due, from the settings as they are then: quiet
+hours on the user's clock (`users.timezone`, which chat and Settings keep equal to the
+browser's; 22:00 to 08:00 unless changed) move `send_after` to their end, a topic since removed or a match the user has already moved out of `found` makes the
+row `skipped`, and a send that fails is tried twice more (after one minute and after ten) before
+the row is `failed`. More than five due at once go out as the five best and one line for the
+rest. One attempt is one request with no retry inside the client: the only way to a duplicate
+left is an answer lost after ntfy had accepted the message. Settings' "Send a test
+notification" is a job as well (`notify.test`, answered with a `notification.test` event, like
+the worker's own test), so no request waits on ntfy (invariant 12) and a test that arrives has
+taken the path a real notification takes.
 
 Tailoring is separate and on demand: the strong model reorders, selects and rephrases
 only what the base resume says; a verifier (deterministic rules plus a cheap-model

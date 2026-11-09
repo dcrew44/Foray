@@ -60,6 +60,8 @@ def rejected(build: Callable[[], object]) -> str:
         ("documents", "kind"),
         ("messages", "role"),
         ("llm_calls", "purpose"),
+        ("notifications", "status"),
+        ("notifications", "channel"),
     ],
 )
 def test_bad_status_rejected(table: str, column: str) -> None:
@@ -74,6 +76,7 @@ def test_bad_status_rejected(table: str, column: str) -> None:
         "documents": f.make_document(user),
         "messages": f.make_message(f.make_conversation(user)),
         "llm_calls": f.make_llm_call(user),
+        "notifications": f.make_notification(user),
     }
     row = rows[table]
     model = type(row)
@@ -304,6 +307,7 @@ FACTORIES: dict[str, Callable[[User], models.Model]] = {
     "message": lambda u: f.make_message(f.make_conversation(u)),
     "llm_call": lambda u: f.make_llm_call(u),
     "system_llm_call": lambda _: f.make_llm_call(None),
+    "notification": lambda u: f.make_notification(u),
     **{f"run_{kind}": (lambda u, kind=kind: f.make_run(u, kind=kind)) for kind in RunKind.values},
 }
 
@@ -361,6 +365,9 @@ def test_stored_keys_keep_todays_spelling() -> None:
         "deepEvalTopN",
         "watchEnabled",
         "watchDailyReviews",
+        "ntfyTopic",
+        "quietHoursStart",
+        "quietHoursEnd",
     ]
     assert list(Preferences().dump()) == [
         "target_roles",

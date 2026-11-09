@@ -550,6 +550,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a test notification */
+        post: operations["apps_notifications_api_post_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pages/home": {
         parameters: {
             query?: never;
@@ -820,6 +837,14 @@ export interface components {
             watchEnabled: boolean;
             /** Watchdailyreviews */
             watchDailyReviews: number;
+            /** Ntfytopic */
+            ntfyTopic: string;
+            /** Quiethoursstart */
+            quietHoursStart: string;
+            /** Quiethoursend */
+            quietHoursEnd: string;
+            /** Timezone */
+            timeZone: string;
         };
         /** SettingsSaved */
         SettingsSaved: {
@@ -847,6 +872,14 @@ export interface components {
             watchEnabled?: boolean;
             /** Watchdailyreviews */
             watchDailyReviews?: number;
+            /** Ntfytopic */
+            ntfyTopic?: string;
+            /** Quiethoursstart */
+            quietHoursStart?: string;
+            /** Quiethoursend */
+            quietHoursEnd?: string;
+            /** Timezone */
+            timeZone?: string;
         };
         /**
          * ApprovalKind
@@ -1476,6 +1509,15 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /** NotificationTestOut */
+        NotificationTestOut: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+            /** Jobid */
+            jobId: number;
+        };
         /** HomeHeadline */
         HomeHeadline: {
             /** Headline */
@@ -1575,6 +1617,21 @@ export interface components {
              * @default 10
              */
             watchDailyReviews: number;
+            /**
+             * Ntfytopic
+             * @default
+             */
+            ntfyTopic: string;
+            /**
+             * Quiethoursstart
+             * @default 22:00
+             */
+            quietHoursStart: string;
+            /**
+             * Quiethoursend
+             * @default 08:00
+             */
+            quietHoursEnd: string;
         };
         /** Slot */
         Slot: {
@@ -2111,6 +2168,8 @@ export interface components {
             /** Purposes */
             purposes: components["schemas"]["PurposeModel"][];
             providers: components["schemas"]["ProviderKeys"];
+            /** Ntfyserver */
+            ntfyServer: string;
         };
         /** SettingsUser */
         SettingsUser: {
@@ -2753,11 +2812,18 @@ export interface components {
          * @enum {string}
          */
         Stage: "found" | "shortlisted" | "applied" | "interviewing" | "offer" | "rejected" | "archived";
+        /** NotificationTestData */
+        NotificationTestData: {
+            /** Jobid */
+            jobId: number;
+            /** Sent */
+            sent: boolean;
+        };
         /**
          * EventKind
          * @enum {string}
          */
-        EventKind: "run.started" | "run.completed" | "run.failed" | "run.cancelled" | "approval.requested" | "approval.auto" | "approval.decided" | "approval.expired" | "approval.reopened" | "search.criteria" | "search.companies.added" | "search.companies.missing" | "source.refresh.start" | "source.refresh.done" | "source.aggregator.done" | "source.aggregator.skipped" | "prefilter.done" | "scoring.start" | "scoring.progress" | "scoring.done" | "evaluation.skipped" | "evaluation.start" | "evaluation.progress" | "evaluation.failed" | "evaluation.done" | "shortlist.skipped" | "shortlist.done" | "tailor.started" | "tailor.verified" | "tailor.done" | "tailor.failed" | "render.done" | "render.failed" | "company.discovered" | "company.not-found" | "company.refresh.done" | "worker.ping" | "chat.followup";
+        EventKind: "run.started" | "run.completed" | "run.failed" | "run.cancelled" | "approval.requested" | "approval.auto" | "approval.decided" | "approval.expired" | "approval.reopened" | "search.criteria" | "search.companies.added" | "search.companies.missing" | "source.refresh.start" | "source.refresh.done" | "source.aggregator.done" | "source.aggregator.skipped" | "prefilter.done" | "scoring.start" | "scoring.progress" | "scoring.done" | "evaluation.skipped" | "evaluation.start" | "evaluation.progress" | "evaluation.failed" | "evaluation.done" | "shortlist.skipped" | "shortlist.done" | "tailor.started" | "tailor.verified" | "tailor.done" | "tailor.failed" | "render.done" | "render.failed" | "company.discovered" | "company.not-found" | "company.refresh.done" | "worker.ping" | "chat.followup" | "notification.test";
         /**
          * ApprovalStatus
          * @enum {string}
@@ -3546,6 +3612,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConversationDeletedOut"];
+                };
+            };
+        };
+    };
+    apps_notifications_api_post_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTestOut"];
                 };
             };
         };

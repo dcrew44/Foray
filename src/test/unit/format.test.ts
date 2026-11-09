@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  clockLabel,
+  clockOptions,
   fitLevel,
   formatDuration,
   formatLag,
@@ -236,6 +238,26 @@ describe("formatLag", () => {
     expect(formatLag(2 * 3600 + 600)).toBe("2 hours");
     expect(formatLag(35 * 3600)).toBe("35 hours");
     expect(formatLag(3 * 86400)).toBe("3 days");
+  });
+});
+
+describe("clock times", () => {
+  it("says a stored time of day the way people do", () => {
+    expect(clockLabel("00:00")).toBe("12:00 am");
+    expect(clockLabel("08:00")).toBe("8:00 am");
+    expect(clockLabel("12:00")).toBe("12:00 pm");
+    expect(clockLabel("22:30")).toBe("10:30 pm");
+    expect(clockLabel("23:59")).toBe("11:59 pm");
+  });
+
+  it("offers every half hour, and keeps a stored time that is not one", () => {
+    const options = clockOptions();
+    expect(options).toHaveLength(48);
+    expect(options.slice(0, 3)).toEqual(["00:00", "00:30", "01:00"]);
+    expect(options.at(-1)).toBe("23:30");
+    expect(clockOptions("22:00")).toHaveLength(48);
+    expect(clockOptions("06:45").slice(13, 16)).toEqual(["06:30", "06:45", "07:00"]);
+    expect(clockOptions("nonsense")).toHaveLength(48);
   });
 });
 

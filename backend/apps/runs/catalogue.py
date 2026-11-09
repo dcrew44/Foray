@@ -164,6 +164,7 @@ class EventKind(models.TextChoices):
     # Jobs that are not runs.
     WORKER_PING = "worker.ping"
     CHAT_FOLLOWUP = "chat.followup"
+    NOTIFICATION_TEST = "notification.test"  # Settings' test notification: sent, or why not
 
 
 # Each kind's level when the emitter does not pass one. Where a kind's level varies (`map/worker.md`
@@ -209,6 +210,7 @@ DEFAULT_LEVEL: dict[str, Level] = {
     EventKind.COMPANY_REFRESH_DONE: Level.INFO,
     EventKind.WORKER_PING: Level.INFO,
     EventKind.CHAT_FOLLOWUP: Level.DEBUG,  # stays out of the feeds unless debug is on
+    EventKind.NOTIFICATION_TEST: Level.INFO,  # warn when the test could not be sent
 }
 
 # Only imported history holds these: tailor and render runs now end with `run.completed` /
@@ -575,6 +577,15 @@ class WorkerPingData(JsonModel):
 
     job_id: int
     worker_pid: int
+
+
+class NotificationTestData(JsonModel):
+    # `notification.test`: the job that tried Settings' test notification, and whether the
+    # channel took it. The event's message is the sentence to show either way.
+    model_config = CAMEL
+
+    job_id: int
+    sent: bool
 
 
 INPUT_MODELS: dict[str, type[JsonModel]] = {

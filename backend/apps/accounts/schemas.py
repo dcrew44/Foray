@@ -27,6 +27,11 @@ Seniority = Literal["intern", "new_grad", "entry", "mid", "senior", "staff_plus"
 RemotePreference = Literal["remote", "hybrid", "onsite", "any"]
 AutonomyMode = Literal["approve_each", "autopilot"]
 
+# An ntfy topic name (ntfy's own rule), or empty for "no phone notifications" (#59).
+NTFY_TOPIC_PATTERN = r"^[A-Za-z0-9_-]{0,64}$"
+# A time of day on a 24-hour clock, "HH:MM".
+CLOCK_PATTERN = r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
+
 
 class SalaryFloor(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -68,6 +73,13 @@ class Settings(DefaultedJsonModel):
     watch_enabled: bool = True
     # The most deep reviews watching may spend in 24 hours, without asking.
     watch_daily_reviews: int = Field(default=10, ge=0, le=60)
+    # Phone notifications (#59): the ntfy topic a watch's matches are published to. Empty means
+    # none. Anyone who knows the name can read the topic, so it is the user's to choose.
+    ntfy_topic: str = Field(default="", pattern=NTFY_TOPIC_PATTERN)
+    # Notifications wait while the user's clock (`users.timezone`) is between these two times,
+    # and go out when the second comes. The same time twice means no quiet hours.
+    quiet_hours_start: str = Field(default="22:00", pattern=CLOCK_PATTERN)
+    quiet_hours_end: str = Field(default="08:00", pattern=CLOCK_PATTERN)
 
 
 # Complete preferences for throwaway users: `create_test_user --with-resume` and

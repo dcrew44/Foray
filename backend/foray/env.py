@@ -69,6 +69,23 @@ def _check_http_url(value: str) -> str:
     return value.rstrip("/")
 
 
+def _check_ntfy_server(value: str) -> str:
+    """An http(s) address the guarded HTTP client will talk to: port 80 or 443 only
+    (`apps.core.http` refuses every other port, so say so at boot rather than at the first
+    notification), and no credentials, which would end up in logs."""
+    value = _check_http_url(value)
+    parts = urlsplit(value)
+    try:
+        port = parts.port
+    except ValueError:
+        raise ValueError("the port is not a number") from None
+    if port not in (None, 80, 443):
+        raise ValueError("only ports 80 and 443 are reachable")
+    if parts.query or parts.fragment or parts.username or parts.password:
+        raise ValueError("give the server's address alone, with no query or credentials")
+    return value
+
+
 def _repo_path(value: str | Path) -> Path:
     path = Path(value).expanduser()
     return path if path.is_absolute() else (REPO_ROOT / path).resolve()
@@ -145,6 +162,11 @@ class Env(BaseSettings):
     jsearch_enabled: bool = False
     jsearch_monthly_budget: int = Field(default=180, gt=0)
 
+    # --- phone notifications (#59) ---
+    # The ntfy server a user's topic is published to. Never a user's value: the host the worker
+    # posts to comes from here alone.
+    ntfy_server: str = "https://ntfy.sh"
+
     # --- runtime ---
     pdf_browser_channel: str | None = None
     worker_concurrency: int = Field(default=3, ge=1, le=8)
@@ -159,6 +181,11 @@ class Env(BaseSettings):
     @classmethod
     def _http_url(cls, value: str | None) -> str | None:
         return None if value is None else _check_http_url(value)
+
+    @field_validator("ntfy_server")
+    @classmethod
+    def _ntfy_origin(cls, value: str) -> str:
+        return _check_ntfy_server(value)
 
     @field_validator("backup_dir", "storage_dir")
     @classmethod
@@ -251,6 +278,9 @@ FIX = {
     "llm_fake_delay_ms": "set it to a whole number of milliseconds from 0 to 60000",
     "jsearch_enabled": "set it to exactly true or false",
     "jsearch_monthly_budget": "set it to a positive whole number",
+    "ntfy_server": (
+        "set it to your ntfy server's public address, e.g. https://ntfy.sh, or leave it empty"
+    ),
     "worker_concurrency": "set it to a whole number from 1 to 8",
     "db_pool_max": "set it to a whole number from 4 to 50",
 }

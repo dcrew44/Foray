@@ -8,7 +8,7 @@
 | `GET /api/auth/config` | none | `{signupOpen}`, for the sign-in page |
 | `GET /api/me` | session | `{id, name, email, signupOpen}` |
 | `PUT /api/preferences` | session | `{ok, message}`; works before any resume exists |
-| `PATCH /api/settings` | session | `{ok, message, settings}` |
+| `PATCH /api/settings` | session | `{ok, message, settings}`; `timeZone` goes to `users.timezone` |
 
 401 means only "not signed in": wrong credentials are a 400 with Better Auth's message, so the
 client's 401 redirect can never swallow a sign-in error. The user-visible strings are today's
@@ -18,6 +18,7 @@ client's 401 redirect can never swallow a sign-in error. The user-visible string
 from __future__ import annotations
 
 import re
+import zoneinfo
 from collections.abc import Sequence
 from typing import Annotated, Any, cast
 
@@ -25,13 +26,21 @@ from django.conf import settings as django_settings
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest
-from pydantic import BeforeValidator, ConfigDict, Field, StrictBool, model_validator
+from pydantic import AfterValidator, BeforeValidator, ConfigDict, Field, StrictBool, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from apps.accounts import profile
 from apps.accounts.hashers import PASSWORD_MAX, PASSWORD_MIN, js_length
 from apps.accounts.models import User, normalize_email_address
-from apps.accounts.schemas import AutonomyMode, Preferences, RemotePreference, Seniority
+from apps.accounts.schemas import (
+    CLOCK_PATTERN,
+    NTFY_TOPIC_PATTERN,
+    AutonomyMode,
+    Preferences,
+    RemotePreference,
+    Seniority,
+    Settings,
+)
 from apps.core import throttle
 from apps.core.errors import DEFAULT_INVALID, ApiError, messages
 from apps.core.openapi import register_schema
@@ -58,9 +67,12 @@ PREFERENCES_SAVED = "Preferences saved"
 PREFERENCES_INVALID = "Those preferences could not be saved. Check the fields and try again."
 SETTINGS_SAVED = "Settings saved"
 SETTINGS_INVALID = "Those settings are out of range. Check the values and try again."
+TOPIC_INVALID = "A topic is up to 64 letters, digits, hyphens and underscores, with no spaces."
+QUIET_HOURS_INVALID = "Quiet hours are two times of day, such as 22:00 and 08:00."
 
 EMAIL_MAX = 320  # users.email
 NAME_MAX = 200  # users.name
+TIME_ZONE_MAX = 64  # users.timezone
 
 # zod 4.6's `z.email()` (`zod/v4/core/regexes.js`), which Better Auth applies to sign-up and
 # sign-in. ASCII only, as the JavaScript regex has no `u` flag; `fullmatch` because Python's `$`
@@ -153,6 +165,24 @@ DeepEvalTopN = Annotated[int, Field(ge=0, le=60), BeforeValidator(_json_number)]
 WatchDailyReviews = Annotated[int, Field(ge=0, le=60), BeforeValidator(_json_number)]
 
 
+def _trimmed(value: Any) -> Any:
+    # A pasted topic often carries a space or a line break.
+    return value.strip() if isinstance(value, str) else value
+
+
+def _iana_zone(value: str) -> str:
+    try:
+        zoneinfo.ZoneInfo(value)
+    except zoneinfo.ZoneInfoNotFoundError, ValueError:
+        raise ValueError("not an IANA time zone name") from None
+    return value
+
+
+NtfyTopic = Annotated[str, Field(pattern=NTFY_TOPIC_PATTERN), BeforeValidator(_trimmed)]
+ClockTime = Annotated[str, Field(pattern=CLOCK_PATTERN)]
+TimeZone = Annotated[str, Field(min_length=1, max_length=TIME_ZONE_MAX), AfterValidator(_iana_zone)]
+
+
 class SettingsPatch(ApiModel):
     """Any subset of the settings. Unknown keys and nulls are refused."""
 
@@ -164,6 +194,12 @@ class SettingsPatch(ApiModel):
     deep_eval_top_n: DeepEvalTopN | SkipJsonSchema[None] = None
     watch_enabled: StrictBool | SkipJsonSchema[None] = None
     watch_daily_reviews: WatchDailyReviews | SkipJsonSchema[None] = None
+    ntfy_topic: NtfyTopic | SkipJsonSchema[None] = None  # "" turns phone notifications off
+    quiet_hours_start: ClockTime | SkipJsonSchema[None] = None
+    quiet_hours_end: ClockTime | SkipJsonSchema[None] = None
+    # Not one of the stored settings: the browser's IANA zone, kept on `users.timezone` (as the
+    # chat view keeps it), which is the clock quiet hours are read on.
+    time_zone: TimeZone | SkipJsonSchema[None] = None
 
     @model_validator(mode="after")
     def _no_nulls(self) -> SettingsPatch:
@@ -180,6 +216,15 @@ class SettingsOut(ApiModel):
     deep_eval_top_n: int
     watch_enabled: bool
     watch_daily_reviews: int
+    ntfy_topic: str
+    quiet_hours_start: str
+    quiet_hours_end: str
+    time_zone: str  # `users.timezone`: the clock quiet hours are read on
+
+
+def settings_out(settings: Settings, time_zone: str) -> SettingsOut:
+    """A user's settings with the zone their clock is read in."""
+    return SettingsOut(**settings.model_dump(), time_zone=time_zone)
 
 
 class SettingsSaved(ApiModel):
@@ -236,6 +281,18 @@ def preferences_invalid(errors: Sequence[dict[str, Any]]) -> str:
     else:
         problem = _PROBLEM_BY_TYPE.get(error_type, "the value is not valid")
     return f"{slot.label} could not be saved: {problem}."
+
+
+def settings_invalid(errors: Sequence[dict[str, Any]]) -> str:
+    """The sentence for the first failing setting. The topic and the quiet hours are typed, so
+    each has its own; a slider out of range gets the general one."""
+    field = next((str(loc[0]) for error in errors if (loc := _body_loc(error))), "")
+    name = field.replace("_", "").lower()
+    if name == "ntfytopic":
+        return TOPIC_INVALID
+    if name.startswith("quiethours"):
+        return QUIET_HOURS_INVALID
+    return SETTINGS_INVALID
 
 
 # --- /auth ---------------------------------------------------------------------------------------
@@ -336,9 +393,15 @@ def put_preferences(request: HttpRequest, body: Preferences) -> dict[str, Any]:
 
 
 @settings.patch("", response=SettingsSaved, summary="Save settings")
-@messages(invalid=SETTINGS_INVALID)
+@messages(invalid=settings_invalid)
 def patch_settings(request: HttpRequest, body: SettingsPatch) -> dict[str, Any]:
-    # Only the keys that were sent: a partial save never resets a field to its default.
-    sent = body.model_dump(include=body.model_fields_set)
-    saved = profile.update_settings(current_user(request).pk, sent)
-    return {"ok": True, "message": SETTINGS_SAVED, "settings": saved.model_dump()}
+    user = current_user(request)
+    # Only the keys that were sent: a partial save never resets a field to its default. The
+    # time zone is the user's column, not one of the stored settings.
+    sent = body.model_dump(include=body.model_fields_set - {"time_zone"})
+    saved = profile.update_settings(user.pk, sent, time_zone=body.time_zone)
+    return {
+        "ok": True,
+        "message": SETTINGS_SAVED,
+        "settings": settings_out(saved, body.time_zone or user.timezone),
+    }

@@ -247,6 +247,9 @@
     "settings": {
       "deepEvalTopN": "number",
       "defaultMode": "string",
+      "ntfyTopic": "string",
+      "quietHoursEnd": "string",
+      "quietHoursStart": "string",
       "scoreThreshold": "number",
       "watchDailyReviews": "number",
       "watchEnabled": "boolean"

@@ -22,7 +22,8 @@ politeness and safety are not per-caller decisions:
   `Last-Modified`; a server that sends neither is simply fetched whole.
 - **`post_json`** sends a JSON body with the same guard, caps and retries. It exists for
   Workday, whose career sites list their postings in answer to a POST (#57); a retry repeats a
-  query, never a write.
+  query, never a write. The one write, a notification published to ntfy (#59), asks for
+  `retries=0`.
 - **An SSRF guard on every request and every hop.** Users type URLs (add company) and the model
   emits them (careers-page `more_listing_urls`). Only http/https on ports 80/443 are fetched,
   and a host is refused when any address it resolves to is loopback, private, link-local

@@ -19,6 +19,9 @@ gates over a narrow window:
   user's "New matches" chat, so `emit()` defers the usual chat follow-up. A quiet one completes
   at debug level with `announced: 0`, which the feeds leave out. Watch moves no stages beyond
   the archiving the shared scoring helpers do: what it announces stays in `found` for the user.
+- **To a phone.** The same matches are queued for the user's ntfy topic as the watch completes
+  (`notifications.outbox.queue_matches`, #59): one notification per match, once, and nothing for
+  a user who has set no topic.
 """
 
 from __future__ import annotations
@@ -48,6 +51,7 @@ from apps.matching.evaluate import evaluate_batch
 from apps.matching.fast_score import score_matches
 from apps.matching.prefilter import DerivedCriteria, derive_search, prefilter_jobs
 from apps.matching.search import assert_can_search, note, roles, scoring_message
+from apps.notifications import outbox
 from apps.resumes.models import Resume, ResumeKind
 from apps.resumes.queries import latest_base_resume
 from apps.runs import lifecycle
@@ -260,10 +264,14 @@ def new_matches_conversation(user_id: str) -> uuid.UUID:
 def finish_watch(run_id: uuid.UUID, user_id: str, output: WatchOutput) -> bool:
     """Completes the watch. With something to announce, at info level and linked to the "New
     matches" chat (created here if need be), so `emit()` defers the chat follow-up; otherwise at
-    debug level, unlinked. A watch Stopped meanwhile leaves no chat behind. Sync."""
+    debug level, unlinked. What it announces is queued for the user's phone in the same
+    transaction (#59; before `complete()`, whose `emit()` must come last). A watch Stopped
+    meanwhile leaves no chat and no notification behind. Sync."""
     announced = len(output.announced_match_ids)
     with transaction.atomic():
         conversation = new_matches_conversation(user_id) if announced else None
+        if announced:
+            outbox.queue_matches(user_id, output.announced_match_ids)
         done = lifecycle.complete(
             run_id,
             output,

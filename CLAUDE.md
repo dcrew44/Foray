@@ -58,7 +58,8 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
   headers).
 - `backend/apps/<app>/`: `core` (the `db()` bridge, `defer_in_tx`, scoping, errors, the router
   factory, the HTTP client, storage, throttles), `accounts`, `llm`, `jobs` (with
-  `sources/<source>.py`), `matching`, `resumes`, `applications`, `runs`, `chat`, `pages`, `legacy`. An app
+  `sources/<source>.py`), `matching`, `resumes`, `applications`, `runs`, `chat`,
+  `notifications`, `pages`, `legacy`. An app
   keeps its models and services, and as it needs them `api.py` (its routers), `tasks.py` (its
   procrastinate tasks), `fakes.py` (its `LLM_FAKE` answers) and `management/commands/`.
 - `backend/tests/`: pytest, one folder per app, plus `fixtures/`, `goldens/` and `contract/`.
@@ -166,6 +167,14 @@ An issue reads like the ones already there:
   `announced: 0` (Activity, toasts and Home leave it out), and one that finds something links
   the "New matches" chat as it completes (`lifecycle.complete(conversation_id=…)`) to report
   there. It works only on matches it created, so it never touches a search's.
+- **What a watch announces goes to the phone once** (`apps/notifications/`). Queue with
+  `outbox.queue_matches(user_id, match_ids)` inside the transaction that announces, before its
+  `emit()`: one `notifications` row per (user, match, channel), and nothing for a user with no
+  ntfy topic. `notify.send` (deferred then, and swept every minute) sends what is due; quiet
+  hours and retries only move `send_after`, and `outbox.claim` leases rows before a send, so
+  send through it, never around it. The server is `NTFY_SERVER` and a user supplies only the
+  topic; publish with `retries=0` (a repeated POST can deliver twice). Settings' test is a job
+  too (`notify.test`, answered by a `notification.test` event): no request waits on ntfy.
 - **The API**: routers come from `apps.core.router.router()` (camelCase on the wire, snake_case
   in Python); output schemas extend `ApiModel`. Mutations answer `{ok: true, message}` (`202`
   when work was queued); expected failures raise `ApiError(status, message)` or name their
@@ -291,6 +300,9 @@ not the only check.
 - `LLM_FAKE=1` (with `DEBUG=true`) runs every model as a deterministic fake at $0;
   `LLM_FAKE_DELAY_MS` slows it enough to press Stop, and `LLM_FAKE_FAIL=<purpose>` makes one
   fail. Set them in the process environment for a rehearsal rather than editing `.env`.
+- Phone notifications are real in a rehearsal: only the models are fake, so a user who has
+  saved an ntfy topic gets what a watch announces, on `NTFY_SERVER`. Give a test user a topic
+  of your own, or none. `pnpm rehearsal manage watch_now --email …` starts a watch now.
 
 ## Tests
 

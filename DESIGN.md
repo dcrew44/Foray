@@ -3,10 +3,10 @@
 Foray is an AI-first job search product. You onboard with a resume, answer a short
 interview, then say things like *"I want entry-level software engineering jobs in the
 Bay Area"* and agents do the work in the background: search many sources and rank every
-posting against your profile, with evidence quoted from your resume. In later phases Foray
-coaches you on strong matches while you write, applies from your own browser to matches
-that are worth applying to but not strong, and looks for warm paths into the companies on
-your shortlist.
+posting against your profile, with evidence quoted from your resume. What it is built toward
+is **the first-day applicant**: for every posting you are eligible for, your application is
+in within hours of the posting going live, filled in your own browser and submitted by you,
+and the best ones get a referral attempt alongside.
 
 This document records **what is settled and why**. The roadmap is the
 [milestones](https://github.com/dcrew44/Foray/milestones) and issues on GitHub, and work
@@ -22,6 +22,7 @@ pre-migration commit of `main` still runs it against the untouched `foray` datab
 
 | Topic | Decision |
 |---|---|
+| Direction | **The first-day applicant** (2026-11-09). Entry-level postings are scarce and flooded with rewritten resumes within hours, so the product is judged by **posted-to-applied time** on postings the user is eligible for, not by fit score alone. The wedge is US new-grad software roles. In order: a radar that sees a posting within the hour, an application prepared before the user opens it, a fill in the user's browser with the user pressing submit, a referral attempt where the user knows someone, and a funnel that says what converted. Blind volume stays out: the user's own research found it converts at well under 1% |
 | Audience | **Self-hosted open source (MIT).** Each install runs its own copy with its own accounts and API keys (once OpenRouter is a provider, one key covers every model), so nobody holds other people's resumes or mail tokens. Every domain row still carries `user_id` and every query is user-scoped, so a hosted version stays possible |
 | Autonomy | **Per-run toggle**: `approve_each` (default) or `autopilot`; approvals surface in chat and in the activity feed. **Watching new postings is the exception** (#5): it deep-reviews without asking, within a daily cap the user sets (`watchDailyReviews`, default 10, about 7¢ a day) and the deep-review limit, so a strong posting is announced the cycle it arrives |
 | Stack | **Django backend, Next.js frontend.** Python 3.14: Django 6.1 with django-ninja 1.7 (the JSON API, sessions, the ORM) on uvicorn, and one procrastinate 3.10 worker process. Next.js 16 only renders: server components read one Django page endpoint each, client components call Django through a typed client, and `/api/*` is rewritten to Django. Types flow from Django's OpenAPI schema into TypeScript (`pnpm api:types`) |
@@ -29,10 +30,11 @@ pre-migration commit of `main` still runs it against the untouched `foray` datab
 | Fetching | **Hybrid: code fetches, agents decide where.** Deterministic adapters (Greenhouse, Lever, Ashby, Workable, Recruitee, Gem, JSearch) + an agent-managed company registry + an LLM extraction fallback for career pages, all through one guarded HTTP client |
 | Posting mirror | **Hosted once, synced by every install.** The one hosted piece: a hub runs the board fetchers and serves what changed since a cursor, and each install applies that to its own `companies` and `jobs`. It holds public postings only. Installs keep the adapters and fetch boards themselves when the hub is down; JSearch stays per install, under that install's own key |
 | Browser | Phase 1 uses headless Chromium (Playwright for Python, in the worker) only to render PDFs. **Applying runs in the user's own browser** (most likely through an extension), under the user's own identity: that is the user applying, and it passes employers' fraud checks, where a cloud browser on data-center addresses looks like fraud. No evasion (no jitter or fingerprint tricks), no CAPTCHA solving and no account creation: each of those hands off to the user |
+| Applying | **One motion, and the user presses submit** (2026-11-09; it reorders the lanes below). Every eligible new posting gets a prepared application: answers planned from saved answers, one of the user's own resume variants chosen, the form filled by the extension. The deep review is no longer a gate in front of applying; eligibility (level, years, work authorization, clearance, place) is, and it is read once per posting at ingest. Unattended auto-submit comes after one-tap applying works, under the rules in the next row |
 | Apply lanes | **The deep review decides.** `strong` goes to the coached lane: Foray coaches, the user writes, Foray fills the form and the user submits. `apply` goes to the automated lane: Foray applies from the user's browser. `maybe` and `skip` go to neither. A match is deep-reviewed before the automated lane takes it, because the fast score is least reliable in the band where a cutoff would fall, and the user can move any match between lanes. Every automated application waits for an approval that shows the filled form; auto-submit is an opt-in, only for applications answered entirely from saved answers, within daily and per-employer caps |
-| Tailoring | **Automated lane only.** For strong matches Foray coaches and the user writes: reviewers notice rewritten resumes, and the user has a better shot writing it. An automated application sends a tailored resume that the verifier has checked line by line |
-| Outreach | **Warm paths before cold email** (Phase 3): alumni, former colleagues or a named hiring manager, with a short note the user edits and approves. Gmail through Google OAuth matches employers' confirmations and replies to applications. No cold email at volume |
-| Hosting | **Self-hosted, local first.** Four processes, the same in dev and prod: Postgres, Next, Django (api), the worker. Postgres runs in Docker Compose; web, api and worker run natively in dev (`pnpm dev:all`); one `Dockerfile` (a `backend` image for api, worker and migrate, a `web` image) and a `prod` compose profile run the same containers |
+| Tailoring | **Variants the user wrote, chosen per role** (2026-11-09). The user keeps two to four resume variants, one per role family, and Foray picks one for each application: a per-posting rewrite is what the flood sends, and it costs minutes when hours matter. The tailoring pipeline and its verifier stay in the code; sending a tailored resume with an application is deferred |
+| Outreach | **Warm paths before cold email**: alumni, former colleagues or a named hiring manager, with a short note the user edits and approves. Contacts come from files the user exports themself (LinkedIn's connections export, an alumni list), never from automating LinkedIn, and the alert worth most is a fresh posting at a company where the user knows someone. Gmail through Google OAuth matches employers' confirmations and replies to applications. No cold email at volume |
+| Hosting | **Self-hosted on something that stays on** (2026-11-09): a small server or a home machine runs the `prod` compose profile, because a worker that runs only during a laptop session cannot be timely (the dev mirror went a week without a refresh). Applying still happens in the user's browser on their own machine. Four processes, the same in dev and prod: Postgres, Next, Django (api), the worker. Postgres runs in Docker Compose; web, api and worker run natively in dev (`pnpm dev:all`); one `Dockerfile` (a `backend` image for api, worker and migrate, a `web` image) and a `prod` compose profile run the same containers |
 | Resume output | Structured resume → **PDF via HTML template**; a renderer interface can be added when a LaTeX (tectonic) renderer is compared |
 | Budget | ~$100/month of third-party APIs; model calls stop for the month at `LLM_MONTHLY_BUDGET_USD` (default $90) of ledger spend |
 | Workflow | Build autonomously, **a branch and a pull request for each piece of work**; the user tries it in the browser and steers |
@@ -381,6 +383,26 @@ with those measurements, not guessed.
 
 The milestones on GitHub hold the order and the work; this section keeps what each phase is
 and why.
+
+**Order since 2026-11-09** (Direction, under Settled decisions). The phases below were
+written before it and keep their designs; the order of work is now:
+
+1. **Radar.** An always-on worker, boards polled every 15 to 30 minutes with the
+   posted-to-seen lag reported, Workday, iCIMS and SmartRecruiters coverage, a company list
+   in the thousands, and each posting's level, years, work authorization and clearance read
+   once at ingest.
+2. **Apply in one motion.** Phase 2's fill, saved answers and proof of arrival, started from
+   an alert: the watch prepares the application and the user opens it filled.
+3. **Referrals.** Phase 3's warm paths, fed by contacts the user imports.
+4. **Outcome loop.** Gmail, read-only, matches confirmations, rejections and interviews to
+   applications; the funnel reports interview rate by posted-to-applied time, source, resume
+   variant and referral. Whether applying early helps is a claim this measures, not one the
+   design assumes.
+
+The career coach and model choice milestones come after these. What decided it, from the
+development database that day: the mirror had not refreshed for a week, 528 matches had
+become 20 shortlisted and 1 applied, and the 406 companies were nearly all on Greenhouse,
+Ashby and Lever.
 
 - **Phase 1 — find, rank, tailor** (no submitting). **Complete**: onboarding (resume
   extraction, preferences interview or form), search across ~200 boards + JSearch,

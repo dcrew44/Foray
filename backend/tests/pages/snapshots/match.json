@@ -26,6 +26,7 @@
     "salaryMax": "number",
     "salaryMin": "number",
     "salaryPeriod": "string",
+    "signals": [],
     "source": "string",
     "title": "string",
     "url": "string"

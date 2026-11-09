@@ -62,6 +62,9 @@ UPDATE = os.environ.get("FORAY_UPDATE_SNAPSHOTS") == "1"
 BUDGETS = {
     "home": 10,
     "matches": 5,
+    # Four of the five are spent: the match with its job, its tailored resume, whether a base
+    # resume exists, and (#7) the one read behind the posting's signals, pinned exactly by
+    # `test_match_page_reads_once_for_its_signals`.
     "match": 5,
     "activity": 6,
     "chat": 3,
@@ -394,6 +397,7 @@ def test_match_page() -> None:
     assert job["source"] == "greenhouse"
     assert job["applyUrl"] == "https://stripe.example.com/apply/1"
     assert "raw" not in job and "descriptionRaw" not in job  # §5.2: never sent
+    assert job["signals"] == []  # an ordinary posting: open, new, posted once (#7)
     # What the posting asks (#56): nothing read yet for this one.
     assert job["facts"] == {
         "read": False,
@@ -601,6 +605,78 @@ def test_match_page_shows_what_the_posting_asks() -> None:
         "workAuthEvidence": "We are unable to sponsor visas.",
         "clearanceEvidence": "Ability to obtain a Secret security clearance.",
     }
+
+
+def test_match_page_shows_a_closed_and_reposted_posting() -> None:
+    """The legitimacy signals (#7, `jobs/legitimacy.py`), closed first."""
+    graph = full_graph()
+    job = graph.jobs["backend"]
+    now = datetime.now(UTC)
+    # The role's third posting in the window; this one has closed since.
+    for _ in range(2):
+        make_job(company=graph.company, title=job.title, posted_at=now, is_active=False)
+    Job.objects.filter(id=job.id).update(is_active=False, posted_at=now, last_seen_at=now)
+
+    body = page(graph, "match")
+    assert body["job"]["isActive"] is False
+    assert body["job"]["signals"] == [
+        {
+            "kind": "closed",
+            "label": "Closed",
+            "detail": f"Last seen on the employer's board on {now:%B} {now.day}.",
+        },
+        {"kind": "reposted", "label": "Reposted", "detail": f"Posted 3 times since {now:%B}."},
+    ]
+
+
+def test_match_page_shows_an_aggregators_stale_posting_that_applies_elsewhere() -> None:
+    user = make_user()
+    old = datetime.now(UTC) - timedelta(days=74)
+    listed = make_job(
+        source="jsearch",
+        company=make_company(name="TechNova Solutions"),
+        apply_url="https://unlockthegenius.netlify.app/?jobs=en-job-entry-level-developer",
+        posted_at=old,
+        first_seen_at=old,
+        raw={"job_id": "abc", "employer_website": "http://www.technovasolutions.com"},
+    )
+    Job.objects.filter(id=listed.id).update(company=None)  # as the aggregator's postings are
+    match = make_match(user, job=listed)
+
+    job = get_page(signed_in(user), f"/api/pages/matches/{match.id}").json()["job"]
+    assert job["signals"] == [
+        {
+            "kind": "aggregator_link",
+            "label": "Apply link goes elsewhere",
+            "detail": (
+                "The apply link goes to unlockthegenius.netlify.app, not the employer's site."
+            ),
+        },
+        {"kind": "long_open", "label": "Open a long time", "detail": "Open for 74 days."},
+    ]
+
+    # The same posting applying at the employer's own site, 60 days in: nothing to say.
+    Job.objects.filter(id=listed.id).update(
+        apply_url="https://careers.technovasolutions.com/jobs/42",
+        posted_at=datetime.now(UTC) - timedelta(days=60),
+    )
+    job = get_page(signed_in(user), f"/api/pages/matches/{match.id}").json()["job"]
+    assert job["signals"] == []
+
+
+def test_match_page_reads_once_for_its_signals(django_assert_num_queries: Any) -> None:
+    """The match page's own reads, exactly: the match with its job, the tailored resume, the
+    base resume check, and one for the signals (the repost count, the company's domain and the
+    database's present together), however many signals there are."""
+    graph = full_graph()
+    job = graph.jobs["backend"]
+    for _ in range(3):
+        make_job(company=graph.company, title=job.title)
+    Job.objects.filter(id=job.id).update(is_active=False)
+    client = signed_in(graph.user)
+    with django_assert_num_queries(4 + AUTH_QUERIES):
+        body = get_page(client, f"/api/pages/matches/{graph.matches['found'].id}").json()
+    assert [signal["kind"] for signal in body["job"]["signals"]] == ["closed", "reposted"]
 
 
 # --- companies -----------------------------------------------------------------------------------

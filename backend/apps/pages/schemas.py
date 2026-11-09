@@ -21,6 +21,7 @@ from apps.accounts.api import SettingsOut
 from apps.accounts.profile import InterviewProgress, OnboardingState, Slot
 from apps.accounts.schemas import Preferences
 from apps.core.router import ApiModel
+from apps.jobs.legitimacy import SignalKind
 from apps.jobs.pipeline import CompanyRow
 from apps.matching.queries import MatchRow, RemoteName, StageName
 from apps.matching.schemas import DeepEval, FastScore
@@ -43,6 +44,7 @@ __all__ = [
     "HomeWaiting",
     "JobFacts",
     "JobDetail",
+    "JobSignal",
     "LatestRender",
     "MatchDetail",
     "MatchDetailPage",
@@ -174,6 +176,14 @@ class JobFacts(ApiModel):
     clearance_evidence: str | None
 
 
+# A reason to look twice before applying (`jobs/legitimacy.py`, #7): what kind, a few words,
+# and one sentence for the user.
+class JobSignal(ApiModel):
+    kind: SignalKind
+    label: str
+    detail: str
+
+
 class JobDetail(ApiModel):
     title: str
     company_name: str
@@ -190,6 +200,7 @@ class JobDetail(ApiModel):
     description_text: str | None
     source: JobSourceName
     facts: JobFacts
+    signals: list[JobSignal]  # closed first; empty for an ordinary posting
 
 
 class TailoredView(ApiModel):

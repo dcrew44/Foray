@@ -201,6 +201,13 @@ An issue reads like the ones already there:
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads
   the mirror a batch at a time) and run `manage.py facts_benchmark --show`: it must stay above
   90% on level and years, and a change tuned on the `fresh` set stops that set being a test.
+- **A posting's warning signs are worked out on read** (`apps/jobs/legitimacy.py`): closed, an
+  aggregator's apply link that leaves the employer, reposted, open a long time. Nothing is
+  stored and no model is asked. A new signal is a kind in `SignalKind`, a pure rule and its
+  place in `signals()`; whatever a rule needs beyond the posting's own row joins the one query
+  in `read_context`, because the match page may spend only one on them. A new board adapter's
+  job links must pass `is_board_link` (`tests/jobs/test_legitimacy.py` fails until one is
+  listed there and known).
 - **Job ids** are `source:company_slug:external_id`; career pages use
   `web:<slug>:<sha1(url)>`.
 - **Never rewrite `description_raw`.** Cleaning produces `description_text`.

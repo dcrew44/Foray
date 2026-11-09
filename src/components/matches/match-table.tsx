@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import type { BoardMatch } from "./board";
+import { ClosedMark } from "./job-signals";
 import { moveMatch } from "./match-api";
 import { ALL_STAGES as STAGES } from "./stages";
 
@@ -174,6 +175,7 @@ export function MatchTable({
                       <span className="text-muted-foreground flex items-center gap-2 truncate text-[12.5px]">
                         {match.company}
                         <RecommendationPill className="hidden xl:inline-flex" value={match.recommendation} />
+                        {!match.isActive && <ClosedMark />}
                       </span>
                     </Link>
                   </td>

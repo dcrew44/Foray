@@ -26,7 +26,7 @@ from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
 from apps.core import clock
 from apps.core.jsonio import js_locale
-from apps.jobs import radar
+from apps.jobs import legitimacy, radar
 from apps.jobs.models import Company, CompanyStatus, Job
 from apps.jobs.pipeline import CompanyRow, company_row
 from apps.jobs.sources.jsearch import jsearch_budget
@@ -54,6 +54,7 @@ from apps.pages.schemas import (
     HomeWaiting,
     JobDetail,
     JobFacts,
+    JobSignal,
     LatestRender,
     MatchDetail,
     MatchDetailPage,
@@ -322,6 +323,14 @@ def _job_facts(job: Job) -> JobFacts:
     )
 
 
+def _job_signals(job: Job, time_zone: str) -> list[JobSignal]:
+    """Reasons to look twice before applying (`jobs/legitimacy.py`), as of now: one query."""
+    found = legitimacy.signals(job, legitimacy.read_context(job), time_zone=time_zone)
+    return [
+        JobSignal(kind=signal.kind, label=signal.label, detail=signal.detail) for signal in found
+    ]
+
+
 def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
     """One match with its posting, its tailored resume and whether a base resume exists; None
     when the match is not this user's."""
@@ -362,6 +371,7 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
             description_text=job.description_text,
             source=cast(Any, job.source),
             facts=_job_facts(job),
+            signals=_job_signals(job, user.timezone),
         ),
         tailored=_tailored_view(tailored) if tailored is not None else None,
         has_base_resume=has_base,

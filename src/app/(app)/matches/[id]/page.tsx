@@ -7,7 +7,7 @@ import { SOURCE_LABEL } from "@/components/companies/company-row";
 import { RefreshOn } from "@/components/live/refresh-on";
 import { DeepEvaluation, FastEvaluation } from "@/components/matches/evaluation";
 import { JobFactsList } from "@/components/matches/job-facts";
-import { JobSignals } from "@/components/matches/job-signals";
+import { ClosedMark, JobSignals } from "@/components/matches/job-signals";
 import { EvaluateButton, MatchNotes, StageSelect } from "@/components/matches/match-controls";
 import { Posting } from "@/components/matches/posting";
 import { TailorPanel } from "@/components/matches/tailor-panel";
@@ -88,7 +88,7 @@ export default async function MatchPage({ params }: Params) {
                   {postedLabel(job.postedAt)}
                 </span>
               )}
-              {!job.isActive && <span className="text-destructive">This posting has closed</span>}
+              {!job.isActive && <ClosedMark />}
             </div>
           </div>
         </div>

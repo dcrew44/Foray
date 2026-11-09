@@ -20,6 +20,9 @@ politeness and safety are not per-caller decisions:
   "has this changed?" with the `ETag` and `Last-Modified` its last answer carried, and a `304`
   costs neither side a body (#55). Greenhouse and Lever answer an `ETag`, Ashby a
   `Last-Modified`; a server that sends neither is simply fetched whole.
+- **`post_json`** sends a JSON body with the same guard, caps and retries. It exists for
+  Workday, whose career sites list their postings in answer to a POST (#57); a retry repeats a
+  query, never a write.
 - **An SSRF guard on every request and every hop.** Users type URLs (add company) and the model
   emits them (careers-page `more_listing_urls`). Only http/https on ports 80/443 are fetched,
   and a host is refused when any address it resolves to is loopback, private, link-local
@@ -245,6 +248,12 @@ class HttpClient:
             transport=transport, follow_redirects=False, trust_env=False
         )
         self._resolve = resolve or system_resolve
+        self._gates: dict[str, asyncio.Semaphore] = {}
+
+    def gate(self, key: str, limit: int) -> asyncio.Semaphore:
+        """A semaphore shared by everything this client does under `key`: how a job keeps to a
+        few requests at a time against one source, however many boards it is reading."""
+        return self._gates.setdefault(key, asyncio.Semaphore(limit))
 
     async def __aenter__(self) -> Self:
         return self
@@ -319,6 +328,58 @@ class HttpClient:
             on_attempt=None,
         )
 
+    async def post_json(
+        self,
+        url: str,
+        body: Any,
+        *,
+        timeout: float = DEFAULT_TIMEOUT_S,  # noqa: ASYNC109 (§10.1: per attempt, asyncio.timeout)
+        retries: int = DEFAULT_RETRIES,
+        headers: Mapping[str, str] | None = None,
+        max_bytes: int | None = None,
+    ) -> str:
+        """The body of a 2xx answer to a JSON POST. For read-only queries that happen to be
+        POSTs: it is retried like a GET."""
+        fetched = await self._fetch(
+            url,
+            validators=Validators(),
+            timeout=timeout,
+            retries=retries,
+            accept=JSON_ACCEPT,
+            headers={**(headers or {}), "content-type": "application/json"},
+            max_bytes=max_bytes,
+            on_attempt=None,
+            content=json.dumps(body, separators=(",", ":")).encode(),
+        )
+        assert fetched.text is not None
+        return fetched.text
+
+    async def status_of(
+        self,
+        url: str,
+        *,
+        timeout: float = DEFAULT_TIMEOUT_S,  # noqa: ASYNC109 (one attempt, asyncio.timeout)
+        accept: str = HTML_ACCEPT,
+    ) -> tuple[int, str | None]:
+        """`(status, Location)` of one guarded GET that follows no redirect and reads no body.
+        For telling "exists" from "redirects away" where the body says nothing (SmartRecruiters
+        answers an unknown company with an empty list, #57). Raises `HttpError("blocked")` or
+        `NetworkError`."""
+        current = await self.check_url(url)
+        try:
+            async with (
+                asyncio.timeout(timeout),
+                self._client.stream(
+                    "GET",
+                    current,
+                    headers={"user-agent": USER_AGENT, "accept": accept},
+                    timeout=timeout,
+                ) as response,
+            ):
+                return response.status_code, response.headers.get("location")
+        except (httpx2.RequestError, TimeoutError, OSError) as error:
+            raise NetworkError(f"Could not fetch {url}: {_reason(error)}") from error
+
     async def _fetch(
         self,
         url: str,
@@ -330,6 +391,7 @@ class HttpClient:
         headers: Mapping[str, str] | None,
         max_bytes: int | None,
         on_attempt: Callable[[int], Awaitable[None]] | None,
+        content: bytes | None = None,
     ) -> Fetched:
         html = accept.startswith("text/html")
         cap = max_bytes if max_bytes is not None else (HTML_MAX_BYTES if html else ATS_MAX_BYTES)
@@ -349,6 +411,7 @@ class HttpClient:
                         timeout=timeout,
                         html=html,
                         max_bytes=cap,
+                        content=content,
                     )
             except HttpError as error:
                 if not is_retryable(error.status) or last or gives_up(error):
@@ -370,14 +433,22 @@ class HttpClient:
         timeout: float,  # noqa: ASYNC109 (the caller wraps the attempt in asyncio.timeout)
         html: bool,
         max_bytes: int,
+        content: bytes | None = None,
     ) -> Fetched:
         current = await self.check_url(url)
         origin = URL(current).origin
         for hop in range(MAX_REDIRECTS + 1):
-            # The caller's headers only while the hop stays on the origin they were meant for.
-            sent = {**base_headers, **headers} if URL(current).origin == origin else base_headers
+            # The caller's headers only while the hop stays on the origin they were meant for,
+            # and its body only there too: a redirect elsewhere is answered with a plain GET.
+            same_origin = URL(current).origin == origin
+            sent = {**base_headers, **headers} if same_origin else base_headers
+            posting = content is not None and same_origin
             async with self._client.stream(
-                "GET", current, headers=sent, timeout=timeout
+                "POST" if posting else "GET",
+                current,
+                headers=sent,
+                content=content if posting else None,
+                timeout=timeout,
             ) as response:
                 location = response.headers.get("location")
                 if response.status_code in REDIRECT_STATUSES and location:

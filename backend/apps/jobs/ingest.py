@@ -216,7 +216,40 @@ def _ingest_batch(
     return result
 
 
-def _deactivate_missing(company_id: uuid.UUID, seen: list[str]) -> int:
+def listing_versions(company_id: uuid.UUID) -> dict[str, str | None]:
+    """`{external_id: listing_version}` of a company's open postings: what a listed source
+    (`sources.types.ListedAdapter`, #57) need not read again."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT external_id, listing_version FROM jobs WHERE company_id = %s AND is_active",
+            [company_id],
+        )
+        return dict(cursor.fetchall())
+
+
+def set_listing_versions(versions: dict[str, str]) -> None:
+    """Remembers, by job id, the listing version each posting was read at."""
+    if not versions:
+        return
+    params = [value for pair in versions.items() for value in pair]
+    with transaction.atomic(), connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE jobs j SET listing_version = v.version FROM (VALUES "
+            + ", ".join(["(%s, %s)"] * len(versions))
+            + ") AS v(id, version) WHERE j.id = v.id "
+            "AND j.listing_version IS DISTINCT FROM v.version",
+            params,
+        )
+
+
+def close_missing(company_id: uuid.UUID, open_external_ids: Sequence[str]) -> int:
+    """Marks closed the company's open postings that a complete listing no longer names, with
+    the same empty-board guard as a whole-board fetch. Returns how many it closed."""
+    return _deactivate_missing(company_id, list(open_external_ids), column="external_id")
+
+
+def _deactivate_missing(company_id: uuid.UUID, seen: list[str], *, column: str = "id") -> int:
+    assert column in ("id", "external_id")
     with transaction.atomic(), connection.cursor() as cursor:
         if not seen:
             # The empty-board guard: one empty answer after a non-empty one closes nothing.
@@ -229,7 +262,7 @@ def _deactivate_missing(company_id: uuid.UUID, seen: list[str]) -> int:
                 return 0
         cursor.execute(
             "UPDATE jobs SET is_active = false, fetched_at = now() "
-            "WHERE company_id = %s AND is_active AND NOT (id = ANY(%s))",
+            f"WHERE company_id = %s AND is_active AND NOT ({column} = ANY(%s))",
             [company_id, seen],
         )
         return cursor.rowcount

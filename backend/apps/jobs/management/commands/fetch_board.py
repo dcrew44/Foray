@@ -6,6 +6,11 @@ database: the quickest way to see whether a slug is real and whether normalisati
     pnpm fetch:board greenhouse anthropic
     pnpm fetch:board lever matchgroup --json
     pnpm fetch:board ashby vanta --limit 3
+    pnpm fetch:board workday nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite
+
+A board on a source that lists postings without their descriptions (Workday, SmartRecruiters,
+iCIMS portals) costs a request per posting, so only the first `--limit` are read; the count is
+the listing's.
 
 Exits 1 when the board does not exist and 2 on a usage error, as `scripts/fetch-board.ts` did.
 """
@@ -21,7 +26,7 @@ from django.core.management.base import BaseCommand, CommandParser
 
 from apps.core.http import HttpClient
 from apps.core.jsonio import js_json_indent, js_locale
-from apps.jobs.sources import BOARD_ADAPTERS
+from apps.jobs.sources import BOARD_ADAPTERS, LISTED_ADAPTERS, SOURCES
 from apps.jobs.sources.types import BoardNotFound, NormalizedJob
 
 
@@ -36,26 +41,26 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         source, slug = options["source"], options["slug"]
-        if not source or not slug or source not in BOARD_ADAPTERS:
-            sources = " | ".join(BOARD_ADAPTERS)
+        if not source or not slug or source not in SOURCES:
+            sources = " | ".join(SOURCES)
             self.stderr.write(f"usage: pnpm fetch:board <{sources}> <slug> [--json] [--limit n]")
             sys.exit(2)
 
+        limit: int = options["limit"]
         started = time.monotonic()
         try:
-            jobs = asyncio.run(_fetch(source, slug))
+            jobs, total = asyncio.run(_fetch(source, slug, limit))
         except BoardNotFound:
             self.stderr.write(f'No {source} board at slug "{slug}".')
             sys.exit(1)
         elapsed = round((time.monotonic() - started) * 1000)
 
-        limit: int = options["limit"]
         if options["json"]:
             self.stdout.write(js_json_indent([job.dump() for job in jobs[:limit]]))
             return
 
         # A trailing newline stops OutputWrapper adding one, so "\n\n" is one blank line.
-        self.stdout.write(f"{source}:{slug} \u2014 {len(jobs)} postings in {elapsed}ms\n\n")
+        self.stdout.write(f"{source}:{slug} \u2014 {total} postings in {elapsed}ms\n\n")
         for job in jobs[:limit]:
             self.stdout.write("\n".join(_describe(job)) + "\n\n")
 
@@ -64,15 +69,26 @@ class Command(BaseCommand):
         bay_area = sum(
             1 for job in jobs if job.location_norm and job.location_norm.metro == "bay-area"
         )
+        read = "" if len(jobs) == total else f" (of the {len(jobs)} read)"
         self.stdout.write(
-            f"totals: {len(jobs)} postings \u00b7 {with_pay} with pay \u00b7 {remote} remote"
-            f" \u00b7 {bay_area} Bay Area"
+            f"totals: {total} postings \u00b7 {with_pay} with pay \u00b7 {remote} remote"
+            f" \u00b7 {bay_area} Bay Area{read}"
         )
 
 
-async def _fetch(source: str, slug: str) -> list[NormalizedJob]:
+async def _fetch(source: str, slug: str, limit: int) -> tuple[list[NormalizedJob], int]:
+    """The postings read and how many the board has."""
     async with HttpClient() as client:
-        return await BOARD_ADAPTERS[source].fetch_board(client, slug)
+        listed = LISTED_ADAPTERS.get(source)
+        if listed is None:
+            jobs = await BOARD_ADAPTERS[source].fetch_board(client, slug)
+            return jobs, len(jobs)
+        listing = await listed.list_board(client, slug)
+        read = [
+            await listed.read_posting(client, slug, posting, slug)
+            for posting in listing.postings[:limit]
+        ]
+        return [job for job in read if job is not None], len(listing.postings)
 
 
 def _describe(job: NormalizedJob) -> list[str]:

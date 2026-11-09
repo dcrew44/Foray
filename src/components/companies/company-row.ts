@@ -13,7 +13,27 @@ export const BOARD_LABEL: Record<CompanyRow["sourceType"], string> = {
   workable: "Workable",
   recruitee: "Recruitee",
   gem: "Gem",
+  jibe: "iCIMS",
+  workday: "Workday",
+  smartrecruiters: "SmartRecruiters",
+  icims: "iCIMS",
   careers_page: "Careers page",
+};
+
+/** Where a posting came from, in words, for the match page. */
+export const SOURCE_LABEL: Record<string, string> = {
+  greenhouse: "Greenhouse board",
+  lever: "Lever board",
+  ashby: "Ashby board",
+  workable: "Workable board",
+  recruitee: "Recruitee board",
+  gem: "Gem board",
+  jibe: "iCIMS career site",
+  workday: "Workday career site",
+  smartrecruiters: "SmartRecruiters board",
+  icims: "iCIMS portal",
+  jsearch: "Job aggregator",
+  web: "Careers page",
 };
 
 /** What a failed fetch means, in words. `ok` has no entry. */

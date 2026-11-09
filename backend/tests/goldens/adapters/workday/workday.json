@@ -1,0 +1,57 @@
+{
+  "fixture": "workday/workday.posting.json",
+  "request": "https://workday.wd5.myworkdayjobs.com/wday/cxs/workday/Workday/job/Solution-Consultant---FIN--Tech---Media_JR-0110602",
+  "slug": "workday.wd5.myworkdayjobs.com/Workday",
+  "companyName": "Workday",
+  "jobs": [
+    {
+      "id": "workday:workday.Workday:Solution-Consultant---FIN--Tech---Media_JR-0110602",
+      "source": "workday",
+      "externalId": "Solution-Consultant---FIN--Tech---Media_JR-0110602",
+      "companySlug": "workday.Workday",
+      "companyName": "Workday",
+      "title": "Solution Consultant - FIN- Tech & Media",
+      "locations": [
+        "Remote, CA",
+        "Remote, WA",
+        "Remote, TX",
+        "Remote, NY",
+        "Remote, MA",
+        "Frisco, TX",
+        "Boston, MA",
+        "Atlanta, GA",
+        "Santa Clara, CA",
+        "Boulder, CO",
+        "San Francisco, CA",
+        "Remote, GA",
+        "Austin, TX",
+        "Pleasanton, CA"
+      ],
+      "locationNorm": {
+        "raw": "Santa Clara, CA",
+        "city": "Santa Clara",
+        "region": "CA",
+        "country": "US",
+        "metro": "bay-area"
+      },
+      "remote": "remote",
+      "employmentType": "Full Time",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "Your work days are brighter here.\n\nWe’re obsessed with making hard work pay off, for our people, our customers, and the world around us. As a Fortune 500 company and a leading AI platform for managing people, money, and agents, we’re shaping the future of work so teams can reach their potential and focus on what matters most. The minute you join, you’ll feel it. Not just in the products we build, but in how we show up for each other. Our culture is rooted in integrity, empathy, and shared enthusiasm. We’re in this together, tackling big challenges with bold ideas and genuine care. We look for curious minds and courageous collaborators who bring sun-drenched optimism and drive. Whether you're building smarter solutions, supporting customers, or creating a space where everyone belongs, you’ll do meaningful work with Workmates who’ve got your back. In return, we’ll give you the trust to take risks, the tools to grow, the skills to develop and the support of a company invested in you for the long haul. So, if you want to inspire a brighter work day for everyone, including yourself, you’ve found a match in Workday, and we hope to be a match for you too.\n\nAbout the Team\nAs a member of our diverse and skilled North America Solution Consulting team, you will have the opportunity to communicate and demonstrate the power of Workday's Financial applications to prospects and customers alike. It is this team's job to bring the value of Workday solutions to life and showcase how the role of finance can be transformed. Along with working closely with our sales counterparts, this team also sits at the exciting intersection of our Product Management, Consulting Services, Marketing, and Value Management teams, providing exposure to various areas of the business.\n\nAbout the Role\n\nWorkday is looking for a Solution Consultant with Financial Management & ERP expertise to join our Technology & Media industry focused Medium Enterprise market segment. Our team demonstrates the value of next generation AI & SaaS Financial Management Applications to Workday prospects and customers. Through interactive discovery meetings, and by leveraging deep Accounting skills and complex Enterprise Software product knowledge, Workday Solution Consultants provide Core Accounting expertise, Executive presentations, and Workday Financials product demonstrations, in partnership with our sales team, to customers throughout the sales cycle. Our team works in a highly complex environment that requires curiosity, flexibility, and drive.\n\nResponsibilities include:\n\n•\nThe delivery of relevant technical product presentations, demonstrations, workshops, and seminars.\n\n•\nSolve complex business challenges for customers & prospects, leverage the Workday application suite\n\n•\nTo assist in the closure of sales opportunities by demonstrating a complete understanding of and resolving questions regarding our solution, services, and training.\n\n•\nTo contribute to the qualification of prospects, proposed demonstration criteria, proof of concept system builds and sales cycle closure plans.\n\n•\nSupporting all sales, marketing, technical and channel objectives.\n\n•\nTo assist sales in the response to RFIs\n\n•\nParticipate in discovery sessions alongside sales to ask qualifying questions and understand pain points, current business processes, and ideal future state\n\n•\nUses in-depth ERP-product knowledge to provide technical expertise to sales staff and the customer through sales presentations and product demonstrations\n\n•\nAbility to travel 50% of the time\n\nAbout You\n\nBasic Qualifications - Presales Solution Consultant, Financials\n\n•\n3+ years of extensive financial domain expertise\n\n•\n4+ years of business experience with relevant cloud-based financial management applications (e.g., Netsuite, Sage Intacct, Zuora, SAP, Oracle, etc.)\n\n•\n2+ years in a pre-sales, sales consulting, AND/OR implementation role\n\n•\n2+ years working with core accounting concepts (GL, AR, AP, Fixed Assets and Cash Management), as well as industry relevant topics such as billing, revenue recognition, content accounting (e.g., ASC605/606, ASC 920/926)\n\nBasic Qualifications - Senior Presales Solution Consultant, Financials\n\n•\n5+ years of extensive financial domain expertise\n\n•\n4+ years of business experience with relevant cloud-based financial management applications (e.g., Netsuite, Sage Intacct, Zuora, SAP, Oracle, etc.)\n\n•\n3+ years in a pre-sales, sales consulting, AND/OR implementation role\n\n•\n3+ years working with core accounting concepts (GL, AR, AP, Fixed Assets and Cash Management), as well as industry relevant topics such as billing, revenue recognition, content accounting (e.g., ASC605/606, ASC 920/926)\n\nOther Qualifications:\n\n•\nBachelor’s Degree in Accounting or Finance, and / or equivalent work experience.\n\n•\nAbility to work under pressure and work on multiple projects individually as well as working cross-functionally.\n\n•\nExceptional and dynamic presentation & communication skills.\n\n•\nExperience with value-based selling.\n\n•\nOutstanding professional discovery, presentation, communication, and influencing skills to C-Level Executives; selling to the office of the CFO specifically.\n\n•\nExperience presenting cloud-based solutions to both functional and technical audiences.\n\nAbility to work in a fast-paced environment.\n\nWorkday Pay Transparency Statement\n\nThe annualized base salary ranges for the primary location and any additional locations are listed below. Workday pay ranges vary based on work location. As a part of the total compensation package, this role may be eligible for the Workday Bonus Plan or a role-specific commission/bonus, as well as annual refresh stock grants. Recruiters can share more detail during the hiring process. Each candidate’s compensation offer will be based on multiple factors including, but not limited to, geography, experience, skills, job duties, and business need, among other things. For more information regarding Workday’s comprehensive benefits, please click here.\n\nPrimary Location: USA.CA.Home Office\n\nPrimary Location Base Pay Range: $105,000 USD - $157,600 USD\n\nAdditional US Location(s) Base Pay Range: $105,000 USD - $157,600 USD\n\nAdditional Considerations:\n\nIf performed in Colorado, the pay range for this job is $105,000 USD - $157,600 USD based on min and max pay range for that role if performed in CO.\n\nThe application deadline for this role is the same as the posting end date stated as below:\n\n11/12/2026\n\nOur Approach to Flexible Work\n\nWith Flex Work, we’re combining the best of both worlds: in-person time and remote. Our approach enables our teams to deepen connections, maintain a strong community, and do their best work. We know that flexibility can take shape in many ways, so rather than a number of required days in-office each week, we simply spend at least half (50%) of our time each quarter in the office or in the field with our customers, prospects, and partners (depending on role). This means you'll have the freedom to create a flexible schedule that caters to your business, team, and personal needs, while being intentional to make the most of time spent together. Those in our remote \"home office\" roles also have the opportunity to come together in our offices for important moments that matter.\n\nPursuant to applicable Fair Chance law, Workday will consider for employment qualified applicants with arrest and conviction records.\n\nWorkday is committed to providing reasonable accommodations for qualified individuals during our application process, in order to perform one or more essential functions of their job, as well as regarding the use of AI tools for employment decision-making to any degree. Please see below for more details including how to request an accommodation as a qualified veteran, due to a disability or for religious reasons, or as otherwise provided under applicable law.\n\nWorkday prohibits taking adverse action against any candidate or employee for reporting a possible violation of this policy, requesting one or more work accommodations, exercising a privacy right, or cooperating in an investigation in accordance with applicable law. Any employee who retaliates against a candidate or employee for doing so may be subject to disciplinary action, up to and including termination of employment, to the fullest extent allowable under applicable law.\n\nAre you being referred to one of our roles? If so, ask your connection at Workday about our Employee Referral process!\n\nAt Workday, we value our candidates’ privacy and data security. Workday will never ask candidates to apply to jobs through websites that are not Workday Careers.\n\nPlease be aware of sites that may ask for you to input your data in connection with a job posting that appears to be from Workday but is not.\n\nIn addition, Workday will never ask candidates to pay a recruiting fee, or pay for consulting or coaching services, in order to apply for a job at Workday.",
+      "url": "https://workday.wd5.myworkdayjobs.com/Workday/job/USA-CA-Remote/Solution-Consultant---FIN--Tech---Media_JR-0110602",
+      "applyUrl": null,
+      "postedAt": "2026-11-09T00:00:00.000Z",
+      "contentHash": "05415e3ee7ae457bbf0a9081bada15c4658df330",
+      "dedupeKey": "19b9942c8750e818715b91bdbf4a10ffe3defabd",
+      "descriptionRaw": {
+        "sha256": "a42d1a19575cafd3301a802ec9c7dfed8730e42181a3241523da30cd77319eed",
+        "utf8Bytes": 11196
+      }
+    }
+  ]
+}

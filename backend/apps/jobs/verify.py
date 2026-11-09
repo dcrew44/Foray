@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from apps.core.http import HttpClient
-from apps.jobs.sources import BOARD_ADAPTERS, GUESS_SOURCES
+from apps.jobs.sources import BOARD_ADAPTERS, GUESS_SOURCES, LISTED_ADAPTERS
 from apps.jobs.sources.js import js_trim
 from apps.jobs.sources.types import BoardNotFound, BoardSource
 
@@ -33,13 +33,20 @@ class VerifyOutcome:
 
 async def verify_board(client: HttpClient, source: BoardSource, slug: str) -> VerifyOutcome:
     try:
-        jobs = await BOARD_ADAPTERS[source].fetch_board(client, slug)
+        # One request says how many postings a board has; where a board is many requests,
+        # reading it is not what verifying is for.
+        listed = LISTED_ADAPTERS.get(source)
+        counted = listed.count if listed is not None else BOARD_ADAPTERS[source].count
+        if counted is not None:
+            found = await counted(client, slug)
+        else:
+            found = len(await BOARD_ADAPTERS[source].fetch_board(client, slug))
     except BoardNotFound:
         return VerifyOutcome("not-found", source, slug)
     except Exception as error:  # an error is "we do not know yet", never a conclusion
         return VerifyOutcome("error", source, slug, error=str(error) or type(error).__name__)
-    if jobs:
-        return VerifyOutcome("ok", source, slug, job_count=len(jobs))
+    if found:
+        return VerifyOutcome("ok", source, slug, job_count=found)
     return VerifyOutcome("empty", source, slug)
 
 

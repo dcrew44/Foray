@@ -27,7 +27,7 @@ pre-migration commit of `main` still runs it against the untouched `foray` datab
 | Autonomy | **Per-run toggle**: `approve_each` (default) or `autopilot`; approvals surface in chat and in the activity feed. **Watching new postings is the exception** (#5): it deep-reviews without asking, within a daily cap the user sets (`watchDailyReviews`, default 10, about 7¢ a day) and the deep-review limit, so a strong posting is announced the cycle it arrives |
 | Stack | **Django backend, Next.js frontend.** Python 3.14: Django 6.1 with django-ninja 1.7 (the JSON API, sessions, the ORM) on uvicorn, and one procrastinate 3.10 worker process. Next.js 16 only renders: server components read one Django page endpoint each, client components call Django through a typed client, and `/api/*` is rewritten to Django. Types flow from Django's OpenAPI schema into TypeScript (`pnpm api:types`) |
 | LLM | **Multi-provider, no default vendor.** pydantic-ai 2.54 models (OpenAI, Google, DeepSeek, Anthropic, plus an OpenAI-compatible slot); the model for each *purpose* is an env setting, and `LLM_DEFAULT` is required at boot |
-| Fetching | **Hybrid: code fetches, agents decide where.** Deterministic adapters (Greenhouse, Lever, Ashby, Workable, Recruitee, Gem, JSearch) + an agent-managed company registry + an LLM extraction fallback for career pages, all through one guarded HTTP client |
+| Fetching | **Hybrid: code fetches, agents decide where.** Deterministic adapters (Greenhouse, Lever, Ashby, Workable, Recruitee, Gem, Workday, SmartRecruiters, iCIMS, JSearch) + an agent-managed company registry + an LLM extraction fallback for career pages, all through one guarded HTTP client |
 | Posting mirror | **Hosted once, synced by every install.** The one hosted piece: a hub runs the board fetchers and serves what changed since a cursor, and each install applies that to its own `companies` and `jobs`. It holds public postings only. Installs keep the adapters and fetch boards themselves when the hub is down; JSearch stays per install, under that install's own key |
 | Browser | Phase 1 uses headless Chromium (Playwright for Python, in the worker) only to render PDFs. **Applying runs in the user's own browser** (most likely through an extension), under the user's own identity: that is the user applying, and it passes employers' fraud checks, where a cloud browser on data-center addresses looks like fraud. No evasion (no jitter or fingerprint tricks), no CAPTCHA solving and no account creation: each of those hands off to the user |
 | Applying | **One motion, and the user presses submit** (2026-11-09; it reorders the lanes below). Every eligible new posting gets a prepared application: answers planned from saved answers, one of the user's own resume variants chosen, the form filled by the extension. The deep review is no longer a gate in front of applying; eligibility (level, years, work authorization, clearance, place) is, and it is read once per posting at ingest. Unattended auto-submit comes after one-tap applying works, under the rules in the next row |
@@ -316,6 +316,27 @@ look, when it was not there". The Companies page reports the week's median and 9
 by source, so timeliness is measured, not assumed. The empty-board guard still needs two reads:
 a poll that would trip it forgets its state.
 
+**Boards that cost a request per posting** (#57, `sources/workday.py`, `smartrecruiters.py`,
+`icims.py`, `jibe.py`). Workday carries almost half of the new-graduate postings the community
+lists link to, and neither it, SmartRecruiters nor a classic iCIMS portal gives a description
+in its listing. Reading every posting on every poll would be thousands of requests for a board
+that did not change, so these are *listed* adapters. A poll asks for the newest page and
+compares its digest; when that moved, it lists the board (ids and a version each: Workday's
+path and title, SmartRecruiters' release date, an iCIMS sitemap's `lastmod`), reads only the
+postings that are new or whose version changed, at most 300 a pass and four at a time, and
+closes the ones that left the listing. A big board fills in over several passes (`pending` in
+its poll state, and no lag is recorded until it has caught up); Workday stops answering at
+2,000 postings, so a listing that reaches the cap closes nothing. A Workday board is its address
+(`nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite`): there is no slug to guess, so these
+boards are found from links (a pasted URL, a careers page, an aggregator's apply link), never
+by trying names. iCIMS is two products. Its newer career sites (the Jibe API at
+`/api/jobs`) return whole postings a page at a time and ask for five seconds between requests;
+its classic portals publish a sitemap and JSON-LD on each posting page, and a portal that
+redirects to a career site is registered as that site. SmartRecruiters' Posting API is
+documented as public, but `api.smartrecruiters.com/robots.txt` disallows generic crawlers, so
+Foray reads a SmartRecruiters board only for a company someone added and never discovers them
+in bulk (#69).
+
 **What a posting asks** (#56, `apps/jobs/facts.py`). Whether someone can get a job at all turns
 on a few facts that are the same for every reader: the role's level, the years it requires, what
 it says about work authorization, whether it needs a clearance. They are read once, at ingest,
@@ -371,7 +392,8 @@ Defined now so later phases are additive, not a rewrite.
 
 | Interface | Phase 1 | Later |
 |---|---|---|
-| Board adapters | `greenhouse`, `lever`, `ashby`, `workable`, `recruitee`, `gem` share one protocol: `fetch_board(client, slug) -> list[NormalizedJob]`, raising `BoardNotFound` on a 404, in two halves (`board_url(slug)`, `parse_board(slug, body)`) so a poll can ask before it reads, plus an optional cheaper `probe_url(slug)` | more boards |
+| Board adapters | `greenhouse`, `lever`, `ashby`, `workable`, `recruitee`, `gem` and `jibe` (iCIMS career sites) share one protocol: `fetch_board(client, slug) -> list[NormalizedJob]`, raising `BoardNotFound` on a 404, in two halves (`board_url(slug)`, `parse_board(slug, body)`) so a poll can ask before it reads, plus an optional cheaper `probe_url(slug)` | more boards |
+| Listed adapters | `workday`, `smartrecruiters` and `icims` (classic portals) list a board without its descriptions and read a posting at a time: `count`, `probe` (a digest of the newest page), `list_board -> Listing` (each posting's id and a version) and `read_posting`. `sources.LISTED_ADAPTERS`; `refresh._refresh_listed` reads only what is new or changed | Oracle, Taleo, SuccessFactors |
 | Other sources | `jsearch` and `careers_page` are plain functions with the same `NormalizedJob` output | — |
 | `Storage` | `LocalStorage` (`apps/core/storage.py`: `put`, `open`, `delete`, `exists`) | S3 / Blob behind the same four methods |
 | `ResumeRenderer` | future work: today there is one renderer, the HTML template in headless Chromium | `latex` via tectonic, compared side by side |

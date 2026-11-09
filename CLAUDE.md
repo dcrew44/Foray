@@ -182,6 +182,12 @@ An issue reads like the ones already there:
   `probe_url(slug)` when the source has a cheaper listing that changes with the board. Bump
   `poll.VERSION` when a parser changes what it makes of the same bytes, or unchanged boards
   keep the old reading for up to a day.
+- **A board whose listing has no descriptions is a listed adapter** (`workday`,
+  `smartrecruiters`, `icims`; `sources.LISTED_ADAPTERS`): `count`, `probe`, `list_board` and
+  `read_posting`, one request per posting. `refresh._refresh_listed` reads only postings that
+  are new or whose `listing_version` changed, 300 a pass, so never loop over a listing reading
+  every posting. A Workday slug is the board's address (`host/site`), found from a link and
+  never guessed; SmartRecruiters boards are read only for companies someone added (#69).
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

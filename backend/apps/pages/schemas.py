@@ -65,7 +65,18 @@ __all__ = [
 
 ProviderId = Literal["openai", "google", "anthropic", "deepseek", "compat"]
 JobSourceName = Literal[
-    "greenhouse", "lever", "ashby", "workable", "recruitee", "gem", "jsearch", "web"
+    "greenhouse",
+    "lever",
+    "ashby",
+    "workable",
+    "recruitee",
+    "gem",
+    "jibe",
+    "workday",
+    "smartrecruiters",
+    "icims",
+    "jsearch",
+    "web",
 ]
 JobLevelName = Literal["intern", "new_grad", "entry", "mid", "senior", "staff_plus", "unknown"]
 WorkAuthName = Literal["citizen_only", "us_person", "no_sponsorship", "sponsors", "unknown"]

@@ -20,7 +20,7 @@ from django.core.management.base import BaseCommand, CommandParser
 
 from apps.core.http import HttpClient
 from apps.core.jsonio import js_json_indent
-from apps.jobs.sources import BOARD_ADAPTERS
+from apps.jobs.sources import SOURCES
 from apps.jobs.verify import VerifyOutcome, find_board, slug_candidates, verify_board
 
 CONCURRENCY = 6
@@ -42,7 +42,7 @@ class Command(BaseCommand):
     help = "Check that board slugs are real (touches no database)."
 
     def add_arguments(self, parser: CommandParser) -> None:
-        parser.add_argument("--source", choices=list(BOARD_ADAPTERS))
+        parser.add_argument("--source", choices=list(SOURCES))
         parser.add_argument("--slugs")
         parser.add_argument("--guess", nargs="*")
         parser.add_argument("--file")

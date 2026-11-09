@@ -96,7 +96,8 @@ async def test_an_empty_board_is_not_a_404(
 
 def test_the_new_boards_are_tried_after_the_original_three() -> None:
     assert BOARD_SOURCES[:3] == ("greenhouse", "lever", "ashby")
-    assert set(BOARD_SOURCES) == set(BOARD_ADAPTERS)
+    # The boards a slug can be guessed against; a career site's host (`jibe`) is not a slug.
+    assert set(BOARD_SOURCES) == set(BOARD_ADAPTERS) - {"jibe"}
 
 
 # --- workable ------------------------------------------------------------------------------------

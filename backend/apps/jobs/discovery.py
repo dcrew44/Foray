@@ -5,8 +5,8 @@ Everything below produces *candidates*; verification is the only thing that prod
 registration. The order is cheapest-and-most-certain first, and every step lands in `trail`, so
 a miss is explicable:
 
-    pasted ATS link -> careers paths -> homepage -> slug guesses -> Brave search
-    -> careers-page fallback
+    pasted ATS link -> careers paths -> the employer's own career site -> homepage
+    -> slug guesses -> Brave search -> careers-page fallback
 
 A web search answers loosely, so a search result is used only when it is about the company: its
 address holds the name's slug, or its page names the company. Otherwise a made-up name would be
@@ -39,8 +39,10 @@ from apps.jobs.registry import (
     get_company_by_board,
     upsert_company,
 )
+from apps.jobs.sources import icims
 from apps.jobs.sources.js import IA, JS_WS, js_trim
 from apps.jobs.sources.jsearch import BOARD_LINK_PATTERNS, DiscoveredBoard
+from apps.jobs.sources.links import board_links, site_label
 from apps.jobs.sources.types import BoardSource
 from apps.jobs.verify import VerifyOutcome, find_board, slug_candidates, verify_board
 
@@ -60,9 +62,10 @@ ATS_PATTERNS: list[tuple[BoardSource, re.Pattern[str]]] = [
 ]
 
 # ATS platforms we recognise but cannot read through an API. These become careers-page
-# companies for the extractor rather than being discarded: a Workday board is still a board.
+# companies for the extractor rather than being discarded: a Taleo board is still a board.
+# (Workday, SmartRecruiters and iCIMS were here until they got adapters, #57.)
 UNSUPPORTED_ATS = re.compile(
-    r"(?:myworkdayjobs\.com|icims\.com|taleo\.net|successfactors\.com|smartrecruiters\.com"
+    r"(?:taleo\.net|successfactors\.com|oraclecloud\.com"
     r"|breezy\.hr|jazzhr\.com|bamboohr\.com|jobvite\.com"
     r"|teamtailor\.com|paylocity\.com|dover\.com|rippling(?:ats)?\.com"
     r"|pinpointhq\.com|applytojob\.com)",
@@ -95,6 +98,13 @@ _SLUG_SEPARATORS = re.compile(r"[-_]+")
 class AtsLink:
     source: BoardSource
     slug: str
+    # What to call the company when the slug is an address rather than a name (a Workday host
+    # and site): our own slug and the guessed display name come from this.
+    label: str = ""
+
+    @property
+    def name(self) -> str:
+        return self.label or self.slug
 
 
 def find_ats_links(html: str) -> list[AtsLink]:
@@ -109,6 +119,10 @@ def find_ats_links(html: str) -> list[AtsLink]:
             link = AtsLink(source, slug)
             if link not in found:
                 found.append(link)
+    for board in board_links(html):
+        link = AtsLink(board.source, board.slug, board.label)
+        if link not in found:
+            found.append(link)
     return found
 
 
@@ -198,9 +212,22 @@ class _Discovery:
         except FetchError:
             return None
 
-    async def usable(self, link: AtsLink) -> VerifyOutcome | None:
+    async def usable(self, link: AtsLink) -> AtsLink | None:
+        """The link when its board verifies. An iCIMS portal that has moved to the employer's
+        own career site (`sources/jibe.py`) is followed there."""
         outcome = await verify_board(self.client, link.source, link.slug)
-        return outcome if outcome.status in ("ok", "empty") else None
+        if outcome.status in ("ok", "empty"):
+            return link
+        if link.source == "icims":
+            host = await icims.moved_to(self.client, link.slug)
+            if host is not None and (await self.career_site(host)) is not None:
+                return AtsLink("jibe", host, link.label)
+        return None
+
+    async def career_site(self, host: str) -> VerifyOutcome | None:
+        """Whether `host` is one of the career sites that answer JSON (`sources/jibe.py`)."""
+        outcome = await verify_board(self.client, "jibe", host)
+        return outcome if outcome.status == "ok" else None
 
 
 async def search_for_careers_page(client: HttpClient, name: str) -> list[str]:
@@ -257,8 +284,8 @@ async def discover_company(
     guessed = False
     careers_urls: list[str] = []
 
-    async def finish(source: str, slug: str | None) -> DiscoveryResult:
-        ours = slug
+    async def finish(source: str, slug: str | None, label: str = "") -> DiscoveryResult:
+        ours = label or slug
         if ours is None:
             normalized = normalize_domain(domain if domain is not None else name)
             ours = normalized.split(".")[0] if normalized is not None else name
@@ -302,9 +329,10 @@ async def discover_company(
     if direct:
         link = direct[0]
         run.step("ats-link", f"pasted {link.source}:{link.slug}")
-        domain, name, guessed = None, link.slug, True
-        if await run.usable(link):
-            return await finish(link.source, link.slug)
+        domain, name, guessed = None, link.name, True
+        usable = await run.usable(link)
+        if usable is not None:
+            return await finish(usable.source, usable.slug, usable.label)
 
     if domain:
         name = domain.split(".")[0]
@@ -321,14 +349,22 @@ async def discover_company(
         described = ", ".join(f"{link.source}:{link.slug}" for link in links) or "no ATS link"
         run.step("careers-page", f"{url} → {described}")
         for link in links:
-            if await run.usable(link):
-                return await finish(link.source, link.slug)
+            usable = await run.usable(link)
+            if usable is not None:
+                return await finish(usable.source, usable.slug, usable.label)
         if has_unsupported_ats(page):
-            run.step(
-                "unsupported-ats", "Workday/iCIMS-style board \u2014 registering as a careers page"
-            )
+            run.step("unsupported-ats", "a board with no API \u2014 registering as a careers page")
             return await finish(SourceType.CAREERS_PAGE, None)
         break  # only the first page that loads is examined
+
+    # 1a. The employer's own career site, when it is one that answers JSON (an iCIMS site
+    # cannot be told from its address: it is asked).
+    if domain:
+        root = domain.removeprefix("careers.").removeprefix("jobs.")
+        for host in dict.fromkeys([domain, f"careers.{root}", f"jobs.{root}"]):
+            if await run.career_site(host) is not None:
+                run.step("career-site", host)
+                return await finish("jibe", host, site_label(host))
 
     # 1b. No careers page at a guessed path? Follow the homepage's own link.
     if domain and not careers_urls:
@@ -342,9 +378,10 @@ async def discover_company(
                     continue
                 careers_urls.append(url)
                 for link in find_ats_links(page):
-                    if await run.usable(link):
-                        run.step("homepage-ats-link", f"{url} → {link.source}:{link.slug}")
-                        return await finish(link.source, link.slug)
+                    usable = await run.usable(link)
+                    if usable is not None:
+                        run.step("homepage-ats-link", f"{url} → {usable.source}:{usable.slug}")
+                        return await finish(usable.source, usable.slug, usable.label)
                 if has_unsupported_ats(page):
                     run.step("unsupported-ats", url)
                     return await finish(SourceType.CAREERS_PAGE, None)
@@ -372,10 +409,11 @@ async def discover_company(
                 continue
             careers_urls.append(url)
             for link in find_ats_links(page):
-                if await run.usable(link):
-                    run.step("search-ats-link", f"{url} → {link.source}:{link.slug}")
+                usable = await run.usable(link)
+                if usable is not None:
+                    run.step("search-ats-link", f"{url} → {usable.source}:{usable.slug}")
                     domain = domain or normalize_domain(url)
-                    return await finish(link.source, link.slug)
+                    return await finish(usable.source, usable.slug, usable.label)
             if has_unsupported_ats(page):
                 domain = domain or normalize_domain(url)
                 run.step("unsupported-ats", url)
@@ -417,8 +455,8 @@ async def register_boards_from_apply_links(
         company, _created = await db(
             upsert_company,
             CompanyInput(
-                name=board.company_name or board.slug,
-                slug=board.slug,
+                name=board.company_name or board.label or board.slug,
+                slug=board.label or board.slug,
                 source_type=board.source,
                 ats_slug=board.slug,
                 status="active",

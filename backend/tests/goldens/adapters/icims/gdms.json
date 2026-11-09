@@ -1,0 +1,44 @@
+{
+  "fixture": "icims/gdms.posting.html",
+  "request": "https://careers-gdms.icims.com/jobs/78250/job?in_iframe=1",
+  "slug": "careers-gdms",
+  "companyName": "General Dynamics Mission Systems",
+  "jobs": [
+    {
+      "id": "icims:careers-gdms:78250",
+      "source": "icims",
+      "externalId": "78250",
+      "companySlug": "careers-gdms",
+      "companyName": "General Dynamics Mission Systems, Inc",
+      "title": "Advanced Systems Admin Specialist",
+      "locations": [
+        "Manassas, VA"
+      ],
+      "locationNorm": {
+        "raw": "Manassas, VA",
+        "city": "Manassas",
+        "region": "VA",
+        "country": "US",
+        "metro": null
+      },
+      "remote": "onsite",
+      "employmentType": null,
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "Basic Qualifications\n\nEDUCATION REQUIREMENTS:\n\nBachelor's degree in Computer Science, a related field or equivalent combination of education and relevant work experience is required plus a minimum of 5 years of relevant experience; or Master's degree plus 3 years of relevant experience.\n\nCLEARANCE REQUIREMENTS:Department of Defense Secret security clearance is preferred at time of hire. Applicants selected will be subject to a U.S. Government security investigation and must meet eligibility requirements for access to classified information. Due to the nature of work performed within our facilities, U.S. citizenship is required.\n\nResponsibilities for this Position\n\nPut your engineering talent to the ultimate test. At General Dynamics Mission Systems, we create the technologies, products and services that help our service members, intelligence analysts and first responders keep our nation safe. The work we do is so advanced our teams often redefine what’s possible for the world. If you want to be a leader with the company that delivers smart solutions for our nation’s challenges, this is your opportunity. We apply advanced technologies such as Artificial Intelligence, Blockchain, AR/VR, Cloud Native and Quantum Physics to solve our customers’ missions in cyber, RF, undersea, interstellar and everything in between. As a seasoned leader, you’ll be involved with our client's decision-making process by serving as a front-line interface to users with technical issues and conducting systems analysis and development to keep systems current with changing technologies. Your duties may include installing new software, troubleshooting, granting permissions to applications and training users. You’ll also be responsible for the day-to-day support of server services by performing server administration for physical and virtual server operating systems and configuring, maintaining and troubleshooting of physical and virtual hardware and network related interfaces on servers. We’ll rely on you to perform, maintain, troubleshoot and conduct a complete analysis of alerts; create scripts to automate repetitive processes; and work with customers to identify, isolate, and resolve problems with servers that are affecting other services.\n\nWhat you’ll experience:\n\n• Technologies that aren’t just top-notch, they’re often top-secret\n\n• A team of bold thinkers committed to exploring what’s next\n\n• Opportunities to gain new knowledge - as it’s discovered\n\nWhat you bring to the table:\n\n• A Bachelor’s degree in Computer Science, a related field or equivalent experience plus a minimum of 8 years of relevant experience; or Master's degree plus 6 years of relevant experience\n\n• Advanced understanding of server based operating systems\n\n• Subject matter expert (SME) with the ability to mentor others on administrating the server environment\n\n• Enhanced troubleshooting skills within the server OS as well as both networking and storage technologies\n\n• Hands-on experience developing, deploying and supporting large-scale enterprise server solutions\n\nWhat sets you apart:\n\n• Team player who thrives in collaborative environments and revels in team success\n\n• Broad understanding of the interrelationships within the IT environment with focus on server and services\n\n• Senior level knowledge of physical and virtual server support\n\n• Senior level knowledge of access, permissions and security that gives the clients the access to the data they need to perform their daily activities\n\n• Identifies opportunities to apply AI for continuous improvement and innovation\n\nSalary Note\nThis estimate represents the typical salary range for this position based on experience and other factors (geographic location, etc.). Actual pay may vary. This job posting will remain open until the position is filled.\n\nCombined Salary Range\nUSD $106,477.00 - USD $115,212.00 /Yr.\n\nCompany Overview\n\nGeneral Dynamics Mission Systems (GDMS) engineers a diverse portfolio of high technology solutions, products and services that enable customers to successfully execute missions across all domains of operation. With a global team of 12,000+ top professionals, we partner with the best in industry to expand the bounds of innovation in the defense and scientific arenas. Given the nature of our work and who we are, we value trust, honesty, alignment and transparency. We offer highly competitive benefits and pride ourselves in being a great place to work with a shared sense of purpose. You will also enjoy a flexible work environment where contributions are recognized and rewarded. If who we are and what we do resonates with you, we invite you to join our high-performance team!",
+      "url": "https://careers-gdms.icims.com/jobs/78250/advanced-systems-admin-specialist/job",
+      "applyUrl": null,
+      "postedAt": "2026-11-09T05:00:00.000Z",
+      "contentHash": "d23c534c969ca54d6edba659d10d00a341de453d",
+      "dedupeKey": "50fa3a7865240c55e843e13bfdeebef7a525733d",
+      "descriptionRaw": {
+        "sha256": "71cc46af8172dfea5d039307819212e605f6b7f0ce3fc2310bbb355b9c285a49",
+        "utf8Bytes": 5054
+      }
+    }
+  ]
+}

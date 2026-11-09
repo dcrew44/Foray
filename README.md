@@ -214,6 +214,10 @@ model becomes a deterministic fake at $0.
 To run the production images locally instead: `pnpm docker:prod` (stop `dev:all` first;
 it wants :3000 too).
 
+Foray is only as timely as its worker. `pnpm worker:up` keeps one running between dev
+sessions, and [docs/always-on.md](docs/always-on.md) covers running the whole app on a
+machine that stays on, with backups.
+
 <details>
 <summary>Bringing over data from the TypeScript version</summary>
 

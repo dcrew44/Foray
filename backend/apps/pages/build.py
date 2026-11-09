@@ -27,7 +27,7 @@ from apps.accounts.schemas import Settings
 from apps.core import clock
 from apps.core.jsonio import js_locale
 from apps.jobs import radar
-from apps.jobs.models import Company, CompanyStatus
+from apps.jobs.models import Company, CompanyStatus, Job
 from apps.jobs.pipeline import CompanyRow, company_row
 from apps.jobs.sources.jsearch import jsearch_budget
 from apps.llm import registry
@@ -53,6 +53,7 @@ from apps.pages.schemas import (
     HomeUser,
     HomeWaiting,
     JobDetail,
+    JobFacts,
     LatestRender,
     MatchDetail,
     MatchDetailPage,
@@ -296,6 +297,31 @@ def _tailored_view(row: Resume) -> TailoredView:
     )
 
 
+def _job_facts(job: Job) -> JobFacts:
+    """What the posting asks, as stored at ingest (`jobs/facts.py`)."""
+    stored = job.facts if isinstance(job.facts, dict) else {}
+    evidence = stored.get("evidence")
+    evidence = evidence if isinstance(evidence, dict) else {}
+
+    def said(key: str) -> str | None:
+        value = evidence.get(key)
+        return value if isinstance(value, str) and value else None
+
+    level_from = stored.get("levelFrom")
+    return JobFacts(
+        read=job.facts_version is not None,
+        level=cast(Any, job.level),
+        level_from=level_from if level_from in ("title", "text", "years") else None,
+        years_min=job.years_min,
+        years_preferred=job.years_preferred,
+        work_auth=cast(Any, job.work_auth),
+        clearance=cast(Any, job.clearance),
+        years_evidence=said("years"),
+        work_auth_evidence=said("workAuth"),
+        clearance_evidence=said("clearance"),
+    )
+
+
 def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
     """One match with its posting, its tailored resume and whether a base resume exists; None
     when the match is not this user's."""
@@ -335,6 +361,7 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
             apply_url=job.apply_url,
             description_text=job.description_text,
             source=cast(Any, job.source),
+            facts=_job_facts(job),
         ),
         tailored=_tailored_view(tailored) if tailored is not None else None,
         has_base_resume=has_base,

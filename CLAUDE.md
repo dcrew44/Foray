@@ -42,6 +42,8 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 | `worker` | the worker itself (what `dev:worker` runs, without the reload) |
 | `acceptance_checks [--since ISO]` | re-check the database-level invariants after a rehearsal; exits 1 on any FAIL |
 | `debug_sleep <seconds>` | a job that sleeps, for checking lock recovery after a `kill -9` (DEBUG only) |
+| `read_facts [--all]` | read level, years, work authorization and clearance for postings that lack them (after the migration that adds the columns, or after `facts.VERSION` changed); `--all` reads every posting again |
+| `facts_benchmark [--show]` | how often the fact reader agrees with the 210 hand labels in `tests/fixtures/facts/`; the posting texts come from `notes/benchmarks/posting-facts/` or the mirror; exits 1 under 90% on level or years |
 | `watch_now [--email e] [--days N] [--fan-out]` | a watch over the newest postings now instead of after the next scheduled refresh; `--days` widens its window, `--fan-out` starts every watching user's (DEBUG only) |
 
 ## Layout
@@ -180,6 +182,11 @@ An issue reads like the ones already there:
   `probe_url(slug)` when the source has a cheaper listing that changes with the board. Bump
   `poll.VERSION` when a parser changes what it makes of the same bytes, or unchanged boards
   keep the old reading for up to a day.
+- **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
+  and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
+  them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads
+  the mirror a batch at a time) and run `manage.py facts_benchmark --show`: it must stay above
+  90% on level and years, and a change tuned on the `fresh` set stops that set being a test.
 - **Job ids** are `source:company_slug:external_id`; career pages use
   `web:<slug>:<sha1(url)>`.
 - **Never rewrite `description_raw`.** Cleaning produces `description_text`.

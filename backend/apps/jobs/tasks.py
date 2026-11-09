@@ -9,7 +9,8 @@ imports every installed app's `tasks` module at startup. Defers go through
 - `companies.refresh_scheduled` (background, 60 min, retry 0): the scheduled poll of the boards
   that are due (#55), with no run, no user and no events. When it brought postings in, when it
   failed, and on every sixth hour's tick whatever it found, it defers `watch.fan_out`
-  (`matching/tasks.py`), which starts each watching user's watch (#5).
+  (`matching/tasks.py`), which starts each watching user's watch (#5). Before that it reads the
+  facts of a batch of postings that have none yet (`fact_store.read_stale`, #56).
 
 The cron's schedule (`*/15 * * * *`, `queueing_lock="company-refresh:cron"`, no `lock`) is in
 `runs/periodic.py`, which `manage.py worker` installs; it passes the tick as `timestamp`.
@@ -24,7 +25,7 @@ from procrastinate.exceptions import AlreadyEnqueued
 
 from apps.core.db import db
 from apps.core.queue import app, defer_in_tx
-from apps.jobs import pipeline
+from apps.jobs import fact_store, pipeline
 from apps.runs.step import BACKGROUND, INTERACTIVE, TASKS, run_step, task_for
 
 __all__ = ["companies_refresh_scheduled", "company_add", "company_refresh", "watches_due"]
@@ -71,6 +72,11 @@ async def companies_refresh_scheduled(timestamp: int | None = None) -> None:
     try:
         async with asyncio.timeout(TASKS[pipeline.SCHEDULED_TASK].timeout_s):
             summary = await pipeline.refresh_scheduled()
+            # Postings from before facts existed, or read by an older version (#56): a batch
+            # each pass until none are left. New and changed ones were read at ingest.
+            caught_up = await db(fact_store.read_stale)
+            if caught_up:
+                log.info("read the facts of %s postings", caught_up)
     except Exception:
         await db(_defer_watches)
         raise

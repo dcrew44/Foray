@@ -1,0 +1,2102 @@
+[
+ {
+  "id": "greenhouse:lyft:8919442002",
+  "set": "bench",
+  "title": "Operations Associate, Flexdrive",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:hermeus:7190eb5d-01e1-4a0d-b9e4-cfa626689ddd",
+  "set": "bench",
+  "title": "Welder",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:zscaler:5271597007",
+  "set": "bench",
+  "title": "Principal Software Development Engineer",
+  "level": "staff_plus",
+  "years_min": 12,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:brex:8812024002",
+  "set": "bench",
+  "title": "ERM Compliance Lead",
+  "level": "senior",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:base-power:8994de62-7690-4c0f-96a5-b40bff4e4a1f",
+  "set": "bench",
+  "title": "MEP Construction Project Manager",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8911291002",
+  "set": "bench",
+  "title": "State and Local Government Affairs Manager (West)",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:palantir:4d29249a-d7e8-4c39-880d-3b35d7b2f6f6",
+  "set": "bench",
+  "title": "Forward Deployed Software Engineer, Internship - Commercial",
+  "level": "intern",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:montecarlodata:b04d5306-20e2-4b71-af54-cafd2d83aafb",
+  "set": "bench",
+  "title": "Enterprise Sales Manager, Americas",
+  "level": "senior",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:zocdoc:8155444",
+  "set": "bench",
+  "title": "Senior Platform Engineering Manager ",
+  "level": "senior",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:waymo:8240198",
+  "set": "bench",
+  "title": "2027 Summer Intern, MS/PhD, Software Engineer, Onboard Developer Platform",
+  "level": "intern",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:rocketlab:7989650003",
+  "set": "bench",
+  "title": "Senior Dynamics Engineer",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "lever:shieldai:b63b3f50-9b7b-42c0-8a9d-f3ba4ed1f099",
+  "set": "bench",
+  "title": "Network Engineer (R4843)",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:sigmacomputing:7771363003",
+  "set": "bench",
+  "title": "Commercial Solution Engineer",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:goatgroup:4747113005",
+  "set": "bench",
+  "title": "Sales Associate - Part Time, Seasonal",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:chime:8657011002",
+  "set": "bench",
+  "title": "Software Engineer, Lending",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:doordashusa:6395535",
+  "set": "bench",
+  "title": "DashMart Team Member - North Valley",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:relativity:8869610002",
+  "set": "bench",
+  "title": "Senior NDE Inspector, Radiography, Second Shift",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:klaviyo:7855793003",
+  "set": "bench",
+  "title": "Software Engineer II, Test Frameworks & Tooling",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:okta:8109371",
+  "set": "bench",
+  "title": "Senior Experiences Art Director",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:datadog:8301113",
+  "set": "bench",
+  "title": "Associate Customer Success Manager - Denver",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:asana:8319678",
+  "set": "bench",
+  "title": "Senior Software Engineer, AI",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:gusto:7918214",
+  "set": "bench",
+  "title": "Staff Software Engineer, Tax Experiences",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:purestorage:8246329",
+  "set": "bench",
+  "title": "Senior Pre-Sales Systems Engineer, Federal (Air Force)",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:highnote:8017257003",
+  "set": "bench",
+  "title": "Principal Software Engineer ",
+  "level": "staff_plus",
+  "years_min": 12,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:zscaler:5113112007",
+  "set": "bench",
+  "title": "Staff Software Engineer- Go/Java (Service Platform & Orchestration)",
+  "level": "staff_plus",
+  "years_min": 5,
+  "work_auth": "citizen_only",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8484570002",
+  "set": "bench",
+  "title": "Sr. Product Compliance Engineer (Starlink)",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:formic:4709351006",
+  "set": "bench",
+  "title": "Robotics Field Service Technician",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:helion:1ab0850a-50e2-4853-8fd7-c05e9a36c20f",
+  "set": "bench",
+  "title": "Principal Experimental Scientist",
+  "level": "staff_plus",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:gleanwork:4428090005",
+  "set": "bench",
+  "title": "Software Engineer, Product Backend",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:rocketlab:7920967003",
+  "set": "bench",
+  "title": "Leading Hand - Inventory",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:machindustries:4387222009",
+  "set": "bench",
+  "title": "Turbomachinery Test Engineer",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lucidmotors:5267667007",
+  "set": "bench",
+  "title": "Studio Associate",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lucidmotors:5199841007",
+  "set": "bench",
+  "title": "Software Engineer, Data Infrastructure",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:rubrik:8084242",
+  "set": "bench",
+  "title": "Strategic Account Executive, Bay Area",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:gitlab:8592555002",
+  "set": "bench",
+  "title": "Commercial Account Executive, Named - West",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:sierra:7ee4ef0f-a67c-403d-81d2-6af364b09a9f",
+  "set": "bench",
+  "title": "Sales Compensation Analyst",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:planetlabs:8221853",
+  "set": "bench",
+  "title": "Harness Manufacturing Engineer",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:coreweave:4715046006",
+  "set": "bench",
+  "title": "Senior Account Solutions Architect",
+  "level": "senior",
+  "years_min": 4,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:gleanwork:4006734005",
+  "set": "bench",
+  "title": "Software Engineer, Fullstack",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:base-power:afaabbd5-a0f9-4069-9fc8-a5c0b0b7ed7a",
+  "set": "bench",
+  "title": "Warehouse Launch Associate",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:robinhood:8335168",
+  "set": "bench",
+  "title": "Senior Android Engineer, Event Contracts",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:asteralabs:4677688005",
+  "set": "bench",
+  "title": "Product Technical Chip Lead, Senior Director ",
+  "level": "staff_plus",
+  "years_min": 15,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "jsearch:zettabyte:X2EyTVhIVFZiSkY4amV3R0FBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBTbVZoT1VWMFZFbEdVbkZaVDNWMGIwcFlZVlpDY1RWc1gxVm9TVTlRY1VjdE9WWkpjMU5JTVdORU0xcFRXRjlWV1d4clZHVlpWWHAwZVVOc1pYQkVlblJKZDJkUGRuQTJObTU2VFRrd1NFSTRSV2haYWxWTmIyTTBha1pHWkVGTlowNUlTR0ZDZUVWTFVscFZjRVV6VlZWSVVUbEJTbEp2VjNkTFduUjBNalJOWldGbk5FRVNGMkZRVHpKaGIyMXZRbU10TFhKMVJWQnVUbWx1ZVZGSkdpSkJSSE55T1daVVZIaFZUR3BVWlVaelduZFBhWEJWT0V4ak1qTTVZV2xyVm5Obg",
+  "set": "bench",
+  "title": "Software Engineer (New Grad)",
+  "level": "new_grad",
+  "years_min": 0,
+  "work_auth": "no_sponsorship",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:commure:2b2ad41e-8946-4c69-b3ed-abdf54ca92cc",
+  "set": "bench",
+  "title": "Staff Backend Engineer, Ambient AI",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:rocketlab:7963735003",
+  "set": "bench",
+  "title": "Senior Systems Engineer II",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "citizen_only",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:redwoodmaterials:6167872004",
+  "set": "bench",
+  "title": "Abuse Testing Technician, Lead",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:roblox:8072244",
+  "set": "bench",
+  "title": "[2027] Software Engineer, Early Career",
+  "level": "new_grad",
+  "years_min": null,
+  "work_auth": "no_sponsorship",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:akunacapital:8036541",
+  "set": "bench",
+  "title": "Junior Quantitative Researcher",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:rocketlab:8019938003",
+  "set": "bench",
+  "title": "Aerospace Production Technician II",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:muonspace:5265711007",
+  "set": "bench",
+  "title": "RF Test Engineer II, Testbeds & EGSE",
+  "level": "mid",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:figureai:4618234006",
+  "set": "bench",
+  "title": "Software Integration Engineer",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:palantir:e82b696e-a085-4bbf-8bcb-6d2c4f8cf2f7",
+  "set": "bench",
+  "title": "Forward Deployed Software Engineer - US Government",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:vast:4693801006",
+  "set": "bench",
+  "title": "University Recruiter II",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lucidmotors:5234671007",
+  "set": "bench",
+  "title": "Studio Associate",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:brex:8659812002",
+  "set": "bench",
+  "title": "Enterprise Account Executive II",
+  "level": "mid",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:xai:5148882007",
+  "set": "bench",
+  "title": "Fiber Technician - Memphis",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:brex:8854182002",
+  "set": "bench",
+  "title": "Staff Software Engineer, Acquisition",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:shieldai:228774d6-9eab-4cbe-9f4c-471a50c49522",
+  "set": "bench",
+  "title": "Senior Military Recruiter",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:anthropic:5017202008",
+  "set": "bench",
+  "title": "Software Engineer, Labs",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "sponsors",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "gem:nominal:am9icG9zdDq1JPt4gojJg-2VrQLT89PU",
+  "set": "bench",
+  "title": "Mission Dev Engineer - Internship (Summer 2027)",
+  "level": "intern",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lucidmotors:5254774007",
+  "set": "bench",
+  "title": "Homologation Engineer II - General Safety",
+  "level": "mid",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:ro:54c9a32f-7c6f-4b02-a971-c2404b20c428",
+  "set": "bench",
+  "title": "Senior Software Engineer, Frontend",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:harnessinc:5240138007",
+  "set": "bench",
+  "title": "Senior Enterprise Account Executive ",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:formenergy:b3431526-1805-4ace-bf33-7dfe908c3b4e",
+  "set": "bench",
+  "title": "Senior Mechanical Engineer, Fluid Systems",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:psiquantum:7715471003",
+  "set": "bench",
+  "title": "Manager of Process Engineering",
+  "level": "senior",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "gem:nominal:am9icG9zdDo3ItlHU2F-0me3sJvgu5GF",
+  "set": "bench",
+  "title": "BizOps – GTM & Monetization",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:databricks:8494153002",
+  "set": "bench",
+  "title": "Sr. Forward Deployed Engineer (FDE) - Communications, Media, Entertainment & Games",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:langchain:d6673e5e-30c4-413c-bda8-70d15908ff80",
+  "set": "bench",
+  "title": "Order Management Operations & Automation",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:asteralabs:4645005005",
+  "set": "bench",
+  "title": "Principal Digital Design Engineer (AI Fabric)",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:scaleai:4741462005",
+  "set": "bench",
+  "title": "Field Marketing & Events Manager, Frontier Data",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:saronic:fa61107a-c799-4767-ab0d-4499e9f00c75",
+  "set": "bench",
+  "title": "Mission Operations Mate",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:okta:8155421",
+  "set": "bench",
+  "title": "Program Manager, ISV Ecosystem",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:vast:4716455006",
+  "set": "bench",
+  "title": "Technical Project Manager, Software",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lithic:6164377004",
+  "set": "bench",
+  "title": "Business Operations Associate, Program Management",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "no_sponsorship",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:psiquantum:8008536003",
+  "set": "bench",
+  "title": "Senior/Staff Electro-Optic Hardware Design Engineer",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "jsearch:safeway:cGFSV2k4YUk4VkhCOU8wbkFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBTVE5FU1hWUVh6QTJXREZIWVd4c2VYTnpiREpWY0ZGWmQxODJVVEE1T0hReVJFRTNObk5wY21obFVtWlJiSGMwWnpVM1NrRjJTazVHYlZnd1pFcEhZMjlIWHpGQkxVRkxha1kzYW5jeE1sUkpPVGRDZEVsQmJHbEJXVUZVTW1FM1QyZEdTbW94ZEhrMlN6aHRhR0o1U0VOV2R6VXljMjlTUzAxcFVuUm5WWFZqTFY4M2IzY1NGMFExZW1aaGNVeFpUM1JwUWpKeWIxQnVXbkZYWjBFMEdpSkJSSE55T1daU1JraFhjV1JRT1ZsWFRIVlNaekJMZWxRdGVrYzVURzkyYW0xQg",
+  "set": "bench",
+  "title": "Front End Entry Level",
+  "level": "entry",
+  "years_min": 0,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:xai:5237890007",
+  "set": "bench",
+  "title": "Production Coordinator, Logistics - Memphis",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:skydio:f1a72f5b-6157-47c1-8de9-379a32c7419f",
+  "set": "bench",
+  "title": "PhD Autonomy Engineer Intern - Deep Learning / Computer Vision, 2027",
+  "level": "intern",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:asteralabs:4743072005",
+  "set": "bench",
+  "title": "Senior Manager, Global Environmental Health & Safety",
+  "level": "senior",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:andurilindustries:5176542007",
+  "set": "bench",
+  "title": "Associate Director, Business Development, Federal Civilian Counter-UAS",
+  "level": "staff_plus",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:cribl:6135855004",
+  "set": "bench",
+  "title": "Regional Sales Manager, Ohio (Strategic)",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:helion:e5cd14f6-e6da-4437-808a-b8b4c284263d",
+  "set": "bench",
+  "title": "R&D Hardware Test & Development Manager",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:doordashusa:8273901",
+  "set": "bench",
+  "title": "Associate,  DashMart - Supply Chain Profitability Strategy & Operations",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:vast:4709836006",
+  "set": "bench",
+  "title": "Avionics Manufacturing Engineer, Solar Array",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:pacificfusion:4048816009",
+  "set": "bench",
+  "title": "OBA Research Scientist/Engineer – Fusion Energy Systems",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:instawork:4411720006",
+  "set": "bench",
+  "title": "Enterprise Account Executive - Light Industrial",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:oscar:8250366",
+  "set": "bench",
+  "title": "Staff Product Manager",
+  "level": "staff_plus",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:coreweave:4727033006",
+  "set": "bench",
+  "title": "Data Center Technician - Miami, FL",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "gem:nominal:am9icG9zdDpbhtDI2EeP7tnEhxkCLJKz",
+  "set": "bench",
+  "title": "Staff Software Engineer, Agents",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:anthropic:4970314008",
+  "set": "bench",
+  "title": "Staff+ Software Engineer, Infrastructure (Distributed Systems)",
+  "level": "staff_plus",
+  "years_min": null,
+  "work_auth": "sponsors",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "jsearch:staffing-spot-inc:MDJoQ3o4anh3RmlMRC1ENUFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBTMmhRUlU1VWN6TTNRak5KZVZsTGJIbGtWamRpUzE4MlpsbGhOMjVYUTBVMlJHbDNVMHB2VWxSSmRtdGZXRUl0Y0RkTk5XeHZjWGRIVnpCblVWRnROV1ZEZVc4NVozWnpielV4VTBVMmEwUnRhR0ptWTA1NFYyWjVjVWczT0c5eVZuUTBUVmRPVTNkRFFuaDFlSGd4VlRGbVdqWlFWamhrTm5wSWNsZ3RSbDgxV21wMFJXSVNGMWxqTFhSaGRFczJSVWx1WmpKeWIxQnJUemMxT0VGbkdpSkJSSE55T1daUlYwaEhhbkF6UmtWWE5rZEdTMEZKV1hGVlJ6RTJkVUZmU25Wbg",
+  "set": "bench",
+  "title": "Jr.  Java Software Engineer",
+  "level": "entry",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:relativity:8893295002",
+  "set": "bench",
+  "title": "Friction Stir Welding Technician I, First Shift ",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:epicgames:5995036004",
+  "set": "bench",
+  "title": "Senior Counsel (Regulatory)",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:brex:8859337002",
+  "set": "bench",
+  "title": "Staff Software Engineer - Identity & Access Management",
+  "level": "staff_plus",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8842080002",
+  "set": "bench",
+  "title": "Supervisor, Materials Management (Thermal Hardware Production)",
+  "level": "senior",
+  "years_min": 2,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:andurilindustries:4246155007",
+  "set": "bench",
+  "title": "Mechanical Engineer, Air Vehicles",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:robinhood:7958748",
+  "set": "bench",
+  "title": "Customer Experience Representative, Concierge",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8930419002",
+  "set": "bench",
+  "title": "IT Linux Systems Engineer",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:relativity:8787370002",
+  "set": "bench",
+  "title": "Manufacturing Engineer II, Structures",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:okta:7917957",
+  "set": "bench",
+  "title": "Staff Product Analyst, Finance Technologies (Order to Cash)",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:netskope:8096118",
+  "set": "second",
+  "title": "Channel Solutions Engineer - NYC",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:roblox:8046794",
+  "set": "second",
+  "title": "Technical Director - AI Roblox Studio",
+  "level": "staff_plus",
+  "years_min": 12,
+  "work_auth": "no_sponsorship",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:ursamajor:4693312005",
+  "set": "second",
+  "title": "Senior Embedded Software Engineer",
+  "level": "senior",
+  "years_min": 4,
+  "work_auth": "us_person",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:okta:8038929",
+  "set": "second",
+  "title": "Senior Product Manager - Agentic Security (Auth0)",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:machindustries:4437051009",
+  "set": "second",
+  "title": "Lead Manufacturing Engineer, DFMA - Avionics",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:rocketlab:7987046003",
+  "set": "second",
+  "title": "Systems Engineering Intern Summer 2027",
+  "level": "intern",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "lever:ro:fedaead1-c855-44e1-aff8-62b326093c30",
+  "set": "second",
+  "title": "Ro Pharmacy Interview Day! Saturday, November 14th",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:doordashusa:8288985",
+  "set": "second",
+  "title": "Electrical Engineer - DoorDash Air",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:andurilindustries:5281225007",
+  "set": "second",
+  "title": "Machine Learning Tracking Engineer",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:brex:8762350002",
+  "set": "second",
+  "title": "Sales Account Manager II",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:scaleai:4674863005",
+  "set": "second",
+  "title": "DevOps Engineer, Infrastructure & Security",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "required",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:vardaspace:7695811003",
+  "set": "second",
+  "title": "Mechanisms Technician (Aerospace)",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:komodohealth:8880020002",
+  "set": "second",
+  "title": "Sales Development Representative",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:gemini:8186546",
+  "set": "second",
+  "title": "Staff Platform Engineer",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:andurilindustries:5256658007",
+  "set": "second",
+  "title": "Division Talent, Planning & Strategy",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:doordashusa:6517257",
+  "set": "second",
+  "title": "Shift Lead - Wellswood",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "ashby:poshmark:5b13d4ca-3dfe-42a3-9e9e-fbd3283e16a3",
+  "set": "second",
+  "title": "Senior Host Operations Associate II, Posh Live",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:zoox:6e83599a-480e-4fe8-bac7-3b9da512558d",
+  "set": "second",
+  "title": "Senior Director of Engineering, Product Software",
+  "level": "staff_plus",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lyft:8780012002",
+  "set": "second",
+  "title": "Senior Software Engineer - iOS",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:relativity:7196730002",
+  "set": "second",
+  "title": "Senior Thermal Engineer",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:andurilindustries:5277479007",
+  "set": "second",
+  "title": "Associate People Business Partner",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:muonspace:5023371007",
+  "set": "second",
+  "title": "Software Engineer, Flight Software",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "gem:retool:4605533005",
+  "set": "second",
+  "title": "Software Engineer, Core Services",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lyft:8863276002",
+  "set": "second",
+  "title": "Associate Counsel, Employment",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:klaviyo:8048078003",
+  "set": "second",
+  "title": "Associate Growth Specialist, German-Speaker",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:anthropic:5390952008",
+  "set": "second",
+  "title": "GTM Strategy & Operations, Frontier",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "sponsors",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:boxinc:8360570",
+  "set": "second",
+  "title": "Director, Small Medium Business Sales",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:coreweave:4720290006",
+  "set": "second",
+  "title": "People Operations Specialist",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:doordashusa:7967848",
+  "set": "second",
+  "title": "Senior Staff Machine Learning Engineer, Consumer",
+  "level": "staff_plus",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:flexport:8263332",
+  "set": "second",
+  "title": "Account Executive II (Farmer)",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:andurilindustries:5283858007",
+  "set": "second",
+  "title": "Technical Writer, Autonomous Airpower",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:planetlabs:8221862",
+  "set": "second",
+  "title": "Electrical Engineer",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:doordashusa:8079777",
+  "set": "second",
+  "title": "Kitchen Operations Associate, DashMart",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:base-power:23bc4e94-d63c-4933-926b-edcb69138410",
+  "set": "second",
+  "title": "Software Engineer, Backend",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:shieldai:4fe78e2a-39c3-431f-a687-0fb2388ab413",
+  "set": "second",
+  "title": "Staff Cross Domain Solution Engineer (R5356)",
+  "level": "staff_plus",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "required",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8729120002",
+  "set": "second",
+  "title": "New Graduate Engineer, Manufacturing (Starship)",
+  "level": "new_grad",
+  "years_min": 1,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:zoox:240ae92f-51ec-4d32-a0a4-3d4669508e3d",
+  "set": "second",
+  "title": "Senior Machine Learning  Engineer - Perception 3D Segmentation",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:pilothq:8649228002",
+  "set": "second",
+  "title": "Founding Account Executive",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:roblox:8287825",
+  "set": "second",
+  "title": "Senior Data Center Engineer",
+  "level": "senior",
+  "years_min": 4,
+  "work_auth": "no_sponsorship",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:rocketlab:7787940003",
+  "set": "second",
+  "title": "Technician I-III, Ops Support – Facilities",
+  "level": "entry",
+  "years_min": 2,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:datadog:7560494",
+  "set": "second",
+  "title": "Manager I, Applied Science - Frontier Agentic Models",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:ursamajor:4751989005",
+  "set": "second",
+  "title": "Senior Development Engineer",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "jsearch:aiprise:RTR0SGdqVUxHRlVlSnVWVEFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBURXBhTldGU1FreDBOalpWU0U0NFRIUkRjRmR1WWxCWk4xSTNPSFowU2xGRWVWOUhVekJYWTI5eFV6VmFTazgzWmtGMU9XOURSM0ZUTkZaYVRFTmpaVzVsWDBOS1UySkhaRkJqYjNjM1VFdGpPVkl4Tm0xeldqTjNUV055ZW1kUmRIWllUa1JMTm1WR1FsVnpkMEZxVFU5UFdHMUVWblJ2UzFkd01HbHdXRTUyZWxCek5Wa1NGMkZRVHpKaGIyMXZRbU10TFhKMVJWQnVUbWx1ZVZGSkdpSkJSSE55T1daUk4wRlBWbWt6VW5Zd1pVNXVkRkl6ZVVGT1oxcFhXSE53V2pObg",
+  "set": "second",
+  "title": "Software Engineer I",
+  "level": "entry",
+  "years_min": 0,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:waymo:6669555",
+  "set": "second",
+  "title": "Staff/Sr. Staff Machine Learning Engineer - World Modeling, Simulation",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:kairospower:6163824004",
+  "set": "second",
+  "title": "Senior Engineer, Scientific Software and Developer Platform, Modeling and Simulation",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:figureai:4596421006",
+  "set": "second",
+  "title": "Mechanical Engineer, Softgoods/Plastics",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:helion:8e3cac8f-f0ac-404f-b2d4-8f4c96103f06",
+  "set": "second",
+  "title": "Second Shift Senior Integration Technician, Bank Build",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:databricks:8635216002",
+  "set": "second",
+  "title": "Senior Software Engineer, AI Native Web Platform",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:starburst:5361682008",
+  "set": "second",
+  "title": "Senior Software Engineer, Connectors",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:purestorage:8168627",
+  "set": "second",
+  "title": "Software Quality Engineer, Hyperscale Line of Business",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:andurilindustries:5281986007",
+  "set": "fresh",
+  "title": "Senior People Experience Program Manager",
+  "level": "senior",
+  "years_min": 10,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:dexterity:5005c9a7-4014-4ccb-8d13-c109951f9097",
+  "set": "fresh",
+  "title": "Forward Deployed Engineer",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:oscar:8326126",
+  "set": "fresh",
+  "title": "Director, Pharmacy Operations Strategy & Integration",
+  "level": "staff_plus",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:vardaspace:8016297003",
+  "set": "fresh",
+  "title": "Manufacturing Engineer II (Avionics / Electromechanical / Harnessing)",
+  "level": "mid",
+  "years_min": 1,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:redwoodmaterials:6147864004",
+  "set": "fresh",
+  "title": "Analytical Lab Technician",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:merge:a20bd3b9-485c-459d-8bc1-052d80da2f45",
+  "set": "fresh",
+  "title": "Sales Development Representative",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:thumbtack:323602c6-082f-4c92-953d-642eccb0ed7f",
+  "set": "fresh",
+  "title": "Product Manager, Pro Integrations & Foundations",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:twitch:8903136002",
+  "set": "fresh",
+  "title": "Sr. Product Manager, Premium Content Experience",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:lightmatter:5407374008",
+  "set": "fresh",
+  "title": "Sr Staff Integrated Photonics Laser Systems Architect ",
+  "level": "staff_plus",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:secureframe:63464f3b-f449-4dd3-ba01-bc53e24c4af3",
+  "set": "fresh",
+  "title": "Sales Solutions Engineer",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:sigmacomputing:7767901003",
+  "set": "fresh",
+  "title": "Staff Software Engineer - Backend",
+  "level": "staff_plus",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:zscaler:5244299007",
+  "set": "fresh",
+  "title": "Senior Sales Engineer, Enterprise - Minnesota",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:atomcomputing:5f565f2c-bc20-4296-a103-21c2c0b2ae39",
+  "set": "fresh",
+  "title": "Senior Mechanical Engineer - Instrumentation Hardware",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:roblox:8017415",
+  "set": "fresh",
+  "title": "Principal Software Engineer",
+  "level": "staff_plus",
+  "years_min": 10,
+  "work_auth": "no_sponsorship",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:palantir:c288bb43-3c63-4557-bd96-600ef0d1b7a6",
+  "set": "fresh",
+  "title": "Software Engineer - Defense Applications",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "ashby:saronic:c33b5a59-63b5-45de-848d-18d9cb15c354",
+  "set": "fresh",
+  "title": "Commissioning Assistant Engineer, Marauder",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "required",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:valaratomics:4438153009",
+  "set": "fresh",
+  "title": "Mechanical Technician, Process Gas Systems ",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:formenergy:6715c60a-f0a3-4867-ad8f-4efc66c488fb",
+  "set": "fresh",
+  "title": "Production Planner",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:rocketlab:7982165003",
+  "set": "fresh",
+  "title": "Senior Systems Engineer II - RF Mission Solutions",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "us_person",
+  "clearance": "eligible",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:rocketlab:8016330003",
+  "set": "fresh",
+  "title": "Reaction Wheel Assembly Technician",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "ashby:1x:fda0ba2e-d1eb-4a21-a666-7e7ee6e20763",
+  "set": "fresh",
+  "title": "Staff Mechanical Engineer, Robot Head",
+  "level": "staff_plus",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:neuralink:6514169003",
+  "set": "fresh",
+  "title": "Mechanical Engineering Intern, Robotics and Surgery Engineering",
+  "level": "intern",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:waymo:8131378",
+  "set": "fresh",
+  "title": "Senior Vehicle Structures Engineer",
+  "level": "senior",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:shieldai:ec31b849-7235-4d07-b46e-6fd89c85073d",
+  "set": "fresh",
+  "title": "Associate Engineer, Manufacturing",
+  "level": "entry",
+  "years_min": 0,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "jsearch:affirm:d0pfOVZ5RE51cFlCMTBnNEFBQUFBQT09OkVza0JDb3dCUVVwcFZEUjBTems0YUdkMFRYZEtWaTFaYWxndFRscGpkVzlmZFdodVpFaFZVR0ZaWVhNeFIzQm9WM0ZTYkRjeldXeGhNVGN3ZGxSdFdXWk9ialpMTjFabmRUWk1Sakk1VGtJelpXSmhiM2RJVURGTFEweElWVWhOVTBadlh5MWhUVkpmWm0xa01rbzRRMUV5VWt4YU9WcE5XR2d3VFdoYVZVY3pWemhvV1RaWFlYVk5jM2h0WTJSb2FrY1NGRlJJZWsxaGMwdEpSV0pQWlhGMGMxQndTM05XR2lKQlJITnlPV1pSUjBoTVVWZHFUa1ZmWm5wUU5sVmFVV2xHZUdaME1USk5RM05C",
+  "set": "fresh",
+  "title": "Software Engineer I (New Grad 2027) (SF)",
+  "level": "new_grad",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:chime:8724243002",
+  "set": "fresh",
+  "title": "Product Manager, Growth - MarTech",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:ro:8eb28ce3-d850-4a0a-8bbf-ff7452e80803",
+  "set": "fresh",
+  "title": "Fulfillment Associate - Boynton Beach, FL",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "ashby:replit:88119b4c-3782-455b-a6fa-b002210c714b",
+  "set": "fresh",
+  "title": "Strategic Finance",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:purestorage:8180150",
+  "set": "fresh",
+  "title": "Hardware Design Engineer, Systems",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:1x:afecf30c-187a-4e4b-8533-0b5f902c145e",
+  "set": "fresh",
+  "title": "Softgoods Development Technician",
+  "level": "entry",
+  "years_min": 0,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:figureai:4612612006",
+  "set": "fresh",
+  "title": "Systems Integration Engineer - Hand Subsystem",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8782120002",
+  "set": "fresh",
+  "title": "Welding Engineer (Starship)",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:databricks:8521198002",
+  "set": "fresh",
+  "title": "Staff Technical Program Manager- Platform Features",
+  "level": "staff_plus",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:stripe:8314283",
+  "set": "fresh",
+  "title": "Software Engineer",
+  "level": "mid",
+  "years_min": 2,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:andurilindustries:5153667007",
+  "set": "fresh",
+  "title": "Mechanical Engineer, Thunder ",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:databricks:8494144002",
+  "set": "fresh",
+  "title": "Sr. Forward Deployed Engineer (FDE) - Healthcare & Life Sciences",
+  "level": "senior",
+  "years_min": 6,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:coreweave:4722828006",
+  "set": "fresh",
+  "title": "Data Center Technician - Elk Grove, IL",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:benchling:ce76248e-0453-49a5-8f92-27ffec0392b8",
+  "set": "fresh",
+  "title": "Customer Success Manager ",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:relativity:8606445002",
+  "set": "fresh",
+  "title": "Instrumentation and Controls Engineer I (Operations)",
+  "level": "entry",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:psiquantum:8038195003",
+  "set": "fresh",
+  "title": "Chemicals Applications Lead",
+  "level": "senior",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8647718002",
+  "set": "fresh",
+  "title": "Government Program Development Manager (Federal Civil Agencies)",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "us_person",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:datadog:7554877",
+  "set": "fresh",
+  "title": "Senior Security Sales Engineer",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:chime:8801438002",
+  "set": "fresh",
+  "title": "Senior Associate, Strategic Finance",
+  "level": "senior",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:purestorage:8238507",
+  "set": "fresh",
+  "title": "Director, HR + Legal Technology & Transformation",
+  "level": "staff_plus",
+  "years_min": 10,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:datadog:7560815",
+  "set": "fresh",
+  "title": "Senior Sourcer",
+  "level": "senior",
+  "years_min": 8,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:psiquantum:7817826003",
+  "set": "fresh",
+  "title": "Staff Applications, Test & Failure Analysis Engineer",
+  "level": "staff_plus",
+  "years_min": 7,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:machindustries:4434427009",
+  "set": "fresh",
+  "title": "Mission Logistics & Global Trade Manager",
+  "level": "senior",
+  "years_min": 7,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "jsearch:blue-origin:S04yYUFuaG9ETDlQNS1EQkFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBUR0Y0VlRZMlIydHhZMVF6YzB4eGVYRllWRXRtYjJWQk5VTlhORXRYTkRaWGRWaGhNRFY2TnpWUGJqTlZWM2xRTmxsdldWaFlia3BIVWpOYVJqWkVORmRLUkVkdVVFTktabmg1WDA1allsWlBhVUZJVkhCU1RFeEJNVzl2T0hoMlIyTkVhR1JYUkhwWFgyRk9YMlppWW5GdlUzRmlka3BGU25aSGIybHJaMmRZT1V0TFMya1NGekJJY2sxaGNVOXNUa3RMWm10UVNWQTJUM0kwTFVGUkdpSkJSSE55T1daVVdXWmxVRFo1UjFBeVEyRm9OWEl0U0dkV1ZqaFVjbkJRUVdoMw",
+  "set": "fresh",
+  "title": "Software Engineer II - Enterprise Systems",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:skydio:7d7dfadc-c6fd-4958-8d59-004a91bff55e",
+  "set": "fresh",
+  "title": "Software Engineer - Cloud Simulation & Full-Stack",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:asteralabs:4738463005",
+  "set": "fresh",
+  "title": "Tech Lead, Digital Design Engineer",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:spacex:8697995002",
+  "set": "fresh",
+  "title": "Warehouse Associate (Starlink) ",
+  "level": "entry",
+  "years_min": 1,
+  "work_auth": "us_person",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:gleanwork:4735022005",
+  "set": "fresh",
+  "title": "Designated Technical Support Engineer",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "greenhouse:ursamajor:4744589005",
+  "set": "fresh",
+  "title": "Manufacturing Engineer II ",
+  "level": "mid",
+  "years_min": 3,
+  "work_auth": "us_person",
+  "clearance": "eligible",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:doordashusa:8333827",
+  "set": "fresh",
+  "title": "Associate Manager, Marketing Product Operations, CRM Automation",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ },
+ {
+  "id": "ashby:sentry:9405b1d7-9a4e-424d-b5b2-4bc3cb2ba5cb",
+  "set": "fresh",
+  "title": "Manager, Design Engineering",
+  "level": "senior",
+  "years_min": 3,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "jsearch:valerie-health:SUZWVmlSQmdaMzVqWV9GcUFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBTVEkyWWtodE5VcDZjVTk2YlhCWExYTlBTMVUzWldKT1RVZE9iWE16TFZvMVpuQnNlRk52VEdZeVpEaGZkM1pJWjJjM2FITlFSRTlZV1V0ellUVjZNbk0yZFZnd05IVjJTa3N3VjI1TVZ6RkxSbTFUVkZaVFpqZHZjMG81VGpWS2RuUnFlVGROY2xoTWRXWm1kekJ0YkUxVU9YbFlWRGw0TUU5WFNGRnZiMmhKY2xkWldua1NGMkZRVHpKaGIyMXZRbU10TFhKMVJWQnVUbWx1ZVZGSkdpSkJSSE55T1daVUxVOVBkMnR5UjBOalJrZHRhemRMVGxGM1YwbGFWMWd5VVZKUg",
+  "set": "fresh",
+  "title": "Software Engineer - Product",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "ashby:sierra:d77487f9-bab3-44c6-be18-744e7125c8b3",
+  "set": "fresh",
+  "title": "Software Engineer, Platform",
+  "level": "mid",
+  "years_min": 4,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:anthropic:5474559008",
+  "set": "fresh",
+  "title": "Legal Specialist, Law Enforcement",
+  "level": "unknown",
+  "years_min": null,
+  "work_auth": "sponsors",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "greenhouse:tenstorrent:5270525007",
+  "set": "fresh",
+  "title": "DFT Engineer",
+  "level": "senior",
+  "years_min": 5,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": false
+ },
+ {
+  "id": "lever:palantir:7d75bed5-45d8-4876-840a-2d92ea79c98d",
+  "set": "fresh",
+  "title": "Software Engineer, New Grad - Infrastructure",
+  "level": "new_grad",
+  "years_min": null,
+  "work_auth": "unknown",
+  "clearance": "none",
+  "unsure": true
+ }
+]

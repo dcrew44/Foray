@@ -79,6 +79,35 @@ class Period(models.TextChoices):
     HOUR = "hour"
 
 
+class JobLevel(models.TextChoices):
+    """The level a posting is at (`jobs/facts.py`, #56). The profile's seniority plus `unknown`,
+    which is the honest answer for most titles that carry no level word."""
+
+    INTERN = "intern"
+    NEW_GRAD = "new_grad"
+    ENTRY = "entry"
+    MID = "mid"
+    SENIOR = "senior"
+    STAFF_PLUS = "staff_plus"
+    UNKNOWN = "unknown"
+
+
+class WorkAuth(models.TextChoices):
+    """What a posting says about who may work there, strictest first when it says several."""
+
+    CITIZEN_ONLY = "citizen_only"  # US citizenship required
+    US_PERSON = "us_person"  # citizen or permanent resident (ITAR, export control)
+    NO_SPONSORSHIP = "no_sponsorship"  # will not sponsor a visa
+    SPONSORS = "sponsors"  # says it sponsors
+    UNKNOWN = "unknown"  # says nothing
+
+
+class Clearance(models.TextChoices):
+    REQUIRED = "required"  # one already held, or required without "able to obtain"
+    ELIGIBLE = "eligible"  # must be able to obtain one
+    NONE = "none"  # not mentioned
+
+
 # The shape of every job id: `source:company_slug:external_id`, or `web:<slug>:<sha1(url)>`.
 JOB_ID_PATTERN = r"^(greenhouse|lever|ashby|workable|recruitee|gem|jsearch|web):[^:]+:.+$"
 COMPANY_SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
@@ -189,6 +218,17 @@ class Job(models.Model):
     # was not listed then, whatever date the source gives it). Null when nothing bounds it: a
     # board's first fetch, the aggregator, careers pages (#55).
     seen_lag_s = models.IntegerField(null=True)
+    # What the posting asks of whoever applies, read once at ingest (`jobs/facts.py`, #56) and
+    # again only when the posting changes or the reading does (`facts_version`, null: not read
+    # yet). `facts` keeps the sentence each one was read from.
+    level = models.TextField(choices=JobLevel.choices, db_default=JobLevel.UNKNOWN)
+    years_min = models.SmallIntegerField(null=True)  # years of experience required; null: unsaid
+    # The least a "preferred" figure asks for, when the posting requires none.
+    years_preferred = models.SmallIntegerField(null=True)
+    work_auth = models.TextField(choices=WorkAuth.choices, db_default=WorkAuth.UNKNOWN)
+    clearance = models.TextField(choices=Clearance.choices, db_default=Clearance.NONE)
+    facts = models.JSONField(null=True)
+    facts_version = models.SmallIntegerField(null=True)
 
     company_id: uuid.UUID | None
 
@@ -196,7 +236,15 @@ class Job(models.Model):
         db_table = "jobs"
         constraints = [
             models.CheckConstraint(condition=Q(id__regex=JOB_ID_PATTERN), name="jobs_id_shape"),
-            *choices_checks("jobs", source=JobSource, remote=Remote, salary_period=Period),
+            *choices_checks(
+                "jobs",
+                source=JobSource,
+                remote=Remote,
+                salary_period=Period,
+                level=JobLevel,
+                work_auth=WorkAuth,
+                clearance=Clearance,
+            ),
         ]
         indexes = [
             # `company` is indexed by its foreign key.

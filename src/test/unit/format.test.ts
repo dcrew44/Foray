@@ -12,6 +12,7 @@ import {
   plural,
   timeAgo,
 } from "@/lib/format";
+import { clearanceLabel, levelLabel, workAuthLabel, yearsLabel } from "@/lib/job-facts";
 
 describe("formatSalary", () => {
   it("renders a yearly USD range compactly", () => {
@@ -118,5 +119,35 @@ describe("formatLag", () => {
     expect(formatLag(2 * 3600 + 600)).toBe("2 hours");
     expect(formatLag(35 * 3600)).toBe("35 hours");
     expect(formatLag(3 * 86400)).toBe("3 days");
+  });
+});
+
+describe("job facts", () => {
+  it("names the level and where it came from", () => {
+    expect(levelLabel({ level: "new_grad", levelFrom: "title" })).toBe(
+      "New graduate role, from its title",
+    );
+    expect(levelLabel({ level: "senior", levelFrom: "years" })).toBe(
+      "Senior, from the years it asks for",
+    );
+    expect(levelLabel({ level: "unknown", levelFrom: null })).toBe("Not stated");
+  });
+
+  it("says what experience is required, preferred or unsaid", () => {
+    expect(yearsLabel({ yearsMin: 3, yearsPreferred: null })).toBe("3 years or more required");
+    expect(yearsLabel({ yearsMin: 1, yearsPreferred: null })).toBe("1 year or more required");
+    expect(yearsLabel({ yearsMin: 0, yearsPreferred: null })).toBe("None required");
+    expect(yearsLabel({ yearsMin: null, yearsPreferred: 5 })).toBe(
+      "5 years or more preferred, none required",
+    );
+    expect(yearsLabel({ yearsMin: null, yearsPreferred: null })).toBe("Not stated");
+  });
+
+  it("names work authorization and clearance", () => {
+    expect(workAuthLabel({ workAuth: "no_sponsorship" })).toBe("No visa sponsorship");
+    expect(workAuthLabel({ workAuth: "unknown" })).toBe("Not stated");
+    expect(clearanceLabel({ clearance: "eligible" })).toBe(
+      "Needs a security clearance you can obtain",
+    );
   });
 });

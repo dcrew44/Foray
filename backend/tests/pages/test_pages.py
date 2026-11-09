@@ -394,6 +394,19 @@ def test_match_page() -> None:
     assert job["source"] == "greenhouse"
     assert job["applyUrl"] == "https://stripe.example.com/apply/1"
     assert "raw" not in job and "descriptionRaw" not in job  # §5.2: never sent
+    # What the posting asks (#56): nothing read yet for this one.
+    assert job["facts"] == {
+        "read": False,
+        "level": "unknown",
+        "levelFrom": None,
+        "yearsMin": None,
+        "yearsPreferred": None,
+        "workAuth": "unknown",
+        "clearance": "none",
+        "yearsEvidence": None,
+        "workAuthEvidence": None,
+        "clearanceEvidence": None,
+    }
     tailored = body["tailored"]
     assert tailored["id"] == str(graph.tailored.pk)
     assert tailored["documentId"] == str(graph.tailored_pdf.pk)
@@ -555,6 +568,38 @@ def test_chat_page_suggestions_before_a_search() -> None:
         "title": "Improve my resume",
         "prompt": "What would make my resume stronger for the roles I want?",
         "prefill": False,
+    }
+
+
+def test_match_page_shows_what_the_posting_asks() -> None:
+    graph = full_graph()
+    Job.objects.filter(id=graph.jobs["backend"].id).update(
+        level="mid",
+        years_min=3,
+        work_auth="no_sponsorship",
+        clearance="eligible",
+        facts_version=1,
+        facts={
+            "levelFrom": "years",
+            "evidence": {
+                "years": "3+ years of backend experience",
+                "workAuth": "We are unable to sponsor visas.",
+                "clearance": "Ability to obtain a Secret security clearance.",
+            },
+        },
+    )
+    facts = page(graph, "match")["job"]["facts"]
+    assert facts == {
+        "read": True,
+        "level": "mid",
+        "levelFrom": "years",
+        "yearsMin": 3,
+        "yearsPreferred": None,
+        "workAuth": "no_sponsorship",
+        "clearance": "eligible",
+        "yearsEvidence": "3+ years of backend experience",
+        "workAuthEvidence": "We are unable to sponsor visas.",
+        "clearanceEvidence": "Ability to obtain a Secret security clearance.",
     }
 
 

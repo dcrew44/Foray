@@ -41,6 +41,7 @@ __all__ = [
     "HomeSpend",
     "HomeUser",
     "HomeWaiting",
+    "JobFacts",
     "JobDetail",
     "LatestRender",
     "MatchDetail",
@@ -66,6 +67,9 @@ ProviderId = Literal["openai", "google", "anthropic", "deepseek", "compat"]
 JobSourceName = Literal[
     "greenhouse", "lever", "ashby", "workable", "recruitee", "gem", "jsearch", "web"
 ]
+JobLevelName = Literal["intern", "new_grad", "entry", "mid", "senior", "staff_plus", "unknown"]
+WorkAuthName = Literal["citizen_only", "us_person", "no_sponsorship", "sponsors", "unknown"]
+ClearanceName = Literal["required", "eligible", "none"]
 
 
 # Every stage with its count, zeros included (`countByStage`).
@@ -143,6 +147,22 @@ class MatchDetail(ApiModel):
     deep_score: int | None
 
 
+class JobFacts(ApiModel):
+    """What the posting asks of whoever applies (`jobs/facts.py`, #56), with the sentence each
+    was read from. `read` is false until the posting's facts have been read."""
+
+    read: bool
+    level: JobLevelName
+    level_from: Literal["title", "text", "years"] | None
+    years_min: int | None
+    years_preferred: int | None
+    work_auth: WorkAuthName
+    clearance: ClearanceName
+    years_evidence: str | None
+    work_auth_evidence: str | None
+    clearance_evidence: str | None
+
+
 class JobDetail(ApiModel):
     title: str
     company_name: str
@@ -158,6 +178,7 @@ class JobDetail(ApiModel):
     apply_url: str | None
     description_text: str | None
     source: JobSourceName
+    facts: JobFacts
 
 
 class TailoredView(ApiModel):

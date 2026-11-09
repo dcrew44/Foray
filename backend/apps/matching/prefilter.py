@@ -12,6 +12,9 @@ fraction of a cent to score and reject.
 - `prefilter_jobs` is raw SQL: Postgres `~*` with `\\y`, the `DISTINCT ON` role key, the 600
   cap and the 45-day window. It runs inside a transaction that first sets a 20 s
   `statement_timeout`, because it executes model-written regexes.
+- A junior seeker's search also filters on what each posting asks (`jobs/facts.py`, #56): its
+  level and the years it requires, read once at ingest. A posting whose facts say nothing
+  (`unknown`, no years) is kept, as everything else here errs toward keeping.
 
 The JavaScript regexes are mirrored with ASCII semantics (`re.ASCII`): JS without the `u` flag
 matches `\\b`, `\\w` and case-insensitivity on ASCII only.
@@ -40,7 +43,9 @@ __all__ = [
     "BAY_AREA_PLACES",
     "DEFAULT_LIMIT",
     "MAX_AGE_DAYS",
+    "PREFERRED_SLACK",
     "SEARCH_INSTRUCTIONS",
+    "YEARS_LIMIT",
     "CompanyFilter",
     "DerivedCriteria",
     "DerivedSearch",
@@ -60,6 +65,11 @@ __all__ = [
 
 # Postings older than this are stale enough to be worth skipping.
 MAX_AGE_DAYS = 45
+# The most years of experience a posting may require of a junior seeker. "2+ years" is still
+# within a new graduate's reach (internships count); "3+" is the first rung past it.
+YEARS_LIMIT = {"intern": 1, "new_grad": 2, "entry": 3}
+# A "preferred" figure is softer: it has to be this far past the limit to rule a posting out.
+PREFERRED_SLACK = 2
 DEFAULT_LIMIT = 600
 STATEMENT_TIMEOUT = "20s"
 
@@ -446,6 +456,25 @@ def _location_clause(preferences: Preferences, params: list[Any]) -> str | None:
     return f"({' OR '.join(clauses)})" if clauses else None
 
 
+def _eligibility_clause(preferences: Preferences, params: list[Any]) -> str | None:
+    """What a junior seeker can get at all, from the posting's own facts: not a senior or staff
+    role, not more years than the level allows, and for a student or new graduate not a
+    second-rung title ("Engineer II") that gives no years. Other seekers are not filtered:
+    someone mid-career applies up and down."""
+    limit = YEARS_LIMIT.get(preferences.seniority or "")
+    if limit is None:
+        return None
+    params.extend([limit, limit + PREFERRED_SLACK])
+    clause = (
+        "j.level NOT IN ('senior', 'staff_plus') "
+        "AND (j.years_min IS NULL OR j.years_min <= %s) "
+        "AND (j.years_preferred IS NULL OR j.years_preferred <= %s)"
+    )
+    if preferences.seniority in ("intern", "new_grad"):
+        clause += " AND NOT (j.level = 'mid' AND j.years_min IS NULL)"
+    return f"({clause})"
+
+
 def _title_clause(criteria: DerivedCriteria, params: list[Any]) -> str | None:
     """A title must match an include term and no exclude term, except that a title matching a
     keep term survives the excludes."""
@@ -502,6 +531,10 @@ def prefilter_jobs(
     title = _title_clause(criteria, params)
     if title is not None:
         conditions.append(title)
+
+    eligible = _eligibility_clause(preferences, params)
+    if eligible is not None:
+        conditions.append(eligible)
 
     # One role, one match. A company posting the same role in four cities is one thing to the
     # user. Roles the user already has a match for are skipped (dismissed ones stay dismissed),

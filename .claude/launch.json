@@ -4,7 +4,17 @@
     {
       "name": "foray-web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev:all"],
+      "runtimeArgs": [
+        "dev:all"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "foray-rehearsal",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "rehearsal"
+      ],
       "port": 3000
     }
   ]

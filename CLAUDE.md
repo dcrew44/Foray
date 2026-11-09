@@ -18,6 +18,9 @@ worker.
 | `pnpm db:create` | create the `foray_app` database (once per Postgres volume) |
 | `pnpm db:migrate` / `db:makemigrations` | Django migrations |
 | `pnpm dev:session [email]` | print `cookie: sessionid=<key>` for a local user, else the oldest one (DEBUG only) |
+| `pnpm rehearsal` | `dev:all` against a scratch database (`foray_rehearsal`, created, migrated and seeded with nine real boards on first use), its own storage folder and `LLM_FAKE=1`; `foray-rehearsal` in `.claude/launch.json`. Stop `dev:all` first: it uses the same ports |
+| `pnpm rehearsal manage <args>` / `pnpm rehearsal -- <command>` | `manage.py <args>`, or any command, in the rehearsal environment (`pnpm rehearsal -- pnpm dev:session`) |
+| `pnpm rehearsal:reset` | drop the scratch database and its files |
 | `pnpm auth:set-password <email>` | set a forgotten password at a hidden prompt (no mail transport yet); signs out every session |
 | `pnpm seed:companies [--fetch]` | load `backend/apps/jobs/seed.json` into `companies`; `--fetch` also fills the mirror |
 | `pnpm fetch:board` / `verify:boards` | print what an adapter makes of one board / check that board slugs are real (neither touches the database) |
@@ -203,6 +206,14 @@ Verify UI in the built-in browser pane (`preview_start` with `foray-web`, which 
 `pnpm dev:all`) so the user can watch; headless Playwright scripts are for extra screenshots,
 not the only check.
 
+- **Rehearse on the rehearsal stack.** Anything that writes (a search, a watch, an
+  application, a migration you have not merged) runs under `pnpm rehearsal`
+  (`preview_start` with `foray-rehearsal`), never against the everyday database: there the
+  worker would score the owner's real matches with fake models. The everyday stack
+  (`foray-web`) is for looking at real data with merged code. Both answer on :3000, so the
+  pane's session from one is unknown to the other: its first request gets a 401, which clears
+  the cookie. Set a session again after switching (`pnpm rehearsal -- pnpm dev:session …`
+  there, `pnpm dev:session you@example.com` back on the everyday stack).
 - Never type a password. Make a throwaway user and mint a session for it:
   `cd backend && uv run python manage.py create_test_user --with-resume` prints
   `user: test-…@example.test`, and `pnpm dev:session test-…@example.test` prints

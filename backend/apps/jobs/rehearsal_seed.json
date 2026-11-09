@@ -1,0 +1,11 @@
+[
+  { "name": "Notion", "slug": "notion", "sourceType": "ashby", "atsSlug": "notion", "domain": "notion.com" },
+  { "name": "Cerebras", "slug": "cerebras", "sourceType": "ashby", "atsSlug": "cerebras", "domain": "cerebras.ai" },
+  { "name": "Perplexity", "slug": "perplexity", "sourceType": "ashby", "atsSlug": "perplexity", "domain": "perplexity.ai" },
+  { "name": "SambaNova", "slug": "sambanovasystems", "sourceType": "greenhouse", "atsSlug": "sambanovasystems", "domain": "sambanova.ai" },
+  { "name": "Akuna Capital", "slug": "akunacapital", "sourceType": "greenhouse", "atsSlug": "akunacapital", "domain": "akunacapital.com" },
+  { "name": "Figma", "slug": "figma", "sourceType": "greenhouse", "atsSlug": "figma", "domain": "figma.com" },
+  { "name": "Duolingo", "slug": "duolingo", "sourceType": "greenhouse", "atsSlug": "duolingo", "domain": "duolingo.com" },
+  { "name": "Wealthfront", "slug": "wealthfront", "sourceType": "lever", "atsSlug": "wealthfront", "domain": "wealthfront.com" },
+  { "name": "Nominal", "slug": "nominal", "sourceType": "gem", "atsSlug": "nominal", "domain": "nominal.io" }
+]

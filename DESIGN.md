@@ -335,7 +335,27 @@ its classic portals publish a sitemap and JSON-LD on each posting page, and a po
 redirects to a career site is registered as that site. SmartRecruiters' Posting API is
 documented as public, but `api.smartrecruiters.com/robots.txt` disallows generic crawlers, so
 Foray reads a SmartRecruiters board only for a company someone added and never discovers them
-in bulk (#69).
+in bulk (#69). A pass reads at most 1,200 postings of one source, four at a time per host and
+sixteen in all, so a hundred Workday boards registered together fill in over a day of passes
+without holding up the fifteen-minute poll of everything else.
+
+**Where the list of boards comes from** (#58, #28, `apps/jobs/candidates.py`,
+`crawl_index.py`). The radar is only as wide as the registry, and the registry began as
+somebody else's list under a non-commercial licence. A board id is a fact that shows in a URL,
+so Foray collects its own from Common Crawl: `find_boards` bisects a crawl's `cluster.idx` by
+byte range for each board host and reads only the index blocks under it (a few seconds and a
+few megabytes a host, against the crawl's static files; the query server in front of them is
+slow and rate-limited). Each id becomes a `board_candidates` row with the crawls it was seen
+in. `grow_registry` then asks each candidate's board once, newest-seen first, and registers
+the ones that answer with postings, a software role among them: a third of the boards in a
+crawl belong to clinics, schools and shops, and every board followed is polled for good. The
+answer that proved a board real is the one ingested, with the poll state it left, so nothing
+is fetched twice. A Workday site must also answer its own search (`--matching "software
+engineer"`), because most of the seven thousand in a crawl are hospitals and retailers. Every
+company records each place it was learned from (`companies.found_in`), a company that was in
+the old seed and is also in a crawl is no longer only the seed's, and the `seed.json` that
+ships is rewritten from boards seen somewhere public and checked live. Community new-graduate
+lists without a licence are a yardstick for coverage and never an import.
 
 **What a posting asks** (#56, `apps/jobs/facts.py`). Whether someone can get a job at all turns
 on a few facts that are the same for every reader: the role's level, the years it requires, what

@@ -64,6 +64,8 @@ const FILTERS: Array<{ id: Filter; label: string; test: (row: CompanyRow) => boo
 ];
 
 const STATUS_RANK: Record<CompanyRow["status"], number> = { active: 0, paused: 1, invalid: 2 };
+/** Rows drawn at a time. */
+const PAGE_ROWS = 100;
 
 const NOTHING_IN: Record<Filter, string> = {
   all: "No companies yet.",
@@ -180,6 +182,19 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
       return STATUS_RANK[a.status] - STATUS_RANK[b.status] || direction * byName(a, b);
     });
   }, [rows, deferredQuery, filter, sort]);
+
+  // The registry runs to thousands of boards: the table draws a page of them and more on
+  // request. A new search, filter or sort starts from the first page again.
+  const view = `${deferredQuery}\n${filter}\n${sort.key}\n${sort.dir}`;
+  const [paged, setPaged] = useState({ view, limit: PAGE_ROWS });
+  const limit = paged.view === view ? paged.limit : PAGE_ROWS;
+  const shown = useMemo(() => {
+    const head = visible.slice(0, limit);
+    if (!highlight || head.some((row) => row.slug === highlight)) return head;
+    // A company just added is shown wherever it sorts.
+    const added = visible.find((row) => row.slug === highlight);
+    return added ? [added, ...head] : head;
+  }, [visible, limit, highlight]);
 
   function toggleSort(key: SortKey) {
     setSort((current) =>
@@ -316,8 +331,8 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
         <div className="text-muted-foreground rounded-xl border border-dashed px-6 py-8 text-[13.5px]">
           <p className="text-display text-foreground text-[17px]">No companies yet</p>
           <p className="mt-1 max-w-[56ch] leading-relaxed">
-            Add one above and Foray will find its job board. To load the starter list of a few
-            hundred tech companies, run <code className="text-foreground">pnpm seed:companies</code>.
+            Add one above and Foray will find its job board. To load the starter list of
+            boards that were checked live, run <code className="text-foreground">pnpm seed:companies</code>.
           </p>
         </div>
       ) : visible.length === 0 ? (
@@ -379,7 +394,7 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {visible.map((row) => (
+                {shown.map((row) => (
                   <CompanyLine
                     busy={sending.has(row.slug) || row.slug in refreshing}
                     highlighted={highlight === row.slug}
@@ -393,11 +408,24 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
               </tbody>
             </table>
           </div>
-          <p className="text-muted-foreground tabular px-1 text-[12.5px]">
-            {visible.length === rows.length
-              ? `${rows.length.toLocaleString()} ${rows.length === 1 ? "company" : "companies"}`
-              : `Showing ${visible.length.toLocaleString()} of ${rows.length.toLocaleString()} companies`}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+            <p className="text-muted-foreground tabular text-[12.5px]">
+              {shown.length === rows.length
+                ? `${rows.length.toLocaleString()} ${rows.length === 1 ? "company" : "companies"}`
+                : visible.length === rows.length || shown.length === visible.length
+                  ? `Showing ${shown.length.toLocaleString()} of ${rows.length.toLocaleString()} companies`
+                  : `Showing ${shown.length.toLocaleString()} of ${visible.length.toLocaleString()} that match, out of ${rows.length.toLocaleString()} companies`}
+            </p>
+            {visible.length > shown.length ? (
+              <Button
+                onClick={() => setPaged({ view, limit: limit + PAGE_ROWS })}
+                size="sm"
+                variant="outline"
+              >
+                Show {Math.min(PAGE_ROWS, visible.length - shown.length).toLocaleString()} more
+              </Button>
+            ) : null}
+          </div>
         </div>
       )}
     </div>

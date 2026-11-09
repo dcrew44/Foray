@@ -24,6 +24,7 @@ from apps.jobs import refresh
 from apps.jobs.discovery import AtsLink, discover_company, find_ats_links, has_unsupported_ats
 from apps.jobs.models import Company, Job
 from apps.jobs.refresh import refresh_company
+from apps.jobs.registry import HOT_INTERVAL, poll_interval
 from apps.jobs.sources import (
     BOARD_ADAPTERS,
     GUESS_SOURCES,
@@ -668,6 +669,34 @@ async def test_a_big_board_is_caught_up_over_several_passes_and_not_timed(
 
     settled = await pass_over(board)
     assert settled.unchanged is True and len(board.read) == 5
+
+
+@db
+async def test_one_pass_reads_only_so_many_postings_of_a_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Two boards of one source share a pass's budget (#58): the second waits its turn."""
+    monkeypatch.setattr(refresh, "SOURCE_POSTINGS_PER_PASS", 4)
+    first = await listed_board(**{str(n): "a" for n in range(1, 4)})
+    other = await sync_to_async(make_company)(
+        slug="other", source_type="workday", ats_slug="other.wd1.myworkdayjobs.com/Careers"
+    )
+    second = Board(other, {n: "a" for n in range(11, 14)})
+
+    async with mock_client(routes({})) as client:
+        for board in (first, second):
+            company = await Company.objects.aget(id=board.company.id)
+            await refresh._refresh_listed(client, company, board.adapter, force=False)
+    assert (len(first.read), len(second.read)) == (3, 1)
+    waiting = await Company.objects.aget(id=other.id)
+    assert PollState.read(waiting.poll_state).pending is True
+    # A board still being read is due again at the next tick, whatever it lists.
+    assert poll_interval(waiting, await sync_to_async(database_now)()) == HOT_INTERVAL
+
+    # The next pass has a budget of its own, and the board goes on from where it stopped.
+    async with mock_client(routes({})) as client:
+        await refresh._refresh_listed(client, waiting, second.adapter, force=False)
+    assert sorted(second.read) == [11, 12, 13]
 
 
 @db

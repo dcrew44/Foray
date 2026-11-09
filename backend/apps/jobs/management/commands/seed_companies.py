@@ -50,6 +50,9 @@ class Command(BaseCommand):
                     careers_urls=entry.get("careersUrls") or [],
                     tags=entry.get("tags") or [],
                     discovered_via=DiscoveredVia.SEED,
+                    # A list built by `grow_registry --write-seed` says where each board was
+                    # seen; an older one is only "the seed".
+                    found_in=entry.get("foundIn") or [],
                 )
             )
             loaded.append(company)

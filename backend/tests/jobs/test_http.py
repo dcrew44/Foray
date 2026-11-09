@@ -537,3 +537,38 @@ def test_backoff_doubles_with_jitter() -> None:
         delay = backoff_seconds(attempt, None)
         assert 2**attempt * 0.5 <= delay <= 2**attempt * 0.5 + 0.25
     assert backoff_seconds(0, "Wed, 21 Oct 2015 07:28:00 GMT") < 1
+
+
+async def test_a_range_is_only_ever_part_of_a_file(no_backoff: list[float]) -> None:
+    """`fetch_range` reads a large static index a piece at a time (#58): a server that ignores
+    the range and sends the whole file is refused, not read."""
+    body = bytes(range(256)) * 4
+    asked: list[str] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        asked.append(request.headers.get("range", ""))
+        if "ignores" in str(request.url):
+            return httpx2.Response(200, content=body)
+        first, last = request.headers["range"].removeprefix("bytes=").split("-")
+        piece = body[int(first) : int(last) + 1]
+        end = int(first) + len(piece) - 1
+        return httpx2.Response(
+            206, content=piece, headers={"content-range": f"bytes {first}-{end}/{len(body)}"}
+        )
+
+    async with mock_client(handler) as client:
+        piece, size = await client.fetch_range("https://data.example.com/index", 10, 5)
+        assert (piece, size) == (body[10:15], len(body))
+        tail, _ = await client.fetch_range("https://data.example.com/index", 1020, 100)
+        assert tail == body[1020:]  # a range past the end is what there is
+        with pytest.raises(HttpError):
+            await client.fetch_range("https://data.example.com/ignores", 0, 5)
+    assert asked[:2] == ["bytes=10-14", "bytes=1020-1119"]
+
+
+async def test_a_budget_is_shared_by_everything_one_client_does_under_a_key() -> None:
+    async with mock_client(lambda request: httpx2.Response(200)) as client:
+        assert client.take("postings:workday", 5, 3) == 3
+        assert client.take("postings:workday", 5, 3) == 2
+        assert client.take("postings:workday", 5, 3) == 0
+        assert client.take("postings:icims", 5, 3) == 3  # another key, another budget

@@ -70,9 +70,17 @@ REFRESH_CONCURRENCY = 6
 # We are a guest on these APIs: no source sees more than this many of the pool at once.
 PER_SOURCE_CONCURRENCY = 4
 # A listed board (#57) costs a request per posting. One pass reads at most this many of one
-# board's, a few at a time across all the boards of a source; the rest wait for the next pass.
+# board's, a few at a time; the rest wait for the next pass. "A few at a time" is per host: a
+# Workday tenant and an iCIMS portal each answer on their own, SmartRecruiters is one API for
+# every company, and no pass has more than `ALL_POSTINGS_CONCURRENCY` such requests in the air.
 POSTINGS_PER_PASS = 300
 POSTING_CONCURRENCY = 4
+ALL_POSTINGS_CONCURRENCY = 16
+OWN_HOST_SOURCES = frozenset({"workday", "icims"})
+# And one pass reads at most this many postings of one source, whatever the number of boards
+# (#58): a hundred Workday boards registered at once fill in over a day of passes instead of
+# holding the fifteen-minute poll of every other board for hours.
+SOURCE_POSTINGS_PER_PASS = 1200
 
 MULTI_BOARD_GATE = asyncio.Lock()
 
@@ -169,13 +177,15 @@ def _lists_early_career(company_id: uuid.UUID) -> bool:
 async def _read_postings(
     client: HttpClient, adapter: ListedAdapter, company: Company, wanted: Sequence[ListedPosting]
 ) -> tuple[list[tuple[ListedPosting, NormalizedJob]], int]:
-    """Reads each wanted posting, a few at a time for the whole source. Returns those read and
-    how many failed; one that has gone since the listing is neither."""
-    gate = client.gate(f"postings:{adapter.source}", POSTING_CONCURRENCY)
+    """Reads each wanted posting, a few at a time for its host. Returns those read and how many
+    failed; one that has gone since the listing is neither."""
     slug = company.ats_slug or ""
+    host = f"{adapter.source}:{slug}" if adapter.source in OWN_HOST_SOURCES else adapter.source
+    gate = client.gate(f"postings:{host}", POSTING_CONCURRENCY)
+    overall = client.gate("postings", ALL_POSTINGS_CONCURRENCY)
 
     async def one(posting: ListedPosting) -> NormalizedJob | None | Exception:
-        async with gate:
+        async with gate, overall:
             try:
                 return await adapter.read_posting(client, slug, posting, company.name)
             except Exception as error:
@@ -219,7 +229,12 @@ async def _refresh_listed(
             for posting in listing.postings
             if force or known.get(posting.external_id) != posting.version
         ]
-        read, failed = await _read_postings(client, adapter, company, wanted[:POSTINGS_PER_PASS])
+        allowed = client.take(
+            f"postings:{adapter.source}",
+            SOURCE_POSTINGS_PER_PASS,
+            min(len(wanted), POSTINGS_PER_PASS),
+        )
+        read, failed = await _read_postings(client, adapter, company, wanted[:allowed])
         if wanted and failed and not read:
             raise RuntimeError(f"none of {failed} postings could be read")
 
@@ -237,7 +252,7 @@ async def _refresh_listed(
             )
         # More to read than one pass takes, or some that failed: go on next pass whatever the
         # probe says. (A posting that has gone since the listing is not waited for.)
-        pending = len(wanted) > POSTINGS_PER_PASS or failed > 0
+        pending = len(wanted) > allowed or failed > 0
         # One empty listing closes nothing (the empty-board guard, §10.4); forgetting its
         # fingerprint is what makes the next pass list again and so see the second.
         guard_held = not listing.postings and (company.last_fetch_job_count or 0) > 0

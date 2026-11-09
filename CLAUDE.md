@@ -44,6 +44,8 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 | `debug_sleep <seconds>` | a job that sleeps, for checking lock recovery after a `kill -9` (DEBUG only) |
 | `read_facts [--all]` | read level, years, work authorization and clearance for postings that lack them (after the migration that adds the columns, or after `facts.VERSION` changed); `--all` reads every posting again |
 | `facts_benchmark [--show]` | how often the fact reader agrees with the 210 hand labels in `tests/fixtures/facts/`; the posting texts come from `notes/benchmarks/posting-facts/` or the mirror; exits 1 under 90% on level or years |
+| `find_boards --latest 2` / `--crawl CC-MAIN-…` / `--file f.tsv [--found-in list:owner/repo]` | collect board ids as registry candidates, from Common Crawl's index or a file (`source<TAB>id`); asks no board anything |
+| `grow_registry [--sources greenhouse,ashby,lever] [--limit N] [--matching text] [--any-board] [--write-seed]` | ask candidates' boards, newest-seen first, and register the ones that list a software role (`--any-board`: any posting; `--matching`: a Workday site must answer its own search for the text); prints the registry's width before and after; `--write-seed` rewrites `seed.json` from boards seen somewhere public |
 | `watch_now [--email e] [--days N] [--fan-out]` | a watch over the newest postings now instead of after the next scheduled refresh; `--days` widens its window, `--fan-out` starts every watching user's (DEBUG only) |
 
 ## Layout
@@ -185,9 +187,15 @@ An issue reads like the ones already there:
 - **A board whose listing has no descriptions is a listed adapter** (`workday`,
   `smartrecruiters`, `icims`; `sources.LISTED_ADAPTERS`): `count`, `probe`, `list_board` and
   `read_posting`, one request per posting. `refresh._refresh_listed` reads only postings that
-  are new or whose `listing_version` changed, 300 a pass, so never loop over a listing reading
-  every posting. A Workday slug is the board's address (`host/site`), found from a link and
+  are new or whose `listing_version` changed, 300 a board and 1,200 a source each pass
+  (`client.take`), so never loop over a listing reading every posting. A Workday slug is the board's address (`host/site`), found from a link and
   never guessed; SmartRecruiters boards are read only for companies someone added (#69).
+- **Every company says where its board was learned** (`companies.found_in`: `seed`, `user`,
+  `agent`, `jsearch`, `commoncrawl:<crawl>`, `list:<owner>/<repo>`; `discovered_via` is only the
+  first). Pass `found_in` to `upsert_company` when a board comes from somewhere new; the shipped
+  `seed.json` holds only boards seen in a public index or a licensed list (#28). Boards found
+  in bulk go through `board_candidates` and `candidates.grow`, which registers one only after
+  its board answered with postings.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

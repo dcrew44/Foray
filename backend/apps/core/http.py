@@ -249,11 +249,20 @@ class HttpClient:
         )
         self._resolve = resolve or system_resolve
         self._gates: dict[str, asyncio.Semaphore] = {}
+        self._budgets: dict[str, int] = {}
 
     def gate(self, key: str, limit: int) -> asyncio.Semaphore:
         """A semaphore shared by everything this client does under `key`: how a job keeps to a
         few requests at a time against one source, however many boards it is reading."""
         return self._gates.setdefault(key, asyncio.Semaphore(limit))
+
+    def take(self, key: str, total: int, wanted: int) -> int:
+        """Up to `wanted` out of a budget of `total` shared by everything this client does under
+        `key`: how one job keeps to so many requests of a kind, however many boards want them."""
+        left = self._budgets.setdefault(key, total)
+        granted = max(0, min(wanted, left))
+        self._budgets[key] = left - granted
+        return granted
 
     async def __aenter__(self) -> Self:
         return self
@@ -353,6 +362,45 @@ class HttpClient:
         )
         assert fetched.text is not None
         return fetched.text
+
+    async def fetch_range(
+        self,
+        url: str,
+        start: int,
+        length: int,
+        *,
+        timeout: float = 60.0,  # noqa: ASYNC109 (§10.1: per attempt, asyncio.timeout)
+        retries: int = DEFAULT_RETRIES,
+    ) -> tuple[bytes, int | None]:
+        """`length` bytes of a file from `start`, undecoded, and the file's size when the
+        server gives it: how a large static index is read a piece at a time. Only a `206` is
+        an answer (a server that ignores the range would send the whole file), and no redirect
+        is followed."""
+        target = await self.check_url(url)
+        headers = {"user-agent": USER_AGENT, "range": f"bytes={start}-{start + length - 1}"}
+        for attempt in range(retries + 1):
+            last = attempt == retries
+            try:
+                async with (
+                    asyncio.timeout(timeout),
+                    self._client.stream("GET", target, headers=headers, timeout=timeout) as answer,
+                ):
+                    if answer.status_code != 206:
+                        raise HttpError(
+                            answer.status_code, url, retry_after=answer.headers.get("retry-after")
+                        )
+                    body = await _read_capped(answer, length, url)
+                    size = answer.headers.get("content-range", "").rpartition("/")[2]
+                    return body, int(size) if size.isdigit() else None
+            except HttpError as error:
+                if not is_retryable(error.status) or last or gives_up(error):
+                    raise
+                await _sleep(backoff_seconds(attempt, error.retry_after))
+            except (httpx2.RequestError, TimeoutError, OSError) as error:
+                if last:
+                    raise NetworkError(f"Could not fetch {url}: {_reason(error)}") from error
+                await _sleep(backoff_seconds(attempt, None))
+        raise AssertionError("unreachable")  # the last attempt always returns or raises
 
     async def status_of(
         self,

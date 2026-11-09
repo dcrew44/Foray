@@ -55,6 +55,16 @@ class DiscoveredVia(models.TextChoices):
     AGENT = "agent"
     JSEARCH = "jsearch"
     USER = "user"
+    CRAWL = "crawl"  # a board found in a public crawl index or list, then checked live (#58)
+
+
+class CandidateStatus(models.TextChoices):
+    NEW = "new"  # not asked yet
+    LIVE = "live"  # answered with postings: registered
+    EMPTY = "empty"  # answered with none
+    MISSING = "missing"  # no such board
+    SKIPPED = "skipped"  # a real board that lists nothing we were asked to look for
+    ERROR = "error"  # the question failed; asked again next time
 
 
 class JobSource(models.TextChoices):
@@ -156,6 +166,9 @@ class Company(Timestamped):
     # When this board last listed an early-career role or gave someone a match. With one in the
     # last 180 days it is polled every 15 minutes, otherwise hourly.
     last_relevant_at = models.DateTimeField(null=True)
+    # Every place this board was learned from (#58, #28): "seed", "user", "agent", "jsearch",
+    # "commoncrawl:CC-MAIN-2026-43", "list:<owner>/<repo>". `discovered_via` is only the first.
+    found_in = ArrayField(models.TextField(), default=list)
 
     added_by_id: str | None
 
@@ -192,6 +205,41 @@ class Company(Timestamped):
 
     def __str__(self) -> str:
         return self.slug
+
+
+class BoardCandidate(Timestamped):
+    """A board id seen somewhere public (a crawl index, a licensed list) and not yet a company
+    (#58). `candidates.grow` asks each one's board once, registers the ones that answer with
+    postings, and remembers the rest so they are not asked again."""
+
+    id = models.UUIDField(primary_key=True, default=new_id, editable=False)
+    source_type = models.TextField(choices=SourceType.choices)
+    ats_slug = models.TextField()
+    found_in = ArrayField(models.TextField(), default=list)
+    # How many crawls it appeared in, and the newest (ids sort by date): recent boards are asked
+    # first, because they are the ones most likely to be alive.
+    seen = models.IntegerField(default=1)
+    newest = models.TextField(default="")
+    status = models.TextField(choices=CandidateStatus.choices, default=CandidateStatus.NEW)
+    postings = models.IntegerField(null=True)
+    checked_at = models.DateTimeField(null=True)
+
+    class Meta:
+        db_table = "board_candidates"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source_type", "ats_slug"], name="board_candidates_board_unique"
+            ),
+            *choices_checks("board_candidates", source_type=SourceType, status=CandidateStatus),
+        ]
+        indexes = [
+            models.Index(
+                fields=["status", "source_type", "-newest", "-seen"], name="board_candidates_next"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.source_type}:{self.ats_slug}"
 
 
 class Job(models.Model):

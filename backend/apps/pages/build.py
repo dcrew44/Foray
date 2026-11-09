@@ -105,7 +105,7 @@ __all__ = [
 BEST_LIMIT = 6  # Home's "Best matches"
 MATCHES_LIMIT = 1000  # the board and the list
 ACTIVITY_LIMIT = 30  # the activity page's runs
-COMPANIES_LIMIT = 2000  # the registry table
+COMPANIES_LIMIT = 10_000  # the registry table, which the page draws a hundred at a time
 
 QUEUE_STAGES: tuple[str, ...] = ("found", "shortlisted")  # what is waiting for a look
 STRONG_SCORE = 80

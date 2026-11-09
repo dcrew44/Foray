@@ -79,6 +79,8 @@ class CompanyInput:
     needs_browser: bool | None = None
     discovered_via: str = "agent"
     added_by_id: str | None = None
+    # Where the board was learned from (`companies.found_in`); `discovered_via` when not given.
+    found_in: list[str] = field(default_factory=list)
 
 
 def _union(existing: Iterable[str], extra: Iterable[str]) -> list[str]:
@@ -111,8 +113,9 @@ def upsert_company(data: CompanyInput) -> tuple[Company, bool]:
     desired = company_slug(data.slug)
     careers_urls = _union([], data.careers_urls)
     tags = _union([], data.tags)
+    found_in = _union([], data.found_in or [str(data.discovered_via)])
     if data.source_type == SourceType.CAREERS_PAGE:
-        return _upsert_careers_page(data, desired, careers_urls, tags)
+        return _upsert_careers_page(data, desired, careers_urls, tags, found_in)
     if not data.ats_slug:
         raise ValueError(f"A {data.source_type} company needs its board slug")
 
@@ -125,9 +128,9 @@ def upsert_company(data: CompanyInput) -> tuple[Company, bool]:
                     INSERT INTO companies (
                         id, name, domain, slug, source_type, ats_slug, careers_urls, tags, status,
                         needs_browser, listing_cache, poll_state, discovered_via, added_by_id,
-                        created_at, updated_at)
+                        found_in, created_at, updated_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s::text[], %s::text[], %s, %s, '{}'::jsonb,
-                            '{}'::jsonb, %s, %s, now(), now())
+                            '{}'::jsonb, %s, %s, %s::text[], now(), now())
                     ON CONFLICT (source_type, ats_slug) WHERE ats_slug IS NOT NULL DO UPDATE SET
                         name = EXCLUDED.name,
                         domain = coalesce(EXCLUDED.domain, companies.domain),
@@ -137,6 +140,9 @@ def upsert_company(data: CompanyInput) -> tuple[Company, bool]:
                         tags = companies.tags || ARRAY(
                             SELECT u FROM unnest(EXCLUDED.tags) WITH ORDINALITY AS t(u, n)
                             WHERE NOT (u = ANY (companies.tags)) ORDER BY n),
+                        found_in = companies.found_in || ARRAY(
+                            SELECT u FROM unnest(EXCLUDED.found_in) WITH ORDINALITY AS t(u, n)
+                            WHERE NOT (u = ANY (companies.found_in)) ORDER BY n),
                         status = CASE WHEN %s THEN EXCLUDED.status ELSE companies.status END,
                         needs_browser = CASE WHEN %s THEN EXCLUDED.needs_browser
                                              ELSE companies.needs_browser END,
@@ -156,6 +162,7 @@ def upsert_company(data: CompanyInput) -> tuple[Company, bool]:
                         bool(data.needs_browser),
                         str(data.discovered_via),
                         data.added_by_id,
+                        found_in,
                         data.status is not None,
                         data.needs_browser is not None,
                     ],
@@ -171,7 +178,7 @@ def upsert_company(data: CompanyInput) -> tuple[Company, bool]:
 
 
 def _upsert_careers_page(
-    data: CompanyInput, desired: str, careers_urls: list[str], tags: list[str]
+    data: CompanyInput, desired: str, careers_urls: list[str], tags: list[str], found_in: list[str]
 ) -> tuple[Company, bool]:
     for _attempt in range(_SLUG_ATTEMPTS):
         try:
@@ -190,6 +197,7 @@ def _upsert_careers_page(
                     existing.domain = data.domain if data.domain is not None else existing.domain
                     existing.careers_urls = _union(existing.careers_urls, careers_urls)
                     existing.tags = _union(existing.tags, tags)
+                    existing.found_in = _union(existing.found_in, found_in)
                     if data.status is not None:
                         existing.status = data.status
                     if data.needs_browser is not None:
@@ -209,6 +217,7 @@ def _upsert_careers_page(
                     needs_browser=bool(data.needs_browser),
                     discovered_via=data.discovered_via,
                     added_by_id=data.added_by_id,
+                    found_in=found_in,
                 )
                 return company, True
         except IntegrityError as error:
@@ -247,6 +256,9 @@ def poll_interval(company: Company, now: datetime) -> timedelta:
     if company.source_type == SourceType.CAREERS_PAGE:
         base = CAREERS_PAGE_INTERVAL
     elif company.last_relevant_at is not None and now - company.last_relevant_at < RELEVANT_FOR:
+        base = HOT_INTERVAL
+    elif isinstance(company.poll_state, dict) and company.poll_state.get("pending") is True:
+        # A listed board still being read (#57) goes on at the next tick, whatever it lists.
         base = HOT_INTERVAL
     else:
         base = COLD_INTERVAL

@@ -8,6 +8,8 @@
     "dev:worker": "cd backend && uv run python -m foray.env && uv run watchfiles --filter python --sigint-timeout 15 \"python manage.py worker --shutdown-timeout 5\" foray apps",
     "dev:all": "concurrently -n web,api,worker -c cyan,yellow,magenta \"pnpm dev\" \"pnpm dev:api\" \"pnpm dev:worker\"",
     "dev:session": "cd backend && uv run python manage.py dev_session",
+    "rehearsal": "cd backend && uv run python -m foray.rehearsal",
+    "rehearsal:reset": "cd backend && uv run python -m foray.rehearsal reset",
     "build": "next build",
     "start": "next start",
     "lint": "eslint && cd backend && uv run ruff check && uv run ruff format --check",

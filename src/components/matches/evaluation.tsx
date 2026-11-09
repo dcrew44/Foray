@@ -17,10 +17,18 @@ import { Blocker } from "./verdict";
  * evaluation is data at rest, and nothing here needs the client.
  *
  * Both lead with what the match's row leads with: the verdict, one line of why
- * and any blocker (`reason` and `blocker` come from Django with the match).
+ * and any blocker (`reason` and `blocker` come from Django with the match). The
+ * apply lane sits right under the verdict it follows from; the page passes its
+ * picker in (`LaneSelect`), since choosing one is the only thing here that needs
+ * the client.
  */
 
-type Lead = { reason?: string | null; blocker?: string | null };
+type Lead = {
+  reason?: string | null;
+  blocker?: string | null;
+  /** The match's apply lane, shown under the verdict. */
+  lane?: React.ReactNode;
+};
 
 type Requirement = {
   requirement: string;
@@ -83,6 +91,7 @@ export function DeepEvaluation({
   evaluation,
   reason,
   blocker,
+  lane,
 }: { evaluation: DeepEvalView } & Lead) {
   const fits = (["seniority_fit", "location_fit", "salary_fit"] as const)
     .map((key) => {
@@ -104,6 +113,7 @@ export function DeepEvaluation({
         <ScoreChip evaluated score={evaluation.score ?? null} size="xl" />
         <div className="min-w-0 space-y-2 pt-1">
           <p className="text-display text-[20px]">{verdictLabel(evaluation.recommendation)}</p>
+          {lane}
           {(lead || rest) && (
             <p className="text-foreground/85 max-w-[68ch] text-[14.5px] leading-relaxed">
               {lead && <span className="text-foreground font-medium">{lead}</span>}
@@ -213,6 +223,7 @@ export function FastEvaluation({
   evaluation,
   reason,
   blocker,
+  lane,
 }: { evaluation: FastEvalView } & Lead) {
   const lead = clean(reason);
   return (
@@ -221,6 +232,7 @@ export function FastEvaluation({
         <ScoreChip score={evaluation.score ?? null} size="xl" />
         <div className="min-w-0 space-y-2 pt-1">
           <p className="text-display text-[20px]">{NOT_REVIEWED}</p>
+          {lane}
           {lead && (
             <p className="max-w-[68ch] text-[14.5px] leading-relaxed font-medium">{lead}</p>
           )}

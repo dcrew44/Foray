@@ -2,7 +2,7 @@
 
 import { ScanSearch } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { requestLiveRefresh } from "@/components/live/live-provider";
@@ -12,8 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { api, call } from "@/lib/api/client";
 import { STAGE_LABEL, type StageId } from "@/lib/format";
+import { LANES, LANE_LABEL, isLane, laneNote, type Lane } from "@/lib/lanes";
+import { cn } from "@/lib/utils";
 
-import { moveMatch, saveMatchNotes } from "./match-api";
+import { moveMatch, saveMatchNotes, setMatchLane } from "./match-api";
 import { ALL_STAGES as STAGES } from "./stages";
 
 /** Where this match sits on the board, changeable in place. */
@@ -52,6 +54,88 @@ export function StageSelect({ matchId, stage }: { matchId: string; stage: StageI
         ))}
       </select>
     </label>
+  );
+}
+
+/** What the page said about the lane when a choice was made, and the choice. */
+type LaneChoice = { choice: Lane | null; lane: Lane; override: Lane | null };
+
+/**
+ * Which apply lane this match is in, changeable in place: it sits under the verdict it follows
+ * from, so it is quiet (no box until it is pointed at) and says what the lane asks of the user.
+ * The deep review decides the lane until the user chooses one; "Follow the review" is offered
+ * once they have, and hands the match back. Django says where each change leaves the match, and
+ * that sentence is the toast.
+ */
+export function LaneSelect({
+  matchId,
+  lane,
+  override,
+  reviewLane,
+  className,
+}: {
+  matchId: string;
+  /** The lane the match is in. */
+  lane: Lane;
+  /** The lane the user chose; null while the match follows the review. */
+  override: Lane | null;
+  /** The lane the review alone gives, which is where handing it back leaves it. */
+  reviewLane: Lane;
+  className?: string;
+}) {
+  const router = useRouter();
+  const noteId = useId();
+  const [pending, startTransition] = useTransition();
+  // A choice shows at once, in place of what the page said when it was made. Once the page
+  // says something else (the save's refresh, or a new review), the page is right again.
+  const [saving, setSaving] = useState<LaneChoice | null>(null);
+  const current = saving && saving.lane === lane && saving.override === override ? saving : null;
+  if (saving && !current) setSaving(null);
+
+  const shown = current ? (current.choice ?? reviewLane) : lane;
+  const chosen = current ? current.choice !== null : override !== null;
+  const note = laneNote(shown, chosen);
+
+  function choose(choice: Lane | null) {
+    setSaving({ choice, lane, override });
+    startTransition(async () => {
+      const result = await setMatchLane(matchId, choice);
+      if (!result.ok) {
+        setSaving(null);
+        toast.error(result.message ?? "That change did not save.");
+        return;
+      }
+      toast(result.message);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div
+      className={cn(
+        "text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px]",
+        className,
+      )}
+    >
+      <label className="flex items-center gap-1.5">
+        <span>Lane</span>
+        <select
+          aria-describedby={note ? noteId : undefined}
+          className="text-foreground hover:border-border h-7 rounded-md border border-transparent bg-transparent px-1 text-[13.5px] font-medium"
+          disabled={pending}
+          onChange={(event) => choose(isLane(event.target.value) ? event.target.value : null)}
+          value={shown}
+        >
+          {LANES.map((id) => (
+            <option key={id} value={id}>
+              {LANE_LABEL[id]}
+            </option>
+          ))}
+          {chosen && <option value="review">Follow the review</option>}
+        </select>
+      </label>
+      {note && <span id={noteId}>{note}</span>}
+    </div>
   );
 }
 

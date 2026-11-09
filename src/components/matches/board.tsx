@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { ClosedMark } from "./job-signals";
+import { LaneLabel } from "./lane";
 import { moveMatch } from "./match-api";
 import { CLOSED_STAGES as CLOSED, OPEN_STAGES as OPEN } from "./stages";
 import { Why } from "./verdict";
@@ -56,6 +57,7 @@ export type BoardMatch = Pick<
   | "recommendation"
   | "reason"
   | "blocker"
+  | "lane"
   | "salaryMin"
   | "salaryMax"
   | "salaryCurrency"
@@ -233,9 +235,12 @@ function Card({ match, dragging = false }: { match: BoardMatch; dragging?: boole
           <p className="text-foreground/75 mt-0.5 truncate text-[12.5px]">{match.company}</p>
         </div>
       </div>
-      {/* What the card leads with: the verdict, one line of why, any blocker. */}
+      {/* What the card leads with: the verdict and its lane, one line of why, any blocker. */}
       <div className="mt-2.5 space-y-1.5">
-        <VerdictPill recommendation={match.recommendation} reviewed={match.deepScore != null} />
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 empty:hidden">
+          <VerdictPill recommendation={match.recommendation} reviewed={match.deepScore != null} />
+          <LaneLabel lane={match.lane} />
+        </span>
         <Why blocker={match.blocker} clamp={2} reason={match.reason} />
       </div>
       <div className="text-muted-foreground mt-2.5 flex items-center gap-1 text-[12px]">

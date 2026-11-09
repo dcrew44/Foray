@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import type { BoardMatch } from "./board";
 import { ClosedMark } from "./job-signals";
+import { LaneLabel } from "./lane";
 import { moveMatch } from "./match-api";
 import { ALL_STAGES as STAGES } from "./stages";
 import { Why } from "./verdict";
@@ -40,9 +41,12 @@ const MIN_SCORES = [
 export function MatchTable({
   matches,
   initialStage,
+  laneFilter,
 }: {
   matches: BoardMatch[];
   initialStage: StageId | null;
+  /** The page's lane filter, which narrows `matches` itself: shown among the list's own. */
+  laneFilter?: React.ReactNode;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -113,6 +117,7 @@ export function MatchTable({
             </option>
           ))}
         </select>
+        {laneFilter}
         <div className="bg-muted/60 flex h-8 items-center rounded-lg p-0.5" role="group" aria-label="Minimum fit">
           {MIN_SCORES.map((option) => (
             <button
@@ -180,11 +185,14 @@ export function MatchTable({
                           column; on a phone it drops under the title instead of squeezing it. */}
                       <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
                         <span className="min-w-0 truncate font-medium group-hover:underline">{match.title}</span>
-                        <VerdictPill
-                          className="shrink-0 sm:ml-auto"
-                          recommendation={match.recommendation}
-                          reviewed={match.deepScore != null}
-                        />
+                        {/* The lane sits before the pill, so the pills still line up. */}
+                        <span className="flex shrink-0 items-center gap-2 empty:hidden sm:ml-auto">
+                          <LaneLabel lane={match.lane} />
+                          <VerdictPill
+                            recommendation={match.recommendation}
+                            reviewed={match.deepScore != null}
+                          />
+                        </span>
                       </span>
                       <span className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-2 text-[12.5px]">
                         <span className="truncate">{match.company}</span>

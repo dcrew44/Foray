@@ -89,6 +89,15 @@ function boardUrl(row: CompanyRow): string | null {
       return `https://${row.atsSlug}.recruitee.com`;
     case "gem":
       return `https://jobs.gem.com/${row.atsSlug}`;
+    case "workday":
+      // The slug is the career site's address: `tenant.wdN.myworkdayjobs.com/Site`.
+      return `https://${row.atsSlug}`;
+    case "smartrecruiters":
+      return `https://careers.smartrecruiters.com/${row.atsSlug}`;
+    case "icims":
+      return `https://${row.atsSlug}.icims.com/jobs/search`;
+    case "jibe":
+      return `https://${row.atsSlug}/jobs`;
     default:
       return null;
   }

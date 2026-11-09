@@ -1174,7 +1174,7 @@ export interface components {
          * SourceType
          * @enum {string}
          */
-        SourceType: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "careers_page";
+        SourceType: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "jibe" | "workday" | "smartrecruiters" | "icims" | "careers_page";
         /** CompanyStatusIn */
         CompanyStatusIn: {
             /**
@@ -1682,7 +1682,7 @@ export interface components {
              * Source
              * @enum {string}
              */
-            source: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "jsearch" | "web";
+            source: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "jibe" | "workday" | "smartrecruiters" | "icims" | "jsearch" | "web";
             facts: components["schemas"]["JobFacts"];
         };
         /**

@@ -73,8 +73,8 @@ approved, what it cost and how long it took.
 
 ### The boards Foray watches
 
-A shared registry of company job boards on Greenhouse, Lever, Ashby, Workable, Recruitee
-and Gem, kept in a local mirror (closed postings are kept, marked closed). While the worker
+A shared registry of company job boards on Greenhouse, Lever, Ashby, Workable, Recruitee,
+Gem, Workday, SmartRecruiters and iCIMS, kept in a local mirror (closed postings are kept, marked closed). While the worker
 runs, each board is asked every 15 minutes whether it changed (hourly for boards that list
 nothing early-career and have given nobody a match), and the Companies page reports how soon
 after it went up a new posting was seen. Add a company by name, website or board link, or just mention it in chat; career
@@ -137,7 +137,7 @@ flowchart LR
     Web -->|"/api/* rewrite"| Api["api<br/>Django 6.1 + django-ninja<br/>on uvicorn :8000"]
     Api --> DB[("Postgres 18<br/>data + job queue")]
     Worker["worker<br/>procrastinate"] --> DB
-    Worker --> Boards["Job boards<br/>Greenhouse, Lever, Ashby,<br/>Workable, Recruitee, Gem, JSearch"]
+    Worker --> Boards["Job boards<br/>Greenhouse, Lever, Ashby,<br/>Workable, Recruitee, Gem, Workday,<br/>SmartRecruiters, iCIMS, JSearch"]
     Worker --> LLM["LLM providers<br/>OpenAI, Anthropic, Google,<br/>DeepSeek, OpenAI-compatible"]
     Api -->|chat stream| LLM
 ```

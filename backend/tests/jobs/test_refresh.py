@@ -195,9 +195,9 @@ def test_seed_fetch_refreshes_only_the_loaded_active_companies(
 def test_fetch_board_prints_postings(monkeypatch: pytest.MonkeyPatch) -> None:
     jobs = [greenhouse.normalize_job("anthropic", job) for job in BOARD["jobs"]]
 
-    async def fake_fetch(source: str, slug: str) -> list:
-        assert (source, slug) == ("greenhouse", "anthropic")
-        return jobs
+    async def fake_fetch(source: str, slug: str, limit: int) -> tuple[list, int]:
+        assert (source, slug, limit) == ("greenhouse", "anthropic", 2)
+        return jobs, len(jobs)
 
     monkeypatch.setattr(fetch_board_command, "_fetch", fake_fetch)
     out = io.StringIO()
@@ -212,5 +212,5 @@ def test_fetch_board_prints_postings(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_fetch_board_usage_errors_exit_2() -> None:
     with pytest.raises(SystemExit) as raised:
-        call_command("fetch_board", "workday", "acme", stderr=io.StringIO())
+        call_command("fetch_board", "taleo", "acme", stderr=io.StringIO())
     assert raised.value.code == 2

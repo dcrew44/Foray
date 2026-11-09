@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CompanyMark, PageBody, Section } from "@/components/foray/primitives";
+import { SOURCE_LABEL } from "@/components/companies/company-row";
 import { RefreshOn } from "@/components/live/refresh-on";
 import { DeepEvaluation, FastEvaluation } from "@/components/matches/evaluation";
 import { JobFactsList } from "@/components/matches/job-facts";
@@ -154,7 +155,7 @@ export default async function MatchPage({ params }: Params) {
               <Row label={STAGE_LABEL[match.stage]} value={`since ${timeAgo(match.stageChangedAt)}`} />
               {match.fastScore != null && <Row label="Triage score" value={String(match.fastScore)} />}
               {match.deepScore != null && <Row label="Deep review" value={String(match.deepScore)} />}
-              <Row label="Source" value={job.source === "jsearch" ? "Job aggregator" : job.source === "web" ? "Careers page" : `${job.source[0]!.toUpperCase()}${job.source.slice(1)} board`} />
+              <Row label="Source" value={SOURCE_LABEL[job.source] ?? job.source} />
             </dl>
           </Section>
         </aside>

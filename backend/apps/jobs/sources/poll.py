@@ -30,7 +30,7 @@ from typing import Any
 from apps.core.http import HttpClient, HttpError, Validators
 from apps.jobs.sources.types import BoardAdapter, BoardNotFound, NormalizedJob, js_iso
 
-__all__ = ["FULL_READ_EVERY", "VERSION", "PollState", "Polled", "poll_board"]
+__all__ = ["FULL_READ_EVERY", "VERSION", "PollState", "Polled", "full_read_due", "poll_board"]
 
 VERSION = 1
 FULL_READ_EVERY = timedelta(hours=24)
@@ -45,6 +45,9 @@ class PollState:
     last_modified: str | None = None
     digest: str | None = None  # sha1 of the body the validators came with
     read_at: datetime | None = None  # when the board was last read whole
+    # A listed board (`ListedAdapter`) still has postings to read: the next pass goes on with
+    # them whatever the probe says.
+    pending: bool = False
     version: int = VERSION
 
     @classmethod
@@ -58,17 +61,22 @@ class PollState:
             value = stored.get(key)
             return value if isinstance(value, str) and value else None
 
+        # No `readAt` is a listed board still being caught up; one that does not parse is not
+        # a state anyone wrote.
         read_at: datetime | None = None
-        try:
-            read_at = datetime.fromisoformat(text("readAt") or "")
-        except ValueError:
-            return cls()
+        stamped = text("readAt")
+        if stamped is not None:
+            try:
+                read_at = datetime.fromisoformat(stamped)
+            except ValueError:
+                return cls()
         return cls(
             url=text("url"),
             etag=text("etag"),
             last_modified=text("lastModified"),
             digest=text("digest"),
             read_at=read_at,
+            pending=stored.get("pending") is True,
         )
 
     def dump(self) -> dict[str, Any]:
@@ -79,6 +87,7 @@ class PollState:
             "lastModified": self.last_modified,
             "digest": self.digest,
             "readAt": js_iso(self.read_at),
+            "pending": self.pending,
         }
 
     def validators(self, url: str) -> Validators:
@@ -95,7 +104,8 @@ class Polled:
     state: PollState
 
 
-def _full_read_due(state: PollState, company_id: uuid.UUID, now: datetime) -> bool:
+def full_read_due(state: PollState, company_id: uuid.UUID, now: datetime) -> bool:
+    """Whether the daily whole read has come round (each company's is put off by its id)."""
     if state.read_at is None:
         return True
     spread = FULL_READ_SPREAD * (company_id.int % 1000 / 1000)
@@ -115,7 +125,7 @@ async def poll_board(
     """One poll of one board. Raises `BoardNotFound` on a 404 and whatever else the fetch
     raises. `force` reads the board whole (a person pressed "Fetch now")."""
     url = (adapter.probe_url or adapter.board_url)(slug)
-    full = force or _full_read_due(state, company_id, now)
+    full = force or full_read_due(state, company_id, now)
     try:
         answer = await client.fetch_conditional(
             url, Validators() if full else state.validators(url)

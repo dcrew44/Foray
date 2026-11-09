@@ -243,6 +243,60 @@ async def test_validators_never_follow_a_redirect_to_another_origin() -> None:
     assert raised.value.status == 304
 
 
+# --- queries that are POSTs, and a look without following ---------------------------------------
+
+
+async def test_post_json_sends_a_json_body_and_is_retried_like_a_get(
+    no_backoff: list[float],
+) -> None:
+    seen: list[tuple[str, str | None, bytes]] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen.append((request.method, request.headers.get("content-type"), request.content))
+        return httpx2.Response(503 if len(seen) == 1 else 200, text='{"total":2}')
+
+    async with mock_client(handler) as client:
+        body = await client.post_json("https://example.com/jobs", {"limit": 20, "offset": 0})
+    assert body == '{"total":2}'
+    assert seen == [("POST", "application/json", b'{"limit":20,"offset":0}')] * 2
+    assert len(no_backoff) == 1  # a query, so a 503 is retried
+
+
+async def test_a_posted_body_never_follows_a_redirect_to_another_origin() -> None:
+    seen: dict[str, tuple[str, bytes]] = {}
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen[request.url.host] = (request.method, request.content)
+        if request.url.host == "example.com":
+            return httpx2.Response(302, headers={"location": "https://other.example/jobs"})
+        return httpx2.Response(200, text="{}")
+
+    async with mock_client(handler) as client:
+        await client.post_json("https://example.com/jobs", {"q": "secret"})
+    assert seen["example.com"] == ("POST", b'{"q":"secret"}')
+    assert seen["other.example"] == ("GET", b"")
+
+
+async def test_status_of_looks_without_following_or_reading() -> None:
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        if request.url.path == "/known":
+            return httpx2.Response(200, text="a page nobody reads")
+        return httpx2.Response(302, headers={"location": "https://example.com/elsewhere"})
+
+    async with mock_client(handler) as client:
+        assert await client.status_of("https://example.com/known") == (200, None)
+        assert await client.status_of("https://example.com/unknown") == (
+            302,
+            "https://example.com/elsewhere",
+        )
+        with pytest.raises(HttpError) as raised:
+            await client.status_of("http://169.254.169.254/latest")
+        assert raised.value.blocked
+        # One gate per key for the life of the client: a job's limit on one source.
+        assert client.gate("postings:workday", 4) is client.gate("postings:workday", 9)
+        assert client.gate("postings:icims", 4) is not client.gate("postings:workday", 4)
+
+
 async def test_on_attempt_runs_before_every_attempt() -> None:
     answers = [httpx2.Response(503, text="busy"), httpx2.Response(200, text="fine")]
     sent: list[int] = []

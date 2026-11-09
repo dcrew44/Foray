@@ -31,6 +31,7 @@ from apps.jobs.models import ApiUsage
 from apps.jobs.sources.clean import clean_description
 from apps.jobs.sources.dedupe import content_hash, dedupe_key, job_id
 from apps.jobs.sources.js import IA, js_lower, js_trim, js_truthy
+from apps.jobs.sources.links import board_links
 from apps.jobs.sources.normalize import (
     detect_remote,
     is_plausible_salary,
@@ -147,6 +148,9 @@ class DiscoveredBoard:
     source: BoardSource
     slug: str
     company_name: str = ""
+    # What to build our own company slug from, when the board's slug is an address rather
+    # than a name (a Workday host and site).
+    label: str = ""
 
 
 def _period_of(value: Any) -> SalaryPeriod | None:
@@ -174,6 +178,9 @@ def ats_from_apply_options(job: dict[str, Any]) -> DiscoveredBoard | None:
             found = pattern.search(link)
             if found:
                 return DiscoveredBoard(source, found.group(1).lower())
+        # Workday, SmartRecruiters and iCIMS: most of what an aggregator links to (#57).
+        for board in board_links(link):
+            return DiscoveredBoard(board.source, board.slug, label=board.label)
     return None
 
 
@@ -361,7 +368,7 @@ async def search_jsearch(
                 key_ = f"{board.source}:{board.slug}"
                 if key_ not in boards:
                     name = js_trim(job.get("employer_name") or "") or board.slug
-                    boards[key_] = DiscoveredBoard(board.source, board.slug, name)
+                    boards[key_] = DiscoveredBoard(board.source, board.slug, name, board.label)
 
         cursor = data.get("cursor")
         if not cursor or not page_jobs:

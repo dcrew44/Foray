@@ -112,8 +112,11 @@ def test_finds_nothing_without_a_board() -> None:
 
 
 def test_recognises_boards_without_an_api() -> None:
-    assert has_unsupported_ats('href="https://acme.wd1.myworkdayjobs.com/careers"')
-    assert has_unsupported_ats('href="https://jobs.smartrecruiters.com/acme"')
+    assert has_unsupported_ats('href="https://acme.taleo.net/careersection/2/jobsearch.ftl"')
+    assert has_unsupported_ats('href="https://acme.bamboohr.com/careers"')
+    # Workday, SmartRecruiters and iCIMS have adapters now (#57).
+    assert not has_unsupported_ats('href="https://acme.wd1.myworkdayjobs.com/careers"')
+    assert not has_unsupported_ats('href="https://jobs.smartrecruiters.com/acme"')
 
 
 def test_does_not_flag_a_readable_board() -> None:
@@ -310,7 +313,7 @@ async def test_a_domain_follows_its_careers_page_to_the_board() -> None:
 
 @pytestmark_db
 async def test_an_unsupported_ats_registers_a_careers_page() -> None:
-    page = '<a href="https://acme.wd1.myworkdayjobs.com/External">Jobs</a>'
+    page = '<a href="https://acme.taleo.net/careersection/2/jobsearch.ftl">Jobs</a>'
     handler = routes({"https://acme.com/jobs": html(page)})
     async with mock_client(handler) as client:
         result = await discover_company(client, "https://www.acme.com")

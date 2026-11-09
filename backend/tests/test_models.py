@@ -130,7 +130,7 @@ def test_duplicate_base_version_rejected() -> None:
     "job_id",
     [
         "greenhouse:acme",  # no external id
-        "workday:acme:1",  # unknown source
+        "taleo:acme:1",  # unknown source
         "greenhouse::1",  # empty company slug
         "greenhouse:acme:",  # empty external id
         "acme-1",

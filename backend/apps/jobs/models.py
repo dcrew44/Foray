@@ -29,6 +29,10 @@ class SourceType(models.TextChoices):
     WORKABLE = "workable"
     RECRUITEE = "recruitee"
     GEM = "gem"
+    JIBE = "jibe"  # iCIMS career sites on the employer's own domain
+    WORKDAY = "workday"
+    SMARTRECRUITERS = "smartrecruiters"
+    ICIMS = "icims"  # classic iCIMS portals, <name>.icims.com
     CAREERS_PAGE = "careers_page"
 
 
@@ -60,6 +64,10 @@ class JobSource(models.TextChoices):
     WORKABLE = "workable"
     RECRUITEE = "recruitee"
     GEM = "gem"
+    JIBE = "jibe"
+    WORKDAY = "workday"
+    SMARTRECRUITERS = "smartrecruiters"
+    ICIMS = "icims"
     JSEARCH = "jsearch"
     WEB = "web"
 
@@ -109,7 +117,10 @@ class Clearance(models.TextChoices):
 
 
 # The shape of every job id: `source:company_slug:external_id`, or `web:<slug>:<sha1(url)>`.
-JOB_ID_PATTERN = r"^(greenhouse|lever|ashby|workable|recruitee|gem|jsearch|web):[^:]+:.+$"
+JOB_ID_PATTERN = (
+    r"^(greenhouse|lever|ashby|workable|recruitee|gem|jibe|workday|smartrecruiters|icims|jsearch"
+    r"|web):[^:]+:.+$"
+)
 COMPANY_SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
 
 
@@ -229,6 +240,10 @@ class Job(models.Model):
     clearance = models.TextField(choices=Clearance.choices, db_default=Clearance.NONE)
     facts = models.JSONField(null=True)
     facts_version = models.SmallIntegerField(null=True)
+    # For sources read a posting at a time (`sources.types.ListedAdapter`, #57): what the
+    # source's listing said of this posting when it was last read. A different value in the
+    # listing means it has to be read again.
+    listing_version = models.TextField(null=True)  # noqa: DJ001 (null: not from a listed source)
 
     company_id: uuid.UUID | None
 

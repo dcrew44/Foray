@@ -1,0 +1,44 @@
+{
+  "fixture": "smartrecruiters/servicenow.posting.json",
+  "request": "https://api.smartrecruiters.com/v1/companies/ServiceNow/postings/744000160721658",
+  "slug": "ServiceNow",
+  "companyName": "ServiceNow",
+  "jobs": [
+    {
+      "id": "smartrecruiters:ServiceNow:744000160721658",
+      "source": "smartrecruiters",
+      "externalId": "744000160721658",
+      "companySlug": "ServiceNow",
+      "companyName": "ServiceNow",
+      "title": "Lead Mid-Market Account Executive",
+      "locations": [
+        "San Diego, CALIFORNIA, United States"
+      ],
+      "locationNorm": {
+        "raw": "San Diego, CALIFORNIA, United States",
+        "city": "San Diego",
+        "region": "CA",
+        "country": "US",
+        "metro": null
+      },
+      "remote": "remote",
+      "employmentType": "Full-time",
+      "salary": {
+        "min": 90360.0,
+        "max": 149100.0,
+        "currency": "USD",
+        "period": "year"
+      },
+      "descriptionText": "Company Description\n\nIt all started when engineer Fred Luddy wrote code that automated a tedious task for his coworker, Phyllis. She cried tears of joy. That moment inspired Fred to build a company that could do that for everyone—freeing people from busywork so they could focus on meaningful work. Today, ServiceNow is the AI control tower for business reinvention. Our ServiceNow AI platform brings together any AI, any data, and any workflow— helping 85% of the Fortune 500® work smarter, faster, and better. We're building an AI-native culture where technology and talent are unstoppable together. And we're just getting started.\n\nJoin us to put AI to work for people.\n\nJob Description\n\nYou’ll drive new business sales revenue from a SaaS license model. You’ll own a high-velocity product-led sales motion for SMB and Mid-Market accounts. Your work starts with self-serve trial and product signals, then moves into consultative, multi-threaded deals where buyers expand usage, add teams, and convert to annual commitments. You will combine account planning, territory planning, prospect research, business development, and targeted field activity across a defined set of prospects, territory, or vertical.\n\nWhat you get to do in this role:\n\n•\nConvert product-qualified leads from free trials, Slack and Teams installs, and inbound requests into paid, annual commitments\n\n•\nBuild relationships with multiple decision-makers and influencers (e.g., IT leaders, CIOs, COOs, HR and Legal leaders, and operations heads) who own employee-facing request workflows\n\n•\nExpand accounts by identifying new teams that can benefit from Flow (IT, HR, Legal, Finance, and others) and driving land-and-expand across departments\n\n•\nRun efficient, repeatable pipeline in a high-volume environment, managing a portfolio of SMB and Mid-Market accounts with disciplined forecasting and CRM hygiene\n\n•\nAct as a trusted advisor by understanding each customer’s request volume, support bottlenecks, and tool stack, then show how Flow resolves those requests and reduces ticket queues\n\n•\nPartner with existing ServiceNow customers to activate Flow using assists they already own, removing procurement friction and accelerating time to value\n\n•\nIdentify the right specialists and support resources (solutions consultants, customer success, partners, and marketing) at the right moment in a deal. Use product usage data, in-app signals, and customer feedback to shape your outreach, identify expansion opportunities, and surface insights to product and go-to-market teams\n\nQualifications\n\nTo be successful in this role you have:\n\n•\nExperience integrating AI into work processes, decision-making, or problem-solving, including using AI-powered tools, automating workflows, or analyzing AI-driven insights\n\n•\n5+ years of sales experience in a software or SaaS sales organization, with a track record in SMB or Mid-Market\n\n•\nDemonstrated experience running product-led or self-serve motions, including converting trial users, managing usage-based expansion, and working with PLG signals\n\n•\nA track record of building trusted relationships with current and prospective clients and across internal teams\n\n•\nAbility to produce new business, negotiate deals, and build relationships with senior leaders at fast-moving companies\n\n•\nA consistent record of achieving or exceeding sales targets in a high-velocity environment\n\n•\nComfort selling across Slack, Microsoft Teams, and ITSM/HR service workflows, or the ability to ramp quickly on them\n\n•\nThe ability to see the bigger picture and how Flow fits into a customer’s broader IT and operations strategy and ServiceNow’s plans\n\n•\nA customer success mindset and experience working in a “win as a team” environment\n\nFor positions in this location, we offer a base pay of $90,360 - $149,100, plus equity (when applicable), variable/incentive compensation and benefits. Sales positions generally offer a competitive On Target Earnings (OTE) incentive compensation structure. Please note that the base pay shown is a guideline, and individual total compensation will vary based on factors such as qualifications, skill level, competencies, and work location. We also offer health plans, including flexible spending accounts, a 401(k) Plan with company match, ESPP, matching donations, a flexible time away plan and family leave programs. Compensation is based on the geographic location in which the role is located and is subject to change based on work location.\n\nAdditional Information\n\nWork Personas\n\nWe approach our distributed world of work with flexibility and trust. Work personas (flexible, remote, or required in office) are categories that are assigned to ServiceNow employees depending on the nature of their work and their assigned work location. Learn more here. To determine eligibility for a work persona, ServiceNow may confirm the distance between your primary residence and the closest ServiceNow office using a third-party service.\n\nAccommodations\n\nWe strive to create an accessible and inclusive experience for all candidates. If you require a reasonable accommodation to complete any part of the application process, or are unable to use this online application and need an alternative method to apply, please contact globaltalentss@servicenow.com for assistance.\n\nExport Control Regulations\n\nFor positions requiring access to controlled technology subject to export control regulations, including the U.S. Export Administration Regulations (EAR), ServiceNow may be required to obtain export control approval from government authorities for certain individuals. All employment is contingent upon ServiceNow obtaining any export license or other approval that may be required by relevant export control authorities.\n\nFrom Fortune. ©2026 Fortune Media IP Limited. All rights reserved. Used under license.",
+      "url": "https://jobs.smartrecruiters.com/ServiceNow/744000160721658-lead-mid-market-account-executive",
+      "applyUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000160721658-lead-mid-market-account-executive?oga=true",
+      "postedAt": "2026-11-09T20:08:50.882Z",
+      "contentHash": "b9e7c4deff2e0058e7193db2d74b63e6ca54c30a",
+      "dedupeKey": "1806341f969aebdb0ef04298b4b269076636726d",
+      "descriptionRaw": {
+        "sha256": "357356edd0646c0cb1245bd8633f92414e789610ac4dfec2e08ba513865fdda2",
+        "utf8Bytes": 7203
+      }
+    }
+  ]
+}

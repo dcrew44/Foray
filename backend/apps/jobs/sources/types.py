@@ -25,9 +25,31 @@ if TYPE_CHECKING:
 log = logging.getLogger("foray.jobs")
 
 type JobSourceId = Literal[
-    "greenhouse", "lever", "ashby", "workable", "recruitee", "gem", "jsearch", "web"
+    "greenhouse",
+    "lever",
+    "ashby",
+    "workable",
+    "recruitee",
+    "gem",
+    "jibe",
+    "workday",
+    "smartrecruiters",
+    "icims",
+    "jsearch",
+    "web",
 ]
-type BoardSource = Literal["greenhouse", "lever", "ashby", "workable", "recruitee", "gem"]
+type BoardSource = Literal[
+    "greenhouse",
+    "lever",
+    "ashby",
+    "workable",
+    "recruitee",
+    "gem",
+    "jibe",
+    "workday",
+    "smartrecruiters",
+    "icims",
+]
 type RemoteKind = Literal["remote", "hybrid", "onsite", "unknown"]
 type SalaryPeriod = Literal["year", "month", "hour"]
 
@@ -123,6 +145,49 @@ class BoardAdapter:
     board_url: Callable[[str], str] = field(repr=False)
     parse_board: Callable[[str, str], list[NormalizedJob]] = field(repr=False)
     probe_url: Callable[[str], str] | None = field(default=None, repr=False)
+    # How many postings the board has, in one request, for a source whose board is several
+    # pages (verifying a board should not read all of it). None: `fetch_board` is one request.
+    count: Callable[[HttpClient, str], Awaitable[int]] | None = field(default=None, repr=False)
+
+
+@dataclass(frozen=True, slots=True)
+class ListedPosting:
+    """One posting as a source's listing shows it, before its description has been read."""
+
+    external_id: str
+    # Changes when the posting has to be read again: what the listing itself says of it (its
+    # title and place, a `lastmod`, a release date).
+    version: str
+    # What `read_posting` needs to fetch it (the listing's own item).
+    item: Any = field(repr=False, compare=False)
+
+
+@dataclass(frozen=True, slots=True)
+class Listing:
+    postings: list[ListedPosting]
+    # False when the source cut the list short (Workday shows at most 2,000): what is missing
+    # from it cannot be concluded closed.
+    complete: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class ListedAdapter:
+    """A source whose listing has no descriptions: every posting costs a request of its own.
+
+    Reading such a board whole on every poll would be thousands of requests, so it is read
+    incrementally (`refresh.refresh_listed`): `probe` says whether anything changed, `list_board`
+    names what is open, and `read_posting` is called only for a posting the mirror has not read
+    in that version. `probe` returns a fingerprint that changes whenever the board does, and
+    `count` how many postings are open, in one request (what verifying a board needs).
+    """
+
+    source: BoardSource
+    count: Callable[[HttpClient, str], Awaitable[int]] = field(repr=False)
+    probe: Callable[[HttpClient, str], Awaitable[str]] = field(repr=False)
+    list_board: Callable[[HttpClient, str], Awaitable[Listing]] = field(repr=False)
+    read_posting: Callable[
+        [HttpClient, str, ListedPosting, str], Awaitable[NormalizedJob | None]
+    ] = field(repr=False)
 
 
 # --- dates ---------------------------------------------------------------------------------------

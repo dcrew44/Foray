@@ -1,0 +1,48 @@
+{
+  "fixture": "workday/nvidia.posting.json",
+  "request": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/job/Principal-CPU-Software-Architect_JR2019801",
+  "slug": "nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite",
+  "companyName": "NVIDIA",
+  "jobs": [
+    {
+      "id": "workday:nvidia.NVIDIAExternalCareerSite:Principal-CPU-Software-Architect_JR2019801",
+      "source": "workday",
+      "externalId": "Principal-CPU-Software-Architect_JR2019801",
+      "companySlug": "nvidia.NVIDIAExternalCareerSite",
+      "companyName": "NVIDIA",
+      "title": "Principal CPU Software Architect",
+      "locations": [
+        "Santa Clara, CA",
+        "Austin, TX",
+        "Durham, NC",
+        "Boulder, CO",
+        "Redmond, WA"
+      ],
+      "locationNorm": {
+        "raw": "Santa Clara, CA",
+        "city": "Santa Clara",
+        "region": "CA",
+        "country": "US",
+        "metro": "bay-area"
+      },
+      "remote": "onsite",
+      "employmentType": "Full time",
+      "salary": {
+        "min": null,
+        "max": null,
+        "currency": null,
+        "period": null
+      },
+      "descriptionText": "We are now looking for a CPU System Software Architect!\n\nDo you want to be a part of the Artificial Intelligence Revolution? Would you like to work with world-class systems architects and deep learning professionals to define the next generation CPUs and System on Chips? NVIDIA is developing processor and system architectures that are at the forefront of accelerating agentic AI, building data centers, and enabling other high-performance computing applications. We are architecting the most advanced CPUs and SoC's in the world for these applications and are looking for software architects to join our effort. In this position, you will have the opportunity to work with teams to maximize the potential of our SoC products, bringing together NVIDIA CPUs, GPUs, custom processors and accelerators. Your role will be cross disciplinary, collaborating with industry partners, customers, internal architects, software, ASIC design, verification, and platform teams. Our software architects excel at pushing the state of the art, while making the best engineering trade-offs.\n\nWhat you’ll be doing:\n\n•\nCollaborate with Hardware and Software Engineers to craft the next generation CPUs and SoCs\n\n•\nBring a deep understanding of Software Architecture, system software technologies, and modern OSes to drive hardware architecture decisions\n\n•\nProvide direction and advice for designing optimized solutions to various software engineering organizations\n\n•\nCollaborate with key partners to customize solutions to meet their requirements\n\n•\nResearch upcoming industry directions for NVIDIA's key markets and provide engagement advice to Sr. Management\n\nWhat we need to see:\n\n•\nYou have a MS or PhD degree in computer or electrical engineering or equivalent experience\n\n•\n15+ years of software and/or architecture experience with CPUs and SoCs.\n\n•\nA deep knowledge of OS/driver software stacks, e.g., Linux and a very strong Software development background with C\n\n•\nExcellent communication skills to describe hard problems in simple terms and drive multi-functional groups to efficient engineering solutions\n\n•\nExcellent analytical, written, and verbal interpersonal skills and ability to work as part of a global team\n\nWays to stand out from the crowd:\n\n•\nExcellent understanding of processor architectures such as ARM, RISC-V, x86\n\n•\nBackground with virtualization technologies and hypervisors\n\n•\nFamiliarity with CPU and SoC security architecture, such as ARM Confidential Compute\n\n•\nExperience in working with the Linux open source community\n\nNVIDIA is widely considered to be one of the technology world’s most desirable employers. We have some of the most forward-thinking and hardworking people in the world working for us. If you're creative, autonomous and love a challenge, we want to hear from you!\n\nYour base salary will be determined based on your location, experience, and other objective job-related factors. The expected base salary ranges for this position are:\n272,000 USD – 431,250 USD for Level 6; and 320,000 USD – 488,750 USD for Level 7.\n\nYou will also be eligible for equity and benefits.\n\nApplications for this job will be accepted at least until November 13, 2026.\n\nThis posting is for an existing vacancy.\n\nNVIDIA uses AI tools in its recruiting processes.\n\nNVIDIA is committed to fostering an inclusive work environment and proud to be an equal opportunity employer. As we highly value diversity in our current and future employees, we do not discriminate (including in our hiring and promotion practices) on the basis of race, religion, color, national origin, gender, gender expression, sexual orientation, age, marital status, veteran status, disability status or any other characteristic protected by law.",
+      "url": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/Principal-CPU-Software-Architect_JR2019801",
+      "applyUrl": null,
+      "postedAt": "2026-11-09T00:00:00.000Z",
+      "contentHash": "b07db98570da5e1e4146cce9ff87f52eebbc0954",
+      "dedupeKey": "826421aabfecd9ad95c9a52976ed2cc67d4ae32b",
+      "descriptionRaw": {
+        "sha256": "4e95448ff4da0a12a2d3517a0a469a45bd595d77c303286d6321c8927507c399",
+        "utf8Bytes": 4465
+      }
+    }
+  ]
+}

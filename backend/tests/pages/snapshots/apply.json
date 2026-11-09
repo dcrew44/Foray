@@ -1,0 +1,41 @@
+{
+  "failed": [],
+  "needsAnswers": [
+    {
+      "answers": [
+        {
+          "key": "string",
+          "kind": "string",
+          "label": "string",
+          "options": [],
+          "required": "boolean",
+          "source": "string",
+          "type": "string",
+          "value": "null"
+        }
+      ],
+      "applyUrl": "string",
+      "company": "string",
+      "deepScore": "null",
+      "error": "string",
+      "fastScore": "number",
+      "firstSeenAt": "string",
+      "formRead": "boolean",
+      "formSource": "string",
+      "id": "string",
+      "locations": [
+        "string"
+      ],
+      "matchId": "string",
+      "postedAt": "string",
+      "preparedAt": "string",
+      "recommendation": "null",
+      "remote": "string",
+      "status": "string",
+      "title": "string"
+    }
+  ],
+  "preparing": "number",
+  "ready": [],
+  "sent": []
+}

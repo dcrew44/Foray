@@ -214,6 +214,14 @@ An issue reads like the ones already there:
   anything else nobody answered is `missing` and waits for the user. A new shared question is
   an `AnswerKind`, a `CATALOGUE` entry and a pattern in `_PATTERNS` (narrower questions first).
   The four work-status answers also filter searches (`work_status`, read by the prefilter).
+- **An application is prepared, never sent** (`apps/applications/`, #60). `prepare.start`
+  creates the row and defers `application.prepare` in one transaction; the task reads the
+  posting's form (`forms.read_form`: Greenhouse publishes its questions, other boards get the
+  fields every form has), plans every field (`prepare.plan_form`) and leaves it `ready` or
+  `needs_answers`. It is a plain task, not a run: the Apply page shows its result and the
+  `application.prepared` event refreshes open pages. After anything that changes saved answers,
+  call `prepare.replan(user_id)`. The only request this app makes is the GET that reads a form;
+  filling and submitting happen in the user's own browser.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

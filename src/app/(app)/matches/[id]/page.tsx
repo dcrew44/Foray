@@ -6,6 +6,7 @@ import { CompanyMark, PageBody, Section } from "@/components/foray/primitives";
 import { SOURCE_LABEL } from "@/components/companies/company-row";
 import { RefreshOn } from "@/components/live/refresh-on";
 import { DeepEvaluation, FastEvaluation } from "@/components/matches/evaluation";
+import { ApplicationPanel } from "@/components/matches/application-panel";
 import { JobFactsList } from "@/components/matches/job-facts";
 import { ClosedMark, JobSignals } from "@/components/matches/job-signals";
 import { EvaluateButton, MatchNotes, StageSelect } from "@/components/matches/match-controls";
@@ -54,7 +55,7 @@ export default async function MatchPage({ params }: Params) {
   return (
     <PageBody>
       {/* Tailoring and rendering end with run.completed too, so one kind covers them. */}
-      <RefreshOn kinds={["run.completed"]} />
+      <RefreshOn kinds={["run.completed", "application.prepared"]} />
 
       <Link
         className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1.5 text-[13px]"
@@ -137,6 +138,12 @@ export default async function MatchPage({ params }: Params) {
 
         <aside className="space-y-10">
           <JobSignals signals={job.signals} />
+
+          <ApplicationPanel
+            application={match.application}
+            closed={!job.isActive}
+            matchId={match.id}
+          />
 
           <Section title="What it asks">
             <JobFactsList facts={job.facts} />

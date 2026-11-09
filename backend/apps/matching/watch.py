@@ -38,6 +38,7 @@ from django.db.models.functions import Now
 from apps.accounts.models import User
 from apps.accounts.profile import interview_progress
 from apps.accounts.schemas import InterviewState, Preferences, Settings
+from apps.applications import prepare as prepare_application
 from apps.chat.models import Conversation
 from apps.core.clock import database_now
 from apps.core.db import db
@@ -285,6 +286,17 @@ def finish_watch(run_id: uuid.UUID, user_id: str, output: WatchOutput) -> bool:
     return done
 
 
+def prepare_applications(user_id: str, match_ids: list[str]) -> int:
+    """Starts preparing an application for each kept match. Never fails the watch: a posting
+    whose application could not be started can still be prepared from its match page. Sync."""
+    try:
+        with transaction.atomic():
+            return prepare_application.start_many(user_id, match_ids)
+    except Exception:
+        log.warning("could not start preparing applications for %s", user_id, exc_info=True)
+        return 0
+
+
 def watch_message(considered: int, announced: int, not_reviewed: int) -> str:
     """`considered`: the new matches this watch made, plus the week's it picked up again."""
     if considered == 0:
@@ -394,6 +406,9 @@ async def run_watch(run: Run) -> None:
         min_fast_score=threshold,
         limit=len(work),
     )
+    # What is worth a review is worth applying to: its application is prepared now, beside the
+    # reviews and without waiting for them (#60).
+    await db(prepare_applications, run.user_id, [str(item.match_id) for item in worth])
     used = await db(reviews_used, run.user_id)
     allowance = min(profile.settings.deep_eval_top_n, profile.settings.watch_daily_reviews - used)
     chosen = worth[: max(0, allowance)]

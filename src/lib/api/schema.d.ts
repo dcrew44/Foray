@@ -515,6 +515,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Prepare an application */
+        post: operations["apps_applications_api_post_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{id}/answers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer a question */
+        post: operations["apps_applications_api_post_answer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Act on an application */
+        patch: operations["apps_applications_api_patch_application"];
+        trace?: never;
+    };
     "/api/conversations": {
         parameters: {
             query?: never;
@@ -665,6 +716,23 @@ export interface paths {
         };
         /** Companies page */
         get: operations["apps_pages_api_companies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Apply page */
+        get: operations["apps_pages_api_apply"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1453,6 +1521,41 @@ export interface components {
             /** Answers */
             answers: components["schemas"]["AnswerIn"][];
         };
+        /** ApplicationStarted */
+        ApplicationStarted: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+            /**
+             * Applicationid
+             * Format: uuid
+             */
+            applicationId: string;
+        };
+        /** PrepareIn */
+        PrepareIn: {
+            /**
+             * Matchid
+             * Format: uuid
+             */
+            matchId: string;
+        };
+        /** QuestionAnswerIn */
+        QuestionAnswerIn: {
+            /** Key */
+            key: string;
+            /** Value */
+            value: string;
+        };
+        /** ApplicationPatch */
+        ApplicationPatch: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "dismiss" | "opened" | "submitted" | "reopen";
+        };
         /** ConversationItem */
         ConversationItem: {
             /**
@@ -1836,6 +1939,24 @@ export interface components {
             /** Detail */
             detail: string;
         };
+        /**
+         * MatchApplication
+         * @description The match's application, when one has been prepared or is being (#60).
+         */
+        MatchApplication: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "preparing" | "needs_answers" | "ready" | "submitted" | "dismissed" | "failed";
+            /** Missing */
+            missing: number;
+        };
         /** MatchDetail */
         MatchDetail: {
             /**
@@ -1872,6 +1993,7 @@ export interface components {
             fastScore: number | null;
             /** Deepscore */
             deepScore: number | null;
+            application: components["schemas"]["MatchApplication"] | null;
         };
         /** MatchDetailPage */
         MatchDetailPage: {
@@ -1991,6 +2113,122 @@ export interface components {
             medianS: number;
             /** P90S */
             p90S: number;
+        };
+        /**
+         * ApplyAnswer
+         * @description One field of an application's form with the answer planned for it (`prepare.Planned`).
+         */
+        ApplyAnswer: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Type */
+            type: string;
+            /** Required */
+            required: boolean;
+            /** Options */
+            options: string[];
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: string | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "profile" | "file" | "saved" | "declined" | "skipped" | "missing";
+        };
+        /** ApplyItem */
+        ApplyItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Matchid
+             * Format: uuid
+             */
+            matchId: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "preparing" | "needs_answers" | "ready" | "submitted" | "dismissed" | "failed";
+            /** Company */
+            company: string;
+            /** Title */
+            title: string;
+            /** Locations */
+            locations: string[];
+            /**
+             * Remote
+             * @enum {string}
+             */
+            remote: "remote" | "hybrid" | "onsite" | "unknown";
+            /** Postedat */
+            postedAt: string | null;
+            /**
+             * Firstseenat
+             * Format: date-time
+             */
+            firstSeenAt: string;
+            /** Formsource */
+            formSource: string;
+            /** Formread */
+            formRead: boolean;
+            /** Applyurl */
+            applyUrl: string;
+            /** Answers */
+            answers: components["schemas"]["ApplyAnswer"][];
+            /** Error */
+            error: string;
+            /** Fastscore */
+            fastScore: number | null;
+            /** Deepscore */
+            deepScore: number | null;
+            /** Recommendation */
+            recommendation: ("strong" | "apply" | "maybe" | "skip") | null;
+            /** Preparedat */
+            preparedAt: string | null;
+        };
+        /** ApplyPage */
+        ApplyPage: {
+            /** Ready */
+            ready: components["schemas"]["ApplyItem"][];
+            /** Needsanswers */
+            needsAnswers: components["schemas"]["ApplyItem"][];
+            /** Failed */
+            failed: components["schemas"]["ApplyItem"][];
+            /** Preparing */
+            preparing: number;
+            /** Sent */
+            sent: components["schemas"]["ApplySent"][];
+        };
+        /** ApplySent */
+        ApplySent: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Matchid
+             * Format: uuid
+             */
+            matchId: string;
+            /** Company */
+            company: string;
+            /** Title */
+            title: string;
+            /**
+             * Submittedat
+             * Format: date-time
+             */
+            submittedAt: string;
+            /** Postedtoapplieds */
+            postedToAppliedS: number | null;
         };
         /** AnswerOption */
         AnswerOption: {
@@ -3552,6 +3790,82 @@ export interface operations {
             };
         };
     };
+    apps_applications_api_post_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrepareIn"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationStarted"];
+                };
+            };
+        };
+    };
+    apps_applications_api_post_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionAnswerIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_applications_api_patch_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicationPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
     apps_chat_api_list_conversations: {
         parameters: {
             query?: never;
@@ -3758,6 +4072,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompaniesPage"];
+                };
+            };
+        };
+    };
+    apps_pages_api_apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplyPage"];
                 };
             };
         };

@@ -40,6 +40,7 @@ __all__ = [
     "choose_option",
     "classify",
     "load",
+    "canonical",
     "plan",
     "question_key",
     "remove",
@@ -341,7 +342,9 @@ def plan(saved: SavedAnswers, label: str, options: Sequence[str] = ()) -> Planne
     choice. A voluntary disclosure nobody answered is declined; anything else nobody answered
     is `missing`, as is a saved answer none of the field's options says."""
     kind = classify(label)
-    answer = saved.get(kind, label)
+    # An answer given to this very wording wins over the shared one: it is how a person pins
+    # the option a particular form wants.
+    answer = saved.custom.get(question_key(label)) or saved.get(kind, label)
     source: Source = "saved"
     if answer is None:
         if kind not in EEO:
@@ -353,6 +356,23 @@ def plan(saved: SavedAnswers, label: str, options: Sequence[str] = ()) -> Planne
     if chosen is None:
         return Planned(kind, None, "missing")
     return Planned(kind, chosen, source)
+
+
+def canonical(kind: AnswerKind | str, value: str) -> str | None:
+    """What an answer given on a form says about the shared question it asked, in the form
+    that question is stored in, or None when that cannot be told: "Yes, I am authorized" is a
+    yes; one of three wordings about citizenship is not guessed at."""
+    question = BY_KIND.get(AnswerKind(kind)) if kind in AnswerKind.values else None
+    if question is None:
+        return None
+    if question.input == "text":
+        return value.strip() or None
+    if question.input == "yes_no":
+        if _YES.match(value):
+            return "yes"
+        if _NO.match(value):
+            return "no"
+    return None
 
 
 # --- who may be hired ----------------------------------------------------------------------------

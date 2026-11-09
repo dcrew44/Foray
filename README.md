@@ -64,6 +64,14 @@ instead of cluttering the board.
 
 ![Matches: the pipeline board](docs/screenshots/matches.png)
 
+### Apply
+
+Each posting Foray keeps while it watches arrives with its application already planned:
+the form's questions read from the board, an answer for each from your resume and your
+saved answers, and anything it could not answer named. The Apply page lists what is ready,
+the posting that has been up longest first. Answer a question once and every application
+that asks it is filled. Foray sends nothing: you open the form, check it and submit.
+
 ### Everything the agents did
 
 Every run and every step is recorded: what was found, scored, archived, reviewed and

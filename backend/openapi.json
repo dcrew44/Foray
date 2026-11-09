@@ -1065,6 +1065,139 @@
         ]
       }
     },
+    "/api/applications": {
+      "post": {
+        "operationId": "apps_applications_api_post_application",
+        "summary": "Prepare an application",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationStarted"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "applications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/applications/{id}/answers": {
+      "post": {
+        "operationId": "apps_applications_api_post_answer",
+        "summary": "Answer a question",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "applications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionAnswerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/applications/{id}": {
+      "patch": {
+        "operationId": "apps_applications_api_patch_application",
+        "summary": "Act on an application",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "applications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/conversations": {
       "get": {
         "operationId": "apps_chat_api_list_conversations",
@@ -1401,6 +1534,33 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CompaniesPage"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "pages"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/pages/apply": {
+      "get": {
+        "operationId": "apps_pages_api_apply",
+        "summary": "Apply page",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyPage"
                 }
               }
             }
@@ -3697,6 +3857,84 @@
         "title": "AnswersIn",
         "type": "object"
       },
+      "ApplicationStarted": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "applicationId": {
+            "format": "uuid",
+            "title": "Applicationid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "applicationId"
+        ],
+        "title": "ApplicationStarted",
+        "type": "object"
+      },
+      "PrepareIn": {
+        "properties": {
+          "matchId": {
+            "format": "uuid",
+            "title": "Matchid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "matchId"
+        ],
+        "title": "PrepareIn",
+        "type": "object"
+      },
+      "QuestionAnswerIn": {
+        "properties": {
+          "key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 4000,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "title": "QuestionAnswerIn",
+        "type": "object"
+      },
+      "ApplicationPatch": {
+        "properties": {
+          "action": {
+            "enum": [
+              "dismiss",
+              "opened",
+              "submitted",
+              "reopen"
+            ],
+            "title": "Action",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "ApplicationPatch",
+        "type": "object"
+      },
       "ConversationItem": {
         "properties": {
           "id": {
@@ -4794,6 +5032,39 @@
         "title": "JobSignal",
         "type": "object"
       },
+      "MatchApplication": {
+        "description": "The match's application, when one has been prepared or is being (#60).",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "preparing",
+              "needs_answers",
+              "ready",
+              "submitted",
+              "dismissed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "missing": {
+            "title": "Missing",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "missing"
+        ],
+        "title": "MatchApplication",
+        "type": "object"
+      },
       "MatchDetail": {
         "properties": {
           "id": {
@@ -4910,6 +5181,16 @@
               }
             ],
             "title": "Deepscore"
+          },
+          "application": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchApplication"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -4924,7 +5205,8 @@
           "createdAt",
           "stageChangedAt",
           "fastScore",
-          "deepScore"
+          "deepScore",
+          "application"
         ],
         "title": "MatchDetail",
         "type": "object"
@@ -5290,6 +5572,330 @@
           "p90S"
         ],
         "title": "RadarLag",
+        "type": "object"
+      },
+      "ApplyAnswer": {
+        "description": "One field of an application's form with the answer planned for it (`prepare.Planned`).",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "source": {
+            "enum": [
+              "profile",
+              "file",
+              "saved",
+              "declined",
+              "skipped",
+              "missing"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type",
+          "required",
+          "options",
+          "kind",
+          "value",
+          "source"
+        ],
+        "title": "ApplyAnswer",
+        "type": "object"
+      },
+      "ApplyItem": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "matchId": {
+            "format": "uuid",
+            "title": "Matchid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "preparing",
+              "needs_answers",
+              "ready",
+              "submitted",
+              "dismissed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Locations",
+            "type": "array"
+          },
+          "remote": {
+            "enum": [
+              "remote",
+              "hybrid",
+              "onsite",
+              "unknown"
+            ],
+            "title": "Remote",
+            "type": "string"
+          },
+          "postedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postedat"
+          },
+          "firstSeenAt": {
+            "format": "date-time",
+            "title": "Firstseenat",
+            "type": "string"
+          },
+          "formSource": {
+            "title": "Formsource",
+            "type": "string"
+          },
+          "formRead": {
+            "title": "Formread",
+            "type": "boolean"
+          },
+          "applyUrl": {
+            "title": "Applyurl",
+            "type": "string"
+          },
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/ApplyAnswer"
+            },
+            "title": "Answers",
+            "type": "array"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "fastScore": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fastscore"
+          },
+          "deepScore": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deepscore"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong",
+                  "apply",
+                  "maybe",
+                  "skip"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "preparedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preparedat"
+          }
+        },
+        "required": [
+          "id",
+          "matchId",
+          "status",
+          "company",
+          "title",
+          "locations",
+          "remote",
+          "postedAt",
+          "firstSeenAt",
+          "formSource",
+          "formRead",
+          "applyUrl",
+          "answers",
+          "error",
+          "fastScore",
+          "deepScore",
+          "recommendation",
+          "preparedAt"
+        ],
+        "title": "ApplyItem",
+        "type": "object"
+      },
+      "ApplyPage": {
+        "properties": {
+          "ready": {
+            "items": {
+              "$ref": "#/components/schemas/ApplyItem"
+            },
+            "title": "Ready",
+            "type": "array"
+          },
+          "needsAnswers": {
+            "items": {
+              "$ref": "#/components/schemas/ApplyItem"
+            },
+            "title": "Needsanswers",
+            "type": "array"
+          },
+          "failed": {
+            "items": {
+              "$ref": "#/components/schemas/ApplyItem"
+            },
+            "title": "Failed",
+            "type": "array"
+          },
+          "preparing": {
+            "title": "Preparing",
+            "type": "integer"
+          },
+          "sent": {
+            "items": {
+              "$ref": "#/components/schemas/ApplySent"
+            },
+            "title": "Sent",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ready",
+          "needsAnswers",
+          "failed",
+          "preparing",
+          "sent"
+        ],
+        "title": "ApplyPage",
+        "type": "object"
+      },
+      "ApplySent": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "matchId": {
+            "format": "uuid",
+            "title": "Matchid",
+            "type": "string"
+          },
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "title": "Submittedat",
+            "type": "string"
+          },
+          "postedToAppliedS": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postedtoapplieds"
+          }
+        },
+        "required": [
+          "id",
+          "matchId",
+          "company",
+          "title",
+          "submittedAt",
+          "postedToAppliedS"
+        ],
+        "title": "ApplySent",
         "type": "object"
       },
       "AnswerOption": {

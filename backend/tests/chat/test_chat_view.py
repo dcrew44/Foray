@@ -1627,7 +1627,10 @@ def test_run_tools() -> None:
     }
     older = make_run(user, status="completed")
     newest = make_run(user, status="running")
+    # A watch runs unasked, so "the most recent run" passes over it; asked by id, it answers.
+    watch = make_run(user, kind="watch", status="running")
     assert call_tool("get_run_status", user, run_id=None)["runId"] == str(newest.id)
+    assert call_tool("get_run_status", user, run_id=str(watch.id))["kind"] == "watch"
     status = call_tool("get_run_status", user, run_id=str(older.id))
     assert (status["kind"], status["status"]) == ("search", "completed")
     assert call_tool("get_run_status", user, run_id="garbage")["ok"] is False
@@ -1679,6 +1682,24 @@ def test_job_tools() -> None:
         min_score=None,
         query=None,
     ) == {"ok": False, "message": "No such search run."}
+    # A watch lists what it announced, not everything it scored.
+    watched = make_run(
+        user,
+        kind="watch",
+        status="completed",
+        input={"prompt": "Check new postings", "candidateJobIds": [job.id, archived.job_id]},
+        output={"announcedMatchIds": [str(match.id)]},
+    )
+    by_watch = call_tool(
+        "list_jobs",
+        user,
+        run_id=str(watched.id),
+        limit=None,
+        stage=None,
+        min_score=None,
+        query=None,
+    )
+    assert [card["matchId"] for card in by_watch["jobs"]] == [str(match.id)]
 
     for wanted in (str(match.id), job.id):
         found = call_tool("get_job", user, id=wanted)

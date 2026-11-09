@@ -263,7 +263,9 @@ class CancelRunInput(_Input):
 
 
 class ListJobsInput(_Input):
-    run_id: str | None = Field(description="Only the roles this search run found.")
+    run_id: str | None = Field(
+        description="Only the roles this search run found, or this watch run announced."
+    )
     limit: Annotated[int, Field(ge=1, le=50)] | None
     stage: StageName | None
     min_score: Annotated[int, Field(ge=0, le=100)] | None
@@ -781,7 +783,13 @@ async def start_search_run(ctx: Ctx, args: StartSearchRunInput) -> Output:
 
 def _user_run(user_id: str, run_id: str | None) -> Run | None:
     if run_id is None:
-        return Run.objects.for_user(user_id).order_by("-created_at").first()
+        # "The most recent run" is the user's own: a watch runs every six hours unasked.
+        return (
+            Run.objects.for_user(user_id)
+            .exclude(kind=RunKind.WATCH)
+            .order_by("-created_at")
+            .first()
+        )
     parsed = lifecycle.as_uuid(run_id)
     if parsed is None:
         return None
@@ -880,10 +888,14 @@ def _list_jobs(user_id: str, args: ListJobsInput) -> Output:
     job_ids: list[str] | None = None
     if args.run_id:
         run = _user_run(user_id, args.run_id)
-        if run is None or run.kind != RunKind.SEARCH:
+        if run is not None and run.kind == RunKind.WATCH:
+            output = run.output if isinstance(run.output, dict) else {}
+            job_ids = match_queries.job_ids_for_matches(user_id, output.get("announcedMatchIds"))
+        elif run is None or run.kind != RunKind.SEARCH:
             return failure("No such search run.")
-        found = run.input.get("candidateJobIds") if isinstance(run.input, dict) else None
-        job_ids = [i for i in found if isinstance(i, str)] if isinstance(found, list) else []
+        else:
+            found = run.input.get("candidateJobIds") if isinstance(run.input, dict) else None
+            job_ids = [i for i in found if isinstance(i, str)] if isinstance(found, list) else []
     rows = match_queries.list_matches(
         user_id,
         job_ids=job_ids,
@@ -898,7 +910,8 @@ def _list_jobs(user_id: str, args: ListJobsInput) -> Output:
 @chat_tool(
     "List the user's matched roles, best first (deep score, else fast score). Filter by "
     "pipeline stage, a minimum score, or text in the title/company. Pass run_id to list only "
-    "what one search found; without it this lists matches from every search. By default "
+    "what one search found or one watch announced; without it this lists matches from every "
+    "search. By default "
     "excludes rejected and archived matches."
 )
 async def list_jobs(ctx: Ctx, args: ListJobsInput) -> Output:

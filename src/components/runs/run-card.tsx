@@ -94,8 +94,9 @@ function describe(run: LiveRun, workerOnline: boolean): string {
       const counts = (o.counts ?? {}) as Record<string, unknown>;
       return `Read ${plural(num(counts, "work") ?? 0, "role")}, ${plural(num(counts, "education") ?? 0, "school")} and ${plural(num(counts, "skills") ?? 0, "skill")}.`;
     }
-    // Adding or refreshing a company finishes with the sentence its run.completed carried.
-    if (run.kind === "company_discovery" || run.kind === "company_refresh") {
+    // Adding or refreshing a company, or a watch, finishes with the sentence its run.completed
+    // carried.
+    if (run.kind === "company_discovery" || run.kind === "company_refresh" || run.kind === "watch") {
       return text(o, "message") ?? "Done.";
     }
     return "Done.";
@@ -119,6 +120,9 @@ function describe(run: LiveRun, workerOnline: boolean): string {
   }
   if (run.kind === "company_refresh" && phase === "waiting") {
     return "Waiting for the scheduled board refresh to finish";
+  }
+  if (run.kind === "watch" && (phase === "starting" || phase === "filtering")) {
+    return "Checking the postings that arrived since the last look";
   }
 
   switch (phase) {
@@ -432,7 +436,9 @@ function RunResults({ run }: { run: LiveRun }) {
     ? (output.topMatchIds as string[])
     : Array.isArray(output.matchIds)
       ? (output.matchIds as string[])
-      : [];
+      : Array.isArray(output.announcedMatchIds)
+        ? (output.announcedMatchIds as string[])
+        : [];
 
   if (ids.length === 0) return null;
   return <ResultList ids={ids} showAllLink={run.kind === "search"} />;

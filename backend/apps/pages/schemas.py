@@ -107,6 +107,8 @@ class HomePage(ApiModel):
     onboarding: OnboardingState
     counts: StageCounts
     best: list[MatchRow]  # found and shortlisted, best first, at most 6
+    # Matched in the last 7 days and reviewed strong or apply, still waiting: at most 6 (#5).
+    new_this_week: list[MatchRow]
     spend: HomeSpend
     waiting: HomeWaiting
     suggestions: list[str]  # the ask box's starting prompts

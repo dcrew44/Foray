@@ -17,7 +17,17 @@ export const KIND_TITLE: Record<LiveRun["kind"], string> = {
   company_discovery: "Company discovery",
   company_refresh: "Board refresh",
   profile_import: "Profile import",
+  watch: "New postings",
 };
+
+/**
+ * A watch (#5) runs every six hours unasked. One that found nothing to announce completes at
+ * debug level with `announced: 0`, and the feeds leave it out; the activity page's server query
+ * does the same.
+ */
+export function isQuietWatch(run: Pick<LiveRun, "kind" | "status" | "stats">): boolean {
+  return run.kind === "watch" && run.status === "completed" && run.stats?.announced === 0;
+}
 
 export const STATUS: Record<
   LiveRun["status"],
@@ -74,6 +84,12 @@ export function runOutcome(run: LiveRun): string | null {
     case "resume_render": {
       const pages = pick("pages");
       return pages != null ? `${pages} ${pages === 1 ? "page" : "pages"}` : null;
+    }
+    case "watch": {
+      const announced = (output.announcedMatchIds as unknown[] | undefined)?.length;
+      const scored = pick("scored");
+      if (announced) return `${announced} worth applying to`;
+      return scored != null ? `${scored} scored` : null;
     }
     case "company_refresh": {
       const ok = pick("ok");

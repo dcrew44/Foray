@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 
 import { ActivityFeed } from "./activity-feed";
 import { RunList } from "./run-list";
-import { KIND_TITLE, type RunSummary } from "./run-summary";
+import { KIND_TITLE, isQuietWatch, type RunSummary } from "./run-summary";
 
 /**
  * The activity page's live half: runs in flight as full cards, finished ones
@@ -51,7 +51,7 @@ export function ActivityView({ initialRuns }: { initialRuns: RunSummary[] }) {
       byId.set(extraRun.id, { run: extraRun, target: extraRun.summary ?? extraRun.prompt, costUsd: null, conversationId: null });
     }
     return [...byId.values()]
-      .filter((summary) => !isActiveRun(summary.run))
+      .filter((summary) => !isActiveRun(summary.run) && !isQuietWatch(summary.run))
       .sort((a, b) => b.run.createdAt.localeCompare(a.run.createdAt));
   }, [initialRuns, live.runs, extraRun]);
 

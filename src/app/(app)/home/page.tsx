@@ -32,7 +32,7 @@ type StageCounts = components["schemas"]["StageCounts"];
  * latest events) comes from the shell's live feed.
  */
 export default async function HomePage() {
-  const { onboarding, counts, best, spend, suggestions, headline } =
+  const { onboarding, counts, best, newThisWeek, spend, suggestions, headline } =
     await django<HomePageData>("/api/pages/home");
 
   return (
@@ -55,6 +55,19 @@ export default async function HomePage() {
         <div className="mt-12 grid gap-12 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0 space-y-10">
             <AttentionPanel />
+
+            {newThisWeek.length > 0 && (
+              <Section
+                description="Arrived in the last week and reviewed in full as worth applying to. Early applications get read."
+                title="New this week"
+              >
+                <div className="-mx-3">
+                  {newThisWeek.map((row) => (
+                    <MatchLine key={row.matchId} match={fromMatchRow(row)} showHeadline />
+                  ))}
+                </div>
+              </Section>
+            )}
 
             <Section
               action={

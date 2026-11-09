@@ -954,6 +954,29 @@ def test_the_cron_refreshes_the_stale_set_with_no_run_user_or_event(web: Web) ->
     assert [job["status"] for job in queue_jobs(task_name="companies.refresh_scheduled")] == [
         "succeeded"
     ]
+    # Then the watches (#5): nobody here is watching, so the fan-out starts none.
+    assert [job["status"] for job in queue_jobs(task_name="watch.fan_out")] == ["succeeded"]
+
+
+@tx
+def test_a_failed_cron_refresh_still_defers_the_watches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def broken() -> None:
+        raise RuntimeError("the network is down")
+
+    monkeypatch.setattr(pipeline, "refresh_scheduled", broken)
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=0)
+    run_deferred(["background"])
+
+    assert [job["status"] for job in queue_jobs(task_name="companies.refresh_scheduled")] == [
+        "failed"
+    ]
+    assert [job.queueing_lock for job in deferred("watch.fan_out")] == ["watch:fan-out"]
+    # A second tick while the first fan-out still waits adds no second copy.
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=1)
+    run_deferred(["background"])
+    assert len(deferred("watch.fan_out")) == 1
 
 
 def test_the_company_tasks_sit_on_their_lanes_and_the_cron_is_scheduled() -> None:

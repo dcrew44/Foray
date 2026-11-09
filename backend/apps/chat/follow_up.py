@@ -334,6 +334,23 @@ def describe_update(
             ),
         )
 
+    if run.kind == RunKind.WATCH:
+        # Only a watch with something to announce reports to chat (`matching/watch.py`).
+        return Update(
+            "New matches",
+            "\n".join(
+                [
+                    head,
+                    "Foray checked the postings that arrived since its last look and deep-reviewed "
+                    f"the best of them on its own. Its result: {event.message}",
+                    f"{list_it} Show them (limit 5), then say in a sentence each why it fits. They "
+                    "are new: applying early is the point of this check, so say so once.",
+                    "End with one concrete next step you could take for them.",
+                    RULES,
+                ]
+            ),
+        )
+
     if run.kind == RunKind.RANK_DEEP:
         return Update(
             "Deep review finished",

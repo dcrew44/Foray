@@ -218,7 +218,13 @@ def test_onboarding_without_a_resume(django_assert_max_num_queries: Any) -> None
     wire = state.model_dump(mode="json", by_alias=True)
     assert set(wire) == {"hasResume", "resume", "preferences", "progress", "settings", "ready"}
     assert wire["preferences"]["target_roles"] == ["Engineer"]  # snake_case, as stored
-    assert set(wire["settings"]) == {"defaultMode", "scoreThreshold", "deepEvalTopN"}
+    assert set(wire["settings"]) == {
+        "defaultMode",
+        "scoreThreshold",
+        "deepEvalTopN",
+        "watchEnabled",
+        "watchDailyReviews",
+    }
     assert set(wire["progress"]) == {
         "filled",
         "outstanding",
@@ -379,16 +385,28 @@ def test_patch_settings_merges_partial_updates(signed_in: Any) -> None:
     assert first.json() == {
         "ok": True,
         "message": "Settings saved",
-        "settings": {"defaultMode": "approve_each", "scoreThreshold": 70, "deepEvalTopN": 15},
+        "settings": {
+            "defaultMode": "approve_each",
+            "scoreThreshold": 70,
+            "deepEvalTopN": 15,
+            "watchEnabled": True,
+            "watchDailyReviews": 10,
+        },
     }
-    second = client.patch("/api/settings", {"defaultMode": "autopilot", "deep_eval_top_n": 0})
-    assert second.json()["settings"] == {
+    second = client.patch(
+        "/api/settings",
+        {"defaultMode": "autopilot", "deep_eval_top_n": 0, "watchEnabled": False},
+    )
+    saved = {
         "defaultMode": "autopilot",
         "scoreThreshold": 70,  # not reset by a save that did not send it
         "deepEvalTopN": 0,
+        "watchEnabled": False,
+        "watchDailyReviews": 10,
     }
+    assert second.json()["settings"] == saved
     user.refresh_from_db()
-    assert user.settings == {"defaultMode": "autopilot", "scoreThreshold": 70, "deepEvalTopN": 0}
+    assert user.settings == saved
     assert client.patch("/api/settings", {}).json()["settings"]["scoreThreshold"] == 70
 
 
@@ -406,6 +424,12 @@ def test_patch_settings_rejects_out_of_range_and_unknown(signed_in: Any) -> None
         {"scoreThreshold": None},
         {"defaultMode": "yolo"},
         {"theme": "dark"},
+        {"watchEnabled": "true"},
+        {"watchEnabled": 1},
+        {"watchEnabled": None},
+        {"watchDailyReviews": 61},
+        {"watchDailyReviews": -1},
+        {"watchDailyReviews": True},
     ):
         response = client.patch("/api/settings", body)
         assert response.status_code == 400, body

@@ -191,6 +191,12 @@ class Job(models.Model):
                 condition=Q(is_active=True),
                 name="jobs_active_posted",
             ),
+            # A watch's window: the postings first seen since its last pass (#5).
+            models.Index(
+                F("first_seen_at").desc(),
+                condition=Q(is_active=True),
+                name="jobs_active_first_seen",
+            ),
         ]
 
     def __str__(self) -> str:

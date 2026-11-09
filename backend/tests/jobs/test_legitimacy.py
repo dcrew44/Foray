@@ -315,8 +315,10 @@ def test_a_posting_without_an_apply_link_says_nothing() -> None:
 
 
 def repost(first: Job, **fields: Any) -> Job:
-    """Another posting of `first`'s role: the same company, title and place, a new id."""
+    """An earlier posting of `first`'s role that has closed: the same company, title and place,
+    another id."""
     assert first.company is not None
+    fields.setdefault("is_active", False)
     return make_job(company=first.company, title=first.title, **fields)
 
 
@@ -328,7 +330,7 @@ def test_context_counts_the_roles_postings() -> None:
     assert (context.postings, context.since) == (1, first.posted_at)
     assert abs(context.now - now) < timedelta(minutes=1)  # the database's present
 
-    second = repost(first, is_active=False)  # closed ones count
+    second = repost(first)
     assert second.dedupe_key == first.dedupe_key
     context = read_context(first)
     assert context.postings == 2
@@ -352,14 +354,24 @@ def test_context_leaves_out_what_is_not_a_repost() -> None:
 
     # Before the window.
     repost(first, first_seen_at=now - timedelta(days=REPOST_WINDOW_DAYS + 1))
-    # Another role, another place, another company.
+    # Another opening of the same title that is up right now is not a repost.
+    repost(first, is_active=True)
+    # A different role that shares the loose key (every "Member of Technical Staff (…)" at one
+    # company does).
     assert first.company is not None
+    make_job(
+        company=first.company,
+        title="Field Engineer (Robotics)",
+        dedupe_key=first.dedupe_key,
+        is_active=False,
+    )
+    # Another role, another place, another company.
     make_job(company=first.company, title="Field Engineer II")
     make_job(company=first.company, title=first.title, locations=["Austin, TX"])
     make_job(title=first.title)
     # An aggregator's copy of the role shares its key, and is a copy.
-    make_job(source="jsearch", title=first.title, dedupe_key=first.dedupe_key)
-    make_job(source="jsearch", title=first.title, dedupe_key=first.dedupe_key)
+    make_job(source="jsearch", title=first.title, dedupe_key=first.dedupe_key, is_active=False)
+    make_job(source="jsearch", title=first.title, dedupe_key=first.dedupe_key, is_active=False)
     assert read_context(first).postings == 2
 
     # The same posting under a second id (its company re-registered under another slug).
@@ -381,7 +393,8 @@ def test_context_leaves_out_what_is_not_a_repost() -> None:
 def test_context_counts_an_aggregators_postings_among_themselves() -> None:
     board = make_job(title="Field Engineer")
     listed = [
-        make_job(source="jsearch", title=board.title, dedupe_key=board.dedupe_key) for _ in range(3)
+        make_job(source="jsearch", title=board.title, dedupe_key=board.dedupe_key, is_active=n == 0)
+        for n in range(3)
     ]
     assert read_context(listed[0]).postings == 3
     assert read_context(board).postings == 1

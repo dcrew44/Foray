@@ -72,8 +72,8 @@ class Signal:
 class Context:
     """What the rules need that a posting's own row does not hold."""
 
-    # Distinct postings of the posting's role first seen in the window (itself among them,
-    # when it is that recent).
+    # This posting and the closed ones of the same role first seen in the window (itself among
+    # them, when it is that recent).
     postings: int
     since: datetime | None  # when the earliest of them was posted, or first seen if undated
     domain: str | None  # the registered company's own domain, when the posting has a company
@@ -161,14 +161,19 @@ def signals(job: Job, context: Context, *, time_zone: str | None = None) -> list
 
 # --- the query -----------------------------------------------------------------------------------
 
-# A role is the ingest dedupe key: the company, the normalised title and the primary location
-# (`sources.dedupe.dedupe_key`; `jobs_dedupe_key_idx`). That key is built to make an aggregator's
-# copy collapse with the board's own, so only postings from this posting's source are counted:
-# a copy is not a repost. Closed postings count; a posting found again keeps its external id.
+# A repost is this posting and the earlier ones of the same role that have closed. The ingest
+# dedupe key (`sources.dedupe.dedupe_key`; `jobs_dedupe_key_idx`) finds the company and the
+# place, but it normalises titles loosely: every "Member of Technical Staff (…)" at one company
+# shares a key, and forty different roles are not one role posted forty times. So the title
+# must also be the same, letter for letter. Another posting of the title that is open now is
+# another opening, not a repost. That key is also built to make an aggregator's copy collapse
+# with the board's own, so only postings from this posting's source are counted. A posting
+# found again keeps its external id.
 _CONTEXT = (
     "SELECT count(DISTINCT external_id), min(COALESCE(posted_at, first_seen_at)), "
     "(SELECT domain FROM companies WHERE id = %s), statement_timestamp() "
     "FROM jobs WHERE dedupe_key = %s AND source = %s "
+    "AND lower(title) = lower(%s) AND (external_id = %s OR NOT is_active) "
     f"AND first_seen_at >= statement_timestamp() - interval '{REPOST_WINDOW_DAYS} days'"
 )
 
@@ -177,7 +182,9 @@ def read_context(job: Job) -> Context:
     """How often the posting's role has been posted lately and since when, its company's
     domain, and the database's present. Sync; one query."""
     with connection.cursor() as cursor:
-        cursor.execute(_CONTEXT, [job.company_id, job.dedupe_key, job.source])
+        cursor.execute(
+            _CONTEXT, [job.company_id, job.dedupe_key, job.source, job.title, job.external_id]
+        )
         row = cursor.fetchone()
     assert row is not None  # an aggregate without GROUP BY always answers one row
     postings, since, domain, now = row

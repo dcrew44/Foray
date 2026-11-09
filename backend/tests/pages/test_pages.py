@@ -671,7 +671,7 @@ def test_match_page_reads_once_for_its_signals(django_assert_num_queries: Any) -
     graph = full_graph()
     job = graph.jobs["backend"]
     for _ in range(3):
-        make_job(company=graph.company, title=job.title)
+        make_job(company=graph.company, title=job.title, is_active=False)
     Job.objects.filter(id=job.id).update(is_active=False)
     client = signed_in(graph.user)
     with django_assert_num_queries(4 + AUTH_QUERIES):

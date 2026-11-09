@@ -14,18 +14,43 @@ Sync; one query each.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from django.db import connection
 from django.db.models import Count, Max, Q
 
-from apps.jobs.models import Company, CompanyStatus, SourceType
+from apps.jobs.models import Company, CompanyStatus, Job, JobLevel, SourceType
 from apps.jobs.registry import RELEVANT_FOR
 
-__all__ = ["WINDOW", "LagReport", "Polling", "SourceLag", "lag_report", "polling"]
+__all__ = [
+    "SOFTWARE_TITLE",
+    "WINDOW",
+    "LagReport",
+    "Polling",
+    "SourceLag",
+    "early_career_software_roles",
+    "is_software_title",
+    "lag_report",
+    "polling",
+]
 
 WINDOW = timedelta(days=7)
+# A title that is a software role, loosely: the yardstick for how wide the radar is (#58) and
+# what decides whether a board found in a crawl is worth following. Nobody's search is matched
+# with it. One list, said twice: for Postgres (`SOFTWARE_TITLE`) and for Python.
+_SOFTWARE_PARTS = (
+    r"software|developer|programmer|back[- ]?end|front[- ]?end|full[- ]?stack|machine learning"
+    r"|data (?:scien|engineer)|devops|site reliability|firmware|embedded"
+)
+_SOFTWARE_WORDS = "swe|sde|ml|ai"
+SOFTWARE_TITLE = rf"{_SOFTWARE_PARTS}|\m(?:{_SOFTWARE_WORDS})\M"
+_SOFTWARE = re.compile(rf"{_SOFTWARE_PARTS}|\b(?:{_SOFTWARE_WORDS})\b", re.IGNORECASE)
+
+
+def is_software_title(title: str) -> bool:
+    return _SOFTWARE.search(title) is not None
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,3 +121,10 @@ def polling(now: datetime) -> Polling:
         careers_pages=careers,
         last_ok_at=counted["last_ok"],
     )
+
+
+def early_career_software_roles() -> int:
+    """Open postings read as intern, new-graduate or entry level whose title is a software
+    role: how many jobs the radar is watching for the people Foray is first for."""
+    early = (JobLevel.INTERN, JobLevel.NEW_GRAD, JobLevel.ENTRY)
+    return Job.objects.filter(is_active=True, level__in=early, title__iregex=SOFTWARE_TITLE).count()

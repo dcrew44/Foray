@@ -34,7 +34,7 @@ from apps.accounts.models import User
 from apps.accounts.schemas import SAMPLE_PREFERENCES
 from apps.chat.models import Conversation, Message
 from apps.core.ids import generate_message_id
-from apps.jobs.models import Company, Job
+from apps.jobs.models import BoardCandidate, Company, Job
 from apps.llm.models import LlmCall
 from apps.matching.models import JobMatch
 from apps.matching.schemas import DeepEval, EvalGap, FastScore, MatchedRequirement
@@ -151,6 +151,17 @@ def make_company(
         source_type=source_type,
         ats_slug=ats_slug,
         **fields,
+    )
+
+
+def make_candidate(
+    *, source_type: str = "greenhouse", ats_slug: str | None = None, **fields: Any
+) -> BoardCandidate:
+    """A board seen in a crawl and not asked yet (#58)."""
+    fields.setdefault("found_in", ["commoncrawl:CC-MAIN-2026-43"])
+    fields.setdefault("newest", "CC-MAIN-2026-43")
+    return BoardCandidate.objects.create(
+        source_type=source_type, ats_slug=ats_slug or f"candidate-{_n()}", **fields
     )
 
 

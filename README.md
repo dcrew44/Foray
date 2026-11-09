@@ -78,7 +78,9 @@ Gem, Workday, SmartRecruiters and iCIMS, kept in a local mirror (closed postings
 runs, each board is asked every 15 minutes whether it changed (hourly for boards that list
 nothing early-career and have given nobody a match), and the Companies page reports how soon
 after it went up a new posting was seen. Add a company by name, website or board link, or just mention it in chat; career
-pages without a known board fall back to LLM extraction.
+pages without a known board fall back to LLM extraction. The starter list
+(`pnpm seed:companies`) is Foray's own: board ids read out of Common Crawl's index and kept
+only when the board answered with postings (`manage.py find_boards`, `grow_registry`).
 
 ![Companies: 400+ boards with their open roles and freshness](docs/screenshots/companies.png)
 

@@ -259,7 +259,7 @@ class Radar(ApiModel):
 
 
 class CompaniesPage(ApiModel):
-    companies: list[CompanyRow]  # by name, at most 2,000
+    companies: list[CompanyRow]  # by name, at most 10,000
     active: int  # companies whose board is active
     open_postings: int  # open postings across the listed companies
     radar: Radar

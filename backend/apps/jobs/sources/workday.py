@@ -27,6 +27,7 @@ A site that does not exist answers 404 and an unknown tenant (or the wrong `wdN`
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import re
@@ -51,6 +52,7 @@ SOURCE = "workday"
 PAGE = 20  # the most the endpoint allows; 21 is a 400
 CAP = 2000  # where one server variant stops counting
 MAX_PAGES = 500  # 10,000 postings: past this a board is not worth mirroring whole
+LIST_CONCURRENCY = 4  # pages of one board's listing asked for at once
 
 _HOST = re.compile(r"^(?:[a-z0-9-]+\.)?wd\d+\.myworkday(?:jobs|site)\.com$")
 _SEGMENT = re.compile(r"^[A-Za-z0-9_-]+$")
@@ -140,8 +142,10 @@ def boards_in(text: str) -> list[Board]:
 # --- the listing ---------------------------------------------------------------------------------
 
 
-async def _page(client: HttpClient, board: Board, slug: str, offset: int) -> dict[str, Any]:
-    body = {"appliedFacets": {}, "limit": PAGE, "offset": offset, "searchText": ""}
+async def _page(
+    client: HttpClient, board: Board, slug: str, offset: int, search: str = ""
+) -> dict[str, Any]:
+    body = {"appliedFacets": {}, "limit": PAGE, "offset": offset, "searchText": search}
     try:
         text = await client.post_json(f"{board.api}/jobs", body)
     except HttpError as error:
@@ -174,9 +178,10 @@ def _real(items: list[Any]) -> list[dict[str, Any]]:
     return [item for item in items if isinstance(item, dict) and item.get("externalPath")]
 
 
-async def count(client: HttpClient, slug: str) -> int:
-    """How many postings the site lists (at most `CAP` on the variant that stops counting)."""
-    page = await _page(client, parse_slug(slug), slug, 0)
+async def count(client: HttpClient, slug: str, search: str = "") -> int:
+    """How many postings the site lists (at most `CAP` on the variant that stops counting), or
+    how many answer the site's own search for `search`."""
+    page = await _page(client, parse_slug(slug), slug, 0, search)
     total = page.get("total")
     listed = len(_real(_raw_items(page)))
     return max(total, listed) if isinstance(total, int) and not isinstance(total, bool) else listed
@@ -203,14 +208,25 @@ async def list_board(client: HttpClient, slug: str) -> Listing:
     found: dict[str, ListedPosting] = {
         listed.external_id: listed for listed in map(_listed, _real(raw))
     }
-    offset = PAGE
     # Not "until a page is empty": one server variant answers an offset past its cap with page
-    # one again. The first page's total is the only one both variants give.
-    while len(raw) == PAGE and offset < total and offset < MAX_PAGES * PAGE:
-        raw = _raw_items(await _page(client, board, slug, offset))
-        for listed in map(_listed, _real(raw)):
+    # one again. The first page's total is the only one both variants give, so it says how many
+    # pages to ask for, a few at a time (a page takes a second or two, and a big board has a
+    # hundred).
+    offsets = range(PAGE, min(total, MAX_PAGES * PAGE), PAGE) if len(raw) == PAGE else range(0)
+    gate = client.gate(f"listing:{SOURCE}:{slug}", LIST_CONCURRENCY)
+
+    async def more(offset: int) -> list[Any]:
+        async with gate:
+            return _raw_items(await _page(client, board, slug, offset))
+
+    try:
+        async with asyncio.TaskGroup() as group:
+            pages = [group.create_task(more(offset)) for offset in offsets]
+    except ExceptionGroup as errors:
+        raise errors.exceptions[0] from None  # what one page said, not that a group failed
+    for page in pages:
+        for listed in map(_listed, _real(page.result())):
             found.setdefault(listed.external_id, listed)
-        offset += PAGE
     complete = total != CAP and total <= MAX_PAGES * PAGE
     return Listing(list(found.values()), complete=complete)
 

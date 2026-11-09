@@ -1164,7 +1164,7 @@ export interface components {
          * DiscoveredVia
          * @enum {string}
          */
-        DiscoveredVia: "seed" | "agent" | "jsearch" | "user";
+        DiscoveredVia: "seed" | "agent" | "jsearch" | "user" | "crawl";
         /**
          * FetchStatus
          * @enum {string}

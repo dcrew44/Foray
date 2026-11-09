@@ -287,6 +287,7 @@ FACTORIES: dict[str, Callable[[User], models.Model]] = {
     "user_with_resume": lambda _: f.make_user(with_resume=True),
     "company": lambda _: f.make_company(),
     "careers_company": lambda _: f.make_company(source_type="careers_page"),
+    "candidate": lambda _: f.make_candidate(),
     "job": lambda _: f.make_job(),
     "careers_job": lambda _: f.make_job(company=f.make_company(source_type="careers_page")),
     "match": lambda u: f.make_match(u, fast_score=70, deep_score=82),

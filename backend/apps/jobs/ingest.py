@@ -38,7 +38,8 @@ from django.db import connection, transaction
 from django.db.backends.utils import CursorWrapper
 
 from apps.jobs import fact_store, facts
-from apps.jobs.sources.dedupe import scrub
+from apps.jobs.models import Company
+from apps.jobs.sources.dedupe import dedupe_key, scrub
 from apps.jobs.sources.types import NormalizedJob
 
 BATCH_SIZE = 500
@@ -165,6 +166,8 @@ def ingest_jobs(
     """Upserts `jobs` into the mirror for `company_id` (None for aggregator rows).
     `previous_ok` is the board's last successful check before this fetch, for `seen_lag_s`."""
     unique = list({job.id: job for job in jobs}.values())
+    if company_id is not None:
+        _name_for_the_company(company_id, unique)
     result = IngestResult()
     for offset in range(0, len(unique), BATCH_SIZE):
         with transaction.atomic(), connection.cursor() as cursor:
@@ -174,6 +177,23 @@ def ingest_jobs(
     if deactivate_missing and company_id is not None:
         result.deactivated = _deactivate_missing(company_id, [job.id for job in unique])
     return result
+
+
+def _name_for_the_company(company_id: uuid.UUID, jobs: Sequence[NormalizedJob]) -> None:
+    """Ashby, Lever and Gem say nothing of who the employer is, so their adapters name a
+    posting for its board (`notion`). The registry knows better (`Notion`): a posting that only
+    carries its board's slug takes the company's name, and the dedupe key that is made from it."""
+    company = Company.objects.filter(id=company_id).values("name", "ats_slug", "slug").first()
+    if company is None or not company["name"]:
+        return
+    slugs = {(company["ats_slug"] or "").lower(), (company["slug"] or "").lower()} - {""}
+    for job in jobs:
+        if job.company_name.lower() in slugs and job.company_name != company["name"]:
+            job.company_name = company["name"]
+            place = job.location_norm
+            job.dedupe_key = dedupe_key(
+                job.company_name, job.title, (place.city or place.raw) if place else None
+            )
 
 
 def _ingest_batch(

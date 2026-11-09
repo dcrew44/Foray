@@ -14,7 +14,7 @@ from apps.jobs.models import Company, Job
 from apps.jobs.sources.dedupe import content_hash, dedupe_key, job_id
 from apps.jobs.sources.normalize import parse_location
 from apps.jobs.sources.types import NormalizedJob, NormalizedSalary
-from tests.factories import make_company
+from tests.factories import make_company, make_job
 
 pytestmark = pytest.mark.django_db
 
@@ -215,3 +215,51 @@ def test_last_seen_moves_forward_on_an_unchanged_fetch(company: Company) -> None
         cursor.execute("SELECT clock_timestamp()")
         [(database_now,)] = cursor.fetchall()
     assert job.last_seen_at <= database_now
+
+
+# --- the company name ----------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_a_posting_named_for_its_board_takes_the_companys_name() -> None:
+    """Ashby, Lever and Gem give no employer name, so their postings arrive named for the
+    board's slug. The registry's name is the one people see, and the one the dedupe key uses."""
+    company = make_company(name="Notion", slug="notion", source_type="ashby", ats_slug="notion")
+    job = posting(company, 1)
+    job.company_name = "notion"
+    job.dedupe_key = dedupe_key("notion", job.title, "San Francisco")
+    named = posting(company, 2)  # an adapter that knew the name is left alone
+    named.company_name = "Notion Labs, Inc."
+    ingest_jobs(company.id, [job, named])
+
+    rows = {row.external_id: row for row in Job.objects.filter(company_id=company.id)}
+    assert rows["1"].company_name == "Notion"
+    assert rows["1"].dedupe_key == dedupe_key("Notion", job.title, "San Francisco")
+    assert rows["2"].company_name == "Notion Labs, Inc."
+
+
+@pytest.mark.django_db
+def test_postings_already_in_the_mirror_are_renamed_once() -> None:
+    """The migration that brings existing rows in line."""
+    from importlib import import_module
+
+    from django.apps import apps as django_apps
+
+    company = make_company(name="Cerebras", slug="cerebras", source_type="ashby")
+    other = make_company(name="acme", slug="acme", source_type="lever")  # named for its slug
+    stale = make_job(company=company, company_name="cerebras", title="Compiler Engineer")
+    fine = make_job(company=company, company_name="Cerebras Systems")
+    same = make_job(company=other, company_name="acme")
+    before = stale.dedupe_key
+
+    migration = import_module("apps.jobs.migrations.0009_posting_company_names")
+    with connection.schema_editor() as editor:
+        migration.rename(django_apps, editor)
+
+    stale.refresh_from_db()
+    assert stale.company_name == "Cerebras"
+    assert stale.dedupe_key == dedupe_key("Cerebras", "Compiler Engineer", "San Francisco")
+    assert stale.dedupe_key != before
+    fine.refresh_from_db()
+    same.refresh_from_db()
+    assert (fine.company_name, same.company_name) == ("Cerebras Systems", "acme")

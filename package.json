@@ -35,7 +35,11 @@
     "verify:boards": "cd backend && uv run python manage.py verify_boards",
     "llm:smoke": "cd backend && uv run python manage.py llm_smoke",
     "llm:bakeoff": "cd backend && uv run python manage.py llm_bakeoff",
-    "docker:prod": "docker compose --profile prod up --build"
+    "docker:prod": "docker compose --profile prod up --build",
+    "worker:up": "pnpm db:migrate && docker compose --profile background up -d --build background",
+    "worker:down": "docker compose --profile background rm -sf background",
+    "worker:logs": "docker compose --profile background logs -f --tail 100 background",
+    "backup": "sh scripts/backup.sh"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.109",

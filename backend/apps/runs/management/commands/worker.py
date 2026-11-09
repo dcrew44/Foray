@@ -1,6 +1,8 @@
 """`manage.py worker [--shutdown-timeout N]`: the one worker process (design §9.1, §13.5).
 
 Before it takes any work it:
+0. waits until no other worker is running on this database (`worker_lock`, #51): two would
+   refresh every board twice. Until then it installs nothing and reaps nothing;
 1. refuses to start with unapplied migrations ("Run pnpm db:migrate");
 2. runs Django's system checks (the command's own `requires_system_checks`);
 3. refuses a legacy-looking database (`assert_app_database`, §3.1);
@@ -57,6 +59,7 @@ from apps.core.guards import assert_app_database
 from apps.core.queue import app
 from apps.runs import periodic, reaper
 from apps.runs.step import BACKGROUND, INTERACTIVE, SYSTEM
+from apps.runs.worker_lock import WorkerLock
 
 log = logging.getLogger("foray.worker")
 
@@ -172,6 +175,13 @@ async def serve(
     crashed: list[str] = []
     django_connector = app.connector
     assert isinstance(django_connector, DjangoConnector), "the app runs on Django's connector"
+    lock = WorkerLock()
+    if not await lock.acquire(stop):
+        for signum in signals:
+            loop.remove_signal_handler(signum)
+        log.info("stopped while waiting for the other worker")
+        return 0
+    watching = asyncio.create_task(lock.watch(stop), name="worker:lock")
     try:
         with app.replace_connector(django_connector.get_worker_connector()):
             async with app.open_async():
@@ -195,11 +205,16 @@ async def serve(
                     ", ".join(f"{lane}×{n}" for lane, n in lanes()),
                 )
                 stopping = asyncio.create_task(stop.wait())
+                displaced = asyncio.create_task(lock.lost.wait())
                 done, _ = await asyncio.wait(
-                    {stopping, *workers.values()}, return_when=asyncio.FIRST_COMPLETED
+                    {stopping, displaced, *workers.values()}, return_when=asyncio.FIRST_COMPLETED
                 )
+                displaced.cancel()
                 crashed = [lane for lane, task in workers.items() if task in done]
-                if crashed:
+                if lock.lost.is_set():
+                    crashed = crashed or ["lock"]
+                    log.error("stopping: another worker holds this database now")
+                elif crashed:
                     log.error("lane %s stopped on its own; stopping the others", ", ".join(crashed))
                 else:
                     log.info("stopping (running jobs get %ss)", shutdown_timeout)
@@ -215,6 +230,8 @@ async def serve(
         # forwards its own), and with Python's default handler back it would interrupt the
         # Playwright close mid-way, leaving it waiting forever and `stopped` never logged.
         await _close_browser_bounded()
+        watching.cancel()
+        await lock.release()
         for signum in signals:
             loop.remove_signal_handler(signum)
     log.info("stopped")

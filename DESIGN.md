@@ -207,7 +207,11 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
   long search never blocks a tailoring job the user is waiting on, and liveness never queues
   behind model work. A step is a `run_step` task: it claims the run, runs under the run's
   `llm_context` and a per-task timeout, turns a failure into `run.failed` with the user's
-  sentence, and fails a run its handler forgot to finish.
+  sentence, and fails a run its handler forgot to finish. Only one worker works on a database
+  (#51, `apps/runs/worker_lock.py`): it holds a session advisory lock, and a second one waits
+  behind it, because the refresh gate and the model limiter each live in a process. That is
+  what lets a worker stay up between dev sessions (`pnpm worker:up`) or on a machine that
+  never sleeps (`docs/always-on.md`) without `pnpm dev:all` ever running a second beside it.
 - **Progress, one channel**: an append-only `events` table, written only by
   `runs.events.emit()`. The app shell's `LiveProvider` polls a single endpoint,
   `/api/live?since=<id>`, which returns new events, active and recently finished runs,

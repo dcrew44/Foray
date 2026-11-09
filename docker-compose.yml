@@ -114,6 +114,31 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # The worker alone, for a machine that runs the app natively (`pnpm dev:all`): it keeps the
+  # radar going between dev sessions (`pnpm worker:up`, #51). Same database; the checkout's
+  # own storage folder, so what it renders is where the native api looks. It is built from the
+  # checkout as it is when started, so start it from `main`. `pnpm dev:all`'s worker waits
+  # behind it (one worker per database: `apps/runs/worker_lock.py`).
+  background:
+    profiles: ['background']
+    build:
+      context: .
+      target: backend
+    command: ['python', 'manage.py', 'worker', '--shutdown-timeout', '60']
+    stop_grace_period: 90s
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # FORAY_DATABASE and LLM_FAKE are for rehearsing this service on the scratch database.
+      DATABASE_URL: postgres://foray:${POSTGRES_PASSWORD:-foray}@db:5432/${FORAY_DATABASE:-foray_app}
+      LLM_FAKE: ${LLM_FAKE:-false}
+      STORAGE_DIR: /data
+    volumes:
+      - ${STORAGE_DIR:-./storage}:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
   web:
     profiles: ['prod']
     build:

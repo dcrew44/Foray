@@ -32,6 +32,8 @@ worker.
 | `pnpm llm:bakeoff` | `--purpose p --models a:b@effort,… --reference c:d [--out f.json]`: compare models for one purpose on fixed fixtures (`score` and `evaluate` so far) by cost, latency, schema failures and agreement with the reference; real calls, ledgered as `bakeoff` |
 | `pnpm db:backup-legacy` / `db:import-legacy` / `db:verify-import` / `db:mark-cutover` | the one-off, read-only import of the old TypeScript app's `foray` database into `foray_app`; marking the cutover makes `--replace` and `reset_app_db` refuse |
 | `pnpm docker:prod` | `docker compose --profile prod up --build`; it wants :3000 too, so stop `dev:all` first |
+| `pnpm worker:up` / `worker:down` / `worker:logs` | a worker container that stays up between dev sessions, on the everyday database and storage; built from the checkout, so start it from `main` |
+| `pnpm backup` | dump the database and archive the stored files into `backups/`, keeping the newest 14 |
 
 Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 
@@ -259,6 +261,10 @@ not the only check.
   6 to 30 seconds, so read state with `get_page_text` instead, and
   `window.dispatchEvent(new Event("foray:live-refresh"))` to poll now.
 - Don't edit files while typing into the pane: Fast Refresh can reset the composer.
+- **One worker per database** (`apps/runs/worker_lock.py`): a second worker waits behind the
+  first. If `pnpm worker:up` is running, the worker inside `dev:all` logs "another worker is
+  running on this database; waiting for it to stop" and does nothing, so merged code runs
+  the everyday stack's jobs. The rehearsal database has its own lock and its own worker.
 - The watch-mode worker restarts on every `.py` save and interrupts whatever it was running;
   the reaper fails such runs ("Interrupted…") within about two minutes, so re-run after edits
   settle. A worker killed with `kill -9` is not restarted until the next save.

@@ -35,6 +35,10 @@ PREFIXES: dict[str, tuple[str, ...]] = {
     "lever": ("co,lever",),
     "workday": ("com,myworkdayjobs", "com,myworkdaysite"),
     "smartrecruiters": ("com,smartrecruiters",),
+    # A whole host each: `com,gem` alone would also be every site whose name begins with it.
+    "gem": ("com,gem,jobs)/",),
+    "workable": ("com,workable,apply)/",),
+    "recruitee": ("com,recruitee,",),
 }
 PEEK = 8 * 1024  # enough for a whole line of cluster.idx wherever the peek lands
 CHUNK = 256 * 1024

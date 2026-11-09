@@ -264,6 +264,10 @@ class HttpClient:
         self._budgets[key] = left - granted
         return granted
 
+    def left(self, key: str, total: int) -> int:
+        """What remains of `key`'s budget of `total`, without taking any."""
+        return self._budgets.get(key, total)
+
     async def __aenter__(self) -> Self:
         return self
 

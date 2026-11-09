@@ -49,6 +49,9 @@ CRAWL = "CC-MAIN-2026-43"
             "https://jobs.smartrecruiters.com/oneclick-ui/company/Visa/publication/1",
             ("smartrecruiters", "Visa"),
         ),
+        ("https://jobs.gem.com/Retool/am9icG9zdDo", ("gem", "retool")),
+        ("https://apply.workable.com/huggingface/j/ABC123/", ("workable", "huggingface")),
+        ("https://acme.recruitee.com/o/engineer", ("recruitee", "acme")),
         (
             "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/x_JR1",
             ("workday", "nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite"),
@@ -120,6 +123,11 @@ def test_a_candidate_seen_again_gains_the_new_place_and_keeps_its_answer() -> No
         "list:someone/new-grad",
     ]
     assert (candidate.seen, candidate.newest, candidate.status) == (2, "CC-MAIN-2026-43", "empty")
+    # Read out of a third crawl on its own, it has been seen in three.
+    add_candidates(
+        [Seen("greenhouse", "acme", "commoncrawl:CC-MAIN-2026-35", 1, "CC-MAIN-2026-35")]
+    )
+    assert BoardCandidate.objects.get().seen == 3
 
 
 @db
@@ -276,6 +284,11 @@ async def test_candidates_are_asked_newest_seen_first() -> None:
     )
     order = await sync_to_async(candidates.next_candidates)(["greenhouse"], 2)
     assert [candidate.ats_slug for candidate in order] == ["recent-often", "recent"]
+    # One place's candidates can be asked on their own, whatever their age.
+    old = await sync_to_async(candidates.next_candidates)(
+        ["greenhouse"], 5, place="commoncrawl:CC-MAIN-2025-47"
+    )
+    assert [candidate.ats_slug for candidate in old] == ["old"]
 
 
 @db
@@ -422,9 +435,14 @@ def test_find_boards_loads_a_file_and_grow_registry_reports_the_width(
     assert (candidate.ats_slug, candidate.seen, candidate.newest) == ("anthropic", 3, CRAWL)
     assert candidate.found_in == [f"commoncrawl:{CRAWL}"]
 
-    licensed = tmp_path / "list.tsv"
-    licensed.write_text("greenhouse\tanthropic\n")
-    call_command("find_boards", file=str(licensed), found_in="list:someone/new-grad")
+    # A licensed list in whatever shape it comes: every board URL in the file is a candidate.
+    licensed = tmp_path / "config.yml"
+    licensed.write_text(
+        'companies:\n  - name: "Anthropic"\n'
+        '    url: "https://boards-api.greenhouse.io/v1/boards/anthropic/jobs"\n'
+        '  - name: "Docs"\n    url: "https://example.com/readme"\n'
+    )
+    call_command("find_boards", urls=str(licensed), found_in="list:someone/new-grad")
     assert BoardCandidate.objects.get().found_in == [
         f"commoncrawl:{CRAWL}",
         "list:someone/new-grad",

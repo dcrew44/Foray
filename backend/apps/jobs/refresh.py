@@ -79,7 +79,10 @@ ALL_POSTINGS_CONCURRENCY = 16
 OWN_HOST_SOURCES = frozenset({"workday", "icims"})
 # And one pass reads at most this many postings of one source, whatever the number of boards
 # (#58): a hundred Workday boards registered at once fill in over a day of passes instead of
-# holding the fifteen-minute poll of every other board for hours.
+# holding the fifteen-minute poll of every other board for hours. Boards being caught up
+# (never read, or part-read) have a budget of their own, so a backlog never spends what a
+# board already followed needs for the posting that went up a minute ago; once theirs is spent
+# the rest wait their turn without even being listed.
 SOURCE_POSTINGS_PER_PASS = 1200
 
 MULTI_BOARD_GATE = asyncio.Lock()
@@ -222,6 +225,14 @@ async def _refresh_listed(
                 company.name, company.slug, "ok", company.last_fetch_job_count or 0, unchanged=True
             )
 
+        catching_up = state.pending or state.url != adapter.source
+        budget = f"{'catch-up' if catching_up else 'postings'}:{adapter.source}"
+        if catching_up and not force and client.left(budget, SOURCE_POSTINGS_PER_PASS) == 0:
+            # Not recorded as fetched: it stays at the front of the next pass's queue.
+            return RefreshOutcome(
+                company.name, company.slug, "ok", company.last_fetch_job_count or 0, unchanged=True
+            )
+
         listing = await adapter.list_board(client, slug)
         known = await db(listing_versions, company.id)
         wanted = [
@@ -229,11 +240,10 @@ async def _refresh_listed(
             for posting in listing.postings
             if force or known.get(posting.external_id) != posting.version
         ]
-        allowed = client.take(
-            f"postings:{adapter.source}",
-            SOURCE_POSTINGS_PER_PASS,
-            min(len(wanted), POSTINGS_PER_PASS),
-        )
+        # A person who asked for this board is not made to wait for a pass's budget.
+        allowed = min(len(wanted), POSTINGS_PER_PASS)
+        if not force:
+            allowed = client.take(budget, SOURCE_POSTINGS_PER_PASS, allowed)
         read, failed = await _read_postings(client, adapter, company, wanted[:allowed])
         if wanted and failed and not read:
             raise RuntimeError(f"none of {failed} postings could be read")

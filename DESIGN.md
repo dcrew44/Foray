@@ -355,7 +355,13 @@ engineer"`), because most of the seven thousand in a crawl are hospitals and ret
 company records each place it was learned from (`companies.found_in`), a company that was in
 the old seed and is also in a crawl is no longer only the seed's, and the `seed.json` that
 ships is rewritten from boards seen somewhere public and checked live. Community new-graduate
-lists without a licence are a yardstick for coverage and never an import.
+lists without a licence are a yardstick for coverage and never an import; one under MIT
+(`ambicuity/New-Grad-Jobs`) is a second source, credited in the README. On 2026-11-09 this took
+the registry from 404 active companies to 3,236 (39,351 open postings to 155,593, and 818
+early-career software roles to 2,038, before the 207 Workday sites among them had been read),
+and the shipped list from 406 entries under somebody else's licence to 3,222 of Foray's own.
+Fourteen boards of the old list appear in no crawl; they stay in databases that already had
+them, marked `found_in = ["seed"]`, and are not in the list that ships.
 
 **What a posting asks** (#56, `apps/jobs/facts.py`). Whether someone can get a job at all turns
 on a few facts that are the same for every reader: the role's level, the years it requires, what
@@ -515,7 +521,8 @@ Ashby and Lever.
   stages on rejections and interview invitations.
 - **Phase 4 — ready for other people.** One-command setup with the user's own keys
   (OpenRouter as a provider makes one key enough), the hosted posting mirror that installs
-  sync from, a company list built from Foray's own discovery in place of the seed list,
+  sync from, a company list built from Foray's own discovery in place of the seed list
+  (done in November 2026: #58, #28),
   per-user company follows instead of one shared status, and a retention policy. No hosted
   app, no usage billing and no cloud browser.
 

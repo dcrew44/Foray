@@ -32,6 +32,8 @@ from django.db import connection, transaction
 from pydantic import BaseModel, ConfigDict
 
 from apps.accounts.schemas import Preferences
+from apps.applications.answers import load as load_answers
+from apps.applications.answers import work_status
 from apps.core.choices import JsonModel
 from apps.core.jsonio import js_json_indent
 from apps.jobs.level import EARLY_CAREER_WORDS, SENIOR_WORDS, word_pattern
@@ -535,6 +537,15 @@ def prefilter_jobs(
     eligible = _eligibility_clause(preferences, params)
     if eligible is not None:
         conditions.append(eligible)
+
+    # Who may be hired at all, by the user's own saved answers (#21) against what the posting
+    # says (`jobs.facts`). Only an answer the user gave rules a posting out.
+    status = work_status(load_answers(user_id))
+    if status.excluded_work_auth:
+        conditions.append("j.work_auth <> ALL(%s)")
+        params.append(status.excluded_work_auth)
+    if status.lacks_clearance:
+        conditions.append("j.clearance <> 'required'")
 
     # One role, one match. A company posting the same role in four cities is one thing to the
     # user. Roles the user already has a match for are skipped (dismissed ones stay dismissed),

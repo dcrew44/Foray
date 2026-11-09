@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.jobs",
     "apps.matching",
     "apps.resumes",
+    "apps.applications",
     "apps.runs",
     "apps.chat",
     "apps.pages",

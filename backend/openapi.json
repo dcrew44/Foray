@@ -1028,6 +1028,43 @@
         ]
       }
     },
+    "/api/answers": {
+      "put": {
+        "operationId": "apps_applications_api_put_answers",
+        "summary": "Save answers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "answers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswersIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/conversations": {
       "get": {
         "operationId": "apps_chat_api_list_conversations",
@@ -3497,6 +3534,77 @@
         "title": "TailorIn",
         "type": "object"
       },
+      "AnswerIn": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AnswerKind"
+          },
+          "answer": {
+            "maxLength": 4000,
+            "title": "Answer",
+            "type": "string"
+          },
+          "question": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "answer"
+        ],
+        "title": "AnswerIn",
+        "type": "object"
+      },
+      "AnswerKind": {
+        "description": "The questions application forms share. `custom` is any other question, kept under the\nquestion's own words.",
+        "enum": [
+          "work_authorization",
+          "sponsorship",
+          "citizenship",
+          "clearance",
+          "salary",
+          "start_date",
+          "years_experience",
+          "relocation",
+          "location",
+          "phone",
+          "linkedin",
+          "github",
+          "website",
+          "how_heard",
+          "previously_employed",
+          "over_18",
+          "pronouns",
+          "gender",
+          "race",
+          "hispanic",
+          "veteran",
+          "disability",
+          "custom"
+        ],
+        "title": "AnswerKind",
+        "type": "string"
+      },
+      "AnswersIn": {
+        "properties": {
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerIn"
+            },
+            "maxItems": 60,
+            "title": "Answers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "answers"
+        ],
+        "title": "AnswersIn",
+        "type": "object"
+      },
       "ConversationItem": {
         "properties": {
           "id": {
@@ -5027,6 +5135,24 @@
         "title": "RadarLag",
         "type": "object"
       },
+      "AnswerOption": {
+        "properties": {
+          "value": {
+            "title": "Value",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "AnswerOption",
+        "type": "object"
+      },
       "BaseVersion": {
         "properties": {
           "version": {
@@ -5117,6 +5243,13 @@
                 "type": "null"
               }
             ]
+          },
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/SavedAnswer"
+            },
+            "title": "Answers",
+            "type": "array"
           }
         },
         "required": [
@@ -5127,9 +5260,75 @@
           "progress",
           "slots",
           "base",
-          "render"
+          "render",
+          "answers"
         ],
         "title": "ProfilePage",
+        "type": "object"
+      },
+      "SavedAnswer": {
+        "description": "One of the questions application forms share (#21), with the user's answer if any.",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AnswerKind"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "input": {
+            "enum": [
+              "yes_no",
+              "choice",
+              "text"
+            ],
+            "title": "Input",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerOption"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "group": {
+            "enum": [
+              "work",
+              "logistics",
+              "links",
+              "disclosures",
+              "custom"
+            ],
+            "title": "Group",
+            "type": "string"
+          },
+          "hint": {
+            "title": "Hint",
+            "type": "string"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          }
+        },
+        "required": [
+          "kind",
+          "question",
+          "input",
+          "options",
+          "group",
+          "hint",
+          "answer"
+        ],
+        "title": "SavedAnswer",
         "type": "object"
       },
       "AggregatorUsage": {

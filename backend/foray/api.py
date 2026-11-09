@@ -18,6 +18,7 @@ from ninja.renderers import JSONRenderer
 from ninja.security import SessionAuth
 
 from apps.accounts import api as accounts_api
+from apps.applications import api as applications_api
 from apps.chat import api as chat_api
 from apps.core import api as core_api
 from apps.core import errors, openapi
@@ -34,6 +35,7 @@ ROUTER_MODULES = (
     matching_api,
     jobs_api,
     resumes_api,
+    applications_api,
     chat_api,
     pages_api,
     core_api,

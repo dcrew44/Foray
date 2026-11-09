@@ -33,6 +33,7 @@ USER_OWNED: list[type[models.Model]] = sorted(
 
 def test_every_per_user_table_is_user_owned() -> None:
     assert {m.__name__ for m in USER_OWNED} == {
+        "ApplicationAnswer",
         "Approval",
         "Conversation",
         "Document",

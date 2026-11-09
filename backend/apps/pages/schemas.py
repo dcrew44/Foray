@@ -20,6 +20,7 @@ from typing import Any, Literal
 from apps.accounts.api import SettingsOut
 from apps.accounts.profile import InterviewProgress, OnboardingState, Slot
 from apps.accounts.schemas import Preferences
+from apps.applications.models import AnswerKind
 from apps.core.router import ApiModel
 from apps.jobs.legitimacy import SignalKind
 from apps.jobs.pipeline import CompanyRow
@@ -289,6 +290,23 @@ class LatestRender(ApiModel):
     version: int
 
 
+class AnswerOption(ApiModel):
+    value: str  # what is stored
+    label: str
+
+
+class SavedAnswer(ApiModel):
+    """One of the questions application forms share (#21), with the user's answer if any."""
+
+    kind: AnswerKind
+    question: str
+    input: Literal["yes_no", "choice", "text"]
+    options: list[AnswerOption]  # for a choice; empty otherwise
+    group: Literal["work", "logistics", "links", "disclosures", "custom"]
+    hint: str
+    answer: str | None
+
+
 class ProfilePage(ApiModel):
     has_resume: bool
     ready: bool
@@ -298,6 +316,8 @@ class ProfilePage(ApiModel):
     slots: list[Slot]  # the interview's slots, so the frontend keeps no copy
     base: BaseVersion | None  # the newest base version, whether or not it reads
     render: LatestRender | None
+    # The shared application questions in the order the page asks them, then the user's own.
+    answers: list[SavedAnswer]
 
 
 # --- /pages/settings -----------------------------------------------------------------------------

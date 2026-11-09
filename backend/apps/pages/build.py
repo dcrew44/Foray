@@ -24,6 +24,8 @@ from apps.accounts.api import SettingsOut
 from apps.accounts.models import User
 from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
+from apps.applications.answers import CATALOGUE, YES_NO
+from apps.applications.models import AnswerKind, ApplicationAnswer
 from apps.core import clock
 from apps.core.jsonio import js_locale
 from apps.jobs import legitimacy, radar
@@ -42,6 +44,7 @@ from apps.matching.schemas import DeepEval, FastScore
 from apps.pages.schemas import (
     ActivityPage,
     AggregatorUsage,
+    AnswerOption,
     BaseVersion,
     ChatPage,
     ChatSuggestion,
@@ -69,6 +72,7 @@ from apps.pages.schemas import (
     RadarLag,
     ReviewCost,
     RunSummary,
+    SavedAnswer,
     SettingsPage,
     SettingsUser,
     StageCounts,
@@ -644,6 +648,48 @@ def radar_summary() -> Radar:
 # --- /pages/profile ------------------------------------------------------------------------------
 
 
+def saved_answers(user_id: str) -> list[SavedAnswer]:
+    """The shared questions in the catalogue's order, each with the user's answer, then the
+    custom questions they answered, oldest first. One query."""
+    rows = list(
+        ApplicationAnswer.objects.for_user(user_id)
+        .order_by("created_at", "id")
+        .values("kind", "question", "answer")
+    )
+    by_kind = {row["kind"]: row["answer"] for row in rows if row["kind"] != AnswerKind.CUSTOM}
+    shared = [
+        SavedAnswer(
+            kind=question.kind,
+            question=question.label,
+            input=question.input,
+            options=[
+                AnswerOption(value=value, label=label)
+                for value, label in (
+                    question.options or (YES_NO if question.input == "yes_no" else ())
+                )
+            ],
+            group=question.group,
+            hint=question.hint,
+            answer=by_kind.get(question.kind),
+        )
+        for question in CATALOGUE
+    ]
+    custom = [
+        SavedAnswer(
+            kind=AnswerKind.CUSTOM,
+            question=row["question"],
+            input="text",
+            options=[],
+            group="custom",
+            hint="",
+            answer=row["answer"],
+        )
+        for row in rows
+        if row["kind"] == AnswerKind.CUSTOM
+    ]
+    return [*shared, *custom]
+
+
 def profile_page(user: User) -> ProfilePage:
     onboarding = onboarding_state(user)
     bases = Resume.objects.for_user(user.pk).filter(kind=ResumeKind.BASE).order_by("-version")
@@ -664,6 +710,7 @@ def profile_page(user: User) -> ProfilePage:
         render=LatestRender(document_id=render["rendered_document_id"], version=render["version"])
         if render
         else None,
+        answers=saved_answers(user.pk),
     )
 
 

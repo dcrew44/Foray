@@ -412,7 +412,7 @@ export function CompanyTable({ companies }: { companies: CompanyRow[] }) {
             <p className="text-muted-foreground tabular text-[12.5px]">
               {shown.length === rows.length
                 ? `${rows.length.toLocaleString()} ${rows.length === 1 ? "company" : "companies"}`
-                : visible.length === rows.length
+                : visible.length === rows.length || shown.length === visible.length
                   ? `Showing ${shown.length.toLocaleString()} of ${rows.length.toLocaleString()} companies`
                   : `Showing ${shown.length.toLocaleString()} of ${visible.length.toLocaleString()} that match, out of ${rows.length.toLocaleString()} companies`}
             </p>

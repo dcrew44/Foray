@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CompanyTable } from "@/components/companies/company-table";
+import { RadarPanel } from "@/components/companies/radar-panel";
 import { RefreshStaleButton } from "@/components/companies/refresh-stale-button";
 import { PageBody, PageHeader } from "@/components/foray/primitives";
 import { RefreshOn } from "@/components/live/refresh-on";
@@ -21,7 +22,7 @@ type CompaniesPageData = components["schemas"]["CompaniesPage"];
  * page.
  */
 export default async function CompaniesPage() {
-  const { companies, active, openPostings } = await django<CompaniesPageData>(
+  const { companies, active, openPostings, radar } = await django<CompaniesPageData>(
     "/api/pages/companies",
   );
 
@@ -33,10 +34,15 @@ export default async function CompaniesPage() {
         description={
           companies.length === 0
             ? "The companies whose job boards Foray reads. Every search starts from these boards, then looks wider."
-            : `${plural(active, "active board")} with ${plural(openPostings, "open posting")} between them. Foray refreshes them every six hours and keeps postings that disappear, marked closed.`
+            : `${plural(active, "active board")} with ${plural(openPostings, "open posting")} between them. Foray asks each board whether it changed, reads the ones that did, and keeps postings that disappear, marked closed.`
         }
         title="Companies"
       />
+      {companies.length > 0 && (
+        <div className="mt-6">
+          <RadarPanel radar={radar} />
+        </div>
+      )}
       <div className="mt-8">
         <CompanyTable companies={companies} />
       </div>

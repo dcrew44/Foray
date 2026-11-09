@@ -105,6 +105,17 @@ class Company(Timestamped):
     listing_cache = models.JSONField(default=dict)
     discovered_via = models.TextField(choices=DiscoveredVia.choices)
     added_by = models.ForeignKey(User, models.SET_NULL, null=True, related_name="+")
+    # Polling (#55). `last_fetched_at` is the last attempt; `last_ok_at` the last check that
+    # succeeded, whether it read the board or found it unchanged (the database's clock: a new
+    # posting's `seen_lag_s` is measured from it).
+    last_ok_at = models.DateTimeField(null=True)
+    # Consecutive failed fetches. Each doubles the wait before the next (`registry.due_companies`).
+    fetch_failures = models.SmallIntegerField(db_default=0)
+    # What the last read left to ask "has this changed?" with (`sources.poll.PollState`).
+    poll_state = models.JSONField(default=dict)
+    # When this board last listed an early-career role or gave someone a match. With one in the
+    # last 180 days it is polled every 15 minutes, otherwise hourly.
+    last_relevant_at = models.DateTimeField(null=True)
 
     added_by_id: str | None
 
@@ -173,6 +184,11 @@ class Job(models.Model):
     first_seen_at = models.DateTimeField()  # never updated after insert
     last_seen_at = models.DateTimeField()
     fetched_at = models.DateTimeField()  # cache metadata (invariant 6)
+    # How long this posting had been up when we first saw it, in seconds: the smaller of
+    # `first_seen_at - posted_at` and the time since its board's previous successful check (it
+    # was not listed then, whatever date the source gives it). Null when nothing bounds it: a
+    # board's first fetch, the aggregator, careers pages (#55).
+    seen_lag_s = models.IntegerField(null=True)
 
     company_id: uuid.UUID | None
 
@@ -196,6 +212,12 @@ class Job(models.Model):
                 F("first_seen_at").desc(),
                 condition=Q(is_active=True),
                 name="jobs_active_first_seen",
+            ),
+            # The radar's lag report: the week's measured postings, closed ones included.
+            models.Index(
+                F("first_seen_at").desc(),
+                condition=Q(seen_lag_s__isnull=False),
+                name="jobs_seen_lag",
             ),
         ]
 

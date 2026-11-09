@@ -15,6 +15,7 @@ from apps.core.http import (
     HTML_ACCEPT,
     HttpError,
     NetworkError,
+    Validators,
     backoff_seconds,
     is_blocked_address,
 )
@@ -184,6 +185,64 @@ async def test_a_callers_headers_never_follow_a_redirect_to_another_origin() -> 
 
 
 @pytest.mark.usefixtures("no_backoff")
+# --- conditional requests ------------------------------------------------------------------------
+
+
+async def test_a_conditional_fetch_sends_its_validators_and_takes_a_304() -> None:
+    asked: list[dict[str, str]] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        asked.append({k: v for k, v in request.headers.items() if k.startswith("if-")})
+        if request.headers.get("if-none-match") == 'W/"abc"':
+            return httpx2.Response(304)
+        return httpx2.Response(
+            200,
+            text="[]",
+            headers={"etag": 'W/"abc"', "last-modified": "Mon, 09 Nov 2026 20:00:00 GMT"},
+        )
+
+    async with mock_client(handler) as client:
+        first = await client.fetch_conditional("https://example.com/board", Validators())
+        second = await client.fetch_conditional("https://example.com/board", first.validators)
+
+    assert (first.text, first.not_modified) == ("[]", False)
+    assert first.validators == Validators('W/"abc"', "Mon, 09 Nov 2026 20:00:00 GMT")
+    assert asked == [
+        {},
+        {"if-none-match": 'W/"abc"', "if-modified-since": "Mon, 09 Nov 2026 20:00:00 GMT"},
+    ]
+    # A 304 has no body, and hands back the validators that earned it.
+    assert (second.text, second.not_modified) == (None, True)
+    assert second.validators == first.validators
+    assert not Validators() and Validators(last_modified="x")
+
+
+async def test_a_304_nobody_asked_for_is_an_error() -> None:
+    async with mock_client(lambda request: httpx2.Response(304)) as client:
+        with pytest.raises(HttpError) as raised:
+            await client.fetch_text("https://example.com/board")
+        with pytest.raises(HttpError):
+            await client.fetch_conditional("https://example.com/board", Validators())
+    assert raised.value.status == 304
+
+
+async def test_validators_never_follow_a_redirect_to_another_origin() -> None:
+    seen: dict[str, dict[str, str]] = {}
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen[request.url.host] = dict(request.headers)
+        if request.url.host == "example.com":
+            return httpx2.Response(302, headers={"location": "https://other.example/board"})
+        return httpx2.Response(304)  # a 304 to a hop that carried no validators
+
+    async with mock_client(handler) as client:
+        with pytest.raises(HttpError) as raised:
+            await client.fetch_conditional("https://example.com/board", Validators(etag='"v1"'))
+    assert seen["example.com"]["if-none-match"] == '"v1"'
+    assert "if-none-match" not in seen["other.example"]
+    assert raised.value.status == 304
+
+
 async def test_on_attempt_runs_before_every_attempt() -> None:
     answers = [httpx2.Response(503, text="busy"), httpx2.Response(200, text="fine")]
     sent: list[int] = []

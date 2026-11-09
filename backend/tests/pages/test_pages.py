@@ -27,12 +27,14 @@ from typing import Any
 import pytest
 from django.core.management import call_command
 from django.db import connection
+from django.db.models.functions import Now
 from django.test.utils import CaptureQueriesContext
 from pydantic import SecretStr
 
 from apps.accounts.profile import SLOTS, onboarding_state
 from apps.accounts.schemas import SAMPLE_PREFERENCES
 from apps.jobs import pipeline
+from apps.jobs.models import Company, Job
 from apps.matching.brief import describe_brief, parse_brief
 from apps.matching.queries import list_matches
 from apps.pages import build
@@ -573,6 +575,29 @@ def test_companies_page() -> None:
     for row in body["companies"]:
         company = graph.company if row["slug"] == "stripe" else linear
         assert row == json.loads(json.dumps(pipeline.row_for(company.id)))
+
+
+def test_companies_page_reports_the_radar() -> None:
+    graph = full_graph()
+    empty = page(graph, "companies")["radar"]
+    assert (empty["postings"], empty["medianS"], empty["p90S"], empty["bySource"]) == (
+        0,
+        None,
+        None,
+        [],
+    )
+    assert (empty["days"], empty["hotBoards"], empty["coldBoards"]) == (7, 0, 2)
+
+    Job.objects.filter(company=graph.company).update(seen_lag_s=240)
+    Company.objects.filter(id=graph.company.id).update(last_relevant_at=Now(), last_ok_at=Now())
+    radar = page(graph, "companies")["radar"]
+    measured = Job.objects.filter(company=graph.company).count()
+    assert (radar["postings"], radar["medianS"], radar["p90S"]) == (measured, 240, 240)
+    assert radar["bySource"] == [
+        {"source": "greenhouse", "postings": measured, "medianS": 240, "p90S": 240}
+    ]
+    assert (radar["hotBoards"], radar["coldBoards"], radar["careersPages"]) == (1, 1, 0)
+    assert radar["lastCheckedAt"] is not None
 
 
 def test_companies_page_is_shared() -> None:

@@ -18,5 +18,16 @@
       "tags": []
     }
   ],
-  "openPostings": "number"
+  "openPostings": "number",
+  "radar": {
+    "bySource": [],
+    "careersPages": "number",
+    "coldBoards": "number",
+    "days": "number",
+    "hotBoards": "number",
+    "lastCheckedAt": "null",
+    "medianS": "null",
+    "p90S": "null",
+    "postings": "number"
+  }
 }

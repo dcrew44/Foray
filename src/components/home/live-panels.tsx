@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 export function AttentionPanel() {
   const { approvals, runs } = useLive();
 
-  // A watch checks new postings every six hours unasked; Activity shows it, Home does not.
+  // A watch checks new postings unasked whenever some arrive; Activity shows it, Home does not.
   const active = Object.values(runs)
     .filter((run) => isActiveRun(run) && run.kind !== "watch")
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));

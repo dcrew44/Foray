@@ -21,7 +21,7 @@ export const KIND_TITLE: Record<LiveRun["kind"], string> = {
 };
 
 /**
- * A watch (#5) runs every six hours unasked. One that found nothing to announce completes at
+ * A watch (#5) runs unasked whenever new postings arrive. One that found nothing to announce completes at
  * debug level with `announced: 0`, and the feeds leave it out; the activity page's server query
  * does the same.
  */

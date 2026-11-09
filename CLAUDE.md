@@ -42,7 +42,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 | `worker` | the worker itself (what `dev:worker` runs, without the reload) |
 | `acceptance_checks [--since ISO]` | re-check the database-level invariants after a rehearsal; exits 1 on any FAIL |
 | `debug_sleep <seconds>` | a job that sleeps, for checking lock recovery after a `kill -9` (DEBUG only) |
-| `watch_now [--email e] [--days N] [--fan-out]` | a watch over the newest postings now instead of after the next six-hourly refresh; `--days` widens its window, `--fan-out` starts every watching user's (DEBUG only) |
+| `watch_now [--email e] [--days N] [--fan-out]` | a watch over the newest postings now instead of after the next scheduled refresh; `--days` widens its window, `--fan-out` starts every watching user's (DEBUG only) |
 
 ## Layout
 
@@ -173,6 +173,13 @@ An issue reads like the ones already there:
   `choices_check` CHECK. Make a new migration with `pnpm db:makemigrations`.
 - **Outbound HTTP** goes through `apps.core.http.HttpClient` only: it refuses private and
   metadata addresses on every hop and caps response sizes.
+- **Boards are polled, not just fetched.** `refresh_company` asks a board whether it changed
+  (`sources/poll.py`: the validators its last answer came with, then a digest of the body) and
+  reads it only when it did; pass `force=True` when a person asked for the read. A board
+  adapter is `board_url(slug)`, `parse_board(slug, body)` and `fetch_board(client, slug)`, plus
+  `probe_url(slug)` when the source has a cheaper listing that changes with the board. Bump
+  `poll.VERSION` when a parser changes what it makes of the same bytes, or unchanged boards
+  keep the old reading for up to a day.
 - **Job ids** are `source:company_slug:external_id`; career pages use
   `web:<slug>:<sha1(url)>`.
 - **Never rewrite `description_raw`.** Cleaning produces `description_text`.

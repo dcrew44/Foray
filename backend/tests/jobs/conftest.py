@@ -75,6 +75,28 @@ def routes(table: Mapping[str, httpx2.Response | Callable[[], httpx2.Response]])
     return handler
 
 
+def greenhouse_listing(board: Any) -> Any:
+    """What Greenhouse's `/jobs` answers without `?content=true`: the same postings, no bodies.
+    A poll asks this first and reads the whole board only when it differs (#55)."""
+    return {
+        **board,
+        "jobs": [
+            {key: value for key, value in job.items() if key != "content"}
+            for job in board.get("jobs") or []
+        ],
+    }
+
+
+def greenhouse_pages(slug: str, board: Any) -> dict[str, httpx2.Response]:
+    """Both URLs of one Greenhouse board for `routes`: the listing a poll asks and the board."""
+    from apps.jobs.sources import greenhouse
+
+    return {
+        greenhouse.probe_url(slug): httpx2.Response(200, json=greenhouse_listing(board)),
+        greenhouse.board_url(slug): httpx2.Response(200, json=board),
+    }
+
+
 def html(body: str, status: int = 200) -> httpx2.Response:
     return httpx2.Response(status, text=body, headers={"content-type": "text/html; charset=utf-8"})
 

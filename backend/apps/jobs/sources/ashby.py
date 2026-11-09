@@ -130,16 +130,7 @@ def normalize_job(slug: str, job: dict[str, Any]) -> NormalizedJob:
     )
 
 
-async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
-    try:
-        body = await client.fetch_text(board_url(slug))
-    except HttpError as error:
-        # Ashby answers an unknown slug with plain text "Not Found", so the status is checked
-        # before anything parses the body.
-        if error.status == 404:
-            raise BoardNotFound(SOURCE, slug) from error
-        raise
-
+def parse_board(slug: str, body: str) -> list[NormalizedJob]:
     board = json.loads(body)
     if not isinstance(board, dict):
         raise ValueError(f"Unexpected ashby response for {slug!r}")
@@ -149,3 +140,15 @@ async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
         for job in board.get("jobs") or []
         if job.get("isListed") is not False
     ]
+
+
+async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
+    try:
+        body = await client.fetch_text(board_url(slug))
+    except HttpError as error:
+        # Ashby answers an unknown slug with plain text "Not Found", so the status is checked
+        # before anything parses the body.
+        if error.status == 404:
+            raise BoardNotFound(SOURCE, slug) from error
+        raise
+    return parse_board(slug, body)

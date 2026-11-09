@@ -510,7 +510,7 @@ async def resolve_targets(run: Run, names: Sequence[str], client: HttpClient) ->
 async def refresh_boards(run: Run, targets: Targets | None, client: HttpClient) -> None:
     """Refreshes stale boards before the search reads the mirror. A search limited to named
     companies refreshes only theirs (ungated: one or a few boards). An unlimited search
-    refreshes the stale set under `MULTI_BOARD_GATE`, so it never overlaps the six-hourly cron or
+    refreshes the stale set under `MULTI_BOARD_GATE`, so it never overlaps the scheduled refresh or
     another stale-set refresh; the set is read once the gate is held."""
     if targets is not None:
         cutoff = stale_cutoff()

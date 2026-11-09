@@ -279,7 +279,7 @@ async def test_follow_up_style_task_is_retried_once_after_a_shutdown_only() -> N
 async def test_max_delay_catches_up_once() -> None:
     """§15.4: with `max_delay = 6 h`, a worker that starts after a stop defers only the latest
     missed tick of each periodic task: one catch-up for a minutely task stopped 3 minutes, and
-    one for the 6-hourly cron 5 h after its tick (procrastinate's default 600 s would skip it)."""
+    one for a 6-hourly cron 5 h after its tick (procrastinate's default 600 s would skip it)."""
     assert dict(app.periodic_defaults) == {"max_delay": 6 * 3600}
     assert settings.PROCRASTINATE_PERIODIC_DEFAULTS == {"max_delay": 6 * 3600}
     registry = PeriodicRegistry()

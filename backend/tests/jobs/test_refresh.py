@@ -28,7 +28,14 @@ from apps.jobs.refresh import (
 )
 from apps.jobs.sources import greenhouse
 from tests.factories import make_company
-from tests.jobs.conftest import FIXTURES, fixture_json, mock_client, routes
+from tests.jobs.conftest import (
+    FIXTURES,
+    fixture_json,
+    greenhouse_listing,
+    greenhouse_pages,
+    mock_client,
+    routes,
+)
 
 BOARD = fixture_json("greenhouse/anthropic.json")
 db = pytest.mark.django_db(transaction=True)
@@ -41,7 +48,7 @@ async def company(**fields: Any) -> Company:
 @db
 async def test_an_ok_refresh_ingests_and_records() -> None:
     acme = await company(slug="acme", ats_slug="acme")
-    handler = routes({greenhouse.board_url("acme"): httpx2.Response(200, json=BOARD)})
+    handler = routes(greenhouse_pages("acme", BOARD))
     async with mock_client(handler) as client:
         outcome = await refresh_company(client, acme)
     assert (outcome.status, outcome.jobs) == ("ok", len(BOARD["jobs"]))
@@ -58,7 +65,7 @@ async def test_an_ok_refresh_ingests_and_records() -> None:
 async def test_only_a_404_marks_a_company_invalid(no_backoff: list[float]) -> None:
     gone = await company(slug="gone", ats_slug="gone", last_fetch_job_count=4)
     flaky = await company(slug="flaky", ats_slug="flaky", last_fetch_job_count=9)
-    handler = routes({greenhouse.board_url("flaky"): httpx2.Response(503, text="busy")})
+    handler = routes({greenhouse.probe_url("flaky"): httpx2.Response(503, text="busy")})
     async with mock_client(handler) as client:
         outcomes = await refresh_companies(client, [gone, flaky])
 
@@ -83,7 +90,12 @@ async def test_one_empty_answer_closes_nothing_and_a_second_does() -> None:
     acme = await company(slug="acme", ats_slug="acme")
     answers = {"board": BOARD}
     handler = routes(
-        {greenhouse.board_url("acme"): lambda: httpx2.Response(200, json=answers["board"])}
+        {
+            greenhouse.probe_url("acme"): lambda: httpx2.Response(
+                200, json=greenhouse_listing(answers["board"])
+            ),
+            greenhouse.board_url("acme"): lambda: httpx2.Response(200, json=answers["board"]),
+        }
     )
     async with mock_client(handler) as client:
         await refresh_company(client, acme)
@@ -109,9 +121,10 @@ async def test_a_company_without_a_board_or_pages_is_unsupported() -> None:
 @db
 async def test_the_pool_keeps_input_order() -> None:
     companies = [await company(slug=f"c{n}", ats_slug=f"c{n}") for n in range(9)]
-    handler = routes(
-        {greenhouse.board_url(c.slug): httpx2.Response(200, json=BOARD) for c in companies[::2]}
-    )
+    pages: dict[str, httpx2.Response] = {}
+    for c in companies[::2]:
+        pages.update(greenhouse_pages(c.slug, BOARD))
+    handler = routes(pages)
     async with mock_client(handler) as client:
         outcomes = await refresh_companies(client, companies, concurrency=3)
     assert [o.slug for o in outcomes] == [c.slug for c in companies]

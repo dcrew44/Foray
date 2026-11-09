@@ -1799,6 +1799,42 @@ export interface components {
             active: number;
             /** Openpostings */
             openPostings: number;
+            radar: components["schemas"]["Radar"];
+        };
+        /**
+         * Radar
+         * @description How soon new postings are seen and how often boards are asked (`jobs/radar.py`, #55).
+         */
+        Radar: {
+            /** Days */
+            days: number;
+            /** Postings */
+            postings: number;
+            /** Medians */
+            medianS: number | null;
+            /** P90S */
+            p90S: number | null;
+            /** Bysource */
+            bySource: components["schemas"]["RadarLag"][];
+            /** Hotboards */
+            hotBoards: number;
+            /** Coldboards */
+            coldBoards: number;
+            /** Careerspages */
+            careersPages: number;
+            /** Lastcheckedat */
+            lastCheckedAt: string | null;
+        };
+        /** RadarLag */
+        RadarLag: {
+            /** Source */
+            source: string;
+            /** Postings */
+            postings: number;
+            /** Medians */
+            medianS: number;
+            /** P90S */
+            p90S: number;
         };
         /** BaseVersion */
         BaseVersion: {

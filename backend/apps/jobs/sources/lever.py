@@ -139,6 +139,14 @@ def normalize_job(slug: str, posting: dict[str, Any]) -> NormalizedJob:
     )
 
 
+def parse_board(slug: str, body: str) -> list[NormalizedJob]:
+    # A real board with nothing open returns `[]`, which is not a 404.
+    postings = json.loads(body)
+    return (
+        [normalize_job(slug, posting) for posting in postings] if isinstance(postings, list) else []
+    )
+
+
 async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
     try:
         body = await client.fetch_text(board_url(slug))
@@ -146,9 +154,4 @@ async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
         if error.status == 404:
             raise BoardNotFound(SOURCE, slug) from error
         raise
-
-    # A real board with nothing open returns `[]`, which is not a 404.
-    postings = json.loads(body)
-    return (
-        [normalize_job(slug, posting) for posting in postings] if isinstance(postings, list) else []
-    )
+    return parse_board(slug, body)

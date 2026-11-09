@@ -4729,14 +4729,125 @@
           "openPostings": {
             "title": "Openpostings",
             "type": "integer"
+          },
+          "radar": {
+            "$ref": "#/components/schemas/Radar"
           }
         },
         "required": [
           "companies",
           "active",
-          "openPostings"
+          "openPostings",
+          "radar"
         ],
         "title": "CompaniesPage",
+        "type": "object"
+      },
+      "Radar": {
+        "description": "How soon new postings are seen and how often boards are asked (`jobs/radar.py`, #55).",
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "postings": {
+            "title": "Postings",
+            "type": "integer"
+          },
+          "medianS": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medians"
+          },
+          "p90S": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90S"
+          },
+          "bySource": {
+            "items": {
+              "$ref": "#/components/schemas/RadarLag"
+            },
+            "title": "Bysource",
+            "type": "array"
+          },
+          "hotBoards": {
+            "title": "Hotboards",
+            "type": "integer"
+          },
+          "coldBoards": {
+            "title": "Coldboards",
+            "type": "integer"
+          },
+          "careersPages": {
+            "title": "Careerspages",
+            "type": "integer"
+          },
+          "lastCheckedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastcheckedat"
+          }
+        },
+        "required": [
+          "days",
+          "postings",
+          "medianS",
+          "p90S",
+          "bySource",
+          "hotBoards",
+          "coldBoards",
+          "careersPages",
+          "lastCheckedAt"
+        ],
+        "title": "Radar",
+        "type": "object"
+      },
+      "RadarLag": {
+        "properties": {
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "postings": {
+            "title": "Postings",
+            "type": "integer"
+          },
+          "medianS": {
+            "title": "Medians",
+            "type": "integer"
+          },
+          "p90S": {
+            "title": "P90S",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "source",
+          "postings",
+          "medianS",
+          "p90S"
+        ],
+        "title": "RadarLag",
         "type": "object"
       },
       "BaseVersion": {

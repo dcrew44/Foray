@@ -175,6 +175,19 @@ export function formatDuration(ms: number): string {
   return `${hours}h ${minutes % 60}m`;
 }
 
+/**
+ * A lag in words, coarse on purpose: "under a minute", "9 minutes", "2 hours", "3 days".
+ * Rounded to the nearest unit, since nobody acts on the seconds of a quarter-hour wait.
+ */
+export function formatLag(seconds: number): string {
+  if (seconds < 60) return "under a minute";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 90) return plural(minutes, "minute");
+  const hours = Math.round(minutes / 60);
+  if (hours < 36) return plural(hours, "hour");
+  return plural(Math.round(hours / 24), "day");
+}
+
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count.toLocaleString()} ${count === 1 ? one : many}`;
 }

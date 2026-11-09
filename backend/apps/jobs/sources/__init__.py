@@ -7,16 +7,29 @@ adapters share one shape; JSearch (`jsearch.search_jsearch`) and careers pages
 
 from __future__ import annotations
 
+from types import ModuleType
+
 from apps.jobs.sources import ashby, gem, greenhouse, lever, recruitee, workable
 from apps.jobs.sources.types import BoardAdapter, BoardSource
 
+
+def _adapter(source: BoardSource, module: ModuleType, *, probe: bool = False) -> BoardAdapter:
+    return BoardAdapter(
+        source,
+        module.fetch_board,
+        module.board_url,
+        module.parse_board,
+        module.probe_url if probe else None,
+    )
+
+
 BOARD_ADAPTERS: dict[str, BoardAdapter] = {
-    "greenhouse": BoardAdapter("greenhouse", greenhouse.fetch_board),
-    "lever": BoardAdapter("lever", lever.fetch_board),
-    "ashby": BoardAdapter("ashby", ashby.fetch_board),
-    "workable": BoardAdapter("workable", workable.fetch_board),
-    "recruitee": BoardAdapter("recruitee", recruitee.fetch_board),
-    "gem": BoardAdapter("gem", gem.fetch_board),
+    "greenhouse": _adapter("greenhouse", greenhouse, probe=True),
+    "lever": _adapter("lever", lever),
+    "ashby": _adapter("ashby", ashby),
+    "workable": _adapter("workable", workable),
+    "recruitee": _adapter("recruitee", recruitee),
+    "gem": _adapter("gem", gem),
 }
 
 # Source order is preference order when one slug verifies on several boards (`find_board`).

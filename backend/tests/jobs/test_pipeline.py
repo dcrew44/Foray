@@ -1,5 +1,5 @@
 """Company pipelines (step 5C; design §5.3, §9.4, §10.5): adding one company, discovering a
-list of names, refreshing one board or the stale set, the six-hourly cron and its gate, and the
+list of names, refreshing one board or the stale set, the scheduled refresh and its gate, and the
 `/api/companies*` endpoints.
 
 Everything runs for real against the test database: the endpoints start runs, a real
@@ -55,7 +55,7 @@ from apps.runs.models import Event, Run
 from apps.runs.step import TASKS
 from tests.factories import make_company, make_conversation, make_job, make_user
 from tests.fakes import fake_models
-from tests.jobs.conftest import fixture_json, html, mock_client
+from tests.jobs.conftest import fixture_json, greenhouse_listing, html, mock_client
 from tests.queue import deferred, run_deferred, worker_connector
 from tests.runs.support import (
     age_run,
@@ -126,6 +126,11 @@ class Web:
 
     def board(self, url: str, payload: Any) -> None:
         self.pages[url] = lambda: httpx2.Response(200, json=payload)
+
+    def greenhouse(self, slug: str, payload: Any) -> None:
+        """A Greenhouse board at both its URLs: the listing a poll asks, and the board."""
+        self.board(greenhouse.probe_url(slug), greenhouse_listing(payload))
+        self.board(greenhouse.board_url(slug), payload)
 
     def page(self, url: str, body: str) -> None:
         self.pages[url] = lambda: html(body)
@@ -577,7 +582,7 @@ def test_an_add_started_from_chat_reports_back_there(web: Web) -> None:
 @tx
 def test_refreshing_one_company_completes_with_integer_counts(web: Web) -> None:
     make_company(name="Acme", slug="acme", ats_slug="acme")
-    web.board(greenhouse.board_url("acme"), ANTHROPIC_BOARD)
+    web.greenhouse("acme", ANTHROPIC_BOARD)
     api, _ = signed_in()
 
     response = api.post("/api/companies/acme/refresh")
@@ -628,7 +633,7 @@ def test_refreshing_one_company_completes_with_integer_counts(web: Web) -> None:
 def test_a_refresh_that_fails_completes_with_the_problem(web: Web, no_backoff: list[float]) -> None:
     make_company(name="Gone", slug="gone", ats_slug="gone")
     make_company(name="Flaky", slug="flaky", ats_slug="flaky")
-    web.pages[greenhouse.board_url("flaky")] = lambda: httpx2.Response(503, text="busy")
+    web.pages[greenhouse.probe_url("flaky")] = lambda: httpx2.Response(503, text="busy")
     user = make_user()
     gone = pipeline.start_refresh(user.pk, "gone").run
     flaky = pipeline.start_refresh(user.pk, "flaky").run
@@ -697,7 +702,7 @@ def test_a_stop_just_before_the_final_pair_leaves_the_cancel_last(
     user = make_user()
     run = pipeline.start_refresh(user.pk, "acme").run
 
-    async def stop_then_refresh(client: Any, company: Company) -> RefreshOutcome:
+    async def stop_then_refresh(client: Any, company: Company, **_: Any) -> RefreshOutcome:
         await db(lifecycle.cancel, user.pk, run.id)
         return RefreshOutcome(company.name, company.slug, "ok", 0)
 
@@ -787,7 +792,7 @@ def test_refresh_stale_refreshes_only_the_stale_boards(web: Web) -> None:
     make_company(name="Fresh", slug="fresh", ats_slug="fresh", last_fetched_at=now)
     make_company(name="Paused", slug="paused", ats_slug="paused", status="paused")
     for slug in ("acme", "beta"):
-        web.board(greenhouse.board_url(slug), ANTHROPIC_BOARD)
+        web.greenhouse(slug, ANTHROPIC_BOARD)
     api, _ = signed_in()
 
     response = api.post("/api/companies/refresh-stale")
@@ -905,6 +910,7 @@ async def test_a_stale_run_waits_while_the_cron_holds_the_gate(
         await release.wait()
         return httpx2.Response(200, json=ANTHROPIC_BOARD)
 
+    web.greenhouse("acme", ANTHROPIC_BOARD)
     web.pages[greenhouse.board_url("acme")] = slow_board
     user = await db(make_user)
     await db(make_company, name="Acme", slug="acme", ats_slug="acme")  # never fetched: stale
@@ -939,7 +945,7 @@ def test_the_cron_refreshes_the_stale_set_with_no_run_user_or_event(web: Web) ->
         name="Acme", slug="acme", ats_slug="acme", last_fetched_at=now - timedelta(hours=7)
     )
     make_company(name="Fresh", slug="fresh", ats_slug="fresh", last_fetched_at=now)
-    web.board(greenhouse.board_url("acme"), ANTHROPIC_BOARD)
+    web.greenhouse("acme", ANTHROPIC_BOARD)
 
     defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=0)
     run_deferred()
@@ -948,7 +954,8 @@ def test_the_cron_refreshes_the_stale_set_with_no_run_user_or_event(web: Web) ->
     assert acme.last_fetch_status == "ok" and acme.last_fetched_at is not None
     assert acme.last_fetched_at > now
     assert active_jobs("acme") == len(ANTHROPIC_BOARD["jobs"])
-    assert web.fetched == [greenhouse.board_url("acme")]
+    # A poll asks the listing first, then reads the board it has never read (#55).
+    assert web.fetched == [greenhouse.probe_url("acme"), greenhouse.board_url("acme")]
     assert Run.objects.unscoped("tests").count() == 0
     assert Event.objects.unscoped("tests").count() == 0
     assert [job["status"] for job in queue_jobs(task_name="companies.refresh_scheduled")] == [
@@ -956,6 +963,30 @@ def test_the_cron_refreshes_the_stale_set_with_no_run_user_or_event(web: Web) ->
     ]
     # Then the watches (#5): nobody here is watching, so the fan-out starts none.
     assert [job["status"] for job in queue_jobs(task_name="watch.fan_out")] == ["succeeded"]
+
+
+@tx
+def test_a_pass_that_brings_nothing_in_starts_no_watches(web: Web) -> None:
+    """Boards are polled every 15 minutes and mostly unchanged (#55): the watches start when a
+    pass brought postings in, not for every tick."""
+    make_company(name="Acme", slug="acme", ats_slug="acme")
+    web.greenhouse("acme", ANTHROPIC_BOARD)
+    quiet_tick = 1_793_491_200 + 900  # a quarter past a sixth hour
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=quiet_tick)
+    run_deferred()
+    assert [job["status"] for job in queue_jobs(task_name="watch.fan_out")] == ["succeeded"]
+
+    Company.objects.update(last_fetched_at=timezone.now() - timedelta(hours=2))
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=quiet_tick + 900)
+    run_deferred()
+    # The second pass asked, found the board as it was, and read nothing: no second fan-out.
+    assert web.fetched.count(greenhouse.probe_url("acme")) == 2
+    assert web.fetched.count(greenhouse.board_url("acme")) == 1
+    assert len(queue_jobs(task_name="watch.fan_out")) == 1
+    assert [job["status"] for job in queue_jobs(task_name="companies.refresh_scheduled")] == [
+        "succeeded",
+        "succeeded",
+    ]
 
 
 @tx
@@ -1000,7 +1031,7 @@ def test_the_company_tasks_sit_on_their_lanes_and_the_cron_is_scheduled() -> Non
     [cron] = [
         p for p in registry.periodic_tasks.values() if p.task.name == "companies.refresh_scheduled"
     ]
-    assert cron.cron == "0 */6 * * *"
+    assert cron.cron == "*/15 * * * *"
     assert cron.configure_kwargs == {"queueing_lock": "company-refresh:cron"}
 
 
@@ -1016,6 +1047,7 @@ async def test_a_worker_stopped_mid_refresh_leaves_the_run_to_the_reaper(web: We
         await asyncio.Event().wait()
         raise AssertionError("unreachable")
 
+    web.greenhouse("acme", ANTHROPIC_BOARD)
     web.pages[greenhouse.board_url("acme")] = hang
     user = await db(make_user)
     await db(make_company, name="Acme", slug="acme", ats_slug="acme")

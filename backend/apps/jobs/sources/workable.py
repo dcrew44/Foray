@@ -91,6 +91,14 @@ def normalize_job(slug: str, job: dict[str, Any], company_name: str | None = Non
     )
 
 
+def parse_board(slug: str, body: str) -> list[NormalizedJob]:
+    board = json.loads(body)
+    if not isinstance(board, dict):
+        raise ValueError(f"Unexpected workable response for {slug!r}")
+    name = board.get("name") if isinstance(board.get("name"), str) else None
+    return [normalize_job(slug, job, name) for job in board.get("jobs") or []]
+
+
 async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
     try:
         body = await client.fetch_text(board_url(slug))
@@ -99,9 +107,4 @@ async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
         if error.status == 404:
             raise BoardNotFound(SOURCE, slug) from error
         raise
-
-    board = json.loads(body)
-    if not isinstance(board, dict):
-        raise ValueError(f"Unexpected workable response for {slug!r}")
-    name = board.get("name") if isinstance(board.get("name"), str) else None
-    return [normalize_job(slug, job, name) for job in board.get("jobs") or []]
+    return parse_board(slug, body)

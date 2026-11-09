@@ -1,8 +1,9 @@
 """Watch: score the postings each scheduled refresh brings in, and announce the strong ones (#5).
 
 A search makes matches only when the user asks; between searches, strong roles sat unscored in
-the mirror for a week. After every scheduled refresh the cron defers `watch.fan_out`, which
-starts one `watch` run per user who is watching. A watch is a search with no request and no
+the mirror for a week. A scheduled refresh that brought postings in defers `watch.fan_out`
+(as does every sixth hour's tick, for what the review cap held back: `jobs.tasks.watches_due`),
+which starts one `watch` run per user who is watching. A watch is a search with no request and no
 gates over a narrow window:
 
 - **The window.** Postings first seen since the previous completed watch (less ten minutes, as
@@ -191,8 +192,8 @@ def watch_window(user_id: str, since: str | None) -> tuple[datetime, datetime]:
 
 
 def cached_criteria(user_id: str, run_id: uuid.UUID, saved: Preferences) -> DerivedCriteria | None:
-    """The title terms an earlier watch derived from these same saved preferences, so four
-    watches a day neither pay for nor drift between derivations. Sync."""
+    """The title terms an earlier watch derived from these same saved preferences, so the many
+    watches of a day neither pay for nor drift between derivations. Sync."""
     rows = _watch_runs(user_id).exclude(id=run_id).order_by("-created_at")
     stored = rows.values_list("input", flat=True).first()
     if not isinstance(stored, dict) or stored.get("preferences") != saved.dump():
@@ -300,7 +301,8 @@ async def _cancelled(run: Run) -> bool:
 
 async def run_watch(run: Run) -> None:
     """`watch.run`: filter the window, score, review within the cap, then complete. Progress is
-    debug-level throughout: four watches a day must not fill the activity feed."""
+    debug-level throughout: a watch after every refresh that found something must not fill the
+    activity feed."""
     value = WatchInput.read(run.input)
     await db(
         note,

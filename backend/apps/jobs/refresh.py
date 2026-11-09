@@ -1,19 +1,22 @@
 """Re-fetching companies into the mirror (design §10.5; `map/worker.md` §18.4).
 
-- A board refresh fetches the whole board, ingests it with deactivation (and the empty-board
-  guard, §10.4) and records the fetch. Only a 404 marks a company `invalid`: the board is gone,
-  so it stops being retried every six hours. A timeout or a 500 records an error and leaves it
-  active.
+- A board refresh is a poll (`sources/poll.py`, #55): it asks whether the board changed, and
+  only then reads it whole, ingests it with deactivation (and the empty-board guard, §10.4) and
+  records the fetch. An unchanged board records a successful check and touches no posting. Only
+  a 404 marks a company `invalid`: the board is gone, so it stops being retried. A timeout or a
+  500 records an error and leaves it active, and each failure in a row doubles its wait
+  (`registry.poll_interval`). `force` skips the question (a person pressed "Fetch now").
 - A careers-page refresh crawls with the listing cache (§10.5), ingests without deactivation (an
   extraction that reads fewer roles is more likely a page that changed shape than a company that
   closed half its jobs), sets *and clears* `needs_browser`, and writes the cache back. A
   careers page is never marked invalid.
-- `refresh_companies` runs 6 at a time and returns outcomes in input order.
+- `refresh_companies` runs 6 at a time, at most 4 of them against one source, and returns
+  outcomes in input order.
 
-**`MULTI_BOARD_GATE`.** Multi-board refreshes never overlap: the six-hourly cron and every
-stale-set `company_refresh` run hold this lock for their whole fan-out, so two of them never
-double the load on free public APIs. Single-company refreshes stay ungated. It assumes one worker
-process, as the LLM limiter does (§8.7).
+**`MULTI_BOARD_GATE`.** Multi-board refreshes never overlap: the scheduled refresh (every 15
+minutes) and every stale-set `company_refresh` run hold this lock for their whole fan-out, so
+two of them never double the load on free public APIs. Single-company refreshes stay ungated. It
+assumes one worker process, as the LLM limiter does (§8.7).
 
 Model calls made here (careers pages) are attributed to whatever run is current: the refresh
 sets no LLM context of its own (§8.8).
@@ -30,23 +33,30 @@ from datetime import datetime, timedelta
 from typing import Literal
 
 from django.db import transaction
+from django.db.models.functions import Now
 from django.utils import timezone
 
 from apps.core.db import db
 from apps.core.http import HttpClient
 from apps.jobs.ingest import IngestResult, ingest_jobs
+from apps.jobs.level import is_early_career_title
 from apps.jobs.models import Company, FetchStatus, SourceType
-from apps.jobs.registry import record_fetch
+from apps.jobs.registry import MAX_FAILURES, record_fetch
 from apps.jobs.schemas import ListingCache, dump_listing_cache, read_listing_cache
 from apps.jobs.sources import board_adapter
 from apps.jobs.sources.careers_page import fetch_careers_page
+from apps.jobs.sources.poll import PollState, poll_board
 from apps.jobs.sources.types import BoardNotFound
 
 log = logging.getLogger("foray.jobs")
 
-# A board fetched longer ago than this is refreshed before a search and by the six-hourly cron.
+# A board fetched longer ago than this is refreshed before a search. The scheduled refresh
+# keeps its own, shorter intervals (`registry.due_companies`), so with a worker running nothing
+# is ever this old.
 BOARD_STALE_AFTER = timedelta(hours=2)
 REFRESH_CONCURRENCY = 6
+# We are a guest on these APIs: no source sees more than this many of the pool at once.
+PER_SOURCE_CONCURRENCY = 4
 
 MULTI_BOARD_GATE = asyncio.Lock()
 
@@ -62,14 +72,18 @@ class RefreshOutcome:
     company: str  # the company's name
     slug: str
     status: RefreshStatus
-    jobs: int
+    jobs: int  # postings on the board (the last count known, when it is unchanged)
     ingest: IngestResult | None = None
     error: str | None = None
+    # The board answered that nothing changed since the last read: nothing was ingested.
+    unchanged: bool = False
     # Careers pages: model calls made (0 when every listing page was a cache hit).
     model_calls: int = 0
 
 
-async def refresh_company(client: HttpClient, company: Company) -> RefreshOutcome:
+async def refresh_company(
+    client: HttpClient, company: Company, *, force: bool = False
+) -> RefreshOutcome:
     if company.source_type == SourceType.CAREERS_PAGE:
         return await _refresh_careers_page(client, company)
 
@@ -77,11 +91,45 @@ async def refresh_company(client: HttpClient, company: Company) -> RefreshOutcom
     if adapter is None or not company.ats_slug:
         return RefreshOutcome(company.name, company.slug, "unsupported", 0)
 
+    state = PollState.read(company.poll_state)
     try:
-        jobs = await adapter.fetch_board(client, company.ats_slug)
+        polled = await poll_board(
+            client,
+            adapter,
+            company.ats_slug,
+            state,
+            company_id=company.id,
+            now=timezone.now(),
+            force=force,
+        )
+        remembered = polled.state.dump() if polled.state != state else None
+        if polled.jobs is None:
+            await db(record_fetch, company.id, FetchStatus.OK, None, poll_state=remembered)
+            return RefreshOutcome(
+                company.name, company.slug, "ok", company.last_fetch_job_count or 0, unchanged=True
+            )
+        jobs = polled.jobs
+        if not jobs and (company.last_fetch_job_count or 0) > 0:
+            # The empty-board guard is about to hold (§10.4): one empty answer closes nothing,
+            # and only a second one does. Remembering this answer would make the next poll say
+            # "unchanged" and never ask the second time, so the state is dropped instead.
+            remembered = {}
         # A full board fetch is the only place a missing posting can be concluded closed.
-        ingest = await db(ingest_jobs, company.id, jobs, deactivate_missing=True)
-        await db(record_fetch, company.id, FetchStatus.OK, len(jobs))
+        ingest = await db(
+            ingest_jobs,
+            company.id,
+            jobs,
+            deactivate_missing=True,
+            previous_ok=company.last_ok_at,
+        )
+        await db(
+            record_fetch,
+            company.id,
+            FetchStatus.OK,
+            len(jobs),
+            poll_state=remembered,
+            relevant=any(is_early_career_title(job.title) for job in jobs),
+        )
     except BoardNotFound as error:
         await db(record_fetch, company.id, FetchStatus.NOT_FOUND, 0, mark_invalid=True)
         return RefreshOutcome(company.name, company.slug, "not-found", 0, error=str(error))
@@ -93,14 +141,22 @@ async def refresh_company(client: HttpClient, company: Company) -> RefreshOutcom
 
 
 async def refresh_companies(
-    client: HttpClient, companies: Sequence[Company], concurrency: int = REFRESH_CONCURRENCY
+    client: HttpClient,
+    companies: Sequence[Company],
+    concurrency: int = REFRESH_CONCURRENCY,
+    *,
+    force: bool = False,
 ) -> list[RefreshOutcome]:
     """Refreshes with a small pool (we are a guest on these APIs); results in input order."""
     gate = asyncio.Semaphore(concurrency)
+    per_source: dict[str, asyncio.Semaphore] = {}
 
     async def one(company: Company) -> RefreshOutcome:
-        async with gate:
-            return await refresh_company(client, company)
+        source = per_source.setdefault(
+            company.source_type, asyncio.Semaphore(PER_SOURCE_CONCURRENCY)
+        )
+        async with source, gate:
+            return await refresh_company(client, company, force=force)
 
     async with asyncio.TaskGroup() as group:
         tasks = [group.create_task(one(company)) for company in companies]
@@ -167,6 +223,11 @@ def _finish_careers_refresh(
         company = Company.objects.select_for_update().get(id=company_id)
         company.last_fetched_at = timezone.now()
         company.last_fetch_status = status
+        if status == FetchStatus.ERROR:
+            company.fetch_failures = min(int(company.fetch_failures) + 1, MAX_FAILURES)
+        else:
+            company.last_ok_at = Now()
+            company.fetch_failures = 0
         if job_count is not None:
             company.last_fetch_job_count = job_count
         if needs_browser is not None:

@@ -783,7 +783,7 @@ async def start_search_run(ctx: Ctx, args: StartSearchRunInput) -> Output:
 
 def _user_run(user_id: str, run_id: str | None) -> Run | None:
     if run_id is None:
-        # "The most recent run" is the user's own: a watch runs every six hours unasked.
+        # "The most recent run" is the user's own: a watch runs unasked when postings arrive.
         return (
             Run.objects.for_user(user_id)
             .exclude(kind=RunKind.WATCH)

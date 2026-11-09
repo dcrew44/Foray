@@ -25,6 +25,7 @@ from django.db.models.fields.json import KT
 from django.db.models.functions import Coalesce, Length, Now
 
 from apps.core.router import ApiModel
+from apps.jobs import registry
 from apps.jobs.models import Job
 from apps.matching.models import JobMatch, Stage
 
@@ -393,7 +394,10 @@ def insert_new_matches(user_id: str, job_ids: Sequence[str]) -> list[str]:
                 [user_id, ids, batch],
             )
             created.update(row[0] for row in cursor.fetchall())
-    return [job_id for job_id in unique if job_id in created]
+    made = [job_id for job_id in unique if job_id in created]
+    # A board that just gave someone a match is one worth asking often (#55).
+    registry.mark_relevant(made)
+    return made
 
 
 def unscored_job_ids(user_id: str, job_ids: Sequence[str]) -> list[str]:

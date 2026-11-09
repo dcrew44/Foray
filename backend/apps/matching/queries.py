@@ -27,6 +27,7 @@ from django.db.models.functions import Coalesce, Length, Now
 from apps.core.router import ApiModel
 from apps.jobs import registry
 from apps.jobs.models import Job
+from apps.matching.lanes import LaneName, lane_expression, lane_of
 from apps.matching.models import JobMatch, Stage
 from apps.matching.verdict import blocker_for, reason_for
 
@@ -121,6 +122,8 @@ class MatchRow(ApiModel):
     # What a row leads with beside the verdict (`matching/verdict.py`, #38).
     reason: str | None  # one line of why: the summary's first sentence, else the first fast reason
     blocker: str | None  # the review's first disqualifying gap; unreviewed, the first hard miss
+    # The apply lane the match is in: the user's override, else the review's (`matching/lanes.py`).
+    lane: LaneName
     title: str
     company: str
     locations: list[str]
@@ -153,6 +156,7 @@ def _rows(user_id: str) -> QuerySet[JobMatch]:
 def _row(match: Any) -> MatchRow:
     job: Job = match.job
     recommendation = match.recommendation if match.recommendation in RECOMMENDATIONS else None
+    lane = lane_of(match)
     return MatchRow(
         match_id=match.id,
         job_id=job.id,
@@ -165,6 +169,7 @@ def _row(match: Any) -> MatchRow:
         headline=match.headline,
         reason=reason_for(match.deep_eval, match.fast_eval),
         blocker=blocker_for(match.deep_eval, match.fast_eval),
+        lane=lane.value,  # pyright: ignore[reportArgumentType] (a lane's value)
         title=job.title,
         company=job.company_name,
         locations=list(job.locations),
@@ -194,13 +199,17 @@ def list_matches(
     query: str | None = None,
     evaluated_only: bool = False,
     job_ids: Sequence[str] | None = None,
+    lane: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> list[MatchRow]:
-    """Matches with their job, best first (deep score, else fast score, then the newest)."""
+    """Matches with their job, best first (deep score, else fast score, then the newest).
+    `lane` keeps the matches in that apply lane, by the rule every row's `lane` follows."""
     rows = _rows(user_id)
     if stages:
         rows = rows.filter(stage__in=list(stages))
+    if lane is not None:
+        rows = rows.alias(lane=lane_expression()).filter(lane=lane)
     if min_score is not None:
         rows = rows.filter(score__gte=min_score)
     if evaluated_only:
@@ -338,9 +347,16 @@ _UNSET: Any = object()
 
 
 def update_match(
-    user_id: str, match_id: Any, *, notes: Any = _UNSET, user_rating: Any = _UNSET
+    user_id: str,
+    match_id: Any,
+    *,
+    notes: Any = _UNSET,
+    user_rating: Any = _UNSET,
+    lane_override: Any = _UNSET,
 ) -> bool:
-    """Sets only the fields given. False when the match is not this user's."""
+    """Sets only the fields given. False when the match is not this user's. `lane_override` is
+    the lane the user chose, or None to follow the review again (`matching/lanes.py`); nothing
+    else writes that column."""
     parsed = as_uuid(match_id)
     if parsed is None:
         return False
@@ -349,6 +365,8 @@ def update_match(
         fields["notes"] = notes
     if user_rating is not _UNSET:
         fields["user_rating"] = user_rating
+    if lane_override is not _UNSET:
+        fields["lane_override"] = lane_override
     return JobMatch.objects.for_user(user_id).filter(id=parsed).update(**fields) > 0
 
 
@@ -466,7 +484,9 @@ def save_deep_eval(user_id: str, match_id: Any, evaluation: dict[str, Any]) -> b
     """Stores a deep evaluation. False when the match is not this user's.
 
     A "skip" verdict archives the match, as a low triage score does, but only an untouched
-    (`found`) match moves; the note is appended to the user's notes.
+    (`found`) match moves; the note is appended to the user's notes. The lane the user chose
+    (`lane_override`) is not this function's to write: a re-review changes what the review says,
+    and the match stays in the lane they put it in.
     """
     parsed = as_uuid(match_id)
     if parsed is None:

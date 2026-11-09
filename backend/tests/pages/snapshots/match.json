@@ -76,8 +76,11 @@
     },
     "fastScore": "number",
     "id": "string",
+    "lane": "string",
+    "laneOverride": "null",
     "notes": "string",
     "reason": "string",
+    "reviewLane": "string",
     "stage": "string",
     "stageChangedAt": "string",
     "tailoredResumeId": "string"

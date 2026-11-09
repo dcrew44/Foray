@@ -158,6 +158,11 @@ An issue reads like the ones already there:
   `apply_brief(saved, brief)` (`apps/matching/brief.py`), never the saved preferences
   directly: a request for entry-level roles at one company overrides level, roles, places,
   remote and companies for that run only.
+- **A match's apply lane has one rule** (`apps/matching/lanes.py`): `effective_lane(override,
+  deep_eval)` is the user's `lane_override`, else the deep review's (`strong` coached, `apply`
+  automated, anything else none). Rows and the match page carry it as `lane`; narrow in SQL
+  with `lane_expression()`; never derive a lane anywhere else. Only `update_match` writes the
+  override, so a re-review cannot move a match the user placed.
 - **Runs started from chat report back there.** `emit()` defers a `chat.follow_up` job for
   `FOLLOW_UP_KINDS` (`apps/runs/catalogue.py`, mirrored in `src/lib/chat/follow-up-kinds.ts`;
   a test keeps them equal) when the run has a conversation. Follow-up turns get read-only

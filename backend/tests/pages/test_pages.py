@@ -371,8 +371,10 @@ def test_matches_page_views() -> None:
     staged = page(graph, "matches", stage="applied")
     assert (staged["view"], staged["stage"], len(staged["matches"])) == ("list", "applied", 4)
 
-    bogus = page(graph, "matches", stage="nope", closed="yes")
+    bogus = page(graph, "matches", stage="nope", closed="yes", lane="vip")
     assert (bogus["view"], bogus["stage"], bogus["showClosed"]) == ("board", None, False)
+    # A lane that is not one narrows nothing, like a stage that is not one.
+    assert (board["lane"], bogus["lane"], len(bogus["matches"])) == (None, None, 3)
 
 
 def test_matches_page_is_not_ready_without_a_resume() -> None:
@@ -419,6 +421,59 @@ def test_matches_page_rows_lead_with_the_verdict(django_assert_max_num_queries: 
         }, view
 
 
+def test_matches_page_filters_by_lane(django_assert_max_num_queries: Any) -> None:
+    """Every row says its apply lane (#39), and `lane=` narrows the board and the list to one,
+    in the read the page already makes: its budget does not move. The counts stay the totals."""
+    user = make_user(with_resume=True)
+    made = {
+        "strong": make_match(user, fast_score=88, deep_score=92),
+        "apply": make_match(user, fast_score=80, deep_score=72, stage="shortlisted"),
+        "maybe": make_match(user, fast_score=70, deep_score=55),
+        "fast only": make_match(user, fast_score=75),
+        "strong, taken out": make_match(user, fast_score=85, deep_score=90, lane_override="none"),
+        "maybe, coached": make_match(user, fast_score=60, deep_score=50, lane_override="coached"),
+        "fast only, automated": make_match(user, fast_score=65, lane_override="automated"),
+        "apply, archived": make_match(user, fast_score=66, deep_score=70, stage="archived"),
+    }
+    names = {str(match.id): name for name, match in made.items()}
+    lanes = {
+        "coached": {"strong", "maybe, coached"},
+        "automated": {"apply", "fast only, automated", "apply, archived"},
+        "none": {"maybe", "fast only", "strong, taken out"},
+    }
+    client = signed_in(user)
+
+    def read(**query: str) -> dict[str, Any]:
+        path = "/api/pages/matches?" + "&".join(f"{key}={value}" for key, value in query.items())
+        with django_assert_max_num_queries(BUDGETS["matches"] + AUTH_QUERIES):
+            response = get_page(client, path)
+        assert response.status_code == 200, response.content
+        return response.json()
+
+    everything = read(view="list")
+    assert everything["lane"] is None
+    assert {names[row["matchId"]]: row["lane"] for row in everything["matches"]} == {
+        name: lane for lane, found in lanes.items() for name in found
+    }
+    for lane, found in lanes.items():
+        listed = read(view="list", lane=lane)
+        assert (listed["view"], listed["lane"]) == ("list", lane)
+        assert {names[row["matchId"]] for row in listed["matches"]} == found
+        assert {row["lane"] for row in listed["matches"]} == {lane}
+        # The board shows open matches only, in the same lane; its closed ones on request.
+        board = read(lane=lane)
+        assert (board["view"], board["lane"], board["showClosed"]) == ("board", lane, False)
+        assert {names[row["matchId"]] for row in board["matches"]} == found - {"apply, archived"}
+        with_closed = read(lane=lane, closed="1")
+        assert {names[row["matchId"]] for row in with_closed["matches"]} == found
+        assert listed["counts"] == board["counts"] == everything["counts"]
+    # A stage link keeps its lane: the list, narrowed by Django to the lane and by the client
+    # to the stage.
+    staged = read(stage="shortlisted", lane="automated")
+    assert (staged["view"], staged["stage"], staged["lane"]) == ("list", "shortlisted", "automated")
+    assert {names[row["matchId"]] for row in staged["matches"]} == lanes["automated"]
+
+
 # --- one match -----------------------------------------------------------------------------------
 
 
@@ -433,6 +488,12 @@ def test_match_page() -> None:
     assert body["match"]["deepEval"] == match.deep_eval  # stored keys, snake_case
     assert body["match"]["fastEval"] == match.fast_eval
     assert body["match"]["notes"] == "Avery replied."
+    # A strong review, and the user has not moved it: the coached lane, from the review (#39).
+    assert [body["match"][key] for key in ("lane", "laneOverride", "reviewLane")] == [
+        "coached",
+        None,
+        "coached",
+    ]
     assert body["match"]["tailoredResumeId"] == str(graph.tailored.pk)
     job = body["job"]
     assert job["title"] == "Avery Backend Engineer"
@@ -498,6 +559,39 @@ def test_match_page_leads_with_the_rows_verdict(django_assert_max_num_queries: A
             body = get_page(client, f"/api/pages/matches/{match.id}").json()["match"]
         assert (body["reason"], body["blocker"]) == lead
         assert (rows[match.id].reason, rows[match.id].blocker) == lead
+
+
+def test_match_page_says_its_lane_as_its_row_does(django_assert_max_num_queries: Any) -> None:
+    """The page's lane is its row's (#39), with what the user chose and what the review alone
+    gives beside it, so the page can offer the way back. Within the budget."""
+    user = make_user()
+    cases = [
+        (make_match(user, fast_score=80, deep_score=90), ("coached", None, "coached")),
+        (make_match(user, fast_score=80, deep_score=72), ("automated", None, "automated")),
+        (make_match(user, fast_score=80, deep_score=50), ("none", None, "none")),
+        (make_match(user, fast_score=80), ("none", None, "none")),
+        (make_match(user), ("none", None, "none")),
+        (
+            make_match(user, fast_score=80, deep_score=90, lane_override="automated"),
+            ("automated", "automated", "coached"),
+        ),
+        (
+            make_match(user, fast_score=80, deep_score=72, lane_override="none"),
+            ("none", "none", "automated"),
+        ),
+        (make_match(user, fast_score=80, lane_override="coached"), ("coached", "coached", "none")),
+        (
+            make_match(user, deep_score=50, deep_eval={"bogus": True}, lane_override="coached"),
+            ("coached", "coached", "none"),
+        ),
+    ]
+    client = signed_in(user)
+    rows = {row.match_id: row for row in list_matches(user.pk)}
+    for match, lanes in cases:
+        with django_assert_max_num_queries(BUDGETS["match"] + AUTH_QUERIES):
+            body = get_page(client, f"/api/pages/matches/{match.id}").json()["match"]
+        assert (body["lane"], body["laneOverride"], body["reviewLane"]) == lanes
+        assert rows[match.id].lane == lanes[0]
 
 
 def test_match_page_is_404_for_anything_not_yours() -> None:

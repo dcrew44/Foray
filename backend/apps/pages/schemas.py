@@ -24,6 +24,7 @@ from apps.applications.models import AnswerKind
 from apps.core.router import ApiModel
 from apps.jobs.legitimacy import SignalKind
 from apps.jobs.pipeline import CompanyRow
+from apps.matching.lanes import LaneName
 from apps.matching.queries import MatchRow, Recommendation, RemoteName, StageName
 from apps.matching.schemas import DeepEval, FastScore
 from apps.resumes.schema import Resume
@@ -146,6 +147,7 @@ class MatchesPage(ApiModel):
     view: Literal["board", "list"]
     stage: StageName | None  # the list's stage filter, when the link named a real stage
     show_closed: bool
+    lane: LaneName | None  # the apply lane `matches` was narrowed to, when the link named one
 
 
 # --- /pages/matches/{id} -------------------------------------------------------------------------
@@ -167,6 +169,11 @@ class MatchDetail(ApiModel):
     # The line the page leads with, as the match's row has it (`matching/verdict.py`, #38).
     reason: str | None
     blocker: str | None
+    # The apply lane (`matching/lanes.py`, #39): the one the match is in, the one the user chose
+    # (null while it follows the review) and the one the review alone gives.
+    lane: LaneName
+    lane_override: LaneName | None
+    review_lane: LaneName
     tailored_resume_id: uuid.UUID | None
     notes: str | None
     created_at: datetime

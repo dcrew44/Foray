@@ -5,8 +5,8 @@ Each server component makes one call here (plus `/api/me` from the layout), with
 
 - `GET /api/pages/home`: `{user, onboarding, counts, best, spend, waiting, suggestions,
   headline}`;
-- `GET /api/pages/matches?view=&stage=&closed=`: `{counts, matches, ready, view, stage,
-  showClosed}`;
+- `GET /api/pages/matches?view=&stage=&closed=&lane=`: `{counts, matches, ready, view, stage,
+  showClosed, lane}`;
 - `GET /api/pages/matches/{id}`: `{match, job, tailored, hasBaseResume}`, or 404;
 - `GET /api/pages/activity`: `{runs: RunSummary[]}`;
 - `GET /api/pages/chat`: `{suggestions}`;
@@ -67,10 +67,12 @@ def matches(
     view: str | None = None,
     stage: str | None = None,
     closed: str | None = None,
+    lane: str | None = None,
 ) -> MatchesPage:
-    """`view=list` or a real `stage` shows the list; `closed=1` adds closed matches to the board.
-    Anything else is ignored, as the page ignored it."""
-    return build.matches_page(_user(request), view=view, stage=stage, closed=closed)
+    """`view=list` or a real `stage` shows the list; `closed=1` adds closed matches to the board;
+    a real `lane` keeps the matches in that apply lane. Anything else is ignored, as the page
+    ignored it."""
+    return build.matches_page(_user(request), view=view, stage=stage, closed=closed, lane=lane)
 
 
 @pages.get("/matches/{id}", response=MatchDetailPage, summary="Match page")

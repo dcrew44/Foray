@@ -30,6 +30,7 @@ import {
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+import { ClosedMark } from "./job-signals";
 import { moveMatch } from "./match-api";
 import { CLOSED_STAGES as CLOSED, OPEN_STAGES as OPEN } from "./stages";
 
@@ -57,6 +58,7 @@ export type BoardMatch = Pick<
   | "salaryCurrency"
   | "salaryPeriod"
   | "postedAt"
+  | "isActive"
   | "stageChangedAt"
   | "tailoredResumeId"
 >;
@@ -231,6 +233,7 @@ function Card({ match, dragging = false }: { match: BoardMatch; dragging?: boole
       <div className="text-muted-foreground mt-2.5 flex items-center gap-1 text-[12px]">
         <MapPin className="size-3 shrink-0 opacity-60" />
         <span className="truncate">{formatLocation(match.locations, match.remote)}</span>
+        {!match.isActive && <ClosedMark className="ml-auto" />}
       </div>
       {(match.recommendation || salary || match.tailoredResumeId) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">

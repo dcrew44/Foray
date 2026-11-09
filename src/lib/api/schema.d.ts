@@ -1684,6 +1684,8 @@ export interface components {
              */
             source: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "jibe" | "workday" | "smartrecruiters" | "icims" | "jsearch" | "web";
             facts: components["schemas"]["JobFacts"];
+            /** Signals */
+            signals: components["schemas"]["JobSignal"][];
         };
         /**
          * JobFacts
@@ -1720,6 +1722,18 @@ export interface components {
             workAuthEvidence: string | null;
             /** Clearanceevidence */
             clearanceEvidence: string | null;
+        };
+        /** JobSignal */
+        JobSignal: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "closed" | "aggregator_link" | "reposted" | "long_open";
+            /** Label */
+            label: string;
+            /** Detail */
+            detail: string;
         };
         /** MatchDetail */
         MatchDetail: {

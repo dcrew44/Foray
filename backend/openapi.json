@@ -4367,6 +4367,13 @@
           },
           "facts": {
             "$ref": "#/components/schemas/JobFacts"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/JobSignal"
+            },
+            "title": "Signals",
+            "type": "array"
           }
         },
         "required": [
@@ -4384,7 +4391,8 @@
           "applyUrl",
           "descriptionText",
           "source",
-          "facts"
+          "facts",
+          "signals"
         ],
         "title": "JobDetail",
         "type": "object"
@@ -4514,6 +4522,35 @@
           "clearanceEvidence"
         ],
         "title": "JobFacts",
+        "type": "object"
+      },
+      "JobSignal": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "closed",
+              "aggregator_link",
+              "reposted",
+              "long_open"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "detail"
+        ],
+        "title": "JobSignal",
         "type": "object"
       },
       "MatchDetail": {

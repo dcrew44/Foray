@@ -383,6 +383,26 @@ they were tuned on, and for 59 and 57 of 60 labelled afterwards and measured onc
 since three of the misses it showed were fixed, which makes that set a regression check rather
 than a test), so the model the issue allowed for was never needed. The match page shows the facts with their sentences.
 
+**Whether a posting is worth an application** (#7, `apps/jobs/legitimacy.py`). Four signs that
+it may not be, each a rule over what the mirror already holds, with no model and no fetch. A
+posting is `closed` when it is no longer on the employer's board (`is_active` false; the page
+says when it was last seen). It is `reposted` when at least three postings with distinct
+external ids share its ingest dedupe key (company, normalised title, primary location) and its
+source, and were first seen in the last 180 days, closed ones included. Only its own source is
+counted because that key exists to make an aggregator's copy collapse with the board's own, and
+a copy is not a repost. It is `long_open` when still open more than 60 days after it was posted,
+or first seen when the source gives no date. And an aggregator's posting has an
+`aggregator_link` when its apply link's host is neither the employer's nor a job board Foray
+knows. The employer's is the registered company's domain, else the website the aggregator's
+own payload states, or any domain named exactly for the employer; the boards are the ones
+discovery recognises, matched against the link's host so that a board's address in some other
+site's path or query does not pass. Unlike the facts, nothing is stored: a signal is true of
+today, so the match page works them out when it is read, in one query (the repost count, the
+company's domain and the database's present together), and shows them under "Before you
+apply". Only a closed posting is prominent, since it alone decides whether applying is
+possible. The signals inform and do not filter: the search pipeline never reads them (it
+already leaves closed postings out by `is_active`).
+
 **Watching new postings** (#5, `apps/matching/watch.py`). Between searches, strong roles used
 to sit unscored in the mirror for a week. A scheduled refresh that brought postings in (and
 every sixth hour's tick, for what the review cap held back) defers

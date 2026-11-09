@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import re
 from datetime import timedelta
+from typing import Any
 
 import pytest
 from django.db import connection
@@ -16,6 +17,7 @@ from django.utils import timezone
 from apps.accounts.schemas import Preferences
 from apps.matching.prefilter import (
     BAY_AREA_PLACES,
+    YEARS_LIMIT,
     CompanyFilter,
     DerivedCriteria,
     DerivedSearch,
@@ -373,3 +375,49 @@ def test_sets_a_statement_timeout_first() -> None:
     first = next(i for i, sql in enumerate(statements) if "statement_timeout" in sql)
     assert statements[first] == "SET LOCAL statement_timeout = '20s'"
     assert "DISTINCT ON" in statements[first + 1]
+
+
+# --- eligibility, from the posting's own facts (#56) ---------------------------------------------
+
+
+@pytest.mark.django_db
+def test_a_junior_search_keeps_what_the_seeker_can_get() -> None:
+    user = make_user()
+    acme = make_company(name="Acme")
+
+    def job(suffix: str, **facts: Any):
+        return make_job(company=acme, title=f"Software Engineer, {suffix}", **facts)
+
+    unread = job("Unread")  # facts not read yet: kept
+    says_nothing = job("Quiet", level="unknown", facts_version=1)
+    new_grad = job("New Grad", level="new_grad", facts_version=1)
+    asks_two = job("Two", level="mid", years_min=2, facts_version=1)
+    asks_three = job("Three", level="mid", years_min=3, facts_version=1)
+    asks_five = job("Five", level="senior", years_min=5, facts_version=1)
+    senior_title = job("Senior", level="senior", facts_version=1)
+    staff = job("Staff", level="staff_plus", years_min=1, facts_version=1)
+    second_rung = job("II", level="mid", facts_version=1)  # "Engineer II", no years given
+    prefers_three = job("Soft3", level="unknown", years_preferred=3, facts_version=1)
+    prefers_seven = job("Soft7", level="unknown", years_preferred=7, facts_version=1)
+
+    def found(seniority: str | None) -> set[str]:
+        preferences = BAY.model_copy(update={"seniority": seniority})
+        return set(prefilter_jobs(user.pk, preferences, SWE).job_ids)
+
+    everything = {
+        job.id
+        for job in (
+            unread, says_nothing, new_grad, asks_two, asks_three, asks_five, senior_title, staff,
+            second_rung, prefers_three, prefers_seven,
+        )
+    }  # fmt: skip
+    kept = {unread.id, says_nothing.id, new_grad.id, asks_two.id, prefers_three.id}
+    assert found("new_grad") == kept
+    # Someone at entry level reaches one rung further: three years, and a second-rung title.
+    assert found("entry") == kept | {asks_three.id, second_rung.id}
+    assert found("intern") == kept - {asks_two.id}
+    # Nobody else is filtered: someone mid-career applies up and down.
+    assert found("mid") == everything
+    assert found("senior") == everything
+    assert found(None) == everything
+    assert YEARS_LIMIT == {"intern": 1, "new_grad": 2, "entry": 3}

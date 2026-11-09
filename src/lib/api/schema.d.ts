@@ -1683,6 +1683,43 @@ export interface components {
              * @enum {string}
              */
             source: "greenhouse" | "lever" | "ashby" | "workable" | "recruitee" | "gem" | "jsearch" | "web";
+            facts: components["schemas"]["JobFacts"];
+        };
+        /**
+         * JobFacts
+         * @description What the posting asks of whoever applies (`jobs/facts.py`, #56), with the sentence each
+         *     was read from. `read` is false until the posting's facts have been read.
+         */
+        JobFacts: {
+            /** Read */
+            read: boolean;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "intern" | "new_grad" | "entry" | "mid" | "senior" | "staff_plus" | "unknown";
+            /** Levelfrom */
+            levelFrom: ("title" | "text" | "years") | null;
+            /** Yearsmin */
+            yearsMin: number | null;
+            /** Yearspreferred */
+            yearsPreferred: number | null;
+            /**
+             * Workauth
+             * @enum {string}
+             */
+            workAuth: "citizen_only" | "us_person" | "no_sponsorship" | "sponsors" | "unknown";
+            /**
+             * Clearance
+             * @enum {string}
+             */
+            clearance: "required" | "eligible" | "none";
+            /** Yearsevidence */
+            yearsEvidence: string | null;
+            /** Workauthevidence */
+            workAuthEvidence: string | null;
+            /** Clearanceevidence */
+            clearanceEvidence: string | null;
         };
         /** MatchDetail */
         MatchDetail: {

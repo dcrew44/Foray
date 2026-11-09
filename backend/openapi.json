@@ -4355,6 +4355,9 @@
             ],
             "title": "Source",
             "type": "string"
+          },
+          "facts": {
+            "$ref": "#/components/schemas/JobFacts"
           }
         },
         "required": [
@@ -4371,9 +4374,137 @@
           "url",
           "applyUrl",
           "descriptionText",
-          "source"
+          "source",
+          "facts"
         ],
         "title": "JobDetail",
+        "type": "object"
+      },
+      "JobFacts": {
+        "description": "What the posting asks of whoever applies (`jobs/facts.py`, #56), with the sentence each\nwas read from. `read` is false until the posting's facts have been read.",
+        "properties": {
+          "read": {
+            "title": "Read",
+            "type": "boolean"
+          },
+          "level": {
+            "enum": [
+              "intern",
+              "new_grad",
+              "entry",
+              "mid",
+              "senior",
+              "staff_plus",
+              "unknown"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "levelFrom": {
+            "anyOf": [
+              {
+                "enum": [
+                  "title",
+                  "text",
+                  "years"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Levelfrom"
+          },
+          "yearsMin": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yearsmin"
+          },
+          "yearsPreferred": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yearspreferred"
+          },
+          "workAuth": {
+            "enum": [
+              "citizen_only",
+              "us_person",
+              "no_sponsorship",
+              "sponsors",
+              "unknown"
+            ],
+            "title": "Workauth",
+            "type": "string"
+          },
+          "clearance": {
+            "enum": [
+              "required",
+              "eligible",
+              "none"
+            ],
+            "title": "Clearance",
+            "type": "string"
+          },
+          "yearsEvidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yearsevidence"
+          },
+          "workAuthEvidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workauthevidence"
+          },
+          "clearanceEvidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clearanceevidence"
+          }
+        },
+        "required": [
+          "read",
+          "level",
+          "levelFrom",
+          "yearsMin",
+          "yearsPreferred",
+          "workAuth",
+          "clearance",
+          "yearsEvidence",
+          "workAuthEvidence",
+          "clearanceEvidence"
+        ],
+        "title": "JobFacts",
         "type": "object"
       },
       "MatchDetail": {

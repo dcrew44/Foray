@@ -41,7 +41,7 @@ from apps.core.errors import ApiError
 from apps.core.models import RateLimit
 from apps.core.queue import app, defer_in_tx
 from apps.core.throttle import TOO_MANY
-from apps.jobs import pipeline
+from apps.jobs import facts, pipeline
 from apps.jobs import refresh as refresh_module
 from apps.jobs import tasks as job_tasks
 from apps.jobs.discovery import DiscoveryResult
@@ -987,6 +987,22 @@ def test_a_pass_that_brings_nothing_in_starts_no_watches(web: Web) -> None:
         "succeeded",
         "succeeded",
     ]
+
+
+@tx
+def test_the_scheduled_refresh_catches_up_postings_whose_facts_were_never_read(web: Web) -> None:
+    """A posting from before facts existed (#56) is read by the pass after the upgrade."""
+    old = make_job(
+        company=make_company(name="Fresh", slug="fresh", last_fetched_at=timezone.now()),
+        title="Senior Engineer",
+        description_text="Requirements\n• 8+ years of experience",
+    )
+    assert old.facts_version is None
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=1_793_491_200 + 900)
+    run_deferred()
+    old.refresh_from_db()
+    assert (old.level, old.years_min, old.facts_version) == ("senior", 8, facts.VERSION)
+    assert web.fetched == []  # no board was due: the catch-up does not depend on a fetch
 
 
 @tx

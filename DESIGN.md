@@ -316,6 +316,22 @@ look, when it was not there". The Companies page reports the week's median and 9
 by source, so timeliness is measured, not assumed. The empty-board guard still needs two reads:
 a poll that would trip it forgets its state.
 
+**What a posting asks** (#56, `apps/jobs/facts.py`). Whether someone can get a job at all turns
+on a few facts that are the same for every reader: the role's level, the years it requires, what
+it says about work authorization, whether it needs a clearance. They are read once, at ingest,
+by patterns over the title and the cleaned description, into columns on `jobs` (`level`,
+`years_min`, `years_preferred`, `work_auth`, `clearance`, with the sentence each came from in
+`facts`), and read again only when the posting changes or `facts.VERSION` does. The reading
+errs toward saying nothing: a posting wrongly called senior would vanish from a junior's search,
+while one called `unknown` only costs a fraction of a cent to score. A junior seeker's prefilter
+then drops senior and staff roles and postings that require more years than the level allows
+(`prefilter.YEARS_LIMIT`: an intern 1, a new graduate 2, entry level 3); nobody else is filtered.
+No model is involved. Against 210 postings labelled by hand (`tests/fixtures/facts/`,
+`manage.py facts_benchmark`) the patterns agree on level and years for 97 and 100 of the 100
+they were tuned on, and for 59 and 57 of 60 labelled afterwards and measured once (60 and 59
+since three of the misses it showed were fixed, which makes that set a regression check rather
+than a test), so the model the issue allowed for was never needed. The match page shows the facts with their sentences.
+
 **Watching new postings** (#5, `apps/matching/watch.py`). Between searches, strong roles used
 to sit unscored in the mirror for a week. A scheduled refresh that brought postings in (and
 every sixth hour's tick, for what the review cap held back) defers

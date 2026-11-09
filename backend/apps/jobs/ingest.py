@@ -12,7 +12,9 @@ Sync, one transaction per batch of 500; async callers use `await db(ingest_jobs,
 4. **New or changed** postings are upserted with `RETURNING (xmax = 0)`, which gives exact insert
    and update counts. `first_seen_at` is never updated, and `description_raw` changes only when
    the posting changed (invariant 4). A new posting also gets `seen_lag_s` when the caller says
-   when its board was last checked (`previous_ok`): how long it can have been up unseen.
+   when its board was last checked (`previous_ok`): how long it can have been up unseen. Its
+   facts (level, years, work authorization, clearance: `facts.py`, #56) are read here too, and
+   read again whenever the posting changes.
 5. **Deactivation**, on complete and successful board fetches only (invariant 7): active
    postings of the company that were not in the fetch become inactive. They are kept, never
    deleted: the mirror is history. The **empty-board guard**: when a fetch returns nothing and
@@ -35,6 +37,7 @@ from typing import Any
 from django.db import connection, transaction
 from django.db.backends.utils import CursorWrapper
 
+from apps.jobs import fact_store, facts
 from apps.jobs.sources.dedupe import scrub
 from apps.jobs.sources.types import NormalizedJob
 
@@ -59,7 +62,8 @@ _COLUMNS = (
     "id, source, external_id, company_id, company_name, title, locations, location_norm, remote, "
     "employment_type, salary_min, salary_max, salary_currency, salary_period, description_raw, "
     "description_text, url, apply_url, posted_at, raw, content_hash, dedupe_key, is_active, "
-    "first_seen_at, last_seen_at, fetched_at, seen_lag_s"
+    "first_seen_at, last_seen_at, fetched_at, level, years_min, years_preferred, work_auth, "
+    "clearance, facts, facts_version, seen_lag_s"
 )
 # The last three parameters are the board's previous successful check (twice) and the posting's
 # date: the lag is the smaller of "since it was posted" and "since we last looked and it was not
@@ -71,7 +75,7 @@ _LAG = (
 )
 _ROW = (
     "(%s, %s, %s, %s, %s, %s, %s::text[], %s::jsonb, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-    f"%s::jsonb, %s, %s, true, now(), now(), now(), {_LAG})"
+    f"%s::jsonb, %s, %s, true, now(), now(), now(), %s, %s, %s, %s, %s, %s::jsonb, %s, {_LAG})"
 )
 # An unchanged row's `last_seen_at` is moved at most this often.
 TOUCH_EVERY = "1 hour"
@@ -96,6 +100,8 @@ _UPDATED = (
     "raw",
     "content_hash",
     "dedupe_key",
+    *fact_store.COLUMNS,
+    "facts_version",
 )
 _UPSERT_TAIL = (
     " ON CONFLICT (id) DO UPDATE SET "
@@ -141,6 +147,8 @@ def _row(
         _json(job.raw),
         job.content_hash,
         job.dedupe_key,
+        *fact_store.fact_values(scrub(job.title), _text(job.description_text)),
+        facts.VERSION,
         previous_ok,
         previous_ok,
         job.posted_at,

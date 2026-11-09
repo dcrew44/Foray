@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CompanyMark, PageBody, Section } from "@/components/foray/primitives";
 import { RefreshOn } from "@/components/live/refresh-on";
 import { DeepEvaluation, FastEvaluation } from "@/components/matches/evaluation";
+import { JobFactsList } from "@/components/matches/job-facts";
 import { EvaluateButton, MatchNotes, StageSelect } from "@/components/matches/match-controls";
 import { Posting } from "@/components/matches/posting";
 import { TailorPanel } from "@/components/matches/tailor-panel";
@@ -133,6 +134,10 @@ export default async function MatchPage({ params }: Params) {
         </div>
 
         <aside className="space-y-10">
+          <Section title="What it asks">
+            <JobFactsList facts={job.facts} />
+          </Section>
+
           <Section title="Tailored resume">
             <div id="resume" className="scroll-mt-6">
               <TailorPanel hasResume={hasBaseResume} matchId={match.id} tailored={tailored} />

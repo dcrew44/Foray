@@ -4,6 +4,18 @@
     "applyUrl": "string",
     "companyName": "string",
     "descriptionText": "string",
+    "facts": {
+      "clearance": "string",
+      "clearanceEvidence": "null",
+      "level": "string",
+      "levelFrom": "null",
+      "read": "boolean",
+      "workAuth": "string",
+      "workAuthEvidence": "null",
+      "yearsEvidence": "null",
+      "yearsMin": "null",
+      "yearsPreferred": "null"
+    },
     "isActive": "boolean",
     "locations": [
       "string"

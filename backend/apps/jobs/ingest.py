@@ -6,10 +6,13 @@ Sync, one transaction per batch of 500; async callers use `await db(ingest_jobs,
    `ON CONFLICT DO UPDATE` cannot touch one row twice in a statement.
 2. **Read** the stored `content_hash` of each id in the batch.
 3. **Unchanged** postings get `last_seen_at`, `fetched_at` and `is_active = true` (a posting that
-   reappears unchanged is open again; it used to stay inactive).
+   reappears unchanged is open again; it used to stay inactive). A row seen within the hour is
+   left alone: boards are read far more often than they change (#55), and rewriting every row
+   of a board for each read is churn that says nothing new.
 4. **New or changed** postings are upserted with `RETURNING (xmax = 0)`, which gives exact insert
    and update counts. `first_seen_at` is never updated, and `description_raw` changes only when
-   the posting changed (invariant 4).
+   the posting changed (invariant 4). A new posting also gets `seen_lag_s` when the caller says
+   when its board was last checked (`previous_ok`): how long it can have been up unseen.
 5. **Deactivation**, on complete and successful board fetches only (invariant 7): active
    postings of the company that were not in the fetch become inactive. They are kept, never
    deleted: the mirror is history. The **empty-board guard**: when a fetch returns nothing and
@@ -26,6 +29,7 @@ import json
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from django.db import connection, transaction
@@ -55,12 +59,22 @@ _COLUMNS = (
     "id, source, external_id, company_id, company_name, title, locations, location_norm, remote, "
     "employment_type, salary_min, salary_max, salary_currency, salary_period, description_raw, "
     "description_text, url, apply_url, posted_at, raw, content_hash, dedupe_key, is_active, "
-    "first_seen_at, last_seen_at, fetched_at"
+    "first_seen_at, last_seen_at, fetched_at, seen_lag_s"
+)
+# The last three parameters are the board's previous successful check (twice) and the posting's
+# date: the lag is the smaller of "since it was posted" and "since we last looked and it was not
+# there", never negative, and null without a previous check to bound it.
+_LAG = (
+    "CASE WHEN %s::timestamptz IS NULL THEN NULL ELSE GREATEST(0, LEAST("
+    "EXTRACT(EPOCH FROM now() - %s::timestamptz), "
+    "COALESCE(EXTRACT(EPOCH FROM now() - %s::timestamptz), 'Infinity')))::int END"
 )
 _ROW = (
     "(%s, %s, %s, %s, %s, %s, %s::text[], %s::jsonb, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-    "%s::jsonb, %s, %s, true, now(), now(), now())"
+    f"%s::jsonb, %s, %s, true, now(), now(), now(), {_LAG})"
 )
+# An unchanged row's `last_seen_at` is moved at most this often.
+TOUCH_EVERY = "1 hour"
 # The source's columns; first_seen_at is deliberately not among them.
 _UPDATED = (
     "company_id",
@@ -101,7 +115,9 @@ def _text(value: str | None) -> str | None:
     return None if value is None else scrub(value)
 
 
-def _row(company_id: uuid.UUID | None, job: NormalizedJob) -> list[Any]:
+def _row(
+    company_id: uuid.UUID | None, job: NormalizedJob, previous_ok: datetime | None
+) -> list[Any]:
     return [
         job.id,
         job.source,
@@ -125,6 +141,9 @@ def _row(company_id: uuid.UUID | None, job: NormalizedJob) -> list[Any]:
         _json(job.raw),
         job.content_hash,
         job.dedupe_key,
+        previous_ok,
+        previous_ok,
+        job.posted_at,
     ]
 
 
@@ -133,13 +152,16 @@ def ingest_jobs(
     jobs: Sequence[NormalizedJob],
     *,
     deactivate_missing: bool = False,
+    previous_ok: datetime | None = None,
 ) -> IngestResult:
-    """Upserts `jobs` into the mirror for `company_id` (None for aggregator rows)."""
+    """Upserts `jobs` into the mirror for `company_id` (None for aggregator rows).
+    `previous_ok` is the board's last successful check before this fetch, for `seen_lag_s`."""
     unique = list({job.id: job for job in jobs}.values())
     result = IngestResult()
     for offset in range(0, len(unique), BATCH_SIZE):
         with transaction.atomic(), connection.cursor() as cursor:
-            result.add(_ingest_batch(cursor, company_id, unique[offset : offset + BATCH_SIZE]))
+            batch = unique[offset : offset + BATCH_SIZE]
+            result.add(_ingest_batch(cursor, company_id, batch, previous_ok))
 
     if deactivate_missing and company_id is not None:
         result.deactivated = _deactivate_missing(company_id, [job.id for job in unique])
@@ -147,7 +169,10 @@ def ingest_jobs(
 
 
 def _ingest_batch(
-    cursor: CursorWrapper, company_id: uuid.UUID | None, batch: Sequence[NormalizedJob]
+    cursor: CursorWrapper,
+    company_id: uuid.UUID | None,
+    batch: Sequence[NormalizedJob],
+    previous_ok: datetime | None,
 ) -> IngestResult:
     result = IngestResult()
     cursor.execute(
@@ -163,13 +188,14 @@ def _ingest_batch(
     if unchanged:
         cursor.execute(
             "UPDATE jobs SET last_seen_at = now(), fetched_at = now(), is_active = true "
-            "WHERE id = ANY(%s)",
+            "WHERE id = ANY(%s) "
+            f"AND (NOT is_active OR last_seen_at < now() - interval '{TOUCH_EVERY}')",
             [unchanged],
         )
         result.unchanged = len(unchanged)
 
     if changed:
-        params = [value for job in changed for value in _row(company_id, job)]
+        params = [value for job in changed for value in _row(company_id, job, previous_ok)]
         cursor.execute(
             f"INSERT INTO jobs ({_COLUMNS}) VALUES "
             + ", ".join([_ROW] * len(changed))

@@ -74,8 +74,10 @@ approved, what it cost and how long it took.
 ### The boards Foray watches
 
 A shared registry of company job boards on Greenhouse, Lever, Ashby, Workable, Recruitee
-and Gem, refreshed every six hours into a local mirror (closed postings are kept, marked
-closed). Add a company by name, website or board link, or just mention it in chat; career
+and Gem, kept in a local mirror (closed postings are kept, marked closed). While the worker
+runs, each board is asked every 15 minutes whether it changed (hourly for boards that list
+nothing early-career and have given nobody a match), and the Companies page reports how soon
+after it went up a new posting was seen. Add a company by name, website or board link, or just mention it in chat; career
 pages without a known board fall back to LLM extraction.
 
 ![Companies: 400+ boards with their open roles and freshness](docs/screenshots/companies.png)

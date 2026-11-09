@@ -202,8 +202,8 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
 - **Queue**: procrastinate on Postgres (no Redis), with LISTEN/NOTIFY so a job starts the
   moment its transaction commits. The worker runs three lanes in one process: `interactive`
   (imports, tailoring, rendering, single evaluations, adding companies, chat follow-ups),
-  `background` (searches and their continuations, board refreshes, the six-hourly refresh of
-  stale boards) and `system` (the reaper, approval expiry, pruning, the Settings ping), so a
+  `background` (searches and their continuations, board refreshes, the scheduled poll of the
+  boards every 15 minutes) and `system` (the reaper, approval expiry, pruning, the Settings ping), so a
   long search never blocks a tailoring job the user is waiting on, and liveness never queues
   behind model work. A step is a `run_step` task: it claims the run, runs under the run's
   `llm_context` and a per-task timeout, turns a failure into `run.failed` with the user's
@@ -301,8 +301,24 @@ A search is one run that moves through phases, pausing at two gates in `approve_
    Shortlisted (phase `shortlisting`)
 8. complete, with the best matches linked from the run card and the count of strong ones
 
+**The radar** (#55, `apps/jobs/refresh.py`, `sources/poll.py`, `radar.py`). Every 15 minutes the
+worker polls the boards that are due: a board that listed an early-career role or gave someone a
+match in the last 180 days every tick, the rest hourly, careers pages every six hours
+(`registry.due_companies`), and a board that fails waits twice as long after each failure. A
+poll asks before it reads. It sends the validators the last answer came with (Greenhouse and
+Lever honour an `ETag`; for Greenhouse the question goes to the listing without bodies, a
+fiftieth of the size) and compares a digest of the body where a 304 never comes (Ashby's
+`Last-Modified` is only its cache's age). An unchanged board costs one small request and
+rewrites no row; a changed one is read whole and ingested as before, and every board is read
+whole once a day whatever it says. Each new posting on a board checked before is timed
+(`jobs.seen_lag_s`): the smaller of "since the source says it was posted" and "since the last
+look, when it was not there". The Companies page reports the week's median and 90th percentile
+by source, so timeliness is measured, not assumed. The empty-board guard still needs two reads:
+a poll that would trip it forgets its state.
+
 **Watching new postings** (#5, `apps/matching/watch.py`). Between searches, strong roles used
-to sit unscored in the mirror for a week. After every scheduled refresh the cron defers
+to sit unscored in the mirror for a week. A scheduled refresh that brought postings in (and
+every sixth hour's tick, for what the review cap held back) defers
 `watch.fan_out`, which starts a `watch` run for each user who is watching (resume, complete
 preferences, no search queued or running, budget left). A watch is the pipeline above with no
 request, no refresh and no gates, over the postings first seen since the previous completed
@@ -339,7 +355,7 @@ Defined now so later phases are additive, not a rewrite.
 
 | Interface | Phase 1 | Later |
 |---|---|---|
-| Board adapters | `greenhouse`, `lever`, `ashby`, `workable`, `recruitee`, `gem` share one protocol: `fetch_board(client, slug) -> list[NormalizedJob]`, raising `BoardNotFound` on a 404 | more boards |
+| Board adapters | `greenhouse`, `lever`, `ashby`, `workable`, `recruitee`, `gem` share one protocol: `fetch_board(client, slug) -> list[NormalizedJob]`, raising `BoardNotFound` on a 404, in two halves (`board_url(slug)`, `parse_board(slug, body)`) so a poll can ask before it reads, plus an optional cheaper `probe_url(slug)` | more boards |
 | Other sources | `jsearch` and `careers_page` are plain functions with the same `NormalizedJob` output | — |
 | `Storage` | `LocalStorage` (`apps/core/storage.py`: `put`, `open`, `delete`, `exists`) | S3 / Blob behind the same four methods |
 | `ResumeRenderer` | future work: today there is one renderer, the HTML template in headless Chromium | `latex` via tectonic, compared side by side |

@@ -156,16 +156,7 @@ def normalize_job(slug: str, offer: dict[str, Any]) -> NormalizedJob:
     )
 
 
-async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
-    if not _LABEL.match(slug):
-        raise BoardNotFound(SOURCE, slug)
-    try:
-        body = await client.fetch_text(board_url(slug))
-    except HttpError as error:
-        if error.status == 404:
-            raise BoardNotFound(SOURCE, slug) from error
-        raise
-
+def parse_board(slug: str, body: str) -> list[NormalizedJob]:
     board = json.loads(body)
     if not isinstance(board, dict):
         raise ValueError(f"Unexpected recruitee response for {slug!r}")
@@ -175,3 +166,15 @@ async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
         for offer in board.get("offers") or []
         if offer.get("status") in (None, "published")
     ]
+
+
+async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
+    if not _LABEL.match(slug):
+        raise BoardNotFound(SOURCE, slug)
+    try:
+        body = await client.fetch_text(board_url(slug))
+    except HttpError as error:
+        if error.status == 404:
+            raise BoardNotFound(SOURCE, slug) from error
+        raise
+    return parse_board(slug, body)

@@ -1,5 +1,5 @@
 """`manage.py watch_now [--email e] [--days N] [--fan-out]` (DEBUG only): a watch now, rather
-than after the next six-hourly refresh (#5).
+than after the next scheduled refresh (#5).
 
 Starts one user's watch (the given email, else the oldest account) and prints `run: <id>`, or
 `already running: <id>` when one is active. `--days N` widens its window to the postings first

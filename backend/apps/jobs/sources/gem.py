@@ -90,6 +90,13 @@ def normalize_job(slug: str, job: dict[str, Any]) -> NormalizedJob:
     )
 
 
+def parse_board(slug: str, body: str) -> list[NormalizedJob]:
+    posts = json.loads(body)
+    if not isinstance(posts, list):
+        raise ValueError(f"Unexpected gem response for {slug!r}")
+    return [normalize_job(slug, job) for job in posts if isinstance(job, dict)]
+
+
 async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
     try:
         body = await client.fetch_text(board_url(slug))
@@ -97,8 +104,4 @@ async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
         if error.status == 404:
             raise BoardNotFound(SOURCE, slug) from error
         raise
-
-    posts = json.loads(body)
-    if not isinstance(posts, list):
-        raise ValueError(f"Unexpected gem response for {slug!r}")
-    return [normalize_job(slug, job) for job in posts if isinstance(job, dict)]
+    return parse_board(slug, body)

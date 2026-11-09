@@ -18,6 +18,7 @@ from typing import Any, cast
 
 from django.db.models import Avg, Count, F, Q, Sum
 from django.db.models.functions import Now, TruncDate
+from django.utils import timezone
 
 from apps.accounts.api import SettingsOut
 from apps.accounts.models import User
@@ -25,6 +26,7 @@ from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
 from apps.core import clock
 from apps.core.jsonio import js_locale
+from apps.jobs import radar
 from apps.jobs.models import Company, CompanyStatus
 from apps.jobs.pipeline import CompanyRow, company_row
 from apps.jobs.sources.jsearch import jsearch_budget
@@ -61,6 +63,8 @@ from apps.pages.schemas import (
     ProviderKeys,
     PurposeModel,
     PurposeSpend,
+    Radar,
+    RadarLag,
     ReviewCost,
     RunSummary,
     SettingsPage,
@@ -92,6 +96,7 @@ __all__ = [
     "month_start",
     "plural",
     "profile_page",
+    "radar_summary",
     "run_target",
     "settings_page",
 ]
@@ -227,7 +232,7 @@ def _waiting(user_id: str) -> HomeWaiting:
         .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=Now()))
         .count()
     )
-    # A watch runs every six hours unasked: Home does not call that "searching right now".
+    # A watch runs unasked when postings arrive: Home does not call that "searching right now".
     running = (
         Run.objects.for_user(user_id)
         .filter(status__in=ACTIVE_RUN_STATUSES)
@@ -567,7 +572,35 @@ def companies_page() -> CompaniesPage:
         rows.append(CompanyRow.model_validate(company_row(company, open_jobs)))
         active += company.status == CompanyStatus.ACTIVE
     return CompaniesPage(
-        companies=rows, active=active, open_postings=sum(row.active_jobs for row in rows)
+        companies=rows,
+        active=active,
+        open_postings=sum(row.active_jobs for row in rows),
+        radar=radar_summary(),
+    )
+
+
+def radar_summary() -> Radar:
+    """The week's posted-to-seen lag and the boards on each cadence: two queries."""
+    lag = radar.lag_report()
+    boards = radar.polling(timezone.now())
+    return Radar(
+        days=radar.WINDOW.days,
+        postings=lag.postings,
+        median_s=lag.median_s,
+        p90_s=lag.p90_s,
+        by_source=[
+            RadarLag(
+                source=item.source,
+                postings=item.postings,
+                median_s=item.median_s,
+                p90_s=item.p90_s,
+            )
+            for item in lag.by_source
+        ],
+        hot_boards=boards.hot,
+        cold_boards=boards.cold,
+        careers_pages=boards.careers_pages,
+        last_checked_at=boards.last_ok_at,
     )
 
 

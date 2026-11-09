@@ -205,10 +205,32 @@ class ChatPage(ApiModel):
 # --- /pages/companies ----------------------------------------------------------------------------
 
 
+class RadarLag(ApiModel):
+    source: str
+    postings: int
+    median_s: int
+    p90_s: int
+
+
+class Radar(ApiModel):
+    """How soon new postings are seen and how often boards are asked (`jobs/radar.py`, #55)."""
+
+    days: int  # the window the lag was measured over
+    postings: int  # new postings measured in it
+    median_s: int | None  # posted-to-seen lag; null with nothing measured yet
+    p90_s: int | None
+    by_source: list[RadarLag]  # most postings first
+    hot_boards: int  # asked every 15 minutes
+    cold_boards: int  # asked hourly
+    careers_pages: int  # read every six hours
+    last_checked_at: datetime | None  # the newest successful check of any board
+
+
 class CompaniesPage(ApiModel):
     companies: list[CompanyRow]  # by name, at most 2,000
     active: int  # companies whose board is active
     open_postings: int  # open postings across the listed companies
+    radar: Radar
 
 
 # --- /pages/profile ------------------------------------------------------------------------------

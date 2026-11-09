@@ -21,11 +21,13 @@ a request any more (bug #22): each is a run whose job does the work in the worke
   the stale set (active boards not fetched in 2 h). It always completes, including "None of your
   boards are stale.", and always emits `company.refresh.done {boards, ok, notFound, errored}`
   (integers: boards attempted, boards refreshed) first.
-- **The six-hourly cron** (`refresh_scheduled`) refreshes the stale set with no run, no user and
-  no events. It and every stale-set run hold `refresh.MULTI_BOARD_GATE` for their whole fan-out,
-  so two multi-board refreshes never overlap; a stale run that has to wait shows phase
-  `waiting` and usually finds nothing stale once the cron is done. Single-company refreshes
-  stay ungated.
+- **The scheduled refresh** (`refresh_scheduled`, every 15 minutes, #55) polls the boards that
+  are due (`registry.due_companies`: every 15 minutes for a board that lists early-career roles
+  or gave someone a match, hourly for the rest) with no run, no user and no events. It and every
+  stale-set run hold `refresh.MULTI_BOARD_GATE` for their whole fan-out, so two multi-board
+  refreshes never overlap; a stale run that has to wait shows phase `waiting` and usually finds
+  nothing stale once the cron is done. Single-company refreshes stay ungated, and "Fetch now"
+  reads the board whole instead of asking whether it changed.
 
 Events a run emits stay before its terminal event (R4): progress events and the final pair are
 written only while the run is active, under its row lock, so nothing lands after a Stop.
@@ -46,6 +48,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from django.db import connection, transaction
+from django.utils import timezone
 
 from apps.core import throttle
 from apps.core.db import db
@@ -62,7 +65,12 @@ from apps.jobs.models import (
     SourceType,
 )
 from apps.jobs.refresh import RefreshOutcome, refresh_companies, refresh_company, stale_cutoff
-from apps.jobs.registry import get_company_by_slug, set_company_status, stale_companies
+from apps.jobs.registry import (
+    due_companies,
+    get_company_by_slug,
+    set_company_status,
+    stale_companies,
+)
 from apps.jobs.schemas import CompanyRow
 from apps.jobs.sources.js import IA, JS_WS, js_trim
 from apps.jobs.sources.types import js_iso
@@ -580,6 +588,7 @@ class RefreshSummary:
     jobs: int  # postings seen on the boards that refreshed
     inserted: int
     closed: int
+    unchanged: int = 0  # boards that answered "nothing changed" (counted in `ok` too)
 
     @classmethod
     def of(cls, outcomes: Sequence[RefreshOutcome]) -> RefreshSummary:
@@ -592,6 +601,7 @@ class RefreshSummary:
             jobs=sum(outcome.jobs for outcome in ok),
             inserted=sum(outcome.ingest.inserted for outcome in ok if outcome.ingest),
             closed=sum(outcome.ingest.deactivated for outcome in ok if outcome.ingest),
+            unchanged=sum(1 for outcome in ok if outcome.unchanged),
         )
 
     def done_data(self) -> dict[str, int]:
@@ -674,7 +684,8 @@ async def _refresh_one(run: Run, slug: str) -> None:
         return
     await db(lifecycle.merge_stats, run.id, phase="refreshing")
     async with http_client() as client:
-        outcome = await refresh_company(client, company)
+        # Someone asked for this board: read it whole, whatever it says about having changed.
+        outcome = await refresh_company(client, company, force=True)
     summary = RefreshSummary.of([outcome])
     level = Level.INFO if outcome.status == "ok" else Level.WARN
     await _complete_refresh(run, summary, _one_message(company.name, outcome), level=level)
@@ -704,16 +715,23 @@ async def _refresh_stale(run: Run) -> None:
 
 
 async def refresh_scheduled() -> RefreshSummary:
-    """The six-hourly cron: the stale set under the gate, with no run, user or events."""
+    """The scheduled refresh: the boards that are due, under the gate, with no run, user or
+    events."""
     async with refresh_module.MULTI_BOARD_GATE:
-        companies = await db(stale_companies, stale_cutoff())
+        companies = await db(due_companies, timezone.now())
         if not companies:
-            log.info("companies.refresh_scheduled: nothing stale")
+            log.info("companies.refresh_scheduled: nothing due")
             return NOTHING
         log.info("companies.refresh_scheduled: %s boards", len(companies))
         started = time.monotonic()
         async with http_client() as client:
             outcomes = await refresh_companies(client, companies)
     summary = RefreshSummary.of(outcomes)
-    log.info("%s in %.1fs", summary.message(), time.monotonic() - started)
+    log.info(
+        "%s (%s unchanged, %s new) in %.1fs",
+        summary.message(),
+        summary.unchanged,
+        summary.inserted,
+        time.monotonic() - started,
+    )
     return summary

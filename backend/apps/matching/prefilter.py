@@ -31,6 +31,7 @@ from pydantic import BaseModel, ConfigDict
 from apps.accounts.schemas import Preferences
 from apps.core.choices import JsonModel
 from apps.core.jsonio import js_json_indent
+from apps.jobs.level import EARLY_CAREER_WORDS, SENIOR_WORDS, word_pattern
 from apps.llm.structured import structured
 from apps.matching.brief import SearchBrief, clean_brief, merge_brief
 from apps.resumes.text import JS_SPACE, js_trim
@@ -223,50 +224,6 @@ async def derive_search(
 # --- title terms ---------------------------------------------------------------------------------
 
 JS_FLAGS = re.IGNORECASE | re.ASCII
-
-
-def word_pattern(phrase: str) -> str:
-    """A word or phrase bounded by non-letters, written to mean the same in Postgres and
-    JavaScript (and Python, case-insensitively)."""
-    return f"(^|[^a-z]){phrase.replace(' ', '[^a-z]+')}([^a-z]|$)"
-
-
-# Early-career title words. A title carrying one is never excluded from a junior search.
-EARLY_CAREER_WORDS = (
-    "intern",
-    "internship",
-    "new grad",
-    "new graduate",
-    "graduate program",
-    "junior",
-    "jr",
-    "entry level",
-    "associate",
-    "early career",
-    "university grad",
-    "resident",
-    "residency",
-    "apprentice",
-    "apprenticeship",
-    "fellow",
-    "fellows",
-    "fellowship",
-    "rotational",
-)
-
-SENIOR_WORDS = (
-    "senior",
-    "sr",
-    "staff",
-    "principal",
-    "lead",
-    "manager",
-    "director",
-    "head of",
-    "vice president",
-    "vp",
-    "distinguished",
-)
 
 
 def guard_seniority(

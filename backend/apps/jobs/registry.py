@@ -23,18 +23,35 @@ import re
 import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Any
 
 from django.db import IntegrityError, connection, transaction
 from django.db.models import Count, F, Q
-from django.db.models.functions import Now
+from django.db.models.functions import Least, Now
 from django.utils import timezone
 
 from apps.core.ids import new_id
-from apps.jobs.models import Company, CompanyStatus, SourceType
+from apps.jobs.models import Company, CompanyStatus, FetchStatus, SourceType
 
 LIST_LIMIT = 500
 STALE_LIMIT = 200
+
+# How often a board is asked whether it changed (#55). A board that listed an early-career role
+# or gave someone a match in the last `RELEVANT_FOR` is asked every tick of the cron; the rest
+# hourly; a careers page (which can cost a model call) as often as before. A tick that arrives a
+# few seconds early still counts (`DUE_SLACK`).
+HOT_INTERVAL = timedelta(minutes=15)
+COLD_INTERVAL = timedelta(hours=1)
+CAREERS_PAGE_INTERVAL = timedelta(hours=6)
+RELEVANT_FOR = timedelta(days=180)
+DUE_SLACK = timedelta(seconds=90)
+# A failing board waits twice as long after each failure, up to this.
+MAX_BACKOFF = timedelta(hours=6)
+MAX_FAILURES = 15
+DUE_LIMIT = 5000
+# `mark_relevant` rewrites a company's mark at most this often.
+RELEVANT_TOUCH_EVERY = timedelta(hours=12)
 _SLUG_RUN = re.compile(r"[^a-z0-9]+")
 _SLUG_ATTEMPTS = 5
 
@@ -107,10 +124,10 @@ def upsert_company(data: CompanyInput) -> tuple[Company, bool]:
                     """
                     INSERT INTO companies (
                         id, name, domain, slug, source_type, ats_slug, careers_urls, tags, status,
-                        needs_browser, listing_cache, discovered_via, added_by_id,
+                        needs_browser, listing_cache, poll_state, discovered_via, added_by_id,
                         created_at, updated_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s::text[], %s::text[], %s, %s, '{}'::jsonb,
-                            %s, %s, now(), now())
+                            '{}'::jsonb, %s, %s, now(), now())
                     ON CONFLICT (source_type, ats_slug) WHERE ats_slug IS NOT NULL DO UPDATE SET
                         name = EXCLUDED.name,
                         domain = coalesce(EXCLUDED.domain, companies.domain),
@@ -225,6 +242,35 @@ def stale_companies(stale_before: datetime, limit: int = STALE_LIMIT) -> list[Co
     return list(rows.order_by(F("last_fetched_at").asc(nulls_first=True))[:limit])
 
 
+def poll_interval(company: Company, now: datetime) -> timedelta:
+    """How long after its last attempt this company is due again."""
+    if company.source_type == SourceType.CAREERS_PAGE:
+        base = CAREERS_PAGE_INTERVAL
+    elif company.last_relevant_at is not None and now - company.last_relevant_at < RELEVANT_FOR:
+        base = HOT_INTERVAL
+    else:
+        base = COLD_INTERVAL
+    failures = min(int(company.fetch_failures or 0), MAX_FAILURES)
+    return max(base, min(base * 2**failures, MAX_BACKOFF)) if failures else base
+
+
+def due_companies(now: datetime, limit: int = DUE_LIMIT) -> list[Company]:
+    """Active companies whose next check has come, never-fetched first, then the longest
+    waiting. What the scheduled refresh reads every fifteen minutes."""
+    # Nothing is due sooner than the hot interval, so the database narrows first.
+    soonest = now - (HOT_INTERVAL - DUE_SLACK)
+    rows = Company.objects.filter(status=CompanyStatus.ACTIVE).filter(
+        Q(last_fetched_at__isnull=True) | Q(last_fetched_at__lte=soonest)
+    )
+    due = [
+        company
+        for company in rows.order_by(F("last_fetched_at").asc(nulls_first=True))
+        if company.last_fetched_at is None
+        or now - company.last_fetched_at >= poll_interval(company, now) - DUE_SLACK
+    ]
+    return due[:limit]
+
+
 def count_by_status() -> dict[str, int]:
     rows = Company.objects.values("status").annotate(count=Count("id")).order_by("status")
     return {row["status"]: row["count"] for row in rows}
@@ -240,11 +286,22 @@ def known_slugs(slugs: Sequence[str]) -> set[str]:
 
 
 def record_fetch(
-    company_id: uuid.UUID, status: str, job_count: int | None, *, mark_invalid: bool = False
+    company_id: uuid.UUID,
+    status: str,
+    job_count: int | None,
+    *,
+    mark_invalid: bool = False,
+    poll_state: dict[str, Any] | None = None,
+    relevant: bool = False,
 ) -> None:
     """Writes `last_fetched_at` and `last_fetch_status`; `job_count=None` keeps the previous
     count (an errored fetch says nothing about how many postings there are, and the count is
-    what the empty-board guard reads)."""
+    what the empty-board guard reads).
+
+    A check that succeeded (`ok`, `needs-browser`) also moves `last_ok_at` and clears the
+    failure count; one that failed adds to it, which is what backs a broken board off. `ok`
+    with a `poll_state` remembers it for the next poll, and a board that is gone forgets its
+    own. `relevant` marks the board as one worth polling often (`last_relevant_at`)."""
     fields: dict[str, object] = {
         "last_fetched_at": timezone.now(),
         "last_fetch_status": status,
@@ -252,9 +309,37 @@ def record_fetch(
     }
     if job_count is not None:
         fields["last_fetch_job_count"] = job_count
+    if status in (FetchStatus.OK, FetchStatus.NEEDS_BROWSER):
+        fields["last_ok_at"] = Now()
+        fields["fetch_failures"] = 0
+        if poll_state is not None:
+            fields["poll_state"] = poll_state
+        if relevant:
+            fields["last_relevant_at"] = Now()
+    else:
+        fields["fetch_failures"] = Least(F("fetch_failures") + 1, MAX_FAILURES)
     if mark_invalid:
         fields["status"] = CompanyStatus.INVALID
+        fields["poll_state"] = {}
     Company.objects.filter(id=company_id).update(**fields)
+
+
+def mark_relevant(job_ids: Sequence[str]) -> int:
+    """The companies behind these postings just gave someone a match: keep their boards on the
+    fast cadence. Rewrites a mark only when it is half a day old, so a busy watch does not
+    update the same rows every pass. Returns how many companies were marked."""
+    if not job_ids:
+        return 0
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE companies SET last_relevant_at = now() "
+            "WHERE id IN (SELECT company_id FROM jobs WHERE id = ANY(%s) "
+            "AND company_id IS NOT NULL) "
+            "AND (last_relevant_at IS NULL "
+            "OR last_relevant_at < now() - make_interval(secs => %s))",
+            [list(job_ids), RELEVANT_TOUCH_EVERY.total_seconds()],
+        )
+        return cursor.rowcount
 
 
 def set_company_status(company_id: uuid.UUID, status: str) -> Company | None:

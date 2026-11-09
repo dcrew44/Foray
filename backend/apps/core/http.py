@@ -16,6 +16,10 @@ politeness and safety are not per-caller decisions:
   Accept alone, as httpx2 drops `Authorization` across origins when it follows redirects itself.
 - **`on_attempt`** is awaited before every attempt, the first and each retry, so a metered API
   (JSearch's monthly quota) counts every request actually sent.
+- **Conditional requests** (`fetch_conditional`): a board polled every few minutes is asked
+  "has this changed?" with the `ETag` and `Last-Modified` its last answer carried, and a `304`
+  costs neither side a body (#55). Greenhouse and Lever answer an `ETag`, Ashby a
+  `Last-Modified`; a server that sends neither is simply fetched whole.
 - **An SSRF guard on every request and every hop.** Users type URLs (add company) and the model
   emits them (careers-page `more_listing_urls`). Only http/https on ports 80/443 are fetched,
   and a host is refused when any address it resolves to is loopback, private, link-local
@@ -39,6 +43,7 @@ import math
 import random
 import socket
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any, Self
 
 import httpx2
@@ -104,6 +109,38 @@ class HttpError(FetchError):
 
 class NetworkError(FetchError):
     """A timeout, a refused connection or a failed DNS lookup, after the retries."""
+
+
+@dataclass(frozen=True, slots=True)
+class Validators:
+    """What an answer gave us to ask "has this changed?" with."""
+
+    etag: str | None = None
+    last_modified: str | None = None
+
+    def __bool__(self) -> bool:
+        return bool(self.etag or self.last_modified)
+
+    def headers(self) -> dict[str, str]:
+        sent: dict[str, str] = {}
+        if self.etag:
+            sent["if-none-match"] = self.etag
+        if self.last_modified:
+            sent["if-modified-since"] = self.last_modified
+        return sent
+
+
+@dataclass(frozen=True, slots=True)
+class Fetched:
+    """A 2xx answer's body and validators, or (`text is None`) a 304: the copy the caller holds
+    is current, and `validators` are the ones it sent."""
+
+    text: str | None
+    validators: Validators
+
+    @property
+    def not_modified(self) -> bool:
+        return self.text is None
 
 
 def _describe(status: int | str, url: str) -> str:
@@ -245,6 +282,55 @@ class HttpClient:
     ) -> str:
         """The body of a 2xx answer, decoded as UTF-8. Raises `HttpError` or `NetworkError`.
         `on_attempt(n)` is awaited before attempt n (0 first); what it raises propagates."""
+        fetched = await self._fetch(
+            url,
+            validators=Validators(),
+            timeout=timeout,
+            retries=retries,
+            accept=accept,
+            headers=headers,
+            max_bytes=max_bytes,
+            on_attempt=on_attempt,
+        )
+        assert fetched.text is not None  # a 304 is only an answer to a conditional request
+        return fetched.text
+
+    async def fetch_conditional(
+        self,
+        url: str,
+        validators: Validators,
+        *,
+        timeout: float = DEFAULT_TIMEOUT_S,  # noqa: ASYNC109 (§10.1: per attempt, asyncio.timeout)
+        retries: int = DEFAULT_RETRIES,
+        accept: str = JSON_ACCEPT,
+        headers: Mapping[str, str] | None = None,
+        max_bytes: int | None = None,
+    ) -> Fetched:
+        """`fetch_text` that sends `validators` and takes a 304 for an answer. The result
+        carries the validators to send next time; with none to send it is a plain fetch."""
+        return await self._fetch(
+            url,
+            validators=validators,
+            timeout=timeout,
+            retries=retries,
+            accept=accept,
+            headers=headers,
+            max_bytes=max_bytes,
+            on_attempt=None,
+        )
+
+    async def _fetch(
+        self,
+        url: str,
+        *,
+        validators: Validators,
+        timeout: float,  # noqa: ASYNC109 (§10.1: per attempt, asyncio.timeout)
+        retries: int,
+        accept: str,
+        headers: Mapping[str, str] | None,
+        max_bytes: int | None,
+        on_attempt: Callable[[int], Awaitable[None]] | None,
+    ) -> Fetched:
         html = accept.startswith("text/html")
         cap = max_bytes if max_bytes is not None else (HTML_MAX_BYTES if html else ATS_MAX_BYTES)
         base_headers = {"user-agent": USER_AGENT, "accept": accept}
@@ -258,7 +344,8 @@ class HttpClient:
                     return await self._attempt(
                         url,
                         base_headers=base_headers,
-                        headers=dict(headers or {}),
+                        headers={**(headers or {}), **validators.headers()},
+                        validators=validators,
                         timeout=timeout,
                         html=html,
                         max_bytes=cap,
@@ -279,10 +366,11 @@ class HttpClient:
         *,
         base_headers: dict[str, str],
         headers: dict[str, str],
+        validators: Validators,
         timeout: float,  # noqa: ASYNC109 (the caller wraps the attempt in asyncio.timeout)
         html: bool,
         max_bytes: int,
-    ) -> str:
+    ) -> Fetched:
         current = await self.check_url(url)
         origin = URL(current).origin
         for hop in range(MAX_REDIRECTS + 1):
@@ -302,10 +390,24 @@ class HttpClient:
                     current = await self.check_url(target)
                     continue
 
+                # A 304 answers only a hop that carried the validators (a hop to another
+                # origin did not); anywhere else it is an answer we cannot use.
+                if response.status_code == 304 and (
+                    "if-none-match" in sent or "if-modified-since" in sent
+                ):
+                    return Fetched(None, validators)
+
                 if 200 <= response.status_code < 300:
                     if html:
                         _check_html(response, current)
-                    return _decode(await _read_capped(response, max_bytes, current))
+                    body = _decode(await _read_capped(response, max_bytes, current))
+                    return Fetched(
+                        body,
+                        Validators(
+                            etag=response.headers.get("etag") or None,
+                            last_modified=response.headers.get("last-modified") or None,
+                        ),
+                    )
 
                 prefix = await _read_prefix(response, _ERROR_BODY_BYTES)
                 raise HttpError(

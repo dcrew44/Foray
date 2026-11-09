@@ -202,8 +202,9 @@ export function BehaviourForm({
               Check new postings on my own
             </p>
             <p className="text-muted-foreground text-[12.5px] leading-snug">
-              After each board refresh, every six hours while the worker runs, Foray scores what
-              arrived and tells you in a New matches chat when something is worth applying to.
+              Boards are checked every 15 minutes while the worker runs. When new postings
+              arrive, Foray scores them and tells you in a New matches chat when something is
+              worth applying to.
             </p>
           </div>
           <Switch aria-labelledby="watch-label" checked={watch} onCheckedChange={setWatch} />

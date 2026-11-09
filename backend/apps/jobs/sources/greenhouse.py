@@ -28,6 +28,13 @@ def board_url(slug: str) -> str:
     return f"{BASE}/{encode_uri_component(slug)}/jobs?content=true"
 
 
+def probe_url(slug: str) -> str:
+    """The same listing without `content`: every posting's id, title and `updated_at`, at a
+    fiftieth of the size (Stripe: 41 KB against 2.1 MB, gzipped). It changes whenever the board
+    does, so a poll asks this and reads the whole board only when it differs (#55)."""
+    return f"{BASE}/{encode_uri_component(slug)}/jobs"
+
+
 def _split_locations(job: dict[str, Any]) -> list[str]:
     """Greenhouse packs several cities into one free-text string and uses both `|` and `;`,
     sometimes in one value ("New York City, NY; San Francisco, CA | New York City, NY"), and
@@ -115,6 +122,13 @@ def normalize_job(slug: str, job: dict[str, Any]) -> NormalizedJob:
     )
 
 
+def parse_board(slug: str, body: str) -> list[NormalizedJob]:
+    board = json.loads(body)
+    if not isinstance(board, dict):
+        raise ValueError(f"Unexpected greenhouse response for {slug!r}")
+    return [normalize_job(slug, job) for job in board.get("jobs") or []]
+
+
 async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
     try:
         body = await client.fetch_text(board_url(slug))
@@ -122,8 +136,4 @@ async def fetch_board(client: HttpClient, slug: str) -> list[NormalizedJob]:
         if error.status == 404:
             raise BoardNotFound(SOURCE, slug) from error
         raise
-
-    board = json.loads(body)
-    if not isinstance(board, dict):
-        raise ValueError(f"Unexpected greenhouse response for {slug!r}")
-    return [normalize_job(slug, job) for job in board.get("jobs") or []]
+    return parse_board(slug, body)

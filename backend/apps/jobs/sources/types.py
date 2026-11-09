@@ -111,10 +111,18 @@ class BoardNotFound(Exception):
 
 @dataclass(frozen=True, slots=True)
 class BoardAdapter:
-    """A source that reads one company's board: every current posting, or `BoardNotFound`."""
+    """A source that reads one company's board: every current posting, or `BoardNotFound`.
+
+    `board_url` and `parse_board` are `fetch_board` in two halves, which is what lets a poll ask
+    the board conditionally and parse it only when it changed (`sources/poll.py`, #55).
+    `probe_url` is a cheaper URL that changes whenever the board does, for a source that has one.
+    """
 
     source: BoardSource
     fetch_board: Callable[[HttpClient, str], Awaitable[list[NormalizedJob]]] = field(repr=False)
+    board_url: Callable[[str], str] = field(repr=False)
+    parse_board: Callable[[str, str], list[NormalizedJob]] = field(repr=False)
+    probe_url: Callable[[str], str] | None = field(default=None, repr=False)
 
 
 # --- dates ---------------------------------------------------------------------------------------

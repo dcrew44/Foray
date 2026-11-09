@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   fitLevel,
   formatDuration,
+  formatLag,
   formatLocation,
   formatSalary,
   formatUsd,
@@ -104,5 +105,18 @@ describe("small helpers", () => {
     expect(initials("airbyte")).toBe("AI");
     expect(initials("")).toBe("?");
     expect(nameHue("Stripe")).toBe(nameHue("Stripe"));
+  });
+});
+
+describe("formatLag", () => {
+  it("rounds to the unit a person would say", () => {
+    expect(formatLag(0)).toBe("under a minute");
+    expect(formatLag(59)).toBe("under a minute");
+    expect(formatLag(60)).toBe("1 minute");
+    expect(formatLag(9 * 60 + 20)).toBe("9 minutes");
+    expect(formatLag(89 * 60)).toBe("89 minutes");
+    expect(formatLag(2 * 3600 + 600)).toBe("2 hours");
+    expect(formatLag(35 * 3600)).toBe("35 hours");
+    expect(formatLag(3 * 86400)).toBe("3 days");
   });
 });

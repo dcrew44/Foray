@@ -44,7 +44,7 @@ from apps.matching.lanes import as_lane, lane_of, review_lane
 from apps.matching.models import JobMatch
 from apps.matching.queries import ALL_STAGES, OPEN_STAGES, MatchRow
 from apps.matching.schemas import DeepEval, FastScore
-from apps.matching.verdict import blocker_for, reason_for
+from apps.matching.verdict import STRONG_AT, blocker_for, reason_for
 from apps.pages.schemas import (
     ActivityPage,
     AggregatorUsage,
@@ -126,7 +126,7 @@ ACTIVITY_LIMIT = 30  # the activity page's runs
 COMPANIES_LIMIT = 10_000  # the registry table, which the page draws a hundred at a time
 
 QUEUE_STAGES: tuple[str, ...] = ("found", "shortlisted")  # what is waiting for a look
-STRONG_SCORE = 80
+STRONG_SCORE = STRONG_AT  # the rubric's, wherever a score is called strong (#87)
 ACTIVE_RUN_STATUSES = (RunStatus.QUEUED, RunStatus.RUNNING)  # Home's "searching right now"
 
 

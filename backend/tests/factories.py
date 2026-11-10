@@ -39,6 +39,7 @@ from apps.jobs.models import BoardCandidate, Company, Job
 from apps.llm.models import LlmCall
 from apps.matching.models import JobMatch
 from apps.matching.schemas import DeepEval, EvalGap, FastScore, MatchedRequirement
+from apps.matching.verdict import band_of
 from apps.notifications.models import Notification
 from apps.resumes import schema as resume_schema
 from apps.resumes.models import Document, Resume, ResumeVariant
@@ -81,9 +82,7 @@ def sample_fast_eval(score: int = 72) -> dict[str, Any]:
 
 
 def sample_deep_eval(score: int = 81) -> dict[str, Any]:
-    recommendation = (
-        "strong" if score >= 80 else "apply" if score >= 65 else "maybe" if score >= 45 else "skip"
-    )
+    recommendation = band_of(score)  # the rubric's bands, as a real review would say
     return DeepEval(
         matched_requirements=[
             MatchedRequirement(

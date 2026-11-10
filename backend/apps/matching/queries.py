@@ -29,7 +29,7 @@ from apps.jobs import registry
 from apps.jobs.models import Job
 from apps.matching.lanes import LaneName, lane_expression, lane_of
 from apps.matching.models import JobMatch, Stage
-from apps.matching.verdict import blocker_for, reason_for
+from apps.matching.verdict import APPLY_AT, STRONG_AT, blocker_for, reason_for
 
 __all__ = [
     "ALL_STAGES",
@@ -296,7 +296,7 @@ def count_new_since(user_id: str, since: datetime) -> dict[str, int]:
         .filter(created_at__gte=since, stage__in=OPEN_STAGES)
         .annotate(score=Coalesce("deep_score", "fast_score"))
     )
-    return {"total": rows.count(), "strong": rows.filter(score__gte=80).count()}
+    return {"total": rows.count(), "strong": rows.filter(score__gte=STRONG_AT).count()}
 
 
 def recent_recommended(user_id: str, *, days: int = 7, limit: int = 6) -> list[MatchRow]:
@@ -621,17 +621,18 @@ def top_match_ids_for_jobs(user_id: str, job_ids: Sequence[str], limit: int = 5)
 
 def score_bands_for_jobs(user_id: str, job_ids: Sequence[str]) -> tuple[int, int]:
     """How a set of postings scored, for a run's summary: `(strong, good)` among the open
-    matches, where strong is a score of 80 or more and good 65 to 79."""
+    matches, by the rubric's bands (`verdict.STRONG_AT`, `APPLY_AT`): strong is 85 or more and
+    good 70 to 84."""
     if not job_ids:
         return 0, 0
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT count(*) FILTER (WHERE coalesce(deep_score, fast_score) >= 80), "
-            "count(*) FILTER (WHERE coalesce(deep_score, fast_score) >= 65 "
-            "AND coalesce(deep_score, fast_score) < 80) "
+            "SELECT count(*) FILTER (WHERE coalesce(deep_score, fast_score) >= %s), "
+            "count(*) FILTER (WHERE coalesce(deep_score, fast_score) >= %s "
+            "AND coalesce(deep_score, fast_score) < %s) "
             "FROM job_matches WHERE user_id = %s AND job_id = ANY(%s::text[]) "
             "AND stage = ANY(%s::text[])",
-            [user_id, list(job_ids), list(OPEN_STAGES)],
+            [STRONG_AT, APPLY_AT, STRONG_AT, user_id, list(job_ids), list(OPEN_STAGES)],
         )
         row = cursor.fetchone()
     return (int(row[0]), int(row[1])) if row else (0, 0)

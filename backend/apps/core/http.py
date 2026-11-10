@@ -24,6 +24,10 @@ politeness and safety are not per-caller decisions:
   Workday, whose career sites list their postings in answer to a POST (#57); a retry repeats a
   query, never a write. The one write, a notification published to ntfy (#59), asks for
   `retries=0`.
+- **`post_form`** sends a form-encoded body (`application/x-www-form-urlencoded`), which is what
+  an OAuth token endpoint takes (#26). Same guard and caps, and **no retry unless asked**: the
+  fields are credentials, and an authorization code is spent by its first use. Like any body it
+  goes only to the origin it was meant for; a redirect elsewhere is followed with a plain GET.
 - **An SSRF guard on every request and every hop.** Users type URLs (add company) and the model
   emits them (careers-page `more_listing_urls`). Only http/https on ports 80/443 are fetched,
   and a host is refused when any address it resolves to is loopback, private, link-local
@@ -49,6 +53,7 @@ import socket
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Self
+from urllib.parse import urlencode
 
 import httpx2
 from ada_url import URL, join_url
@@ -375,6 +380,33 @@ class HttpClient:
             max_bytes=max_bytes,
             on_attempt=None,
             content=json.dumps(body, separators=(",", ":")).encode(),
+        )
+        assert fetched.text is not None
+        return fetched.text
+
+    async def post_form(
+        self,
+        url: str,
+        fields: Mapping[str, str],
+        *,
+        timeout: float = DEFAULT_TIMEOUT_S,  # noqa: ASYNC109 (§10.1: per attempt, asyncio.timeout)
+        retries: int = 0,
+        headers: Mapping[str, str] | None = None,
+        max_bytes: int | None = None,
+    ) -> str:
+        """The body of a 2xx answer to a form-encoded POST: an OAuth token endpoint's request.
+        One attempt unless `retries` says otherwise. The fields never appear in an error: a
+        failure names the URL and the status, and carries only what the server answered."""
+        fetched = await self._fetch(
+            url,
+            validators=Validators(),
+            timeout=timeout,
+            retries=retries,
+            accept=JSON_ACCEPT,
+            headers={**(headers or {}), "content-type": "application/x-www-form-urlencoded"},
+            max_bytes=max_bytes,
+            on_attempt=None,
+            content=urlencode(fields).encode(),
         )
         assert fetched.text is not None
         return fetched.text

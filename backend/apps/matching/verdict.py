@@ -17,6 +17,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from apps.matching.schemas import Recommendation
+
 __all__ = [
     "APPLY_AT",
     "MAYBE_AT",
@@ -35,7 +37,7 @@ APPLY_AT = 70
 MAYBE_AT = 50
 
 
-def band_of(score: int) -> str:
+def band_of(score: int) -> Recommendation:
     """A 0-100 score as the rubric's recommendation."""
     if score >= STRONG_AT:
         return "strong"

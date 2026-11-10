@@ -27,6 +27,7 @@ export const config = {
   matcher: [
     "/home/:path*",
     "/matches/:path*",
+    "/apply/:path*",
     "/chat/:path*",
     "/onboarding/:path*",
     "/activity/:path*",

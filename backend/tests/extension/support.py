@@ -33,7 +33,17 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
-from playwright.sync_api import BrowserContext, CDPSession, Frame, Page, Playwright, Route, Worker
+import pytest
+from playwright.sync_api import (
+    BrowserContext,
+    CDPSession,
+    Frame,
+    Page,
+    Playwright,
+    Route,
+    Worker,
+    sync_playwright,
+)
 
 REPO = Path(__file__).resolve().parents[3]
 EXTENSION = REPO / "extension"
@@ -542,10 +552,9 @@ class Popup:
 def _fulfil(route: Route, pages: Pages, aborted: list[str]) -> None:
     url = route.request.url
     parts = urlsplit(url)
-    if (
-        parts.scheme in ("chrome-extension", "data", "blob", "about")
-        or parts.hostname == "127.0.0.1"
-    ):
+    # This machine: the fake Foray, or Django's own test server.
+    local = parts.hostname in ("127.0.0.1", "localhost")
+    if local or parts.scheme in ("chrome-extension", "data", "blob", "about"):
         return route.continue_()
     if parts.path.startswith("/__replica/"):
         name = parts.path.removeprefix("/__replica/")
@@ -562,6 +571,17 @@ def _fulfil(route: Route, pages: Pages, aborted: list[str]) -> None:
     if body.endswith(".html") and "\n" not in body:
         body = (REPLICAS / body).read_text()
     return route.fulfill(status=200, content_type="text/html; charset=utf-8", body=body)
+
+
+@contextmanager
+def playwright_chromium() -> Iterator[Playwright]:
+    """Playwright, when its own Chromium is installed. Chrome itself no longer loads an
+    unpacked extension from the command line, so without the bundled browser the test is
+    skipped."""
+    with sync_playwright() as playwright:
+        if not Path(playwright.chromium.executable_path).exists():
+            pytest.skip("no Chromium to load the extension in (uv run playwright install chromium)")
+        yield playwright
 
 
 @contextmanager

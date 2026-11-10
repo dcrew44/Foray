@@ -12,18 +12,20 @@ from contextlib import AbstractContextManager, ExitStack
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Playwright, sync_playwright
+from playwright.sync_api import Playwright
 
-from tests.extension.support import Browser, FakeForay, Pages, browser
+from tests.extension.support import Browser, FakeForay, Pages, browser, playwright_chromium
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def chromium() -> Iterator[Playwright]:
-    """Playwright with its own Chromium. Chrome itself no longer loads an unpacked extension
-    from the command line, so without the bundled browser these tests are skipped."""
-    with sync_playwright() as playwright:
-        if not Path(playwright.chromium.executable_path).exists():
-            pytest.skip("no Chromium to load the extension in (uv run playwright install chromium)")
+    """Playwright with its own Chromium, for one test.
+
+    Not for the session: Playwright's sync API keeps an event loop running on this thread
+    for as long as it is open, and while it does Django refuses every database call and
+    pytest-asyncio cannot start a loop of its own. Opened and closed around each test, it
+    leaves the rest of the suite alone."""
+    with playwright_chromium() as playwright:
         yield playwright
 
 

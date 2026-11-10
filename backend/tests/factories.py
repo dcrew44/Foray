@@ -35,7 +35,7 @@ from apps.accounts.schemas import SAMPLE_PREFERENCES
 from apps.applications.models import Application, ApplicationAnswer
 from apps.chat.models import Conversation, Message
 from apps.core.ids import generate_message_id
-from apps.jobs.models import BoardCandidate, Company, Job
+from apps.jobs.models import BoardBacklog, BoardCandidate, Company, Job
 from apps.llm.models import LlmCall
 from apps.matching.models import JobMatch
 from apps.matching.schemas import DeepEval, EvalGap, FastScore, MatchedRequirement
@@ -180,6 +180,18 @@ def make_candidate(
     return BoardCandidate.objects.create(
         source_type=source_type, ats_slug=ats_slug or f"candidate-{_n()}", **fields
     )
+
+
+def make_backlog(company: Company | None = None, **fields: Any) -> BoardBacklog:
+    """What a listed board being caught up still has to read (#84)."""
+    if company is None:
+        slug = f"listed-{_n()}"
+        company = make_company(
+            slug=slug, source_type="workday", ats_slug=f"{slug}.wd1.myworkdayjobs.com/Careers"
+        )
+    fields.setdefault("postings", [["Engineer_R1", "a"], ["Analyst_R2", "a"]])
+    fields.setdefault("fingerprint", "2:Engineer_R1")
+    return BoardBacklog.objects.create(company=company, **fields)
 
 
 def make_job(

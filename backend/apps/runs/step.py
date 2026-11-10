@@ -99,6 +99,8 @@ TASKS: dict[str, TaskSpec] = {
     "company.add": TaskSpec(INTERACTIVE, 15 * MINUTE),
     "company.refresh": TaskSpec(BACKGROUND, 60 * MINUTE),
     "companies.refresh_scheduled": TaskSpec(BACKGROUND, 60 * MINUTE),
+    # Under the cron's fifteen minutes, so one is done before the next is deferred (#84).
+    "companies.catch_up": TaskSpec(BACKGROUND, 14 * MINUTE),
     "watch.fan_out": TaskSpec(SYSTEM, 5 * MINUTE),
     "watch.run": TaskSpec(BACKGROUND, 30 * MINUTE),
     "chat.follow_up": TaskSpec(INTERACTIVE, 3 * MINUTE),
@@ -118,6 +120,7 @@ SYSTEM_TASKS = frozenset(
         "application.prepare",
         "chat.follow_up",
         "companies.refresh_scheduled",
+        "companies.catch_up",
         "watch.fan_out",
         "notify.send",
         "notify.test",

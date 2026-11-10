@@ -33,6 +33,8 @@ from django.utils import timezone
 
 from apps.core.ids import new_id
 from apps.jobs.models import Company, CompanyStatus, FetchStatus, SourceType
+from apps.jobs.sources import LISTED_ADAPTERS
+from apps.jobs.sources.poll import PollState
 
 LIST_LIMIT = 500
 STALE_LIMIT = 200
@@ -266,21 +268,53 @@ def poll_interval(company: Company, now: datetime) -> timedelta:
     return max(base, min(base * 2**failures, MAX_BACKOFF)) if failures else base
 
 
-def due_companies(now: datetime, limit: int = DUE_LIMIT) -> list[Company]:
+def is_catching_up(company: Company) -> bool:
+    """Whether a board is being caught up: one whose postings are read a request each
+    (`sources.LISTED_ADAPTERS`) that has never been read, or still has postings left over from
+    its last listing. The fifteen-minute pass leaves these to `companies.catch_up` (#84)."""
+    if company.source_type not in LISTED_ADAPTERS:
+        return False
+    state = PollState.read(company.poll_state)
+    return state.pending or state.url != company.source_type
+
+
+def due_companies(
+    now: datetime, limit: int = DUE_LIMIT, *, catching_up: bool = False
+) -> list[Company]:
     """Active companies whose next check has come, never-fetched first, then the longest
-    waiting. What the scheduled refresh reads every fifteen minutes."""
+    waiting: what the scheduled refresh reads every fifteen minutes. Boards being caught up
+    are not among them; `catching_up=True` gives those instead, for the pass that reads them.
+    """
     # Nothing is due sooner than the hot interval, so the database narrows first.
     soonest = now - (HOT_INTERVAL - DUE_SLACK)
     rows = Company.objects.filter(status=CompanyStatus.ACTIVE).filter(
         Q(last_fetched_at__isnull=True) | Q(last_fetched_at__lte=soonest)
     )
+    if catching_up:
+        rows = rows.filter(source_type__in=list(LISTED_ADAPTERS))
     due = [
         company
         for company in rows.order_by(F("last_fetched_at").asc(nulls_first=True))
-        if company.last_fetched_at is None
-        or now - company.last_fetched_at >= poll_interval(company, now) - DUE_SLACK
+        if is_catching_up(company) is catching_up
+        and (
+            company.last_fetched_at is None
+            or now - company.last_fetched_at >= poll_interval(company, now) - DUE_SLACK
+        )
     ]
     return due[:limit]
+
+
+def boards_to_catch_up(now: datetime) -> list[Company]:
+    """The boards being caught up whose turn has come: what `pipeline.catch_up` reads."""
+    return due_companies(now, catching_up=True)
+
+
+def catch_up_waiting() -> bool:
+    """Whether any active board is being caught up, due or not."""
+    rows = Company.objects.filter(
+        status=CompanyStatus.ACTIVE, source_type__in=list(LISTED_ADAPTERS)
+    )
+    return any(is_catching_up(company) for company in rows)
 
 
 def count_by_status() -> dict[str, int]:

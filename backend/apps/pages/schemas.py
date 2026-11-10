@@ -21,6 +21,7 @@ from apps.accounts.api import SettingsOut
 from apps.accounts.profile import InterviewProgress, OnboardingState, Slot
 from apps.accounts.schemas import Preferences
 from apps.applications.models import AnswerKind
+from apps.applications.outcomes import OutcomeFunnel, OutcomeSpeed, OutcomeTimings
 from apps.core.router import ApiModel
 from apps.jobs.legitimacy import SignalKind
 from apps.jobs.pipeline import CompanyRow
@@ -54,6 +55,7 @@ __all__ = [
     "MatchesPage",
     "ModelSpend",
     "MonthSpend",
+    "OutcomesPage",
     "ProfilePage",
     "ProfileVariant",
     "ProviderId",
@@ -416,6 +418,20 @@ class ApplyPage(ApiModel):
     failed: list[ApplyItem]
     preparing: int
     sent: list[ApplySent]  # newest first, at most 20
+
+
+# --- /pages/outcomes -----------------------------------------------------------------------------
+
+
+class OutcomesPage(ApiModel):
+    """How long applications took to go out and what came of them (`applications/outcomes.py`,
+    #65, #6). Every number comes with the count it rests on; a rate is null on too few."""
+
+    matches: int  # every match the user has
+    applications: int  # the ones known to have been applied to
+    timing: OutcomeTimings
+    speed: OutcomeSpeed
+    funnel: OutcomeFunnel
 
 
 # --- /pages/settings -----------------------------------------------------------------------------

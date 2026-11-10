@@ -1,0 +1,119 @@
+{
+  "applications": "number",
+  "funnel": {
+    "byLane": [
+      {
+        "applications": "number",
+        "interviews": "number",
+        "key": "string",
+        "rate": "null"
+      }
+    ],
+    "byRecommendation": [
+      {
+        "applications": "number",
+        "interviews": "number",
+        "key": "string",
+        "rate": "null"
+      }
+    ],
+    "byResume": [
+      {
+        "applications": "number",
+        "interviews": "number",
+        "key": "string",
+        "rate": "null"
+      }
+    ],
+    "bySource": [
+      {
+        "applications": "number",
+        "interviews": "number",
+        "key": "string",
+        "rate": "null"
+      }
+    ],
+    "closed": [
+      {
+        "applied": "number",
+        "matches": "number",
+        "stage": "string"
+      }
+    ],
+    "minDenominator": "number",
+    "steps": [
+      {
+        "matches": "number",
+        "rate": "null",
+        "stage": "string"
+      }
+    ]
+  },
+  "matches": "number",
+  "speed": {
+    "applications": "number",
+    "buckets": [
+      {
+        "applications": "number",
+        "bucket": "string",
+        "interviews": "number",
+        "rate": "null"
+      }
+    ],
+    "enough": "boolean",
+    "needed": "number"
+  },
+  "timing": {
+    "allTime": {
+      "applications": "number",
+      "byHand": "number",
+      "postedToApplied": {
+        "applications": "number",
+        "medianS": "number",
+        "p90S": "null"
+      },
+      "postedToSeen": {
+        "applications": "number",
+        "medianS": "number",
+        "p90S": "null"
+      },
+      "readyToApplied": {
+        "applications": "number",
+        "medianS": "null",
+        "p90S": "null"
+      },
+      "seenToReady": {
+        "applications": "number",
+        "medianS": "null",
+        "p90S": "null"
+      }
+    },
+    "days": "number",
+    "p90After": "number",
+    "recent": {
+      "applications": "number",
+      "byHand": "number",
+      "postedToApplied": {
+        "applications": "number",
+        "medianS": "number",
+        "p90S": "null"
+      },
+      "postedToSeen": {
+        "applications": "number",
+        "medianS": "number",
+        "p90S": "null"
+      },
+      "readyToApplied": {
+        "applications": "number",
+        "medianS": "null",
+        "p90S": "null"
+      },
+      "seenToReady": {
+        "applications": "number",
+        "medianS": "null",
+        "p90S": "null"
+      }
+    },
+    "untimed": "number"
+  }
+}

@@ -77,6 +77,8 @@ BUDGETS = {
     # and the newest rendered snapshot of each (not read when there are no variants).
     "profile": 8,
     "apply": 2,
+    # One for each part (#65, #6): the spans, the buckets, the grouped count behind the funnel.
+    "outcomes": 3,
     "settings": 6,
 }
 # The session row and the user row, read before any endpoint runs.
@@ -92,6 +94,7 @@ PAGES = {
     "profile": "/api/pages/profile",
     "settings": "/api/pages/settings",
     "apply": "/api/pages/apply",
+    "outcomes": "/api/pages/outcomes",
 }
 
 

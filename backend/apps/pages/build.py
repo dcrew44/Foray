@@ -25,6 +25,7 @@ from apps.accounts.api import settings_out
 from apps.accounts.models import User
 from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
+from apps.applications import outcomes
 from apps.applications.answers import CATALOGUE, YES_NO
 from apps.applications.models import AnswerKind, Application, ApplicationAnswer
 from apps.applications.prepare import missing_of
@@ -73,6 +74,7 @@ from apps.pages.schemas import (
     MatchesPage,
     ModelSpend,
     MonthSpend,
+    OutcomesPage,
     ProfilePage,
     ProfileVariant,
     ProviderKeys,
@@ -113,6 +115,7 @@ __all__ = [
     "match_page",
     "matches_page",
     "month_start",
+    "outcomes_page",
     "plural",
     "profile_page",
     "radar_summary",
@@ -866,6 +869,23 @@ def _match_application(match: JobMatch) -> MatchApplication | None:
         id=application.id,
         status=cast(Any, application.status),
         missing=len(missing_of(application.answers)),
+    )
+
+
+# --- /pages/outcomes -----------------------------------------------------------------------------
+
+
+def outcomes_page(user: User) -> OutcomesPage:
+    """Posted-to-applied time, then what came of the applications (#65, #6). Three queries,
+    one for each part; the two totals are the funnel's first and third steps."""
+    funnel = outcomes.funnel(user.pk)
+    counted = {step.stage: step.matches for step in funnel.steps}
+    return OutcomesPage(
+        matches=counted["found"],
+        applications=counted["applied"],
+        timing=outcomes.timing(user.pk),
+        speed=outcomes.by_speed(user.pk),
+        funnel=funnel,
     )
 
 

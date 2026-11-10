@@ -117,15 +117,15 @@ describe("outcomes", () => {
   it("says why the timings cover fewer applications than were sent", () => {
     const one = timingNotes(timings({ applications: 3, byHand: 1, postedToApplied: span(2) }, 1));
     expect(one).toHaveLength(3);
-    expect(one[0]).toMatch(/^1 application is in Applied because you moved it there by hand/);
-    expect(one[1]).toMatch(/^1 application was moved to Applied by hand and has since moved on/);
+    expect(one[0]).toMatch(/^1 application was moved to Applied by hand, not marked sent/);
+    expect(one[1]).toMatch(/^1 application was moved to Applied by hand and had moved on before/);
     expect(one[2]).toMatch(/^1 application went to a posting that does not say when it went up/);
 
     const many = timingNotes(
       timings({ applications: 1200, byHand: 1100, postedToApplied: span(1197) }, 2),
     );
-    expect(many[0]).toMatch(/^1,100 applications are in Applied because you moved them there/);
-    expect(many[1]).toMatch(/^2 applications were moved to Applied by hand and have since moved on/);
+    expect(many[0]).toMatch(/^1,100 applications were moved to Applied by hand, not marked sent/);
+    expect(many[1]).toMatch(/^2 applications were moved to Applied by hand and had moved on before/);
     expect(many[2]).toMatch(/^3 applications went to postings that do not say/);
   });
 });

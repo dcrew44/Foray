@@ -694,6 +694,18 @@ candidate (mid-level, not a new graduate), and no posting in the set is labelled
 The milestones on GitHub hold the order and the work; this section keeps what each phase is
 and why.
 
+**Where it stands (2026-11-10).** All four parts of the order below are built and merged:
+the radar (polling, listed sources, the registry grown from Common Crawl, facts at ingest,
+the worker lock and an always-on worker container), applying (saved answers, prepared
+applications, lanes, resume variants, the browser extension with its caps, proof and
+auto-submit rule), referrals (contacts, who-you-know alerts, drafted notes) and the outcome
+loop (the Outcomes page, stage times, Gmail matching, the match benchmark). What has run only
+against fakes and replicas, and so is not yet known to work: the extension on a real
+employer's form, the Gmail connection against Google, a note or a match verdict from the
+configured model at scale, and the posted-to-seen lag over a week of unattended polling
+(#55, which needs the always-on machine of #54). The open issues in each milestone are what
+first real use is expected to turn up.
+
 **Order since 2026-11-09** (Direction, under Settled decisions). The phases below were
 written before it and keep their designs; the order of work is now:
 
@@ -721,17 +733,19 @@ written before it and keep their designs; the order of work is now:
    from found to offer, and the interview rate by source, by the review's recommendation, by
    lane and by tailored resume, as counts until a group has ten.
 
-   `job_matches` keeps where a match is now and nothing records a move, so a stage a match
-   "reached" is only what the present proves (`outcomes.reached`): a match in Interviewing or
-   Offer was applied to, and a rejected or archived one counts as applied to only when its
-   application was marked sent on the Apply page (`applications.submitted_at` outlives a
-   stage change). Every count past found is therefore a floor, an interview that ended in a
-   rejection is no longer counted as one, and an application moved to Applied by hand and
-   then closed is no longer counted at all; the page says so. One moved by hand is timed from
-   `stage_changed_at` while it is still in Applied, has no ready time, and is left out of the
-   buckets, where it could only be counted for as long as it had no interview.
-   Keeping when a match first entered each stage would settle all of it, and is the first
-   thing to add when replies start moving stages (#26).
+   A match keeps when it first reached Applied and Interviewing (`job_matches.applied_at`,
+   `interviewing_at`, #94), written by the same statement that moves its stage
+   (`matching.queries.STAGE_TIMES`), so a stage a match "reached" (`outcomes.reached`) is
+   where it is now, a recorded application (`applications.submitted_at` outlives a stage
+   change), or one of those times. An interview that ended in a rejection is still an
+   interview, and an application made by hand and then closed is still an application, timed
+   from when it was moved to Applied. Moving a match back before a step clears that step's
+   time: the user is saying it never got there. The first version kept only the current
+   stage, which made every count past found a floor and read interview rates low, because a
+   rejection is how most interviews end; a match closed before November 2026 has no history
+   and is still counted that way, and the page says so. An application made by hand has no
+   ready time and is left out of the buckets: when a card was moved is not when the
+   application went in.
 
 The career coach and model choice milestones come after these. What decided it, from the
 development database that day: the mirror had not refreshed for a week, 528 matches had

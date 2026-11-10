@@ -22,6 +22,7 @@ from apps.applications.outcomes import (
     reached,
 )
 from apps.jobs.models import Company
+from apps.matching import queries as match_queries
 from apps.matching.models import JobMatch
 from tests.factories import (
     make_application,
@@ -86,6 +87,25 @@ def span(found: Any) -> tuple[int, int | None, int | None]:
 
 
 # --- what the present proves ---------------------------------------------------------------------
+
+
+def move(user: User, match: JobMatch, *stages: str, at: Any = None) -> None:
+    """The user moves a match through `stages`, as the board and the chat do; `at` is when it
+    reached the first of them."""
+    for index, stage in enumerate(stages):
+        assert match_queries.set_match_stage(
+            user.pk, match.id, stage, entered_at=at if index == 0 else None
+        )
+
+
+def test_reached_reads_the_times_a_match_keeps() -> None:
+    """#94: a closed match that keeps when it reached a step is counted at it."""
+    assert reached("rejected", False, applied=True) == 2
+    assert reached("archived", False, applied=True, interviewed=True) == 3
+    assert reached("rejected", True, interviewed=True) == 3
+    # A time never takes a match back from where it is now.
+    assert reached("offer", False, applied=True, interviewed=True) == 4
+    assert reached("shortlisted", False) == 1
 
 
 def test_reached_reads_only_what_the_present_proves() -> None:
@@ -224,7 +244,8 @@ def test_an_application_made_by_hand_has_only_its_posted_to_applied_time() -> No
     assert (found.all_time.applications, found.all_time.by_hand) == (2, 2)
     assert span(found.all_time.seen_to_ready) == (0, None, None)
 
-    # Once one moves on, the time it was sent is gone: it is counted, and not timed.
+    # One that had moved on before `applied_at` was kept (these rows are made without it) has
+    # no sent time: it is counted, and not timed.
     send(user, posted=2 * H, sent=3 * H, by_hand=True, stage="interviewing")
     send(user, posted=2 * H, sent=3 * H, by_hand=True, stage="offer")
     found = outcomes.timing(user.pk)
@@ -307,12 +328,70 @@ def test_rates_by_speed_need_fifty_recorded_applications() -> None:
     }
 
 
-def test_an_interview_that_ended_in_a_rejection_is_not_counted() -> None:
-    """The floor the page admits to: only the current stage is kept."""
+def test_a_match_rejected_before_its_times_were_kept_is_not_counted_as_an_interview() -> None:
+    """The floor the page admits to for old matches: these rows carry no `interviewing_at`,
+    as every match that closed before #94 does."""
     user = make_user()
     send(user, posted=ZERO, ready=ZERO, sent=H, stage="rejected")
     send(user, posted=ZERO, ready=ZERO, sent=H, stage="interviewing")
     assert buckets(user)["same_day"] == (2, 1, None)
+
+
+def test_an_interview_that_ended_in_a_rejection_is_still_an_interview() -> None:
+    """#94: the match keeps when it first reached Interviewing, so every report counts it."""
+    user = make_user()
+    interviewed = send(user, posted=ZERO, ready=ZERO, sent=H)
+    move(user, interviewed, "interviewing", "rejected")
+    turned_down = send(user, posted=ZERO, ready=ZERO, sent=H)
+    move(user, turned_down, "rejected")
+
+    assert buckets(user)["same_day"] == (2, 1, None)
+    found = outcomes.funnel(user.pk)
+    assert [step.matches for step in found.steps] == [2, 2, 2, 1, 0]
+    assert [(c.stage, c.matches, c.applied, c.interviewed) for c in found.closed] == [
+        ("rejected", 2, 2, 1),
+        ("archived", 0, 0, 0),
+    ]
+    [source] = found.by_source
+    assert (source.applications, source.interviews) == (2, 1)
+
+
+def test_an_application_made_by_hand_keeps_its_time_and_its_place_after_it_closes() -> None:
+    """#94: moved to Applied on the board, interviewed, rejected. It is still an application
+    and an interview, and it is still timed from when it was moved to Applied."""
+    user = make_user()
+    seen = timezone.now() - 3 * D
+    match = make_match(
+        user, job=make_job(posted_at=seen - 2 * H, first_seen_at=seen), stage="found"
+    )
+    move(user, match, "applied", at=seen + 3 * H)
+    move(user, match, "interviewing", "rejected")
+
+    timing = outcomes.timing(user.pk)
+    assert (timing.all_time.applications, timing.all_time.by_hand, timing.untimed) == (1, 1, 0)
+    assert span(timing.all_time.posted_to_applied) == (1, seconds(5 * H), None)
+    found = outcomes.funnel(user.pk)
+    assert [step.matches for step in found.steps] == [1, 1, 1, 1, 0]
+    assert [(c.matches, c.applied, c.interviewed) for c in found.closed] == [(1, 1, 1), (0, 0, 0)]
+    # Made by hand, it is in no bucket: when a card was moved is not when it was sent.
+    assert outcomes.by_speed(user.pk).applications == 0
+
+
+def test_a_match_moved_back_before_a_step_never_reached_it() -> None:
+    """Dragging a match back to Found says it was not applied to after all; back to Applied
+    from Interviewing, that there was no interview."""
+    user = make_user()
+    mistake = make_match(user, stage="found")
+    move(user, mistake, "applied", "found", "archived")
+    no_interview = make_match(user, stage="found")
+    move(user, no_interview, "interviewing", "applied", "rejected")
+
+    found = outcomes.funnel(user.pk)
+    assert [step.matches for step in found.steps] == [2, 1, 1, 0, 0]
+    assert [(c.stage, c.matches, c.applied, c.interviewed) for c in found.closed] == [
+        ("rejected", 1, 1, 0),
+        ("archived", 1, 0, 0),
+    ]
 
 
 # --- the funnel ----------------------------------------------------------------------------------

@@ -8,9 +8,8 @@ import { BUCKET_HINT, BUCKET_LABEL, rateText, type OutcomeSpeed } from "@/lib/ou
  *
  * Until enough applications are recorded Django sends no rates, and this shows the counts
  * and says how many more are needed: with a handful in each row, a difference between rows
- * is chance. Only applications marked sent on the Apply page are here, because one moved to
- * Applied by hand loses its sent time when it moves on, so it could only ever be counted
- * while it had no interview.
+ * is chance. Only applications marked sent on the Apply page are here: when a match was moved
+ * to Applied by hand is when a card was moved, not when the application went in.
  */
 export function SpeedPanel({ speed, minimum }: { speed: OutcomeSpeed; minimum: number }) {
   if (speed.applications === 0) {
@@ -80,8 +79,8 @@ export function SpeedPanel({ speed, minimum }: { speed: OutcomeSpeed; minimum: n
         {speed.enough
           ? `Rates rest on ${plural(speed.applications, "application")} marked sent on the Apply page. A row with fewer than ${minimum} shows its counts only.`
           : `${speed.applications.toLocaleString()} of the ${speed.needed} applications needed before a rate means anything. Until then these are counts: with so few in each row, a difference between them is as likely to be chance.`}{" "}
-        Applications moved to Applied by hand are left out, because the time they were sent is
-        not kept once they move on.
+        Applications moved to Applied by hand are left out: when you moved the match is not
+        when the application went in.
       </p>
     </div>
   );

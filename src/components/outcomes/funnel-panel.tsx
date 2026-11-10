@@ -4,8 +4,8 @@ import { barWidth, NO_NUMBER, rateText, type OutcomeFunnel } from "@/lib/outcome
 /**
  * How far the user's matches have got (#6): each step with the matches known to have reached
  * it or gone past it, and the share of the step before. Rejected and archived matches are
- * outcomes rather than steps, so they are listed apart, with how many of them had an
- * application marked sent.
+ * outcomes rather than steps, so they are listed apart, with how many of them were applied to
+ * and how many reached an interview before they closed.
  *
  * The bars compare each step with the first on one pine scale. A step that is not empty always
  * shows a sliver: one application among hundreds of matches is the point, not a rounding error.
@@ -77,8 +77,11 @@ export function FunnelPanel({ funnel }: { funnel: OutcomeFunnel }) {
             <th className="py-2 pr-4 text-right font-normal" scope="col">
               Matches
             </th>
+            <th className="py-2 pr-4 text-right font-normal" scope="col">
+              Applied to
+            </th>
             <th className="py-2 text-right font-normal" scope="col">
-              With an application marked sent
+              Interviewed
             </th>
           </tr>
         </thead>
@@ -91,8 +94,11 @@ export function FunnelPanel({ funnel }: { funnel: OutcomeFunnel }) {
               <td className="tabular py-2.5 pr-4 text-right font-medium">
                 {closed.matches.toLocaleString()}
               </td>
-              <td className="tabular text-muted-foreground py-2.5 text-right">
+              <td className="tabular text-muted-foreground py-2.5 pr-4 text-right">
                 {closed.applied.toLocaleString()}
+              </td>
+              <td className="tabular text-muted-foreground py-2.5 text-right">
+                {closed.interviewed.toLocaleString()}
               </td>
             </tr>
           ))}
@@ -100,10 +106,9 @@ export function FunnelPanel({ funnel }: { funnel: OutcomeFunnel }) {
       </table>
 
       <p className="text-muted-foreground max-w-[75ch] text-[13px] leading-relaxed">
-        A match counts at every step it is known to have reached. A rejected or archived match
-        counts as applied to only when its application was marked sent on the Apply page, and
-        as found otherwise: Foray keeps where a match is now, not where it has been. A share is
-        shown once the step before has {funnel.minDenominator} matches.
+        A match counts at every step it reached, wherever it is now: one that was interviewed
+        and then rejected is still counted at Interviewing. A share is shown once the step
+        before has {funnel.minDenominator} matches.
       </p>
     </div>
   );

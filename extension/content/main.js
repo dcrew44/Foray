@@ -587,6 +587,14 @@
     if (state.stopped) return;
     if (here() !== state.url) return void (await look());
     if (state.pending && (await confirmIfShown())) return;
+    // A challenge can appear after the form was filled, or when submit is pressed: say so.
+    if (state.results && !state.busy) {
+      const handoff = H.detect();
+      if ((handoff?.kind ?? "") !== (state.results.handoff?.kind ?? "")) {
+        state.results.handoff = handoff;
+        P.show(filledView());
+      }
+    }
     // A word to the worker now and then keeps it awake while a filled form waits to be
     // sent, so it is there to hear the press of submit.
     ticks += 1;

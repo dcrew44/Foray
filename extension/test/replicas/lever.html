@@ -4,7 +4,8 @@
   HTML form of `li.application-question` rows with the same names and label markup, none of
   the site's own scripts or styles, and invented questions.
 
-  `?captcha=1` shows the CAPTCHA's tick box, as a board does when it wants a person.
+  `?captcha=1` shows the CAPTCHA's tick box, as a board does when it wants a person;
+  `?captcha=late` shows it only when submit is pressed, and holds the application back.
 -->
 <html lang="en">
   <head>
@@ -196,17 +197,15 @@
 
       // The CAPTCHA every Lever form loads: full-page frames that stay hidden until the board
       // wants a person. `?captcha=1` is that moment: a tick box, on screen.
-      const asking = new URLSearchParams(location.search).has("captcha");
-      const holder = document.getElementById("h-captcha");
-      holder.append(
-        el("iframe", {
-          title: "Widget containing checkbox for hCaptcha security challenge",
-          src: "https://newassets.hcaptcha.com/captcha/v1/replica/static/hcaptcha.html#frame=checkbox",
-          style: asking
-            ? "width: 303px; height: 78px; border: 0;"
-            : "position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; visibility: hidden;",
-        }),
-      );
+      const captcha = new URLSearchParams(location.search).get("captcha");
+      const SHOWN = "width: 303px; height: 78px; border: 0;";
+      const HIDDEN = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; visibility: hidden;";
+      const challenge = el("iframe", {
+        title: "Widget containing checkbox for hCaptcha security challenge",
+        src: "https://newassets.hcaptcha.com/captcha/v1/replica/static/hcaptcha.html#frame=checkbox",
+        style: captcha === "1" ? SHOWN : HIDDEN,
+      });
+      document.getElementById("h-captcha").append(challenge);
 
       // A plain form holds its own state: what it would send is what FormData reads.
       const read = () => {
@@ -221,6 +220,11 @@
 
       document.getElementById("btn-submit").addEventListener("click", () => {
         if (!form.reportValidity()) return;
+        replica.presses = (replica.presses ?? 0) + 1;
+        if (captcha === "late" && !replica.state["h-captcha-response"]) {
+          challenge.setAttribute("style", SHOWN); // the board wants a person before it takes it
+          return;
+        }
         submit(read());
         location.assign(location.pathname.replace(/\/apply$/, "/thanks"));
       });

@@ -141,7 +141,7 @@ manifest's `matches`, and a replica with a test.
 pnpm test:web                                   # the pure helpers (extension/test/unit)
 cd backend
 uv run playwright install chromium              # once: Chrome itself will not load an unpacked extension from the command line
-uv run pytest tests/extension                   # the manifest and the code, without a browser
+uv run pytest tests/extension -m "not slow"     # the manifest and the code, without a browser
 uv run pytest tests/extension -m slow           # a real Chromium with the extension loaded
 FORAY_EXTENSION_HEADED=1 uv run pytest tests/extension -m slow -k lever   # watch one
 ```

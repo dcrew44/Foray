@@ -212,6 +212,28 @@ def test_submit_is_pressed_only_when_foray_allows_it_and_the_page_asks_for_nobod
     assert "Application submitted!" in sent.body["text"]
 
 
+def test_a_challenge_that_appears_on_submit_is_left_to_the_user(
+    open_browser: Open, foray: FakeForay
+) -> None:
+    """Allowed to submit and nothing in the way, the extension presses submit, and the board
+    answers with a CAPTCHA. That is where it stops: one press, the challenge untouched,
+    nothing reported."""
+    foray.add(unread(LEVER_ID, f"{LEVER}/apply", "lever", may_submit=True))
+    foray.answers = LEVER_ANSWERS | {YEARS: "Six"}
+    browser = open_browser(LEVER_PAGES)
+    page = browser.context.new_page()
+    page.goto(f"{LEVER}/apply?captcha=late")
+    browser.wait_for_panel(page, "Fill the form")
+    browser.press_panel_button(page)
+    words = browser.wait_for_panel(page, "This page is asking for a CAPTCHA.")
+    assert "Foray pressed submit, as you allowed for this application." in words
+    browser.pump(3000)
+    assert page.evaluate("[window.replica.presses, window.replica.submits]") == [1, 0]
+    assert page.evaluate("window.replica.state['h-captcha-response']") == ""
+    assert page.url.endswith("/apply?captcha=late")
+    assert foray.sent("POST", "/submitted") == []
+
+
 def test_submit_is_not_pressed_while_anything_is_unanswered_even_when_allowed(
     open_browser: Open, foray: FakeForay
 ) -> None:

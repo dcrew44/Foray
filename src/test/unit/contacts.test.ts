@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { NOT_A_CONTACT_LIST, connectedLabel, contactsFileProblem } from "@/lib/contacts";
+import {
+  NOT_A_CONTACT_LIST,
+  connectedLabel,
+  contactsFileProblem,
+  knowsLabel,
+} from "@/lib/contacts";
 
 const MB = 1024 * 1024;
 
@@ -25,6 +30,38 @@ describe("contactsFileProblem", () => {
     expect(contactsFileProblem("Connections.csv", Math.round(12.3 * MB))).toBe(
       "That file is 12.3 MB; the limit is 10 MB.",
     );
+  });
+});
+
+describe("knowsLabel", () => {
+  const person = (name: string) => ({ name });
+
+  it("says nothing where the user knows nobody", () => {
+    expect(knowsLabel(null)).toBeNull();
+    expect(knowsLabel(undefined)).toBeNull();
+    expect(knowsLabel({ count: 0, people: [] })).toBeNull();
+  });
+
+  it("names one person, two people, or the first and how many others", () => {
+    expect(knowsLabel({ count: 1, people: [person("Priya Rao")] })).toBe("You know Priya Rao");
+    expect(knowsLabel({ count: 2, people: [person("Priya Rao"), person("Marcus Bell")] })).toBe(
+      "You know Priya Rao and Marcus Bell",
+    );
+    expect(
+      knowsLabel({ count: 3, people: [person("Priya Rao"), person("Marcus Bell"), person("Ines Ortega")] }),
+    ).toBe("You know Priya Rao and 2 others");
+    // The row carries three names at most; the count is of everyone.
+    expect(knowsLabel({ count: 41, people: [person("Priya Rao")] })).toBe(
+      "You know Priya Rao and 40 others",
+    );
+    expect(knowsLabel({ count: 2, people: [person("Priya Rao")] })).toBe(
+      "You know Priya Rao and 1 other",
+    );
+  });
+
+  it("falls back to the count when no name came with it", () => {
+    expect(knowsLabel({ count: 1, people: [] })).toBe("You know 1 person here");
+    expect(knowsLabel({ count: 5, people: [] })).toBe("You know 5 people here");
   });
 });
 

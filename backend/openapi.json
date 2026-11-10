@@ -2981,6 +2981,56 @@
         "title": "SearchIn",
         "type": "object"
       },
+      "MatchKnows": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/MatchPerson"
+            },
+            "title": "People",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "people"
+        ],
+        "title": "MatchKnows",
+        "type": "object"
+      },
+      "MatchPerson": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "profileUrl": {
+            "title": "Profileurl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "profileUrl"
+        ],
+        "title": "MatchPerson",
+        "type": "object"
+      },
       "MatchRow": {
         "properties": {
           "matchId": {
@@ -3229,6 +3279,16 @@
             "format": "date-time",
             "title": "Createdat",
             "type": "string"
+          },
+          "knows": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchKnows"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -5972,15 +6032,40 @@
           "hasBaseResume": {
             "title": "Hasbaseresume",
             "type": "boolean"
+          },
+          "knows": {
+            "$ref": "#/components/schemas/MatchPeople"
           }
         },
         "required": [
           "match",
           "job",
           "tailored",
-          "hasBaseResume"
+          "hasBaseResume",
+          "knows"
         ],
         "title": "MatchDetailPage",
+        "type": "object"
+      },
+      "MatchPeople": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/MatchPerson"
+            },
+            "title": "People",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "people"
+        ],
+        "title": "MatchPeople",
         "type": "object"
       },
       "MatchedRequirement": {

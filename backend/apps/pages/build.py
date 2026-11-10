@@ -29,6 +29,7 @@ from apps.applications import outcomes
 from apps.applications.answers import CATALOGUE, YES_NO
 from apps.applications.models import AnswerKind, Application, ApplicationAnswer
 from apps.applications.prepare import missing_of
+from apps.contacts.known import match_people
 from apps.core import clock
 from apps.core.jsonio import js_locale
 from apps.jobs import legitimacy, radar
@@ -268,13 +269,16 @@ def home_page(user: User) -> HomePage:
     onboarding = onboarding_state(user)
     counts = _stage_counts(user.pk)
     best = match_queries.list_matches(user.pk, stages=QUEUE_STAGES, limit=BEST_LIMIT)
+    new = match_queries.recent_recommended(user.pk, limit=BEST_LIMIT)
     waiting = _waiting(user.pk)
+    # Who the user knows at the companies both lists show, in one read (#64).
+    shown = match_queries.with_known(user.pk, [*best, *new])
     return HomePage(
         user=HomeUser(name=user.name),
         onboarding=onboarding,
         counts=counts,
-        best=best,
-        new_this_week=match_queries.recent_recommended(user.pk, limit=BEST_LIMIT),
+        best=shown[: len(best)],
+        new_this_week=shown[len(best) :],
         spend=_month_spend_brief(user.pk, month_start()),
         waiting=waiting,
         suggestions=home_suggestions(onboarding, best),
@@ -298,8 +302,11 @@ def matches_page(
     lane_param = as_lane(lane)
     return MatchesPage(
         counts=_stage_counts(user.pk),
-        matches=match_queries.list_matches(
-            user.pk, stages=stages, lane=lane_param, limit=MATCHES_LIMIT
+        matches=match_queries.with_known(
+            user.pk,
+            match_queries.list_matches(
+                user.pk, stages=stages, lane=lane_param, limit=MATCHES_LIMIT
+            ),
         ),
         ready=onboarding_state(user).ready,
         view=view_name,
@@ -412,6 +419,7 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
         ),
         tailored=_tailored_view(tailored) if tailored is not None else None,
         has_base_resume=has_base,
+        knows=match_people(user.pk, job),
     )
 
 

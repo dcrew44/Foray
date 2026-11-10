@@ -31,6 +31,17 @@
     "title": "string",
     "url": "string"
   },
+  "knows": {
+    "count": "number",
+    "people": [
+      {
+        "id": "string",
+        "name": "string",
+        "position": "string",
+        "profileUrl": "string"
+      }
+    ]
+  },
   "match": {
     "application": "null",
     "blocker": "null",

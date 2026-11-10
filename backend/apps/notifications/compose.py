@@ -1,8 +1,9 @@
 """What a notification says (#59). Pure: no database, no clock of its own.
 
 A match's notification is its company and title, the verdict of the deep review, how long the
-posting has been up, and a link to the match. The company and the title are third-party text:
-they go to a phone, not to a model, so they are only put on one line and cut to a sane length.
+posting has been up, how many people the user knows there when they know any (#64), and a link
+to the match. The company and the title are third-party text: they go to a phone, not to a
+model, so they are only put on one line and cut to a sane length.
 """
 
 from __future__ import annotations
@@ -78,10 +79,12 @@ def match_url(match_id: object) -> str:
     return f"{settings.PUBLIC_ORIGIN}/matches/{match_id}"
 
 
-def match_message(match: JobMatch, now: datetime) -> Message:
+def match_message(match: JobMatch, now: datetime, knows: int = 0) -> Message:
     """One match (its `job` loaded): `Acme: Software Engineer, Payments`, then `Strong fit.
     Posted 40 minutes ago.` A careers-page posting carries no date, so it says when Foray
-    first saw it instead."""
+    first saw it instead. With `knows` contacts of the user's at that company it ends `You know
+    2 people there.` (#64): a count and never a name, because the message leaves for a
+    notification server, and a contact goes nowhere."""
     job = match.job
     company = one_line(job.company_name, COMPANY_MAX)
     title = one_line(job.title, TITLE_MAX)
@@ -91,9 +94,12 @@ def match_message(match: JobMatch, now: datetime) -> Message:
         age = f"Posted {age_phrase(now - job.posted_at)}."
     else:
         age = f"First seen {age_phrase(now - job.first_seen_at)}."
+    body = f"{verdict}. {age}" if verdict else age
+    if knows > 0:
+        body += f" You know {'1 person' if knows == 1 else f'{knows} people'} there."
     return Message(
         title=f"{company}: {title}" if company else title,
-        body=f"{verdict}. {age}" if verdict else age,
+        body=body,
         click=match_url(match.id),
         tags=(MATCH_TAG,),
     )

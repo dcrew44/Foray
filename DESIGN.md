@@ -468,6 +468,22 @@ thing that leaves: company names, on the user's press, to the job boards Foray a
 search when a key is set). A person's name, email or profile address is never sent anywhere,
 and Foray makes no request to LinkedIn of any kind.
 
+The alert worth most is a fresh posting at a company where the user knows someone (#64), so
+everything that announces a match says so. `known.known_at` answers "who does this user know
+at these postings' companies" in one query: a contact linked to the posting's registered
+company, or one whose company name has the key of the posting's own company name (which covers
+an aggregator's posting and a company registered a moment ago). Every `MatchRow` a page or a
+card shows carries `knows` (the first three people and the count, `queries.with_known`: one
+more read for Home, the Matches page and a run card's results), and the match page lists them
+under "People you know here". When a watch completes, its message adds "You know someone at
+one of them"; its chat update names the people at each such role, wrapped as third-party text
+because a name and a position are whatever a file said; and the phone notification ends "You
+know 2 people there", a count and never a name, since that message goes through a notification
+server. The contacts are counted when the notification is sent, and `watch.fan_out` links
+contacts to newly registered companies before it starts the watches. A posting where the user
+knows nobody is announced exactly as it was before any of this: the message, the update and
+the notification are each pinned in both cases.
+
 Tailoring is separate and on demand: the strong model reorders, selects and rephrases
 only what the base resume says; a verifier (deterministic rules plus a cheap-model
 check) flags any claim it cannot trace to a base fact, unsupported lines are reverted
@@ -702,7 +718,9 @@ Ashby and Lever.
   The user imports their LinkedIn connections export or any list with a name column; each
   person is linked to the registered company they work at, and the Contacts page counts them
   per company and offers to look for the boards of the companies the mirror lacks. It adds
-  the `contacts` table.
+  the `contacts` table. **Who you know, where a match is announced** (#64): a match's row and
+  page, a watch's message and chat update, and the phone notification each say when the
+  posting is at a company where the user knows someone.
 - **Phase 4 — ready for other people.** One-command setup with the user's own keys
   (OpenRouter as a provider makes one key enough), the hosted posting mirror that installs
   sync from, a company list built from Foray's own discovery in place of the seed list

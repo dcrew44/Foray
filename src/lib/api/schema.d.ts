@@ -1280,6 +1280,27 @@ export interface components {
             /** Againfrom */
             againFrom?: string | null;
         };
+        /** MatchKnows */
+        MatchKnows: {
+            /** Count */
+            count: number;
+            /** People */
+            people: components["schemas"]["MatchPerson"][];
+        };
+        /** MatchPerson */
+        MatchPerson: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: string;
+            /** Profileurl */
+            profileUrl: string;
+        };
         /** MatchRow */
         MatchRow: {
             /**
@@ -1354,6 +1375,7 @@ export interface components {
              * Format: date-time
              */
             createdAt: string;
+            knows?: components["schemas"]["MatchKnows"] | null;
         };
         /** MatchesOut */
         MatchesOut: {
@@ -2275,6 +2297,14 @@ export interface components {
             tailored: components["schemas"]["TailoredView"] | null;
             /** Hasbaseresume */
             hasBaseResume: boolean;
+            knows: components["schemas"]["MatchPeople"];
+        };
+        /** MatchPeople */
+        MatchPeople: {
+            /** Count */
+            count: number;
+            /** People */
+            people: components["schemas"]["MatchPerson"][];
         };
         /** MatchedRequirement */
         MatchedRequirement: {

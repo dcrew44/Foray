@@ -21,6 +21,8 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.schemas import SAMPLE_PREFERENCES
+from apps.chat import follow_up
+from apps.chat.follow_up import KnownRole
 from apps.chat.models import Conversation
 from apps.core.queue import defer_in_tx
 from apps.jobs.models import Company, Job
@@ -31,7 +33,14 @@ from apps.matching.models import JobMatch
 from apps.pages import build
 from apps.runs import lifecycle
 from apps.runs.models import Approval, Event, Run
-from tests.factories import make_company, make_job, make_match, make_run, make_user
+from tests.factories import (
+    make_company,
+    make_contact,
+    make_job,
+    make_match,
+    make_run,
+    make_user,
+)
 from tests.matching.conftest import FakeLLM
 from tests.queue import deferred, run_deferred
 
@@ -423,3 +432,146 @@ def test_a_watch_starts_preparing_an_application_for_each_match_it_keeps(
     watch_now(user)
     assert Application.objects.for_user(user.pk).count() == 4
     assert len(deferred("application.prepare")) == 4
+
+
+# --- where the user knows someone (#64) ----------------------------------------------------------
+
+
+def test_a_watch_says_when_a_match_is_at_a_company_where_the_user_knows_someone(
+    company: Company, scores: FakeLLM
+) -> None:
+    user = watcher()
+    elsewhere = make_company(name="Globex", last_fetched_at=timezone.now())
+    post(company, STRONG)
+    post(elsewhere, APPLY)
+    make_contact(user, name="Priya Rao", company=company, position="Staff Engineer")
+    make_contact(user, name="Marcus Bell", company_name="Acme, Inc.")  # linked by name alone
+    make_contact(user, name="Someone Else", company_name="Hooli")
+
+    run = watch_now(user)
+
+    result = output(run)
+    assert titles(user, result["announcedMatchIds"]) == [STRONG, APPLY]
+    assert result["message"] == (
+        "2 roles look worth applying to, from 2 new postings. You know someone at one of them."
+    )
+    completed = Event.objects.unscoped("tests").get(run_id=run.id, kind="run.completed")
+    assert completed.message == result["message"]
+    # What the chat follow-up will be told: the role, and who the user knows there.
+    [known] = follow_up.known_roles(user.pk, run)
+    assert (known.title, known.company, known.count) == (STRONG, "Acme", 2)
+    assert sorted(known.people) == [("Marcus Bell", ""), ("Priya Rao", "Staff Engineer")]
+    assert len(follow_ups()) == 1
+    # Everything else about the watch is what it was.
+    assert {key: result[key] for key in result if key not in ("announcedMatchIds", "message")} == {
+        "candidates": 2,
+        "newMatches": 2,
+        "scored": 2,
+        "autoArchived": 0,
+        "evaluated": 2,
+        "strong": 1,
+        "apply": 1,
+        "notReviewed": 0,
+    }
+
+
+def test_a_watch_where_the_user_knows_nobody_is_announced_as_before(
+    company: Company, scores: FakeLLM
+) -> None:
+    """The other half of #64: contacts at other companies, or another user's contacts at this
+    one, change nothing about what a watch says."""
+    user, other = watcher(), make_user()
+    post(company, STRONG, APPLY)
+    make_contact(user, name="Someone Else", company_name="Hooli")
+    make_contact(other, name="Not Mine", company=company)
+
+    run = watch_now(user)
+
+    assert output(run)["message"] == "2 roles look worth applying to, from 2 new postings."
+    assert follow_up.known_roles(user.pk, run) == []
+    assert set(output(run)) == {
+        "candidates",
+        "newMatches",
+        "scored",
+        "autoArchived",
+        "evaluated",
+        "strong",
+        "apply",
+        "notReviewed",
+        "announcedMatchIds",
+        "message",
+    }
+
+
+def test_the_watch_message_counts_the_matches_where_the_user_knows_someone() -> None:
+    assert watch.watch_message(9, 2, 0) == "2 roles look worth applying to, from 9 new postings."
+    assert watch.watch_message(9, 2, 0, 0) == watch.watch_message(9, 2, 0)
+    assert watch.watch_message(9, 1, 0, 1) == (
+        "1 role looks worth applying to, from 9 new postings. You know someone there."
+    )
+    assert watch.watch_message(9, 3, 0, 1) == (
+        "3 roles look worth applying to, from 9 new postings. You know someone at one of them."
+    )
+    assert watch.watch_message(9, 3, 2, 2) == (
+        "3 roles look worth applying to, from 9 new postings. You know someone at 2 of them. "
+        "2 more scored well; the daily review cap holds them for now."
+    )
+    # Nothing announced: nothing to say about contacts.
+    assert watch.watch_message(9, 0, 0, 0) == "Nothing strong among 9 new postings."
+
+
+def test_a_contact_lookup_that_fails_never_fails_the_watch(
+    company: Company, scores: FakeLLM, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken(user_id: str, match_ids: list[str]) -> int:
+        raise RuntimeError("the contacts table is on fire")
+
+    monkeypatch.setattr(watch, "count_matches_with_contacts", broken)
+    user = watcher()
+    post(company, STRONG)
+    make_contact(user, company=company)
+    run = watch_now(user)
+    assert run.status == "completed"
+    assert output(run)["message"] == "1 role looks worth applying to, from 1 new posting."
+
+
+def test_known_roles_are_only_a_watch_s(company: Company) -> None:
+    user = make_user()
+    make_contact(user, name="Priya Rao", company=company)
+    match = make_match(user, job=make_job(company=company), fast_score=90, deep_score=90)
+    announced = {"announcedMatchIds": [str(match.id), "not-a-uuid"]}
+    search = make_run(user, kind="search", status="completed", output=announced)
+    assert follow_up.known_roles(user.pk, search) == []
+    watched = make_run(user, kind="watch", status="completed", output=announced)
+    assert follow_up.known_roles(user.pk, watched) == [
+        KnownRole(title="Software Engineer", company="Acme", people=(("Priya Rao", ""),), count=1)
+    ]
+    assert follow_up.known_roles(user.pk, make_run(user, kind="watch", output=None)) == []
+
+
+def test_the_fan_out_links_contacts_to_companies_registered_since_they_were_imported(
+    scores: FakeLLM,
+) -> None:
+    """#63: a contact imported before their company's board was registered is linked before
+    the watches start, for every user and whether or not that user is watching."""
+    from apps.contacts.models import Contact
+
+    watching, idle = watcher(), make_user()
+    for user in (watching, idle):
+        make_contact(user, name="Lena Fischer", company_name="Globex Analytics")
+    globex = make_company(name="Globex Analytics", last_fetched_at=timezone.now())
+
+    assert watch.start_watches() == 1
+    for user in (watching, idle):
+        assert Contact.objects.for_user(user.pk).get().company_id == globex.id
+
+
+def test_the_fan_out_starts_its_watches_even_when_contacts_cannot_be_linked(
+    scores: FakeLLM, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken() -> int:
+        raise RuntimeError("no linking today")
+
+    monkeypatch.setattr(watch, "link_contacts", broken)
+    watcher()
+    assert watch.start_watches() == 1

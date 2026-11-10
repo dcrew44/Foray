@@ -1,5 +1,5 @@
-"""`manage.py create_test_user [--email e] [--with-resume] [--with-match] | --purge` (DEBUG only;
-design §4.6).
+"""`manage.py create_test_user [--email e] [--with-resume] [--with-match] [--with-contact] |
+--purge` (DEBUG only; design §4.6).
 
 Throwaway users for checks and browser rehearsals, so nobody types a password into the pane:
 create one here, then sign in as it with `dev_session`.
@@ -11,6 +11,9 @@ create one here, then sign in as it with `dev_session`.
 - `--with-match` adds one `found` match on the newest active job in the mirror (it fails if the
   mirror is empty) and also prints `match: <id>`, so tailoring and evaluation can be checked
   without a search.
+- `--with-contact` (which implies `--with-match`) adds a made-up contact at that posting's
+  company and prints `contact: <name>`, so the match page's "People you know here" and a
+  note to them can be checked without importing a file (#64, #25).
 - `--purge` deletes every `@example.test` user, with their rows (cascade), their sessions (a
   `django_session` row names its user only inside its encoded data, so nothing cascades to it)
   and their `STORAGE_DIR/<user_id>/` files, and prints the count. Their ledger rows stay, with no
@@ -37,11 +40,14 @@ import apps.accounts
 from apps.accounts.management import fail
 from apps.accounts.models import User, normalize_email_address
 from apps.accounts.schemas import SAMPLE_PREFERENCES
+from apps.contacts.link import company_key
+from apps.contacts.models import Contact, ContactSource
 from apps.jobs.models import Job
 from apps.matching.models import JobMatch, Stage
 from apps.resumes.models import Resume, ResumeKind
 
 TEST_DOMAIN = "@example.test"
+TEST_CONTACT = "Priya Rao"  # nobody: the made-up contact `--with-contact` adds
 SAMPLE_RESUME_PATH = Path(apps.accounts.__file__).resolve().parent / "sample_resume.json"
 _RANDOM_ALPHABET = string.ascii_lowercase + string.digits
 
@@ -104,6 +110,11 @@ class Command(BaseCommand):
             help="add one found match on the newest active job",
         )
         parser.add_argument(
+            "--with-contact",
+            action="store_true",
+            help="add a made-up contact at the matched job's company (implies --with-match)",
+        )
+        parser.add_argument(
             "--purge",
             action="store_true",
             help=f"delete every {TEST_DOMAIN} user and their files",
@@ -114,10 +125,11 @@ class Command(BaseCommand):
             fail(self, "create_test_user is for local development only.")
         email: str | None = options.get("email")
         with_resume: bool = options.get("with_resume", False)
-        with_match: bool = options.get("with_match", False)
+        with_contact: bool = options.get("with_contact", False)
+        with_match: bool = options.get("with_match", False) or with_contact
 
         if options.get("purge"):
-            if email or with_resume or with_match:
+            if email or with_resume or with_match or with_contact:
                 fail(self, "--purge takes no other option.")
             count = purge_test_users()
             self.stdout.write(f"Deleted {count} test {'user' if count == 1 else 'users'}.")
@@ -151,7 +163,23 @@ class Command(BaseCommand):
                 if job is not None
                 else None
             )
+            contact = (
+                Contact.objects.create_for(
+                    user.pk,
+                    name=TEST_CONTACT,
+                    position="Staff Engineer",
+                    company_id=job.company_id,
+                    company_name=job.company_name,
+                    company_key=company_key(job.company_name),
+                    source=ContactSource.CSV,
+                    dedupe_key="create_test_user",
+                )
+                if job is not None and with_contact
+                else None
+            )
 
         self.stdout.write(f"user: {user.email}")
         if match is not None:
             self.stdout.write(f"match: {match.pk}")
+        if contact is not None:
+            self.stdout.write(f"contact: {contact.name}")

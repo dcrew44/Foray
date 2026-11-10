@@ -39,6 +39,8 @@ from apps.runs.catalogue import FOLLOW_UP_EVENT, FOLLOW_UP_KINDS
 from apps.runs.models import Event, Run
 from tests.factories import (
     make_approval,
+    make_company,
+    make_contact,
     make_conversation,
     make_job,
     make_match,
@@ -500,3 +502,40 @@ def test_the_chat_fake_reports_in_text_with_read_only_tools(
     assert reply.parts[3]["text"] == (
         "Foray checked the run: it is completed. Tell me what you would like to do next."
     )
+
+
+def test_a_watch_follow_up_is_told_who_the_user_knows(monkeypatch: pytest.MonkeyPatch) -> None:
+    """#64: the update for a watch names the contacts at the announced companies, wrapped, so
+    the reply can say "you know Priya Rao there"; a role where they know nobody adds nothing."""
+    prompts: list[str] = []
+
+    async def stream(messages: list[ModelMessage], info: AgentInfo) -> AsyncIterator[str]:
+        prompts.append(fake.latest_user_text(messages))
+        yield "Two new roles. You know Priya Rao at Acme."
+
+    install(monkeypatch, stream)
+    user = make_user()
+    conversation = make_conversation(user, title="New matches")
+    acme = make_company(name="Acme")
+    make_contact(user, name="Priya Rao", company=acme, position="Staff Engineer")
+    known = make_match(user, job=make_job(company=acme, title="Payments Engineer"), deep_score=90)
+    unknown = make_match(user, job=make_job(title="Platform Engineer"), deep_score=80)
+    run = make_run(
+        user,
+        kind="watch",
+        status="completed",
+        conversation=conversation,
+        output={"announcedMatchIds": [str(known.id), str(unknown.id)]},
+    )
+    done = emitted(user.pk, "run.completed", "2 roles look worth applying to.", run)
+    assert run_now(done.id) == "posted"
+
+    [notice] = prompts
+    lines = notice.splitlines()
+    listed = lines.index("- Payments Engineer at Acme: Priya Rao (Staff Engineer)")
+    assert lines[listed - 1] == '<untrusted source="the user\'s contacts">'
+    assert lines[listed + 1] == "</untrusted>"
+    assert "The user knows people at one of these companies" in notice
+    assert "Platform Engineer" not in notice  # nobody known there: not listed
+    stored = messages_of(conversation)[0]
+    assert (stored.metadata or {})["label"] == "New matches"

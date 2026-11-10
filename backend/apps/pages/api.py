@@ -7,7 +7,7 @@ Each server component makes one call here (plus `/api/me` from the layout), with
   headline}`;
 - `GET /api/pages/matches?view=&stage=&closed=&lane=`: `{counts, matches, ready, view, stage,
   showClosed, lane}`;
-- `GET /api/pages/matches/{id}`: `{match, job, tailored, hasBaseResume}`, or 404;
+- `GET /api/pages/matches/{id}`: `{match, job, tailored, hasBaseResume, knows}`, or 404;
 - `GET /api/pages/activity`: `{runs: RunSummary[]}`;
 - `GET /api/pages/chat`: `{suggestions}`;
 - `GET /api/pages/companies`: `{companies: CompanyRow[], active, openPostings}`;

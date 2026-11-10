@@ -66,9 +66,9 @@ UPDATE = os.environ.get("FORAY_UPDATE_SNAPSHOTS") == "1"
 BUDGETS = {
     "home": 10,
     "matches": 5,
-    # Four of the five are spent: the match with its job, its tailored resume, whether a base
-    # resume exists, and (#7) the one read behind the posting's signals, pinned exactly by
-    # `test_match_page_reads_once_for_its_signals`.
+    # All five are spent: the match with its job, its tailored resume, whether a base resume
+    # exists, (#7) the one read behind the posting's signals, and (#64) the people the user
+    # knows at the company, pinned exactly by `test_match_page_reads_once_for_its_signals`.
     "match": 5,
     "activity": 6,
     "chat": 3,
@@ -845,15 +845,16 @@ def test_match_page_shows_an_aggregators_stale_posting_that_applies_elsewhere() 
 
 def test_match_page_reads_once_for_its_signals(django_assert_num_queries: Any) -> None:
     """The match page's own reads, exactly: the match with its job, the tailored resume, the
-    base resume check, and one for the signals (the repost count, the company's domain and the
-    database's present together), however many signals there are."""
+    base resume check, one for the signals (the repost count, the company's domain and the
+    database's present together), however many signals there are, and one for the people the
+    user knows at the company (#64)."""
     graph = full_graph()
     job = graph.jobs["backend"]
     for _ in range(3):
         make_job(company=graph.company, title=job.title, is_active=False)
     Job.objects.filter(id=job.id).update(is_active=False)
     client = signed_in(graph.user)
-    with django_assert_num_queries(4 + AUTH_QUERIES):
+    with django_assert_num_queries(5 + AUTH_QUERIES):
         body = get_page(client, f"/api/pages/matches/{graph.matches['found'].id}").json()
     assert [signal["kind"] for signal in body["job"]["signals"]] == ["closed", "reposted"]
 

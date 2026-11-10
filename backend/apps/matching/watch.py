@@ -22,6 +22,10 @@ gates over a narrow window:
 - **To a phone.** The same matches are queued for the user's ntfy topic as the watch completes
   (`notifications.outbox.queue_matches`, #59): one notification per match, once, and nothing for
   a user who has set no topic.
+- **Where the user knows someone** (#64). The completing message says how many of the announced
+  matches are at a company where one of the user's contacts works; the chat follow-up names
+  them and the phone notification counts them (`contacts.known`). With no contact there, every
+  one of these says exactly what it said before.
 """
 
 from __future__ import annotations
@@ -40,6 +44,8 @@ from apps.accounts.profile import interview_progress
 from apps.accounts.schemas import InterviewState, Preferences, Settings
 from apps.applications import prepare as prepare_application
 from apps.chat.models import Conversation
+from apps.contacts.known import count_matches_with_contacts
+from apps.contacts.link import rematch as link_contacts
 from apps.core.clock import database_now
 from apps.core.db import db
 from apps.core.ids import new_id
@@ -149,7 +155,14 @@ def start_watch(user_id: str, *, since: datetime | None = None) -> tuple[Run, bo
 
 def start_watches() -> int:
     """`watch.fan_out`: a watch for every eligible user. One user's failure is logged and the
-    rest still start. Returns how many started. Sync."""
+    rest still start. Returns how many started. Sync.
+
+    First, contacts imported before their company was registered are linked to it (#63), so
+    the watches about to start see who works at the boards the refresh just brought in."""
+    try:
+        link_contacts()
+    except Exception:
+        log.warning("watch: could not link contacts to new companies", exc_info=True)
     started = 0
     for user_id in eligible_user_ids():
         try:
@@ -297,8 +310,21 @@ def prepare_applications(user_id: str, match_ids: list[str]) -> int:
         return 0
 
 
-def watch_message(considered: int, announced: int, not_reviewed: int) -> str:
-    """`considered`: the new matches this watch made, plus the week's it picked up again."""
+def contacts_among(user_id: str, match_ids: list[str]) -> int:
+    """How many of the matches about to be announced are at a company where the user knows
+    someone (#64). Never fails the watch: with the answer missing, the announcement is the one
+    a user with no contacts gets. Sync."""
+    try:
+        return count_matches_with_contacts(user_id, match_ids)
+    except Exception:
+        log.warning("could not look up contacts for %s", user_id, exc_info=True)
+        return 0
+
+
+def watch_message(considered: int, announced: int, not_reviewed: int, known: int = 0) -> str:
+    """`considered`: the new matches this watch made, plus the week's it picked up again.
+    `known`: how many of the announced are at a company where the user knows someone (#64);
+    with none, the message is what it always was."""
     if considered == 0:
         return "No new postings match your criteria."
     pool = f"{considered} new {'posting' if considered == 1 else 'postings'}"
@@ -307,6 +333,10 @@ def watch_message(considered: int, announced: int, not_reviewed: int) -> str:
     else:
         verb = "looks" if announced == 1 else "look"
         message = f"{roles(announced).capitalize()} {verb} worth applying to, from {pool}."
+        if known and announced == 1:
+            message += " You know someone there."
+        elif known:
+            message += f" You know someone at {'one' if known == 1 else known} of them."
     if not_reviewed > 0:
         message += f" {not_reviewed} more scored well; the daily review cap holds them for now."
     return message
@@ -442,6 +472,8 @@ async def run_watch(run: Run) -> None:
         key=lambda item: -item.evaluation.score,
     )
     strong = sum(1 for item in announced if item.evaluation.recommendation == "strong")
+    # A fresh posting where the user knows someone is the alert worth most (#64): say so.
+    known = await db(contacts_among, run.user_id, [item.match_id for item in announced])
     await db(
         finish_watch,
         run.id,
@@ -456,6 +488,6 @@ async def run_watch(run: Run) -> None:
             apply=len(announced) - strong,
             not_reviewed=not_reviewed,
             announced_match_ids=[item.match_id for item in announced],
-            message=watch_message(len(work), len(announced), not_reviewed),
+            message=watch_message(len(work), len(announced), not_reviewed, known),
         ),
     )

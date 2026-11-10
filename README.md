@@ -133,6 +133,11 @@ your contacts name that it does not read yet; one button looks for those compani
 boards, twenty at a time. Importing the same file again changes nothing, and a newer export
 updates the people it already knows.
 
+From then on a match at a company where you know someone says so: on its row ("You know
+Priya Rao and 2 others"), on its page under **People you know here**, in the "New matches"
+chat, where Foray names who you know at each new role, and on your phone ("You know 2
+people there": a count only, since that message passes through a notification server).
+
 Foray never signs in to LinkedIn and never looks anyone up. Your contacts stay in your own
 database: the only thing the board lookup sends out is company names, and only when you
 press the button.

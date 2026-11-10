@@ -21,6 +21,24 @@ export function contactsFileProblem(name: string, size: number): string | null {
   return resumeTooLarge(size);
 }
 
+/** The people a match's row names, and how many there are in all (`MatchKnows`). */
+type Knows = { count: number; people: Array<{ name: string }> };
+
+/**
+ * Who the user knows at a posting's company, in the few words a row has room for: "You know
+ * Priya Rao", "You know Priya Rao and Marcus Bell", "You know Priya Rao and 4 others". Null
+ * when they know nobody there, so a row for such a posting shows nothing at all.
+ */
+export function knowsLabel(knows: Knows | null | undefined): string | null {
+  if (!knows || knows.count < 1) return null;
+  const [first, second] = knows.people;
+  if (!first) return knows.count === 1 ? "You know 1 person here" : `You know ${knows.count} people here`;
+  if (knows.count === 1) return `You know ${first.name}`;
+  if (knows.count === 2 && second) return `You know ${first.name} and ${second.name}`;
+  const others = knows.count - 1;
+  return `You know ${first.name} and ${others} ${others === 1 ? "other" : "others"}`;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /**

@@ -20,6 +20,17 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "knows": {
+        "count": "number",
+        "people": [
+          {
+            "id": "string",
+            "name": "string",
+            "position": "string",
+            "profileUrl": "string"
+          }
+        ]
+      },
       "lane": "string",
       "locations": [
         "string"
@@ -51,6 +62,49 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "knows": "null",
+      "lane": "string",
+      "locations": [
+        "string"
+      ],
+      "matchId": "string",
+      "postedAt": "string",
+      "reason": "string",
+      "recommendation": "null",
+      "remote": "string",
+      "salaryCurrency": "null",
+      "salaryMax": "null",
+      "salaryMin": "null",
+      "salaryPeriod": "null",
+      "score": "number",
+      "stage": "string",
+      "stageChangedAt": "string",
+      "tailoredResumeId": "null",
+      "title": "string",
+      "url": "string",
+      "userRating": "null"
+    },
+    {
+      "applyUrl": "null",
+      "blocker": "null",
+      "company": "string",
+      "createdAt": "string",
+      "deepScore": "null",
+      "fastScore": "number",
+      "headline": "string",
+      "isActive": "boolean",
+      "jobId": "string",
+      "knows": {
+        "count": "number",
+        "people": [
+          {
+            "id": "string",
+            "name": "string",
+            "position": "string",
+            "profileUrl": "string"
+          }
+        ]
+      },
       "lane": "string",
       "locations": [
         "string"

@@ -22,6 +22,7 @@ from apps.accounts.profile import InterviewProgress, OnboardingState, Slot
 from apps.accounts.schemas import Preferences
 from apps.applications.models import AnswerKind
 from apps.applications.outcomes import OutcomeFunnel, OutcomeSpeed, OutcomeTimings
+from apps.contacts.known import MatchPeople
 from apps.core.router import ApiModel
 from apps.jobs.legitimacy import SignalKind
 from apps.jobs.pipeline import CompanyRow
@@ -244,6 +245,7 @@ class MatchDetailPage(ApiModel):
     job: JobDetail
     tailored: TailoredView | None
     has_base_resume: bool
+    knows: MatchPeople  # who the user knows at the posting's company (#64); empty for nobody
 
 
 # --- /pages/activity -----------------------------------------------------------------------------

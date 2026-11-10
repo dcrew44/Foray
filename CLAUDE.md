@@ -39,7 +39,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 
 | Command | What it does |
 |---|---|
-| `create_test_user [--email e] [--with-resume] [--with-match]` | a throwaway `test-…@example.test` user with an unusable password (DEBUG only); `--with-resume` adds a sample resume and complete preferences, `--with-match` one match on the newest job |
+| `create_test_user [--email e] [--with-resume] [--with-match] [--with-contact]` | a throwaway `test-…@example.test` user with an unusable password (DEBUG only); `--with-resume` adds a sample resume and complete preferences, `--with-match` one match on the newest job, `--with-contact` that match and a made-up contact at its company |
 | `create_test_user --purge` | delete every `@example.test` user with their rows, sessions and files |
 | `worker` | the worker itself (what `dev:worker` runs, without the reload) |
 | `acceptance_checks [--since ISO]` | re-check the database-level invariants after a rehearsal; exits 1 on any FAIL |
@@ -259,6 +259,15 @@ An issue reads like the ones already there:
   one thing that leaves is a company *name*, and only when the user presses "Look for the
   boards" (`page.start_lookup`, the existing `company_discovery` run): never start that
   unasked, and never put a person's field in it.
+- **A match says who the user knows there** (`apps/contacts/known.py`, #64). `known_at` answers
+  for any number of postings in one query (the contact's linked company, or its company name's
+  key against the posting's). Rows a page or card shows get `knows` from
+  `matching.queries.with_known(user_id, rows)`; rows a pipeline only reads do not ask. A watch's
+  message counts the announced matches where the user knows someone, its chat update names the
+  people (`chat.follow_up.known_roles`, wrapped with `untrusted()`), and the phone notification
+  says only how many: a name never goes to a notification server. With nobody known, each of
+  the three is byte for byte what it was, and tests pin both cases. Anything new that tells a
+  model about a contact wraps the name and position the same way.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

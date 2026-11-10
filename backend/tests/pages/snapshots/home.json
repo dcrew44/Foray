@@ -10,6 +10,17 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "knows": {
+        "count": "number",
+        "people": [
+          {
+            "id": "string",
+            "name": "string",
+            "position": "string",
+            "profileUrl": "string"
+          }
+        ]
+      },
       "lane": "string",
       "locations": [
         "string"
@@ -41,6 +52,17 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "knows": {
+        "count": "number",
+        "people": [
+          {
+            "id": "string",
+            "name": "string",
+            "position": "string",
+            "profileUrl": "string"
+          }
+        ]
+      },
       "lane": "string",
       "locations": [
         "string"
@@ -87,6 +109,17 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "knows": {
+        "count": "number",
+        "people": [
+          {
+            "id": "string",
+            "name": "string",
+            "position": "string",
+            "profileUrl": "string"
+          }
+        ]
+      },
       "lane": "string",
       "locations": [
         "string"

@@ -205,8 +205,16 @@ An issue reads like the ones already there:
   `smartrecruiters`, `icims`; `sources.LISTED_ADAPTERS`): `count`, `probe`, `list_board` and
   `read_posting`, one request per posting. `refresh._refresh_listed` reads only postings that
   are new or whose `listing_version` changed, 300 a board and 1,200 a source each pass
-  (`client.take`), so never loop over a listing reading every posting. A Workday slug is the board's address (`host/site`), found from a link and
-  never guessed; SmartRecruiters boards are read only for companies someone added (#69).
+  (`client.take`), so never loop over a listing reading every posting. A Workday slug is the
+  board's address (`host/site`), found from a link and never guessed; SmartRecruiters boards
+  are read only for companies someone added (#69).
+- **A board being caught up is not the timed pass's** (#84). A listed board never read, or
+  with postings left over from its last listing (`registry.is_catching_up`), is left out of
+  `due_companies` and read by `companies.catch_up`, which the scheduled pass defers and which
+  runs beside it under `CATCH_UP_GATE`, never `MULTI_BOARD_GATE`. What a pass could not read
+  is written to `board_backlogs` (`apps/jobs/backlog.py`) and the next pass goes on from that
+  with no probe and no listing; keep it out of `companies.poll_state`, which is read with
+  every company.
 - **Every company says where its board was learned** (`companies.found_in`: `seed`, `user`,
   `agent`, `jsearch`, `commoncrawl:<crawl>`, `list:<owner>/<repo>`; `discovered_via` is only the
   first). Pass `found_in` to `upsert_company` when a board comes from somewhere new; the shipped

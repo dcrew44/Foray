@@ -336,6 +336,7 @@ FACTORIES: dict[str, Callable[[User], models.Model]] = {
     "company": lambda _: f.make_company(),
     "careers_company": lambda _: f.make_company(source_type="careers_page"),
     "candidate": lambda _: f.make_candidate(),
+    "backlog": lambda _: f.make_backlog(),
     "answer": lambda u: f.make_answer(u),
     "application": lambda u: f.make_application(u),
     "job": lambda _: f.make_job(),

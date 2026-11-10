@@ -66,6 +66,7 @@ from apps.jobs.models import (
 )
 from apps.jobs.refresh import RefreshOutcome, refresh_companies, refresh_company, stale_cutoff
 from apps.jobs.registry import (
+    boards_to_catch_up,
     due_companies,
     get_company_by_slug,
     set_company_status,
@@ -102,6 +103,7 @@ __all__ = [
     "QUERY_MISSING",
     "QUERY_TOO_LONG",
     "REFRESH_TASK",
+    "CATCH_UP_TASK",
     "SCHEDULED_TASK",
     "UNREADABLE_INPUT",
     "CompanyRow",
@@ -131,6 +133,7 @@ type Id = str | uuid.UUID
 ADD_TASK = "company.add"
 REFRESH_TASK = "company.refresh"
 SCHEDULED_TASK = "companies.refresh_scheduled"
+CATCH_UP_TASK = "companies.catch_up"
 
 QUERY_MAX = 300
 QUERY_MISSING = "Type a company name, its website or a job board link."
@@ -720,7 +723,7 @@ async def _refresh_stale(run: Run) -> None:
 
 async def refresh_scheduled() -> RefreshSummary:
     """The scheduled refresh: the boards that are due, under the gate, with no run, user or
-    events."""
+    events. Boards being caught up are not among them (`catch_up` reads those)."""
     async with refresh_module.MULTI_BOARD_GATE:
         companies = await db(due_companies, timezone.now())
         if not companies:
@@ -735,6 +738,33 @@ async def refresh_scheduled() -> RefreshSummary:
         "%s (%s unchanged, %s new) in %.1fs",
         summary.message(),
         summary.unchanged,
+        summary.inserted,
+        time.monotonic() - started,
+    )
+    return summary
+
+
+# --- companies.catch_up --------------------------------------------------------------------------
+
+
+async def catch_up() -> RefreshSummary:
+    """One pass over the boards being caught up (#84): the listed boards never read, and the
+    ones with postings left over from their last listing. It holds its own gate, not the
+    multi-board one, because it reads no board the timed pass reads and must not hold it up;
+    its client has its own budgets, so it is as polite to each host as any pass."""
+    async with refresh_module.CATCH_UP_GATE:
+        companies = await db(boards_to_catch_up, timezone.now())
+        if not companies:
+            return NOTHING
+        log.info("companies.catch_up: %s boards", len(companies))
+        started = time.monotonic()
+        async with http_client() as client:
+            outcomes = await refresh_companies(client, companies)
+    summary = RefreshSummary.of(outcomes)
+    log.info(
+        "caught up %s of %s boards (%s new) in %.1fs",
+        summary.ok - summary.unchanged,
+        summary.boards,
         summary.inserted,
         time.monotonic() - started,
     )

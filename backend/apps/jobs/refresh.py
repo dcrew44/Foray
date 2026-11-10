@@ -14,8 +14,11 @@
   SmartRecruiters, iCIMS portals: `ListedAdapter`, #57) is read incrementally
   (`_refresh_listed`): one cheap probe says whether anything changed; if it did, the listing
   says what is open, only postings the mirror has not read in that version are fetched (a few
-  hundred a pass, the rest on the next), and what a complete listing no longer names is
-  closed.
+  hundred a pass), and what a complete listing no longer names is closed. What a pass could
+  not read is written down (`backlog.py`), and the board goes on from that on later passes
+  without being asked or listed again. Such a board is being caught up, and so is one never
+  read: the fifteen-minute pass leaves both to `companies.catch_up`, which runs beside it
+  (#84), so a backlog of big boards never delays the poll of the boards already followed.
 - `refresh_companies` runs 6 at a time, at most 4 of them against one source, and returns
   outcomes in input order.
 
@@ -44,6 +47,7 @@ from django.utils import timezone
 
 from apps.core.db import db
 from apps.core.http import HttpClient
+from apps.jobs.backlog import drop_backlog, read_backlog, save_backlog
 from apps.jobs.ingest import (
     IngestResult,
     close_missing,
@@ -53,7 +57,7 @@ from apps.jobs.ingest import (
 )
 from apps.jobs.level import is_early_career_title
 from apps.jobs.models import Company, FetchStatus, Job, JobLevel, SourceType
-from apps.jobs.registry import MAX_FAILURES, record_fetch
+from apps.jobs.registry import MAX_FAILURES, is_catching_up, record_fetch
 from apps.jobs.schemas import ListingCache, dump_listing_cache, read_listing_cache
 from apps.jobs.sources import board_adapter, listed_adapter
 from apps.jobs.sources.careers_page import fetch_careers_page
@@ -78,18 +82,25 @@ POSTING_CONCURRENCY = 4
 ALL_POSTINGS_CONCURRENCY = 16
 OWN_HOST_SOURCES = frozenset({"workday", "icims"})
 # And one pass reads at most this many postings of one source, whatever the number of boards
-# (#58): a hundred Workday boards registered at once fill in over a day of passes instead of
-# holding the fifteen-minute poll of every other board for hours. Boards being caught up
-# (never read, or part-read) have a budget of their own, so a backlog never spends what a
-# board already followed needs for the posting that went up a minute ago; once theirs is spent
-# the rest wait their turn without even being listed.
+# (#58): a burst of new postings on boards already followed cannot hold the fifteen-minute
+# poll of every other board.
 SOURCE_POSTINGS_PER_PASS = 1200
+# Boards being caught up (never read, or part-read) are read by a pass of their own
+# (`pipeline.catch_up`, #84) with a budget of its own, so a backlog never spends what a board
+# already followed needs for the posting that went up a minute ago. Its size is about the
+# hosts, not the clock: a source whose boards each answer on their own host is read more of
+# in a pass than one API that serves every company. Once a source's is spent, the rest of its
+# boards wait their turn without being asked anything.
+CATCH_UP_POSTINGS_PER_PASS = 3000
 
 # Sources that answer 429 to anything faster (#86): boards of these are asked one at a time,
 # this many seconds apart, by the scheduled refresh and by `candidates.grow` alike.
 SOURCE_PACE_S: dict[str, float] = {"workable": 1.0}
 
 MULTI_BOARD_GATE = asyncio.Lock()
+# One catch-up at a time. It is not the gate above: the two passes read different boards, and
+# the timed one must never wait for this one.
+CATCH_UP_GATE = asyncio.Lock()
 
 type RefreshStatus = Literal["ok", "not-found", "unsupported", "error"]
 
@@ -183,12 +194,11 @@ def _lists_early_career(company_id: uuid.UUID) -> bool:
 
 async def _read_postings(
     client: HttpClient, adapter: ListedAdapter, company: Company, wanted: Sequence[ListedPosting]
-) -> tuple[list[tuple[ListedPosting, NormalizedJob]], int]:
-    """Reads each wanted posting, a few at a time for its host. Returns those read and how many
-    failed; one that has gone since the listing is neither."""
+) -> tuple[list[tuple[ListedPosting, NormalizedJob]], list[ListedPosting]]:
+    """Reads each wanted posting, a few at a time for its host. Returns those read and those
+    that failed; one that has gone since the listing is neither."""
     slug = company.ats_slug or ""
-    host = f"{adapter.source}:{slug}" if adapter.source in OWN_HOST_SOURCES else adapter.source
-    gate = client.gate(f"postings:{host}", POSTING_CONCURRENCY)
+    gate = client.gate(f"postings:{_host(adapter.source, slug)}", POSTING_CONCURRENCY)
     overall = client.gate("postings", ALL_POSTINGS_CONCURRENCY)
 
     async def one(posting: ListedPosting) -> NormalizedJob | None | Exception:
@@ -201,15 +211,34 @@ async def _read_postings(
     async with asyncio.TaskGroup() as group:
         tasks = [group.create_task(one(posting)) for posting in wanted]
     read: list[tuple[ListedPosting, NormalizedJob]] = []
-    failed = 0
+    failed: list[ListedPosting] = []
     for posting, task in zip(wanted, tasks, strict=True):
         result = task.result()
         if isinstance(result, Exception):
-            failed += 1
+            failed.append(posting)
             log.debug("reading %s:%s failed: %s", company.slug, posting.external_id, result)
         elif result is not None:
             read.append((posting, result))
     return read, failed
+
+
+def _host(source: str, slug: str) -> str:
+    """Whose server a listed board is on, as a key for the client's gates: the tenant's own
+    host for a source that has one (two Workday sites of one company share it, and Workday
+    answers 429 when they are read side by side), the source itself for one shared API."""
+    if source not in OWN_HOST_SOURCES:
+        return source
+    return f"{source}:{slug.split('/', 1)[0].lower()}"
+
+
+def _budget(source: str, catching_up: bool) -> tuple[str, int]:
+    """The pass's budget a listed board's postings are taken from: its name and its size."""
+    if not catching_up:
+        return f"postings:{source}", SOURCE_POSTINGS_PER_PASS
+    own_host = source in OWN_HOST_SOURCES
+    return f"catch-up:{source}", (
+        CATCH_UP_POSTINGS_PER_PASS if own_host else SOURCE_POSTINGS_PER_PASS
+    )
 
 
 async def _refresh_listed(
@@ -220,37 +249,56 @@ async def _refresh_listed(
     slug = company.ats_slug or ""
     state = PollState.read(company.poll_state)
     now = timezone.now()
+    catching_up = is_catching_up(company)
+    budget, size = _budget(adapter.source, catching_up)
     try:
-        fingerprint = await adapter.probe(client, slug)
-        settled = state.url == adapter.source and state.digest == fingerprint and not state.pending
-        if settled and not force and not full_read_due(state, company.id, now):
-            await db(record_fetch, company.id, FetchStatus.OK, None)
+        if catching_up and not force and client.left(budget, size) == 0:
+            # Its turn has not come this pass: nothing is asked, and it is not recorded as
+            # fetched, so it stays at the front of the next pass's queue.
             return RefreshOutcome(
                 company.name, company.slug, "ok", company.last_fetch_job_count or 0, unchanged=True
             )
 
-        catching_up = state.pending or state.url != adapter.source
-        budget = f"{'catch-up' if catching_up else 'postings'}:{adapter.source}"
-        if catching_up and not force and client.left(budget, SOURCE_POSTINGS_PER_PASS) == 0:
-            # Not recorded as fetched: it stays at the front of the next pass's queue.
-            return RefreshOutcome(
-                company.name, company.slug, "ok", company.last_fetch_job_count or 0, unchanged=True
-            )
+        # A part-read board goes on with what its last listing named: no probe, no listing.
+        # A person who asked for the board gets it listed afresh.
+        left_over = await db(read_backlog, company.id, now) if state.pending and not force else None
+        listing = None
+        if left_over is not None:
+            fingerprint, wanted = left_over.fingerprint, left_over.postings
+        else:
+            # Boards on one host are asked and listed one after another: a listing is already
+            # several requests at a time.
+            async with client.gate(f"listing:{_host(adapter.source, slug)}", 1):
+                fingerprint = await adapter.probe(client, slug)
+                settled = (
+                    state.url == adapter.source
+                    and state.digest == fingerprint
+                    and not state.pending
+                )
+                if settled and not force and not full_read_due(state, company.id, now):
+                    await db(record_fetch, company.id, FetchStatus.OK, None)
+                    return RefreshOutcome(
+                        company.name,
+                        company.slug,
+                        "ok",
+                        company.last_fetch_job_count or 0,
+                        unchanged=True,
+                    )
+                listing = await adapter.list_board(client, slug)
+            known = await db(listing_versions, company.id)
+            wanted = [
+                posting
+                for posting in listing.postings
+                if force or known.get(posting.external_id) != posting.version
+            ]
 
-        listing = await adapter.list_board(client, slug)
-        known = await db(listing_versions, company.id)
-        wanted = [
-            posting
-            for posting in listing.postings
-            if force or known.get(posting.external_id) != posting.version
-        ]
         # A person who asked for this board is not made to wait for a pass's budget.
         allowed = min(len(wanted), POSTINGS_PER_PASS)
         if not force:
-            allowed = client.take(budget, SOURCE_POSTINGS_PER_PASS, allowed)
+            allowed = client.take(budget, size, allowed)
         read, failed = await _read_postings(client, adapter, company, wanted[:allowed])
         if wanted and failed and not read:
-            raise RuntimeError(f"none of {failed} postings could be read")
+            raise RuntimeError(f"none of {len(failed)} postings could be read")
 
         # A board being caught up is not being watched yet: what a later pass of the catch-up
         # brings in was there all along, and is not timed.
@@ -260,27 +308,37 @@ async def _refresh_listed(
         )
         await db(set_listing_versions, {job.id: posting.version for posting, job in read})
         # Only a listing known to be whole says what has closed.
-        if listing.complete:
+        if listing is not None and listing.complete:
             ingest.deactivated = await db(
                 close_missing, company.id, [posting.external_id for posting in listing.postings]
             )
-        # More to read than one pass takes, or some that failed: go on next pass whatever the
-        # probe says. (A posting that has gone since the listing is not waited for.)
-        pending = len(wanted) > allowed or failed > 0
+        # More to read than one pass takes, or some that failed: the next pass goes on with
+        # them, the ones that failed last. (One that has gone since the listing is not kept.)
+        left = [*wanted[allowed:], *failed]
+        pending = bool(left)
+        if pending:
+            listed_at = left_over.listed_at if left_over is not None else now
+            await db(save_backlog, company.id, left, fingerprint, listed_at)
+        elif state.pending:
+            await db(drop_backlog, company.id)
         # One empty listing closes nothing (the empty-board guard, §10.4); forgetting its
         # fingerprint is what makes the next pass list again and so see the second.
-        guard_held = not listing.postings and (company.last_fetch_job_count or 0) > 0
+        guard_held = (
+            listing is not None and not listing.postings and (company.last_fetch_job_count or 0) > 0
+        )
         remembered = PollState(
             url=adapter.source,
             digest=None if guard_held else fingerprint,
             read_at=state.read_at if pending else now,
             pending=pending,
         )
+        # Going on from a backlog says nothing new about how many postings the board lists.
+        listed = len(listing.postings) if listing is not None else None
         await db(
             record_fetch,
             company.id,
             FetchStatus.OK,
-            len(listing.postings),
+            listed,
             poll_state=remembered.dump(),
             relevant=await db(_lists_early_career, company.id),
         )
@@ -291,7 +349,8 @@ async def _refresh_listed(
         log.warning("refresh of %s failed: %s", company.slug, error)
         await db(record_fetch, company.id, FetchStatus.ERROR, None)
         return RefreshOutcome(company.name, company.slug, "error", 0, error=_message(error))
-    return RefreshOutcome(company.name, company.slug, "ok", len(listing.postings), ingest=ingest)
+    jobs = listed if listed is not None else company.last_fetch_job_count or 0
+    return RefreshOutcome(company.name, company.slug, "ok", jobs, ingest=ingest)
 
 
 async def refresh_companies(

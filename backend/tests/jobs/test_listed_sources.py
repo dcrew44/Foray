@@ -8,6 +8,7 @@ and the incremental refresh is driven with a board made for the purpose.
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 import re
@@ -20,11 +21,18 @@ import pytest
 from asgiref.sync import sync_to_async
 
 from apps.core.clock import database_now
-from apps.jobs import refresh
+from apps.jobs import backlog, refresh
 from apps.jobs.discovery import AtsLink, discover_company, find_ats_links, has_unsupported_ats
-from apps.jobs.models import Company, Job
+from apps.jobs.models import BoardBacklog, Company, Job
 from apps.jobs.refresh import refresh_company
-from apps.jobs.registry import HOT_INTERVAL, poll_interval
+from apps.jobs.registry import (
+    HOT_INTERVAL,
+    boards_to_catch_up,
+    catch_up_waiting,
+    due_companies,
+    is_catching_up,
+    poll_interval,
+)
 from apps.jobs.sources import (
     BOARD_ADAPTERS,
     GUESS_SOURCES,
@@ -657,18 +665,22 @@ async def test_a_big_board_is_caught_up_over_several_passes_and_not_timed(
     company = await Company.objects.aget(id=board.company.id)
     assert PollState.read(company.poll_state).pending is True
 
-    # The probe has not changed, and the pass goes on with the rest anyway.
+    # The pass goes on with what the listing left, without asking or listing again (#84).
     await pass_over(board)
     assert len(board.read) == 4
     last = await pass_over(board)
-    assert sorted(board.read) == [1, 2, 3, 4, 5] and last.unchanged is False
+    assert board.read == [1, 2, 3, 4, 5] and last.unchanged is False
+    assert (last.jobs, board.probes, board.listings) == (5, 1, 1)
     company = await Company.objects.aget(id=board.company.id)
-    assert PollState.read(company.poll_state).pending is False
+    state = PollState.read(company.poll_state)
+    assert (state.pending, state.digest) == (False, board.fingerprint())
+    assert company.last_fetch_job_count == 5  # going on from a backlog keeps the listed count
     # What a later pass of the catch-up brought in was there all along.
     assert {lag for _, lag in (await sync_to_async(_open)(board.company)).values()} == {None}
 
     settled = await pass_over(board)
     assert settled.unchanged is True and len(board.read) == 5
+    assert (board.probes, board.listings) == (2, 1)
 
 
 @db
@@ -677,6 +689,7 @@ async def test_one_pass_reads_only_so_many_postings_of_a_source(
 ) -> None:
     """Two boards of one source share a pass's budget (#58): the second waits its turn."""
     monkeypatch.setattr(refresh, "SOURCE_POSTINGS_PER_PASS", 4)
+    monkeypatch.setattr(refresh, "CATCH_UP_POSTINGS_PER_PASS", 4)
     first = await listed_board(**{str(n): "a" for n in range(1, 4)})
     other = await sync_to_async(make_company)(
         slug="other", source_type="workday", ats_slug="other.wd1.myworkdayjobs.com/Careers"
@@ -693,21 +706,21 @@ async def test_one_pass_reads_only_so_many_postings_of_a_source(
     # A board still being read is due again at the next tick, whatever it lists.
     assert poll_interval(waiting, await sync_to_async(database_now)()) == HOT_INTERVAL
 
-    # A third board finds the pass's catch-up budget spent: it is not even listed, and not
+    # A third board finds the pass's catch-up budget spent: it is asked nothing, and not
     # recorded as fetched, so it is first in line next pass.
     late = await sync_to_async(make_company)(
         slug="late", source_type="workday", ats_slug="late.wd1.myworkdayjobs.com/Careers"
     )
     third = Board(late, {n: "a" for n in range(21, 24)})
     async with mock_client(routes({})) as client:
-        client.take("catch-up:workday", refresh.SOURCE_POSTINGS_PER_PASS, 4)
+        client.take("catch-up:workday", refresh.CATCH_UP_POSTINGS_PER_PASS, 4)
         outcome = await refresh._refresh_listed(client, late, third.adapter, force=False)
-    assert (outcome.unchanged, third.listings, third.read) == (True, 0, [])
+    assert (outcome.unchanged, third.probes, third.listings, third.read) == (True, 0, 0, [])
     assert (await Company.objects.aget(id=late.id)).last_fetched_at is None
 
     # A board already followed has its own budget: the backlog cannot starve a new posting.
     async with mock_client(routes({})) as client:
-        client.take("catch-up:workday", refresh.SOURCE_POSTINGS_PER_PASS, 4)
+        client.take("catch-up:workday", refresh.CATCH_UP_POSTINGS_PER_PASS, 4)
         await refresh._refresh_listed(client, late, third.adapter, force=True)  # read it whole
         third.open[24] = "a"
         followed = await Company.objects.aget(id=late.id)
@@ -717,7 +730,63 @@ async def test_one_pass_reads_only_so_many_postings_of_a_source(
     # The next pass has a budget of its own, and the board goes on from where it stopped.
     async with mock_client(routes({})) as client:
         await refresh._refresh_listed(client, waiting, second.adapter, force=False)
-    assert sorted(second.read) == [11, 12, 13]
+    assert second.read == [11, 12, 13] and second.listings == 1
+
+
+def test_two_sites_of_one_tenant_are_one_host_and_a_shared_api_is_one_for_everybody() -> None:
+    host = refresh._host  # pyright: ignore[reportPrivateUsage]
+    assert host("workday", "alterra.wd1.myworkdayjobs.com/JuneMountain") == host(
+        "workday", "Alterra.wd1.myworkdayjobs.com/SteamboatSkiResort"
+    )
+    assert host("workday", "nvidia.wd5.myworkdayjobs.com/Careers") != host(
+        "workday", "alterra.wd1.myworkdayjobs.com/JuneMountain"
+    )
+    assert host("icims", "careers-amd") == "icims:careers-amd"
+    assert host("smartrecruiters", "ServiceNow") == host("smartrecruiters", "Visa")
+
+
+@db
+async def test_boards_on_one_host_are_listed_one_after_another() -> None:
+    """Two sites of one Workday tenant in the same pass: the second is not asked or listed
+    until the first's listing is done (Workday answers 429 otherwise)."""
+    first = await listed_board(**{"1": "a"})
+    sibling = await sync_to_async(make_company)(
+        slug="acme-2", source_type="workday", ats_slug="acme.wd1.myworkdayjobs.com/Retail"
+    )
+    second = Board(sibling, {2: "a"})
+    listing, overlapped = 0, False
+
+    def held(board: Board) -> ListedAdapter:
+        real = board.adapter
+
+        async def list_board(client: Any, slug: str) -> Listing:
+            nonlocal listing, overlapped
+            listing += 1
+            overlapped = overlapped or listing > 1
+            await asyncio.sleep(0.05)
+            listing -= 1
+            return await real.list_board(client, slug)
+
+        return ListedAdapter("workday", real.count, real.probe, list_board, real.read_posting)
+
+    async with mock_client(routes({})) as client:
+        await asyncio.gather(
+            refresh._refresh_listed(client, first.company, held(first), force=False),
+            refresh._refresh_listed(client, sibling, held(second), force=False),
+        )
+    assert (first.read, second.read, overlapped) == ([1], [2], False)
+
+
+def test_a_source_that_is_one_api_for_every_company_keeps_the_smaller_catch_up_budget() -> None:
+    budget = refresh._budget  # pyright: ignore[reportPrivateUsage]
+    assert budget("workday", True) == ("catch-up:workday", refresh.CATCH_UP_POSTINGS_PER_PASS)
+    assert budget("icims", True) == ("catch-up:icims", refresh.CATCH_UP_POSTINGS_PER_PASS)
+    assert budget("smartrecruiters", True) == (
+        "catch-up:smartrecruiters",
+        refresh.SOURCE_POSTINGS_PER_PASS,
+    )
+    assert budget("workday", False) == ("postings:workday", refresh.SOURCE_POSTINGS_PER_PASS)
+    assert refresh.CATCH_UP_POSTINGS_PER_PASS > refresh.SOURCE_POSTINGS_PER_PASS
 
 
 @db
@@ -729,12 +798,154 @@ async def test_a_posting_that_fails_is_tried_again_and_one_that_has_gone_is_not(
     company = await Company.objects.aget(id=board.company.id)
     assert PollState.read(company.poll_state).pending is True  # 2 failed: next pass goes on
 
+    left = await BoardBacklog.objects.aget(company_id=board.company.id)
+    assert left.postings == [["2", "a"]]  # the one that failed; the one that has gone is not kept
+
     board.broken, board.read = set(), []
     await pass_over(board)
-    assert sorted(board.read) == [2, 3]  # 3 is asked for again only because the pass went on
+    assert board.read == [2]
     assert set(await sync_to_async(_open)(board.company)) == {"1", "2"}
     company = await Company.objects.aget(id=board.company.id)
     assert PollState.read(company.poll_state).pending is False
+    assert not await BoardBacklog.objects.filter(company_id=board.company.id).aexists()
+
+
+@db
+async def test_a_part_read_board_goes_on_from_what_its_listing_left(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """#84: what a pass could not read is written down in the order it will be read (the ones
+    that failed last), and the passes after it make no listing request at all."""
+    monkeypatch.setattr(refresh, "POSTINGS_PER_PASS", 3)
+    board = await listed_board(**{str(n): "a" for n in range(1, 8)})
+    board.broken = {2}
+
+    await pass_over(board)
+    assert board.read == [1, 2, 3]
+    left = await BoardBacklog.objects.aget(company_id=board.company.id)
+    assert left.postings == [[str(n), "a"] for n in (4, 5, 6, 7, 2)]
+    assert left.fingerprint == board.fingerprint()
+    listed_at = left.listed_at
+
+    # The board changes while it is being caught up: 8 opens, 5 closes.
+    listed = board.fingerprint()
+    board.open[8] = "a"
+    del board.open[5]
+    board.gone = {5}
+    board.broken = set()
+    await pass_over(board)
+    assert board.read == [1, 2, 3, 4, 5, 6]
+    left = await BoardBacklog.objects.aget(company_id=board.company.id)
+    assert (left.postings, left.listed_at) == ([["7", "a"], ["2", "a"]], listed_at)
+    await pass_over(board)
+    assert board.read == [1, 2, 3, 4, 5, 6, 7, 2]
+    assert (board.probes, board.listings) == (1, 1)  # three passes, one listing
+    assert not await BoardBacklog.objects.filter(company_id=board.company.id).aexists()
+    company = await Company.objects.aget(id=board.company.id)
+    state = PollState.read(company.poll_state)
+    # It settles on the fingerprint it was listed at, so the next pass sees that it moved,
+    # lists it and reads what opened meanwhile.
+    assert (state.pending, state.digest) == (False, listed)
+    assert set(await sync_to_async(_open)(board.company)) == {"1", "2", "3", "4", "6", "7"}
+
+    await pass_over(board)
+    assert board.read[-1] == 8 and (board.probes, board.listings) == (2, 2)
+    assert set(await sync_to_async(_open)(board.company)) == {"1", "2", "3", "4", "6", "7", "8"}
+
+
+@db
+async def test_an_old_backlog_and_a_person_who_asked_both_list_the_board_afresh(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(refresh, "POSTINGS_PER_PASS", 2)
+    board = await listed_board(**{str(n): "a" for n in range(1, 6)})
+    await pass_over(board)
+    assert (board.listings, board.read) == (1, [1, 2])
+
+    # A day on, the listing is too old to go on with: the board is listed again, and what the
+    # mirror already read is not read twice.
+    await BoardBacklog.objects.filter(company_id=board.company.id).aupdate(
+        listed_at=await sync_to_async(database_now)() - backlog.MAX_AGE - timedelta(minutes=1)
+    )
+    await pass_over(board)
+    assert (board.listings, board.read) == (2, [1, 2, 3, 4])
+    left = await BoardBacklog.objects.aget(company_id=board.company.id)
+    assert left.postings == [["5", "a"]]
+
+    # "Fetch now" does not go on from a backlog either: it lists, and reads everything again.
+    board.read.clear()
+    await pass_over(board, force=True)
+    assert (board.listings, board.read) == (3, [1, 2])
+    left = await BoardBacklog.objects.aget(company_id=board.company.id)
+    assert left.postings == [[str(n), "a"] for n in (3, 4, 5)]
+
+
+@db
+def test_a_backlog_nobody_here_wrote_is_not_gone_on_with() -> None:
+    company = make_company(slug="acme", source_type="workday", ats_slug="acme.wd1/Careers")
+    now = database_now()
+    assert backlog.read_backlog(company.id, now) is None
+    backlog.save_backlog(company.id, [], "f", now)
+    assert backlog.read_backlog(company.id, now) is None  # nothing left is no backlog
+    BoardBacklog.objects.filter(company_id=company.id).update(
+        postings=[["1", "a"], ["2"], "3", ["4", 4], ["5", "b"]]
+    )
+    read = backlog.read_backlog(company.id, now)
+    assert read is not None and read.fingerprint == "f"
+    assert [(p.external_id, p.version) for p in read.postings] == [("1", "a"), ("5", "b")]
+    backlog.drop_backlog(company.id)
+    assert not BoardBacklog.objects.exists()
+    backlog.save_backlog(company.id, [ListedPosting("9", "z", {"any": "item"})], "g", now)
+    Company.objects.filter(id=company.id).delete()
+    assert not BoardBacklog.objects.exists()  # a backlog goes with its company
+
+
+@db
+def test_boards_being_caught_up_are_left_out_of_the_timed_pass() -> None:
+    """#84: a listed board never read, or with postings left over, is `catch_up`'s; the
+    fifteen-minute pass takes everything else."""
+    now = database_now()
+    long_ago = now - timedelta(hours=3)
+    settled = PollState(url="workday", digest="f", read_at=now).dump()
+    part_read = PollState(url="workday", digest="f", pending=True).dump()
+    make_company(slug="board", ats_slug="board", last_fetched_at=long_ago)  # a whole-board source
+    make_company(slug="never", source_type="workday", ats_slug="never.wd1/Careers")
+    make_company(
+        slug="part",
+        source_type="workday",
+        ats_slug="part.wd1/Careers",
+        poll_state=part_read,
+        last_fetched_at=long_ago,
+    )
+    make_company(
+        slug="settled",
+        source_type="workday",
+        ats_slug="settled.wd1/Careers",
+        poll_state=settled,
+        last_fetched_at=long_ago,
+    )
+    make_company(
+        slug="just-read",  # part-read a minute ago: its turn comes at the next tick
+        source_type="icims",
+        ats_slug="careers-just",
+        poll_state=PollState(url="icims", pending=True).dump(),
+        last_fetched_at=now - timedelta(minutes=1),
+    )
+    make_company(slug="off", source_type="workday", ats_slug="off.wd1/Careers", status="invalid")
+
+    by_slug = {company.slug: company for company in Company.objects.all()}
+    assert {slug for slug, company in by_slug.items() if is_catching_up(company)} == {
+        "never",
+        "part",
+        "just-read",
+        "off",
+    }
+    assert [company.slug for company in due_companies(now)] == ["board", "settled"]
+    assert [company.slug for company in boards_to_catch_up(now)] == ["never", "part"]
+    assert catch_up_waiting() is True
+    Company.objects.filter(slug__in=["never", "part", "just-read"]).delete()
+    assert catch_up_waiting() is False  # a board that is switched off is nobody's to catch up
+    assert boards_to_catch_up(now) == []
 
 
 @db

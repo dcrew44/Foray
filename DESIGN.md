@@ -343,8 +343,39 @@ redirects to a career site is registered as that site. SmartRecruiters' Posting 
 documented as public, but `api.smartrecruiters.com/robots.txt` disallows generic crawlers, so
 Foray reads a SmartRecruiters board only for a company someone added and never discovers them
 in bulk (#69). A pass reads at most 1,200 postings of one source, four at a time per host and
-sixteen in all, so a hundred Workday boards registered together fill in over a day of passes
-without holding up the fifteen-minute poll of everything else.
+sixteen in all.
+
+**Catching a board up happens beside the timed pass, not inside it** (#84). A listed board
+that has never been read, or that still has postings left over from its last listing, is
+*being caught up*. When 207 Workday sites were registered at once, reading them inside the
+scheduled pass made that pass take 86 to 241 seconds instead of a few, and every other board's
+new postings waited for it. So `due_companies` leaves such boards out, and the scheduled pass
+ends by deferring `companies.catch_up`, a background task that reads them with its own HTTP
+client, its own budget (3,000 postings a pass for a source whose boards each answer on their
+own host, 1,200 for one API that serves every company) and its own gate. It does not take
+`MULTI_BOARD_GATE`: it reads no board the timed pass reads, and the timed pass must never wait
+for it. It defers the watches when it brought postings in, and it times out a minute short of
+the next tick so two never pile up.
+
+What a pass could not read is written down in `board_backlogs` (each posting's id and listing
+version, which is all `read_posting` needs), and the passes after it go on from that with no
+probe and no listing. Before, a part-read board was listed again on every pass, and Workday
+shows twenty postings a page, so a 2,000-posting site cost a hundred requests each time to
+learn what the pass before already knew. A posting that closed meanwhile answers "gone" and is
+dropped; a board that changed meanwhile settles on the fingerprint it was listed at, so the
+next timed pass sees that it moved and lists it. A backlog older than a day is not gone on
+with, which bounds a posting that never reads to one listing a day. The backlog has a table of
+its own because `companies.poll_state` is read with every company and a backlog can be large.
+Boards on one host are asked and listed one after another, and their postings share that
+host's four at a time: two sites of one Workday tenant read side by side were answered 429.
+
+Measured on the rehearsal stack on 2026-11-10, with 174 followed boards due and 40 Workday
+sites unread: the timed pass took 8, 24 and 8 seconds with the backlog waiting and 33, 15 and
+7 with those boards switched off, the spread being the public APIs' own; it asked Workday for
+15 probes (the boards it follows) and nothing else either way. The same pass with the catch-up
+inside it, as before, took 95 seconds. A catch-up pass read 3,000 postings in about three
+minutes; the second one listed only the two boards it had not reached and none of the ten it
+was part-way through.
 
 **Where the list of boards comes from** (#58, #28, `apps/jobs/candidates.py`,
 `crawl_index.py`). The radar is only as wide as the registry, and the registry began as

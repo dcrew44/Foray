@@ -242,6 +242,34 @@ class BoardCandidate(Timestamped):
         return f"{self.source_type}:{self.ats_slug}"
 
 
+class BoardBacklog(models.Model):
+    """What a listed board (#57) still has to read: the postings its last listing named that
+    the mirror has not read in that version (#84). A board caught up over several passes goes
+    on from this instead of being listed again each pass (a 2,000-posting Workday site is a
+    hundred requests to list). The row goes when the board is caught up, and it is kept apart
+    from `companies.poll_state` because a company is read in many places and this can be large.
+    """
+
+    company = models.OneToOneField(
+        Company, models.CASCADE, primary_key=True, related_name="backlog"
+    )
+    # `[[external_id, listing_version], ...]`, in the order they will be read.
+    postings = models.JSONField(default=list)
+    # The board's fingerprint when it was listed: what its poll state settles on once these
+    # are read, so a board that changed meanwhile is listed again and one that did not is not.
+    fingerprint = models.TextField()
+    # When that listing was made. One older than `backlog.MAX_AGE` is not gone on with.
+    listed_at = models.DateTimeField(db_default=Now())
+
+    company_id: uuid.UUID
+
+    class Meta:
+        db_table = "board_backlogs"
+
+    def __str__(self) -> str:
+        return f"{self.company_id}: {len(self.postings)} to read"
+
+
 class Job(models.Model):
     # source:company_slug:external_id; careers pages web:<slug>:<sha1(url)> (§2.5, §10.3).
     id = models.TextField(primary_key=True)

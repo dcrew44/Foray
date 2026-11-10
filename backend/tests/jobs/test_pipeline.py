@@ -1026,16 +1026,117 @@ def test_a_failed_cron_refresh_still_defers_the_watches(
     assert len(deferred("watch.fan_out")) == 1
 
 
+# --- the catch-up runs beside the timed pass (#84) -----------------------------------------------
+
+
+@pytest.fixture
+def unread_board(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """A Workday board with five postings that nobody has read, behind a made-up adapter that
+    counts what it is asked (`tests/jobs/test_listed_sources.Board`)."""
+    from tests.jobs.test_listed_sources import Board
+
+    company = make_company(
+        name="Big", slug="big", source_type="workday", ats_slug="big.wd1.myworkdayjobs.com/Careers"
+    )
+    board = Board(company, {n: "a" for n in range(1, 6)})
+    adapters = {"workday": board.adapter}
+    monkeypatch.setattr(refresh_module, "listed_adapter", adapters.get)
+    return board
+
+
+def timed_pass(timestamp: int) -> None:
+    """The scheduled pass alone, as the worker would run it, leaving what it defers waiting."""
+    asyncio.run(job_tasks.companies_refresh_scheduled(timestamp=timestamp))
+
+
+@tx
+def test_the_timed_pass_asks_a_board_being_caught_up_nothing_and_defers_the_catch_up(
+    web: Web, unread_board: Any
+) -> None:
+    make_company(name="Acme", slug="acme", ats_slug="acme")
+    web.greenhouse("acme", ANTHROPIC_BOARD)
+
+    timed_pass(0)
+
+    # The timed pass read the board it follows and made no request of the other.
+    assert active_jobs("acme") == len(ANTHROPIC_BOARD["jobs"])
+    assert (unread_board.probes, unread_board.listings, unread_board.read) == (0, 0, [])
+    assert Company.objects.get(slug="big").last_fetched_at is None
+    [waiting] = deferred("companies.catch_up")
+    assert (waiting.queueing_lock, waiting.lock) == ("company-catch-up", None)
+
+    # A second tick while that one still waits adds no second copy.
+    Company.objects.filter(slug="acme").update(last_fetched_at=None)
+    timed_pass(900)
+    assert len(deferred("companies.catch_up")) == 1
+
+
+@tx
+def test_the_catch_up_reads_the_board_over_its_passes_and_starts_the_watches(
+    monkeypatch: pytest.MonkeyPatch, unread_board: Any
+) -> None:
+    monkeypatch.setattr(refresh_module, "POSTINGS_PER_PASS", 3)
+    quiet_tick = 1_793_491_200 + 900  # a quarter past a sixth hour: only new postings start watches
+
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=quiet_tick)
+    run_deferred()
+    assert unread_board.read == [1, 2, 3] and active_jobs("big") == 3
+    assert [job["status"] for job in queue_jobs(task_name="companies.catch_up")] == ["succeeded"]
+    # The timed pass brought nothing in; the catch-up did, and started the watches for it.
+    assert len(queue_jobs(task_name="watch.fan_out")) == 1
+
+    # Part-read, it is due again at the next tick, and the catch-up goes on without listing.
+    Company.objects.filter(slug="big").update(
+        last_fetched_at=timezone.now() - timedelta(minutes=15)
+    )
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=quiet_tick + 900)
+    run_deferred()
+    assert unread_board.read == [1, 2, 3, 4, 5] and active_jobs("big") == 5
+    assert (unread_board.probes, unread_board.listings) == (1, 1)
+    assert len(queue_jobs(task_name="watch.fan_out")) == 2
+
+    # Caught up, it is the timed pass's board from now on, and no catch-up is deferred.
+    Company.objects.filter(slug="big").update(last_fetched_at=timezone.now() - timedelta(hours=2))
+    defer_in_tx(job_tasks.companies_refresh_scheduled, timestamp=quiet_tick + 1800)
+    run_deferred()
+    assert unread_board.probes == 2 and unread_board.listings == 1  # asked, and unchanged
+    assert len(queue_jobs(task_name="companies.catch_up")) == 2
+    assert len(queue_jobs(task_name="watch.fan_out")) == 2
+
+
+@tx
+def test_a_failed_timed_pass_still_defers_the_catch_up_and_a_failed_catch_up_the_watches(
+    monkeypatch: pytest.MonkeyPatch, unread_board: Any
+) -> None:
+    async def broken() -> None:
+        raise RuntimeError("the network is down")
+
+    monkeypatch.setattr(pipeline, "refresh_scheduled", broken)
+    with pytest.raises(RuntimeError, match="the network is down"):
+        timed_pass(0)
+    assert len(deferred("companies.catch_up")) == 1
+    assert len(deferred("watch.fan_out")) == 1
+
+    monkeypatch.setattr(pipeline, "catch_up", broken)
+    run_deferred(["background"])
+    assert [job["status"] for job in queue_jobs(task_name="companies.catch_up")] == ["failed"]
+    assert len(deferred("watch.fan_out")) == 1  # the one already waiting; no second copy
+
+
 def test_the_company_tasks_sit_on_their_lanes_and_the_cron_is_scheduled() -> None:
     for name, lane in [
         ("company.add", "interactive"),
         ("company.refresh", "background"),
         ("companies.refresh_scheduled", "background"),
+        ("companies.catch_up", "background"),
     ]:
         task = app.tasks[name]
         assert (task.queue, TASKS[name].lane) == (lane, lane), name
         assert task.retry_strategy is None, f"{name} can call a model and must not retry"
     assert app.tasks["companies.refresh_scheduled"].lock is None  # a periodic never holds one
+    assert app.tasks["companies.catch_up"].lock is None  # nor does what it defers each tick
+    # The catch-up is done before the next tick defers another.
+    assert TASKS["companies.catch_up"].timeout_s < 15 * 60
 
     registry = PeriodicRegistry()
 

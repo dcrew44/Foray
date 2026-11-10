@@ -10,7 +10,12 @@ imports every installed app's `tasks` module at startup. Defers go through
   that are due (#55), with no run, no user and no events. When it brought postings in, when it
   failed, and on every sixth hour's tick whatever it found, it defers `watch.fan_out`
   (`matching/tasks.py`), which starts each watching user's watch (#5). Before that it reads the
-  facts of a batch of postings that have none yet (`fact_store.read_stale`, #56).
+  facts of a batch of postings that have none yet (`fact_store.read_stale`, #56). After it, and
+  whether or not it failed, it defers `companies.catch_up` when a board is being caught up.
+- `companies.catch_up` (background, 14 min, retry 0): one pass over the boards being caught up
+  (`pipeline.catch_up`, #84), beside the timed pass and never inside it, so a backlog of big
+  boards does not delay the poll of the boards already followed. It defers the watches when it
+  brought postings in. One waiting copy (`queueing_lock`), and no `lock`, like the periodics.
 
 The cron's schedule (`*/15 * * * *`, `queueing_lock="company-refresh:cron"`, no `lock`) is in
 `runs/periodic.py`, which `manage.py worker` installs; it passes the tick as `timestamp`.
@@ -26,9 +31,16 @@ from procrastinate.exceptions import AlreadyEnqueued
 from apps.core.db import db
 from apps.core.queue import app, defer_in_tx
 from apps.jobs import fact_store, pipeline
+from apps.jobs.registry import catch_up_waiting
 from apps.runs.step import BACKGROUND, INTERACTIVE, TASKS, run_step, task_for
 
-__all__ = ["companies_refresh_scheduled", "company_add", "company_refresh", "watches_due"]
+__all__ = [
+    "companies_catch_up",
+    "companies_refresh_scheduled",
+    "company_add",
+    "company_refresh",
+    "watches_due",
+]
 
 log = logging.getLogger("foray.jobs")
 
@@ -64,11 +76,37 @@ def watches_due(inserted: int, timestamp: int | None) -> bool:
     return inserted > 0 or not timestamp or timestamp % BACKLOG_TICK_S == 0
 
 
+@app.task(name=pipeline.CATCH_UP_TASK, queue=BACKGROUND)
+async def companies_catch_up() -> None:
+    """Read on with the boards being caught up, then defer the watches when that brought
+    postings in. A pass that fails or runs out of time still defers them: what it ingested
+    before then is new."""
+    try:
+        async with asyncio.timeout(TASKS[pipeline.CATCH_UP_TASK].timeout_s):
+            summary = await pipeline.catch_up()
+    except Exception:
+        await db(_defer_watches)
+        raise
+    if summary.inserted:
+        await db(_defer_watches)
+
+
+def _defer_catch_up() -> None:
+    """Defers `companies.catch_up` when a board is being caught up. One waiting copy."""
+    if not catch_up_waiting():
+        return
+    try:
+        defer_in_tx(companies_catch_up, queueing_lock="company-catch-up")
+    except AlreadyEnqueued:
+        log.info("companies.catch_up is already waiting")
+
+
 @app.task(name=pipeline.SCHEDULED_TASK, queue=BACKGROUND)
 async def companies_refresh_scheduled(timestamp: int | None = None) -> None:
     """Poll the boards that are due, holding `MULTI_BOARD_GATE` (§9.3), then defer the watches
     when there is something for them (`watches_due`). A failed pass still defers them (what
-    earlier passes brought in is new); a worker shutting down does not."""
+    earlier passes brought in is new); a worker shutting down does not. Either way the catch-up
+    of boards not yet read whole is deferred to run beside the next thing, not before it."""
     try:
         async with asyncio.timeout(TASKS[pipeline.SCHEDULED_TASK].timeout_s):
             summary = await pipeline.refresh_scheduled()
@@ -79,6 +117,8 @@ async def companies_refresh_scheduled(timestamp: int | None = None) -> None:
                 log.info("read the facts of %s postings", caught_up)
     except Exception:
         await db(_defer_watches)
+        await db(_defer_catch_up)
         raise
     if watches_due(summary.inserted, timestamp):
         await db(_defer_watches)
+    await db(_defer_catch_up)

@@ -51,9 +51,9 @@ from tests.factories import (
     make_resume,
     make_run,
     make_user,
+    make_variant,
     sample_deep_eval,
     sample_fast_eval,
-    make_variant,
 )
 from tests.pages.conftest import Graph, full_graph, get_page, signed_in
 

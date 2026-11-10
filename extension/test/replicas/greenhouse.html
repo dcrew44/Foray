@@ -1,0 +1,177 @@
+<!doctype html>
+<!--
+  A hand-written replica of a Greenhouse job board application form (job-boards.greenhouse.io):
+  the same ids, names, roles and label wiring, none of the site's own scripts or styles, and
+  invented questions. Served to the tests by the browser itself; never fetched from the network.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Job Application for Platform Engineer at Northwind Tools</title>
+    <link rel="stylesheet" href="/__replica/replica.css" />
+  </head>
+  <body>
+    <main>
+      <div class="job-post-container">
+        <h1 class="section-header">Platform Engineer</h1>
+        <p>Northwind Tools makes things. This is a test page; nobody is hiring here.</p>
+      </div>
+
+      <form id="application-form" class="application--form" action="/northwind/jobs/4000001" method="get">
+        <div class="application--questions">
+          <div class="field-wrapper">
+            <label id="first_name-label" for="first_name" class="label">First Name<span aria-hidden="true">*</span></label>
+            <input id="first_name" class="input input__single-line" aria-label="First Name" aria-required="true" type="text" maxlength="255" autocomplete="given-name" />
+          </div>
+          <div class="field-wrapper">
+            <label id="last_name-label" for="last_name" class="label">Last Name<span aria-hidden="true">*</span></label>
+            <input id="last_name" class="input input__single-line" aria-label="Last Name" aria-required="true" type="text" maxlength="255" autocomplete="family-name" />
+          </div>
+          <div class="field-wrapper">
+            <label id="email-label" for="email" class="label">Email<span aria-hidden="true">*</span></label>
+            <input id="email" class="input input__single-line" aria-label="Email" aria-required="true" type="text" maxlength="255" autocomplete="email" />
+          </div>
+          <div>
+            <fieldset class="phone-input">
+              <legend class="visually-hidden">Phone</legend>
+              <div class="phone-input__country" id="country-mount"></div>
+              <label id="phone-label" for="phone" class="label">Phone<span aria-hidden="true">*</span></label>
+              <input id="phone" class="input input__single-line" aria-label="Phone" aria-required="true" type="tel" autocomplete="off" />
+            </fieldset>
+          </div>
+          <div class="field-wrapper" id="location-mount"></div>
+          <div class="field-wrapper">
+            <div role="group" aria-labelledby="upload-label-resume" aria-required="true" class="file-upload">
+              <div id="upload-label-resume" class="label upload-label">Resume/CV<span class="required">*</span></div>
+              <div class="file-upload__wrapper">
+                <button type="button" class="btn btn--pill">Attach</button>
+                <label class="visually-hidden" for="resume">Attach</label>
+                <input id="resume" class="visually-hidden" type="file" accept=".pdf,.doc,.docx,.txt,.rtf" />
+                <button type="button" class="btn btn--pill" data-testid="resume-text">Enter manually</button>
+                <label class="visually-hidden" for="resume_text">Enter manually</label>
+                <p id="accepted-filetypes" class="file-upload__filetypes">Accepted file types: pdf, doc, docx, txt, rtf</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="application--questions">
+          <hr />
+          <div class="field-wrapper">
+            <label id="question_5000001-label" for="question_5000001" class="label">LinkedIn Profile</label>
+            <input id="question_5000001" class="input input__single-line" aria-label="LinkedIn Profile" aria-required="false" type="text" maxlength="255" />
+          </div>
+          <div class="field-wrapper field-wrapper--multiline">
+            <label id="question_5000002-label" for="question_5000002" class="label">Why do you want to work at Northwind?<span aria-hidden="true">*</span></label>
+            <textarea id="question_5000002" class="input input__multi-line" aria-label="Why do you want to work at Northwind?" aria-required="true" rows="4"></textarea>
+          </div>
+          <div class="field-wrapper" id="question_5000003-mount"></div>
+          <div class="field-wrapper" id="question_5000004-mount"></div>
+          <div class="field-wrapper" id="question_5000005-mount"></div>
+          <div class="field-wrapper">
+            <fieldset id="question_5000006-fieldset" class="checkbox">
+              <legend id="question_5000006-label" class="label">Which of these have you shipped with?</legend>
+              <div class="checkbox__wrapper">
+                <input type="checkbox" id="question_5000006[]_1" name="question_5000006[]" value="1" />
+                <label for="question_5000006[]_1">Python</label>
+              </div>
+              <div class="checkbox__wrapper">
+                <input type="checkbox" id="question_5000006[]_2" name="question_5000006[]" value="2" />
+                <label for="question_5000006[]_2">Go</label>
+              </div>
+              <div class="checkbox__wrapper">
+                <input type="checkbox" id="question_5000006[]_3" name="question_5000006[]" value="3" />
+                <label for="question_5000006[]_3">Rust</label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <div class="eeoc__container">
+          <h2 class="section-header">Voluntary Self-Identification</h2>
+          <div class="eeoc__question__wrapper" id="gender-mount"></div>
+        </div>
+
+        <div class="field-wrapper">
+          <div class="checkbox__wrapper">
+            <input type="checkbox" id="gdpr_demographic_data_consent_given_1" name="gdpr_demographic_data_consent_given" value="1" />
+            <label for="gdpr_demographic_data_consent_given_1">I agree to Northwind keeping my data as its privacy notice describes</label>
+          </div>
+        </div>
+
+        <div class="application--submit">
+          <button type="submit" class="btn btn--pill" aria-disabled="false">Submit application</button>
+        </div>
+      </form>
+    </main>
+
+    <!-- The invisible reCAPTCHA every form carries: a corner badge that asks for nothing. -->
+    <div class="grecaptcha-badge" data-style="bottomright" style="width: 256px; height: 60px; position: fixed; bottom: 14px; right: 0">
+      <iframe title="reCAPTCHA" width="256" height="60" src="https://www.recaptcha.net/recaptcha/enterprise/anchor?k=replica"></iframe>
+    </div>
+
+    <script type="module">
+      import { combobox, controlled, replica, submit, watchFile } from "/__replica/replica.js";
+
+      for (const id of ["first_name", "last_name", "email", "phone", "question_5000001", "question_5000002"]) {
+        controlled(document.getElementById(id), id);
+      }
+      watchFile(document.getElementById("resume"), "resume");
+
+      const places = [
+        "Portland, Maine, United States",
+        "Portland, Oregon, United States",
+        "Portland, Victoria, Australia",
+        "Port Angeles, Washington, United States",
+      ];
+      combobox(document.getElementById("country-mount"), {
+        id: "country",
+        label: "Country",
+        required: true,
+        options: ["Canada +1", "United Kingdom +44", "United States +1"],
+      });
+      combobox(document.getElementById("location-mount"), {
+        id: "candidate-location",
+        label: "Location (City)",
+        required: true,
+        placeholder: "",
+        options: async (typed) => (typed.trim().length < 2 ? [] : places.filter((place) => place.toLowerCase().startsWith(typed.trim().toLowerCase()))),
+      });
+      combobox(document.getElementById("question_5000003-mount"), {
+        id: "question_5000003",
+        label: "Are you authorized to work in the country this job is in?",
+        required: true,
+        options: ["Yes", "No"],
+      });
+      combobox(document.getElementById("question_5000004-mount"), {
+        id: "question_5000004",
+        label: "Will you now or in the future need sponsorship to work here?",
+        required: true,
+        options: ["Yes, I will need sponsorship", "No, I will not need sponsorship"],
+      });
+      combobox(document.getElementById("question_5000005-mount"), {
+        id: "question_5000005",
+        label: "Which office would you work from?",
+        options: ["Lisbon", "Toronto"],
+      });
+      combobox(document.getElementById("gender-mount"), {
+        id: "gender",
+        label: "Gender",
+        options: ["Male", "Female", "Decline To Self Identify"],
+      });
+
+      const form = document.getElementById("application-form");
+      const boxes = () =>
+        [...form.querySelectorAll('input[type="checkbox"]')].filter((box) => box.checked).map((box) => box.id);
+      form.addEventListener("change", () => {
+        replica.state.checked = boxes();
+      });
+      replica.state.checked = [];
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        submit({ checked: boxes() });
+        location.assign("/northwind/jobs/4000001/confirmation");
+      });
+    </script>
+  </body>
+</html>

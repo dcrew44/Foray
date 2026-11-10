@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Foray</title>
+    <link rel="stylesheet" href="../ui/foray.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="../icons/icon-32.png" width="24" height="24" alt="" />
+      <h1>Foray</h1>
+    </header>
+    <p id="connection" class="muted" role="status">Checking the connection…</p>
+    <p id="waiting" hidden><a id="open-foray" target="_blank" rel="noopener noreferrer"></a></p>
+    <button id="fill" class="primary" type="button" disabled>Fill this page with Foray</button>
+    <button id="connect" class="primary" type="button" hidden>Connect to Foray</button>
+    <p id="result" class="error" role="status"></p>
+    <p class="muted note">Nothing is sent. You read the form and press submit.</p>
+    <footer>
+      <button id="settings" class="link" type="button">Settings</button>
+    </footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

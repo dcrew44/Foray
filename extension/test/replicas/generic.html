@@ -1,0 +1,102 @@
+<!doctype html>
+<!--
+  An application form on an employer's own site, as none of the boards would build it: every
+  question is labelled a different way (a label's `for`, a wrapping label, aria-labelledby,
+  aria-label, a fieldset's legend, plain words before the control). It also carries the things
+  a script must leave alone: a field nobody can see, a terms box, a newsletter box.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Apply: Platform Engineer | Northwind Tools</title>
+    <link rel="stylesheet" href="/__replica/replica.css" />
+  </head>
+  <body>
+    <header>
+      <form role="search" action="/search"><input type="search" name="q" aria-label="Search jobs" /></form>
+    </header>
+    <main>
+      <h1>Platform Engineer</h1>
+      <form id="apply" action="/jobs/platform-engineer/apply" method="post">
+        <label for="applicant-first">First name *</label>
+        <input id="applicant-first" name="first" type="text" required />
+
+        <label>Last name * <input name="last" type="text" required /></label>
+
+        <span id="email-words">Email address</span>
+        <input name="email" type="email" aria-labelledby="email-words" aria-required="true" />
+
+        <input name="phone" type="tel" aria-label="Phone number" />
+
+        <div class="question">
+          <p>Where are you based?</p>
+          <input name="city" type="text" />
+        </div>
+
+        <div role="group" aria-labelledby="cv-words">
+          <div id="cv-words">Resume (required)</div>
+          <label for="cv-file">Upload</label>
+          <input id="cv-file" name="cv" type="file" accept=".pdf,application/pdf" />
+        </div>
+
+        <label for="notice">How much notice do you need to give?</label>
+        <select id="notice" name="notice">
+          <option value="">Choose one</option>
+          <option value="0">None</option>
+          <option value="2w">Two weeks</option>
+          <option value="1m">One month</option>
+        </select>
+
+        <fieldset>
+          <legend>Do you need a visa to work here? *</legend>
+          <label><input type="radio" name="visa" value="y" required /> Yes</label>
+          <label><input type="radio" name="visa" value="n" required /> No</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Which days could you be in the office?</legend>
+          <label><input type="checkbox" name="days" value="mon" /> Monday</label>
+          <label><input type="checkbox" name="days" value="wed" /> Wednesday</label>
+          <label><input type="checkbox" name="days" value="fri" /> Friday</label>
+        </fieldset>
+
+        <label for="pitch">Why this job? *</label>
+        <textarea id="pitch" name="pitch" rows="4" required></textarea>
+
+        <label for="salary">What salary are you looking for?</label>
+        <input id="salary" name="salary" type="text" />
+
+        <!-- A trap for scripts: no person can see or fill it. -->
+        <div class="honeypot"><label for="website">Website</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off" /></div>
+
+        <p><label><input type="checkbox" name="terms" value="1" required /> I have read and accept the terms and the privacy notice *</label></p>
+        <p><label><input type="checkbox" name="news" value="1" /> Email me Northwind's newsletter</label></p>
+
+        <button type="submit">Send application</button>
+      </form>
+    </main>
+
+    <script type="module">
+      import { el, replica, submit, watchFile } from "/__replica/replica.js";
+
+      const form = document.getElementById("apply");
+      watchFile(document.getElementById("cv-file"), "cv");
+      const read = () => {
+        const sent = {};
+        for (const [name, value] of new FormData(form)) {
+          if (value instanceof File) continue;
+          sent[name] = name in sent ? [].concat(sent[name], value) : value;
+        }
+        return sent;
+      };
+      Object.defineProperty(replica, "state", { get: read, configurable: true });
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const sent = read();
+        Object.defineProperty(replica, "state", { value: sent, configurable: true });
+        submit(sent);
+        form.replaceWith(el("section", { class: "done" }, el("h2", { text: "Thanks for applying!" }), el("p", { text: "Your application has been received." })));
+      });
+    </script>
+  </body>
+</html>

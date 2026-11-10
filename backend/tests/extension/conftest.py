@@ -1,0 +1,57 @@
+"""Fixtures for the browser extension's tests: a real Chromium with the extension loaded, a
+fake Foray, and the replica forms. See `support.py`.
+
+Set `FORAY_EXTENSION_HEADED=1` to watch a test in a window.
+"""
+
+from __future__ import annotations
+
+import os
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, ExitStack
+from pathlib import Path
+
+import pytest
+from playwright.sync_api import Playwright, sync_playwright
+
+from tests.extension.support import Browser, FakeForay, Pages, browser
+
+
+@pytest.fixture(scope="session")
+def chromium() -> Iterator[Playwright]:
+    """Playwright with its own Chromium. Chrome itself no longer loads an unpacked extension
+    from the command line, so without the bundled browser these tests are skipped."""
+    with sync_playwright() as playwright:
+        if not Path(playwright.chromium.executable_path).exists():
+            pytest.skip("no Chromium to load the extension in (uv run playwright install chromium)")
+        yield playwright
+
+
+@pytest.fixture
+def foray() -> Iterator[FakeForay]:
+    server = FakeForay()
+    server.start()
+    yield server
+    server.stop()
+
+
+type Open = Callable[..., Browser]
+
+
+@pytest.fixture
+def open_browser(chromium: Playwright, foray: FakeForay, tmp_path: Path) -> Iterator[Open]:
+    """`open_browser(pages, connected=True)`: the browser, closed when the test ends."""
+    with ExitStack() as stack:
+
+        def start(pages: Pages | None = None, *, connected: bool = True) -> Browser:
+            manager: AbstractContextManager[Browser] = browser(
+                chromium,
+                foray,
+                tmp_path,
+                pages=pages,
+                connected=connected,
+                headless=os.environ.get("FORAY_EXTENSION_HEADED") != "1",
+            )
+            return stack.enter_context(manager)
+
+        yield start

@@ -1,0 +1,22 @@
+<!doctype html>
+<!-- A hand-written replica of the page a Greenhouse board shows after an application. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Northwind Tools</title>
+    <link rel="stylesheet" href="/__replica/replica.css" />
+  </head>
+  <body>
+    <main>
+      <div class="confirmation">
+        <h1 class="section-header">Thank you for applying.</h1>
+        <p>Your application has been received. We will be in touch if there is a match.</p>
+        <a class="link" href="/northwind">Back to jobs</a>
+      </div>
+    </main>
+    <script type="module">
+      import { replica } from "/__replica/replica.js";
+      Object.assign(replica, JSON.parse(sessionStorage.getItem("replica") ?? "{}"));
+    </script>
+  </body>
+</html>

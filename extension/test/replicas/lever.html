@@ -1,0 +1,229 @@
+<!doctype html>
+<!--
+  A hand-written replica of a Lever application page (jobs.lever.co/<board>/<id>/apply): a plain
+  HTML form of `li.application-question` rows with the same names and label markup, none of
+  the site's own scripts or styles, and invented questions.
+
+  `?captcha=1` shows the CAPTCHA's tick box, as a board does when it wants a person.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Northwind Tools - Platform Engineer</title>
+    <link rel="stylesheet" href="/__replica/replica.css" />
+  </head>
+  <body>
+    <main>
+      <h2>Platform Engineer</h2>
+      <form id="application-form" method="POST" enctype="multipart/form-data">
+        <div class="section page-centered application-form">
+          <h4>Submit your application</h4>
+          <ul>
+            <li class="application-question awli-application-row">
+              <div class="application-label">LinkedIn profile</div>
+              <div class="application-field">
+                <button type="button" class="template-btn-utility awli-button">Apply with LinkedIn</button>
+              </div>
+            </li>
+            <li class="application-question resume">
+              <label>
+                <div class="application-label">Resume/CV <span class="required">✱</span></div>
+                <div class="application-field">
+                  <a href="#" class="postings-btn template-btn-utility visible-resume-upload">
+                    <span class="default-label">ATTACH RESUME/CV</span>
+                    <input class="application-file-input invisible-resume-upload hidden-file" data-qa="input-resume" id="resume-upload-input" name="resume" tabindex="-1" type="file" />
+                  </a>
+                </div>
+              </label>
+            </li>
+            <li class="application-question">
+              <label>
+                <div class="application-label">Full name<span class="required">✱</span></div>
+                <div class="application-field"><input type="text" data-qa="name-input" name="name" required /></div>
+              </label>
+            </li>
+            <li class="application-question">
+              <label>
+                <div class="application-label">Email<span class="required">✱</span></div>
+                <div class="application-field"><input name="email" data-qa="email-input" type="email" required /></div>
+              </label>
+            </li>
+            <li class="application-question">
+              <label>
+                <div class="application-label">Phone<span class="required">✱</span></div>
+                <div class="application-field"><input name="phone" data-qa="phone-input" type="text" required /></div>
+              </label>
+            </li>
+            <li class="application-question" data-qa="structured-contact-location-question">
+              <label>
+                <div class="application-label">Current location<span class="required">✱</span></div>
+                <div class="application-field">
+                  <input class="location-input" data-qa="location-input" name="location" type="text" id="location-input" required />
+                  <input name="selectedLocation" type="hidden" id="selected-location" />
+                </div>
+              </label>
+            </li>
+            <li class="application-question">
+              <label>
+                <div class="application-label">Current company</div>
+                <div class="application-field"><input type="text" data-qa="org-input" name="org" /></div>
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <div class="section page-centered application-form">
+          <h4>Links</h4>
+          <ul>
+            <li class="application-question">
+              <label>
+                <div class="application-label">LinkedIn URL</div>
+                <div class="application-field"><input type="text" name="urls[LinkedIn]" /></div>
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <div class="section page-centered application-form" data-qa="additional-cards">
+          <h4 data-qa="card-name">Screening questions</h4>
+          <input type="hidden" name="cards[c0ffee00-0000-4000-8000-000000000000][baseTemplate]" value="{}" />
+          <ul>
+            <li class="application-question custom-question">
+              <div>
+                <div class="application-label full-width multiple-choice">
+                  <div class="text">Are you allowed to work where this job is?<span class="required">✱</span></div>
+                </div>
+                <div class="application-field full-width required-field">
+                  <ul data-qa="multiple-choice">
+                    <li><label><input type="radio" name="cards[c0ffee00-0000-4000-8000-000000000000][field0]" value="Yes" required="required" /><span class="application-answer-alternative">Yes</span></label></li>
+                    <li><label><input type="radio" name="cards[c0ffee00-0000-4000-8000-000000000000][field0]" value="No" required="required" /><span class="application-answer-alternative">No</span></label></li>
+                  </ul>
+                </div>
+              </div>
+            </li>
+            <li class="application-question custom-question">
+              <div>
+                <div class="application-label full-width">
+                  <div class="text">Where did you hear about this job?<span class="required">✱</span></div>
+                </div>
+                <div class="application-field full-width required-field">
+                  <select name="cards[c0ffee00-0000-4000-8000-000000000000][field1]" required>
+                    <option value="">Select one</option>
+                    <option value="A friend">A friend</option>
+                    <option value="A job board">A job board</option>
+                    <option value="Northwind's own site">Northwind's own site</option>
+                  </select>
+                </div>
+              </div>
+            </li>
+            <li class="application-question custom-question">
+              <div>
+                <div class="application-label full-width">
+                  <div class="text">What would you build first?</div>
+                </div>
+                <div class="application-field full-width">
+                  <textarea class="card-field-input" name="cards[c0ffee00-0000-4000-8000-000000000000][field2]"></textarea>
+                </div>
+              </div>
+            </li>
+            <li class="application-question custom-question">
+              <div>
+                <div class="application-label full-width">
+                  <div class="text">How many years have you run production systems?<span class="required">✱</span></div>
+                </div>
+                <div class="application-field full-width required-field">
+                  <input type="text" name="cards[c0ffee00-0000-4000-8000-000000000000][field3]" required />
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="section page-centered application-form">
+          <h4 data-qa="card-name">Voluntary survey</h4>
+          <ul>
+            <li class="application-question">
+              <div class="application-label full-width multiple-select">
+                <div class="text">Which of these describe you?</div>
+                <p class="description">Select all that apply</p>
+              </div>
+              <div class="application-field full-width">
+                <ul data-qa="checkboxes">
+                  <li><label><input type="checkbox" name="surveysResponses[5eed0000-0000-4000-8000-000000000000][responses][field0]" value="Early riser" /><span class="application-answer-alternative">Early riser</span></label></li>
+                  <li><label><input type="checkbox" name="surveysResponses[5eed0000-0000-4000-8000-000000000000][responses][field0]" value="Night owl" /><span class="application-answer-alternative">Night owl</span></label></li>
+                  <li><label><input type="checkbox" name="surveysResponses[5eed0000-0000-4000-8000-000000000000][responses][field0]" value="Prefer not to say" /><span class="application-answer-alternative">Prefer not to say</span></label></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <input type="hidden" name="accountId" value="replica" />
+        <input id="hcaptchaResponseInput" type="hidden" name="h-captcha-response" value="" />
+        <button id="hcaptchaSubmitBtn" type="submit" class="hidden"></button>
+
+        <div class="section page-centered application-form" data-qa="consent-section">
+          <ul>
+            <li class="application-question">
+              <div class="application-field full-width">
+                <ul>
+                  <li>
+                    <label>
+                      <input type="hidden" name="consent[marketing]" value="0" />
+                      <input type="checkbox" name="consent[marketing]" value="1" />
+                      <p class="application-answer-alternative">Yes, Northwind can contact me about future openings</p>
+                    </label>
+                  </li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div id="h-captcha" class="h-captcha" data-sitekey="replica"></div>
+
+        <div class="section page-centered application-form last-section-apply">
+          <button id="btn-submit" type="button" class="postings-btn template-btn-submit" data-qa="btn-submit">Submit application</button>
+        </div>
+      </form>
+    </main>
+
+    <script type="module">
+      import { el, replica, submit, watchFile } from "/__replica/replica.js";
+
+      const form = document.getElementById("application-form");
+      watchFile(document.getElementById("resume-upload-input"), "resume");
+
+      // The CAPTCHA every Lever form loads: full-page frames that stay hidden until the board
+      // wants a person. `?captcha=1` is that moment: a tick box, on screen.
+      const asking = new URLSearchParams(location.search).has("captcha");
+      const holder = document.getElementById("h-captcha");
+      holder.append(
+        el("iframe", {
+          title: "Widget containing checkbox for hCaptcha security challenge",
+          src: "https://newassets.hcaptcha.com/captcha/v1/replica/static/hcaptcha.html#frame=checkbox",
+          style: asking
+            ? "width: 303px; height: 78px; border: 0;"
+            : "position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; visibility: hidden;",
+        }),
+      );
+
+      // A plain form holds its own state: what it would send is what FormData reads.
+      const read = () => {
+        const sent = {};
+        for (const [name, value] of new FormData(form)) {
+          if (value instanceof File) continue;
+          sent[name] = name in sent ? [].concat(sent[name], value) : value;
+        }
+        return sent;
+      };
+      Object.defineProperty(replica, "state", { get: read });
+
+      document.getElementById("btn-submit").addEventListener("click", () => {
+        if (!form.reportValidity()) return;
+        submit(read());
+        location.assign(location.pathname.replace(/\/apply$/, "/thanks"));
+      });
+    </script>
+  </body>
+</html>

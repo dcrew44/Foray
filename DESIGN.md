@@ -583,6 +583,30 @@ written before it and keep their designs; the order of work is now:
    variant and referral. Whether applying early helps is a claim this measures, not one the
    design assumes.
 
+   Built so far, before any mail is read: **the Outcomes page** (#65, #6,
+   `apps/applications/outcomes.py`). It leads with posted-to-applied time over the
+   applications the user sent, as the median (and, from ten applications, the 90th
+   percentile) of the whole and of the three spans it is made of: posted to seen
+   (`jobs.posted_at` to `first_seen_at`), seen to ready (to `applications.ready_at`) and
+   ready to applied (to `submitted_at`), over all time and over the last 30 days, each with
+   the number of applications it rests on. Then the test of the direction: applications sent
+   the same day (under 24 hours from posting), within three days and later, with how many of
+   each reached an interview, and the rates only once 50 are in the buckets. Then the funnel
+   from found to offer, and the interview rate by source, by the review's recommendation, by
+   lane and by tailored resume, as counts until a group has ten.
+
+   `job_matches` keeps where a match is now and nothing records a move, so a stage a match
+   "reached" is only what the present proves (`outcomes.reached`): a match in Interviewing or
+   Offer was applied to, and a rejected or archived one counts as applied to only when its
+   application was marked sent on the Apply page (`applications.submitted_at` outlives a
+   stage change). Every count past found is therefore a floor, an interview that ended in a
+   rejection is no longer counted as one, and an application moved to Applied by hand and
+   then closed is no longer counted at all; the page says so. One moved by hand is timed from
+   `stage_changed_at` while it is still in Applied, has no ready time, and is left out of the
+   buckets, where it could only be counted for as long as it had no interview.
+   Keeping when a match first entered each stage would settle all of it, and is the first
+   thing to add when replies start moving stages (#26).
+
 The career coach and model choice milestones come after these. What decided it, from the
 development database that day: the mirror had not refreshed for a week, 528 matches had
 become 20 shortlisted and 1 applied, and the 406 companies were nearly all on Greenhouse,
@@ -675,7 +699,8 @@ rather than a rewrite.
 The UI was rebuilt as its own piece of work at the end of Phase 1.
 
 - **Shell**: a quiet sidebar on a lichen-grey canvas, and every page on a raised white
-  sheet. Navigation: Home, Matches, Activity; Profile, Companies, Settings; recent chats.
+  sheet. Navigation: Home, Matches, Apply, Activity, Outcomes; Profile, Companies, Settings;
+  recent chats.
 - **Palette**: deep pine ink and primary, one signal colour (marigold) reserved for
   "agents working now" and "decisions waiting on you", brick only for errors. Match fit
   is one sequential pine scale (`--fit-0..5`), never traffic lights: the deeper the

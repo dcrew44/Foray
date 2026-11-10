@@ -30,6 +30,7 @@ export const config = {
     "/chat/:path*",
     "/onboarding/:path*",
     "/activity/:path*",
+    "/outcomes/:path*",
     "/profile/:path*",
     "/companies/:path*",
     "/settings/:path*",

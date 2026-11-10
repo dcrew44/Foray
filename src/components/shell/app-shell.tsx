@@ -3,6 +3,7 @@
 import {
   Activity,
   Building,
+  ChartColumn,
   House,
   Menu,
   MessageSquarePlus,
@@ -59,6 +60,12 @@ const PRIMARY: NavItem[] = [
     label: "Activity",
     icon: Activity,
     match: (p) => p.startsWith("/activity"),
+  },
+  {
+    href: "/outcomes",
+    label: "Outcomes",
+    icon: ChartColumn,
+    match: (p) => p.startsWith("/outcomes"),
   },
 ];
 

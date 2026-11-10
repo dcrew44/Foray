@@ -10,7 +10,7 @@ import pytest
 from django.db import connections
 
 from apps.resumes import edits
-from apps.resumes.edits import create_base_version, save_user_edit, stamp_user_edits
+from apps.resumes.edits import carry_ids, create_base_version, save_user_edit, stamp_user_edits
 from apps.resumes.models import Resume as ResumeRow
 from apps.resumes.queries import latest_base_resume
 from apps.resumes.schema import Resume
@@ -38,6 +38,136 @@ def resume(work: list[dict[str, Any]]) -> Resume:
 
 def copy(value: Resume) -> Resume:
     return value.model_copy(deep=True)
+
+
+# --- carry_ids -----------------------------------------------------------------------------------
+
+
+def whole(**sections: list[dict[str, Any]]) -> Resume:
+    """A resume from bare items: each gets `source: resume` unless it says otherwise."""
+    links = sections.pop("links", [])
+    return Resume.model_validate(
+        {
+            "basics": {"name": "Test Person", "links": [{"source": "resume", **x} for x in links]},
+            **{
+                name: [{"source": "resume", **item} for item in items]
+                for name, items in sections.items()
+            },
+        }
+    )
+
+
+BEFORE = whole(
+    links=[{"id": "l1", "label": "GitHub", "url": "https://github.com/test-person/"}],
+    work=[
+        {
+            "id": "w1",
+            "company": "Lumen Pay, Inc.",
+            "position": "Software Engineer",
+            "source": "user",
+        },
+        {
+            "id": "w2",
+            "company": "Harbor",
+            "position": "Data Engineer",
+            "highlights": ["Old words."],
+        },
+    ],
+    education=[
+        {
+            "id": "e1",
+            "institution": "State University",
+            "studyType": "B.S.",
+            "area": "Computer Science",
+        }
+    ],
+    projects=[{"id": "p1", "name": "Tide Tables"}],
+    skills=[
+        {"id": "s1", "name": "PostgreSQL"},
+        {"id": "s2", "name": "Go", "category": "Languages"},
+    ],
+)
+
+
+def test_a_reread_item_keeps_the_id_of_the_one_it_clearly_is():
+    """Case, punctuation and spacing are the reader's; the words and the provenance carried
+    are the new file's."""
+    reread = whole(
+        links=[{"id": "n0", "label": "Code", "url": "github.com/Test-Person"}],
+        work=[
+            {"id": "n1", "company": "harbor", "position": "Data  Engineer", "highlights": ["New."]},
+            {"id": "n2", "company": "Lumen Pay Inc", "position": "Software Engineer"},
+        ],
+        education=[
+            {
+                "id": "n3",
+                "institution": "State University",
+                "studyType": "BS",
+                "area": "computer science",
+            }
+        ],
+        projects=[{"id": "n4", "name": "Tide tables"}],
+        skills=[{"id": "n5", "name": "Go"}, {"id": "n6", "name": "postgresql"}],
+    )
+    carried = carry_ids(reread, BEFORE)
+    assert [link.id for link in carried.basics.links] == ["l1"]
+    assert [item.id for item in carried.work] == ["w2", "w1"]
+    assert [item.id for item in carried.education] == ["e1"]
+    assert [item.id for item in carried.projects] == ["p1"]
+    assert [item.id for item in carried.skills] == ["s2", "s1"]
+    assert carried.work[0].highlights == ["New."]
+    assert carried.work[1].source == "resume"  # an id is carried, never who wrote the item
+    assert carried.model_copy(update={}).dump() != reread.dump()
+    assert reread.work[0].id == "n1"  # the resume passed in is left as it was
+
+
+def test_an_item_the_previous_resume_does_not_have_keeps_its_new_id():
+    reread = whole(
+        work=[
+            {"id": "n1", "company": "Harbor", "position": "Analytics Engineer"},  # another title
+            {"id": "n2", "company": "Fernwood", "position": "Data Engineer"},  # another employer
+        ],
+        education=[
+            {
+                "id": "n3",
+                "institution": "State University",
+                "studyType": "M.S.",
+                "area": "Computer Science",
+            }
+        ],
+        projects=[{"id": "n4", "name": "Tide Charts"}],
+        skills=[{"id": "n5", "name": "Postgres"}],
+    )
+    carried = carry_ids(reread, BEFORE)
+    assert carried == reread
+
+
+def test_an_id_is_given_once_and_two_stints_in_one_role_pair_off_in_order():
+    before = whole(
+        work=[
+            {"id": "w1", "company": "Acme", "position": "Engineer", "startDate": "2024-01"},
+            {"id": "w2", "company": "Acme", "position": "Engineer", "startDate": "2020-06"},
+        ],
+        skills=[{"id": "s1", "name": "Go"}],
+    )
+    reread = whole(
+        work=[
+            {"id": "n1", "company": "Acme", "position": "Engineer", "startDate": "2024-01"},
+            {"id": "n2", "company": "Acme", "position": "Engineer", "startDate": "2020-06"},
+            {"id": "n3", "company": "Acme", "position": "Engineer", "startDate": "2018-01"},
+        ],
+        skills=[{"id": "n4", "name": "Go"}, {"id": "n5", "name": "go"}],
+    )
+    carried = carry_ids(reread, before)
+    assert [item.id for item in carried.work] == ["w1", "w2", "n3"]
+    assert [item.id for item in carried.skills] == ["s1", "n5"]
+
+
+def test_a_nameless_item_takes_nobodys_id_and_a_first_resume_is_returned_as_read():
+    before = whole(projects=[{"id": "p1", "name": "  "}], skills=[{"id": "s1", "name": "—"}])
+    reread = whole(projects=[{"id": "n1", "name": ""}], skills=[{"id": "n2", "name": "!"}])
+    assert carry_ids(reread, before) == reread
+    assert carry_ids(reread, None) is reread
 
 
 # --- stamp_user_edits ----------------------------------------------------------------------------

@@ -14,13 +14,20 @@ absent (a jsonb round trip turns one into the other).
 (`max + 1`) written in one transaction. Two writers can pick the same number; the partial unique
 constraint `resumes_base_version` refuses the second, which retries once with the next number.
 Every reader takes the newest version through `queries.latest_base_resume` (R14).
+
+**An item keeps its id across uploads.** A new file is read from scratch, but a resume variant
+(`variants.py`) names the base's items by id, so `carry_ids` gives an item from the new file the
+id of the one it clearly is in the resume before it: the same employer and title, the same school
+and degree, the same project or skill name, the same link. Only the id is carried; the words and
+the provenance are the new file's.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import uuid
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, Self
 
@@ -35,6 +42,7 @@ from apps.resumes.queries import latest_base_resume
 __all__ = [
     "SavedEdit",
     "canonical_json",
+    "carry_ids",
     "create_base_version",
     "save_user_edit",
     "stamp_user_edits",
@@ -106,6 +114,76 @@ def stamp_user_edits(next_resume: schema.Resume, previous: schema.Resume | None)
             "education": _stamp_list(next_resume.education, previous.education),
             "projects": _stamp_list(next_resume.projects, previous.projects),
             "skills": _stamp_list(next_resume.skills, previous.skills),
+        }
+    )
+
+
+# --- Ids across uploads --------------------------------------------------------------------------
+
+# Everything a reader may add or drop between two readings of one line: spaces, case and
+# punctuation. "+" and "#" stay, or C, C++ and C# would be one skill.
+_NOT_A_WORD = re.compile(r"[^\w+#]|_")
+_SCHEME = re.compile(r"^https?://(www\.)?")
+
+type _Key = tuple[str, ...]
+
+
+def _words(value: str | None) -> str:
+    """What two readings of one line share: its letters and digits, in lower case."""
+    return _NOT_A_WORD.sub("", (value or "").casefold())
+
+
+def _work_key(item: schema.WorkItem) -> _Key:
+    return (_words(item.company), _words(item.position))
+
+
+def _education_key(item: schema.EducationItem) -> _Key:
+    return (_words(item.institution), _words(item.study_type), _words(item.area))
+
+
+def _project_key(item: schema.ProjectItem) -> _Key:
+    return (_words(item.name),)
+
+
+def _skill_key(item: schema.SkillItem) -> _Key:
+    return (_words(item.name),)
+
+
+def _link_key(item: schema.Link) -> _Key:
+    return (_SCHEME.sub("", item.url.strip().casefold()).rstrip("/"),)
+
+
+def _carry[T: _Sourced](
+    next_items: list[T], previous: list[T], key: Callable[[T], _Key]
+) -> list[T]:
+    """`next_items`, each with the id of the previous item that has its key. Items that share a
+    key (two stints in one role) pair off in the order they are listed, and an id is given once."""
+    waiting: dict[_Key, list[str]] = {}
+    for item in previous:
+        waiting.setdefault(key(item), []).append(item.id)
+    carried: list[T] = []
+    for item in next_items:
+        item_key = key(item)
+        ids = waiting.get(item_key) if item_key[0] else None  # a nameless item is nobody's
+        carried.append(item.model_copy(update={"id": ids.pop(0)}) if ids else item)
+    return carried
+
+
+def carry_ids(next_resume: schema.Resume, previous: schema.Resume | None) -> schema.Resume:
+    """A freshly read resume with the ids of the items it shares with the one before it, so
+    whatever names an item by id (a resume variant) still finds it. Items the previous resume
+    does not have keep the new ids they were read with."""
+    if previous is None:
+        return next_resume
+    return next_resume.model_copy(
+        update={
+            "basics": next_resume.basics.model_copy(
+                update={"links": _carry(next_resume.basics.links, previous.basics.links, _link_key)}
+            ),
+            "work": _carry(next_resume.work, previous.work, _work_key),
+            "education": _carry(next_resume.education, previous.education, _education_key),
+            "projects": _carry(next_resume.projects, previous.projects, _project_key),
+            "skills": _carry(next_resume.skills, previous.skills, _skill_key),
         }
     )
 

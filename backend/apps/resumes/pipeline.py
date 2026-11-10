@@ -59,7 +59,7 @@ from apps.matching import queries as match_queries
 from apps.matching.models import JobMatch
 from apps.resumes import render as rendering
 from apps.resumes import variants
-from apps.resumes.edits import create_base_version
+from apps.resumes.edits import carry_ids, create_base_version
 from apps.resumes.extract import ResumeReadError, extract_from, read_document
 from apps.resumes.models import Document, DocumentKind, ResumeKind
 from apps.resumes.models import Resume as ResumeRow
@@ -434,11 +434,16 @@ def _save_import(
     garble: GarbleReport,
 ) -> bool:
     """One transaction: the document's text, the next base version (pointing at the document)
-    and `run.completed`. False, with nothing written, when the run was stopped meanwhile."""
+    and `run.completed`. False, with nothing written, when the run was stopped meanwhile.
+
+    Items the resume before this one also had keep their ids (`carry_ids`), so the user's
+    variants still select them."""
     with transaction.atomic():
         if not _lock_if_active(user_id, run_id):
             return False
         Document.objects.for_user(user_id).filter(id=document_id).update(text_extracted=text)
+        before = latest_base_resume(user_id)
+        resume = carry_ids(resume, before.resume if before else None)
         row = create_base_version(user_id, resume, source_document_id=document_id)
         output = ImportOutput(
             document_id=str(document_id),

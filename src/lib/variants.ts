@@ -166,8 +166,8 @@ export function selectionCounts(base: VariantBase, spec: VariantSpec): Selection
 }
 
 /**
- * A variant that names nothing the resume still has: after a new upload every item has a new
- * id, so the variants made from the old file select nothing. Django never sends such a variant.
+ * A variant that names nothing the resume still has (the user uploaded a different resume, not
+ * a new copy of the same one, whose items keep their ids). Django never sends such a variant.
  */
 export function selectsNothing(counts: SelectionCounts): boolean {
   return counts.work + counts.projects + counts.education + counts.skills === 0;

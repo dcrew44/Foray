@@ -39,8 +39,17 @@ from apps.resumes import render as rendering
 from apps.resumes.models import Document, DocumentKind, ResumeKind
 from apps.resumes.models import Resume as ResumeRow
 from apps.resumes.parse.pdf import parse_pdf
+from apps.resumes.queries import latest_base_resume
 from apps.resumes.render import RenderError, RenderResult
 from apps.resumes.schema import Resume, Verification
+from apps.resumes.variants import (
+    VariantItem,
+    VariantSpec,
+    compose,
+    resume_for,
+    selects_nothing,
+    variant_views,
+)
 from apps.runs import lifecycle
 from apps.runs.models import Event, Run
 from tests.factories import (
@@ -49,6 +58,7 @@ from tests.factories import (
     make_resume,
     make_run,
     make_user,
+    make_variant,
     sample_resume_data,
 )
 from tests.fakes import fake_models
@@ -246,6 +256,67 @@ def test_upload_is_read_by_an_import_run(fakes: None) -> None:
     # The one model call is the run's.
     [call] = LlmCall.objects.for_user(user.pk).filter(run_id=run.id)
     assert call.purpose == "extract"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_variants_show_what_they_showed_after_the_same_resume_is_uploaded_again(fakes: None):
+    """#83: a new file is read from scratch, and the items it shares with the resume before it
+    keep their ids, so a variant made over the first reading selects the same things in the
+    second."""
+    user = make_user()
+    browser = Browser(user)
+    first_run = browser.upload(fixture("single-column.pdf")).json()
+    run_deferred()
+    assert reload(first_run["runId"], user).status == "completed"
+    saved = latest_base_resume(user.pk)
+    assert saved is not None
+    first = saved.resume
+    assert len(first.work) >= 2 and first.skills
+
+    lead, second = first.work[0], first.work[1]
+    backend = make_variant(
+        user,
+        name="Backend",
+        spec=VariantSpec(
+            headline="Backend engineer",
+            work=[VariantItem(id=second.id), VariantItem(id=lead.id)],
+            education=[item.id for item in first.education],
+            skills=[item.id for item in first.skills[:3]],
+        ),
+    )
+    data = make_variant(
+        user,
+        name="Data",
+        keywords=["data"],
+        spec=VariantSpec(
+            work=[VariantItem(id=lead.id, highlights=["Said in the variant's own words."])],
+            projects=[VariantItem(id=item.id) for item in first.projects],
+            skills=[item.id for item in reversed(first.skills)],
+        ),
+    )
+    shown = {
+        row.id: compose(first, VariantSpec.model_validate(row.spec)) for row in (backend, data)
+    }
+    assert all(not selects_nothing(resume) for resume in shown.values())
+
+    # The same resume, saved again as a file with other bytes: a new document and a new reading.
+    again = browser.upload(fixture("single-column.pdf") + b"\n% saved again\n").json()
+    assert again["documentId"] != first_run["documentId"]
+    run_deferred()
+    assert reload(again["runId"], user).status == "completed"
+    row = ResumeRow.objects.for_user(user.pk).get(kind=ResumeKind.BASE, version=2)
+    reread = Resume.model_validate(row.data)
+
+    assert reread == first  # every item kept its id, and the file says what it said
+    for variant in (backend, data):
+        assert compose(reread, VariantSpec.model_validate(variant.spec)) == shown[variant.id]
+    # What the Profile page lists is each variant's stored spec, with no id cleaned out of it.
+    assert {view.variant.id: view.spec for view in variant_views(user.pk, reread)} == {
+        row.id: VariantSpec.model_validate(row.spec) for row in (backend, data)
+    }
+    chosen = resume_for(user.pk, "Data Engineer")
+    assert chosen is not None and chosen.variant is not None and chosen.variant.id == data.id
+    assert chosen.resume.work[0].highlights == ["Said in the variant's own words."]
 
 
 @pytest.mark.django_db(transaction=True)

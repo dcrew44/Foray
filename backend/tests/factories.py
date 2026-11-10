@@ -32,7 +32,7 @@ from django.utils import timezone
 import apps.accounts
 from apps.accounts.models import User
 from apps.accounts.schemas import SAMPLE_PREFERENCES
-from apps.applications.models import Application, ApplicationAnswer
+from apps.applications.models import Application, ApplicationAnswer, ExtensionToken
 from apps.chat.models import Conversation, Message
 from apps.contacts.link import company_key
 from apps.contacts.models import Contact, OutreachNote
@@ -171,6 +171,17 @@ def make_application(user: User, match: JobMatch | None = None, **fields: Any) -
     """A match's application (#60), `preparing` unless told otherwise."""
     match = match if match is not None else make_match(user)
     return Application.objects.create_for(user.pk, match=match, **fields)
+
+
+def make_extension_token(user: User, secret: str | None = None, **fields: Any) -> ExtensionToken:
+    """A browser-extension token (#22). Sign in with `secret`, which defaults to a made-up one
+    nobody holds."""
+    import hashlib
+
+    secret = secret or f"foray_ext_{_n()}-nobody-holds-this"
+    return ExtensionToken.objects.create_for(
+        user.pk, token_hash=hashlib.sha256(secret.encode()).hexdigest(), **fields
+    )
 
 
 def make_candidate(

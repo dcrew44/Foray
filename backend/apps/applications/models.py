@@ -17,6 +17,7 @@ from __future__ import annotations
 import uuid
 
 from django.db import models
+from django.db.models.functions import Now
 
 from apps.accounts.models import User
 from apps.core.choices import choices_checks
@@ -24,7 +25,7 @@ from apps.core.ids import new_id
 from apps.core.models import Timestamped
 from apps.core.scoping import UserOwned
 from apps.matching.models import JobMatch
-from apps.resumes.models import Document
+from apps.resumes.models import Document, ResumeVariant
 
 
 class AnswerKind(models.TextChoices):
@@ -110,7 +111,13 @@ class Application(UserOwned, Timestamped):
     # is empty for a form Foray cannot read ahead; the browser extension reads it when it fills.
     questions = models.JSONField(default=list)
     answers = models.JSONField(default=list)
-    # The rendered resume this application sends, once one is chosen and rendered.
+    # Which resume it sends (#61, `applications/resume.py`): the user's own choice ("" lets the
+    # posting's title decide, "base" is the full resume, else a variant's id), the variant that
+    # follows from it (null: the full resume) and the sentence saying why.
+    resume_choice = models.TextField(default="")
+    variant = models.ForeignKey(ResumeVariant, models.SET_NULL, null=True, related_name="+")
+    resume_reason = models.TextField(default="")
+    # The PDF that was attached, once the form was filled.
     document = models.ForeignKey(Document, models.SET_NULL, null=True, related_name="+")
     error = models.TextField(default="")
     # When each thing happened, for posted-to-applied time (#65). `prepared_at` is when the form
@@ -119,9 +126,21 @@ class Application(UserOwned, Timestamped):
     ready_at = models.DateTimeField(null=True)
     opened_at = models.DateTimeField(null=True)
     submitted_at = models.DateTimeField(null=True)
+    # Proof of arrival (#23), kept for good once the user's browser reports the form went in:
+    # what was put in each field, the page that confirmed it and what it said, and a picture
+    # of it (a key under STORAGE_DIR). `filled_at` is when the extension last filled the form.
+    filled_at = models.DateTimeField(null=True)
+    # The extension pressed submit itself, as the user's setting allowed (#40).
+    auto_submitted = models.BooleanField(db_default=False)
+    sent_answers = models.JSONField(null=True)
+    confirmation_url = models.TextField(default="")
+    confirmation_text = models.TextField(default="")
+    confirmation_image = models.TextField(default="")
 
     user_id: str
     match_id: uuid.UUID
+    document_id: uuid.UUID | None
+    variant_id: uuid.UUID | None
 
     class Meta(UserOwned.Meta):
         db_table = "applications"
@@ -130,3 +149,24 @@ class Application(UserOwned, Timestamped):
 
     def __str__(self) -> str:
         return f"{self.status}: {self.match_id}"
+
+
+class ExtensionToken(UserOwned):
+    """What the browser extension signs in with (#22): a secret the user makes in Settings and
+    pastes into the extension once. Only its SHA-256 is kept, so a token can be shown exactly
+    once and a copy of the database signs in nobody."""
+
+    id = models.UUIDField(primary_key=True, default=new_id, editable=False)
+    user = models.ForeignKey(User, models.CASCADE, related_name="extension_tokens")
+    token_hash = models.CharField(max_length=64, unique=True)
+    label = models.TextField(default="")
+    created_at = models.DateTimeField(db_default=Now())
+    last_used_at = models.DateTimeField(null=True)
+
+    user_id: str
+
+    class Meta(UserOwned.Meta):
+        db_table = "extension_tokens"
+
+    def __str__(self) -> str:
+        return f"extension token {self.label or self.id}"

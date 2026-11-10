@@ -27,6 +27,14 @@
       "usd": "number"
     }
   ],
+  "extensionTokens": [
+    {
+      "createdAt": "string",
+      "id": "string",
+      "label": "string",
+      "lastUsedAt": "null"
+    }
+  ],
   "monthStart": "string",
   "ntfyServer": "string",
   "providers": {
@@ -51,6 +59,9 @@
     "perItemUsd": "number"
   },
   "settings": {
+    "applyDailyCap": "number",
+    "applyPerEmployer": "number",
+    "autoSubmit": "boolean",
     "deepEvalTopN": "number",
     "defaultMode": "string",
     "ntfyTopic": "string",

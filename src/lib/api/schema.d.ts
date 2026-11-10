@@ -604,6 +604,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/applications/{id}/proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The confirming page, as it looked
+         * @description The picture the extension took of the employer's confirmation (#23), for its owner.
+         */
+        get: operations["apps_applications_api_get_proof"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Choose the resume it sends */
+        put: operations["apps_applications_api_put_resume_choice"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/applications/{id}": {
         parameters: {
             query?: never;
@@ -619,6 +656,159 @@ export interface paths {
         head?: never;
         /** Act on an application */
         patch: operations["apps_applications_api_patch_application"];
+        trace?: never;
+    };
+    "/api/extension-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make an extension token */
+        post: operations["apps_applications_api_post_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension-tokens/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove an extension token */
+        delete: operations["apps_applications_api_delete_token"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who the token belongs to */
+        get: operations["apps_applications_api_ext_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The application for a page */
+        get: operations["apps_applications_api_ext_find"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension/applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An application to fill */
+        get: operations["apps_applications_api_ext_application"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension/applications/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The resume an application attaches */
+        get: operations["apps_applications_api_ext_resume"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension/applications/{id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Plan fields read from a page */
+        post: operations["apps_applications_api_ext_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension/applications/{id}/filled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The form was filled */
+        post: operations["apps_applications_api_ext_filled"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension/applications/{id}/submitted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The form was sent */
+        post: operations["apps_applications_api_ext_submitted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/contacts/import": {
@@ -1114,6 +1304,12 @@ export interface components {
             quietHoursStart: string;
             /** Quiethoursend */
             quietHoursEnd: string;
+            /** Applyperemployer */
+            applyPerEmployer: number;
+            /** Applydailycap */
+            applyDailyCap: number;
+            /** Autosubmit */
+            autoSubmit: boolean;
             /** Timezone */
             timeZone: string;
         };
@@ -1149,6 +1345,12 @@ export interface components {
             quietHoursStart?: string;
             /** Quiethoursend */
             quietHoursEnd?: string;
+            /** Applyperemployer */
+            applyPerEmployer?: number;
+            /** Applydailycap */
+            applyDailyCap?: number;
+            /** Autosubmit */
+            autoSubmit?: boolean;
             /** Timezone */
             timeZone?: string;
         };
@@ -1834,6 +2036,11 @@ export interface components {
             /** Value */
             value: string;
         };
+        /** ResumeChoiceIn */
+        ResumeChoiceIn: {
+            /** Choice */
+            choice: string;
+        };
         /** ApplicationPatch */
         ApplicationPatch: {
             /**
@@ -1841,6 +2048,171 @@ export interface components {
              * @enum {string}
              */
             action: "dismiss" | "opened" | "submitted" | "reopen";
+        };
+        /** TokenCreated */
+        TokenCreated: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Token */
+            token: string;
+        };
+        /** TokenIn */
+        TokenIn: {
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+        };
+        /** ExtensionMe */
+        ExtensionMe: {
+            /** Ok */
+            ok: boolean;
+            /** Name */
+            name: string;
+            /** Waiting */
+            waiting: number;
+        };
+        /** FillField */
+        FillField: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Type */
+            type: string;
+            /** Required */
+            required: boolean;
+            /** Options */
+            options: string[];
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: string | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "profile" | "file" | "saved" | "declined" | "skipped" | "missing";
+        };
+        /**
+         * FillPayload
+         * @description One application as the extension fills it (`extension.payload`).
+         */
+        FillPayload: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Company */
+            company: string;
+            /** Title */
+            title: string;
+            /** Applyurl */
+            applyUrl: string;
+            /** Formsource */
+            formSource: string;
+            /** Formread */
+            formRead: boolean;
+            /** Fields */
+            fields: components["schemas"]["FillField"][];
+            /** Missing */
+            missing: string[];
+            resume: components["schemas"]["FillResume"] | null;
+            /** Blocked */
+            blocked: string | null;
+            /** Maysubmit */
+            maySubmit: boolean;
+        };
+        /** FillResume */
+        FillResume: {
+            /** Filename */
+            filename: string;
+            /** Sizebytes */
+            sizeBytes: number;
+        };
+        /** FoundOut */
+        FoundOut: {
+            application: components["schemas"]["FillPayload"] | null;
+        };
+        /** PageFieldIn */
+        PageFieldIn: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Type
+             * @default text
+             */
+            type: string;
+            /**
+             * Required
+             * @default false
+             */
+            required: boolean;
+            /** Options */
+            options?: string[];
+        };
+        /** PlanIn */
+        PlanIn: {
+            /** Fields */
+            fields: components["schemas"]["PageFieldIn"][];
+        };
+        /** FilledIn */
+        FilledIn: {
+            /** Filled */
+            filled?: components["schemas"]["SentField"][];
+        };
+        /** SentField */
+        SentField: {
+            /** Key */
+            key: string;
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+        };
+        /** SubmittedIn */
+        SubmittedIn: {
+            /**
+             * Url
+             * @default
+             */
+            url: string;
+            /**
+             * Text
+             * @default
+             */
+            text: string;
+            /**
+             * Screenshot
+             * @default
+             */
+            screenshot: string;
+            /** Filled */
+            filled?: components["schemas"]["SentField"][] | null;
+            /**
+             * Auto
+             * @default false
+             */
+            auto: boolean;
         };
         /** ContactsImported */
         ContactsImported: {
@@ -2084,6 +2456,21 @@ export interface components {
              * @default 08:00
              */
             quietHoursEnd: string;
+            /**
+             * Applyperemployer
+             * @default 2
+             */
+            applyPerEmployer: number;
+            /**
+             * Applydailycap
+             * @default 25
+             */
+            applyDailyCap: number;
+            /**
+             * Autosubmit
+             * @default false
+             */
+            autoSubmit: boolean;
         };
         /** Slot */
         Slot: {
@@ -2307,6 +2694,20 @@ export interface components {
             status: "preparing" | "needs_answers" | "ready" | "submitted" | "dismissed" | "failed";
             /** Missing */
             missing: number;
+            /** Submittedat */
+            submittedAt: string | null;
+            /** Autosubmitted */
+            autoSubmitted: boolean;
+            /** Confirmationtext */
+            confirmationText: string;
+            /** Confirmationurl */
+            confirmationUrl: string;
+            /** Haspicture */
+            hasPicture: boolean;
+            /** Documentid */
+            documentId: string | null;
+            /** Sent */
+            sent: components["schemas"]["SentAnswer"][];
         };
         /** MatchContact */
         MatchContact: {
@@ -2419,6 +2820,13 @@ export interface components {
              * @enum {string}
              */
             strength: "strong" | "partial";
+        };
+        /** SentAnswer */
+        SentAnswer: {
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
         };
         /** TailoredView */
         TailoredView: {
@@ -2686,6 +3094,7 @@ export interface components {
             recommendation: ("strong" | "apply" | "maybe" | "skip") | null;
             /** Preparedat */
             preparedAt: string | null;
+            resume: components["schemas"]["ApplyResume"];
         };
         /** ApplyPage */
         ApplyPage: {
@@ -2699,6 +3108,22 @@ export interface components {
             preparing: number;
             /** Sent */
             sent: components["schemas"]["ApplySent"][];
+            /** Variants */
+            variants: components["schemas"]["ApplyVariant"][];
+        };
+        /**
+         * ApplyResume
+         * @description Which resume an application sends, and why (`applications/resume.py`, #61).
+         */
+        ApplyResume: {
+            /** Variantid */
+            variantId: string | null;
+            /** Name */
+            name: string;
+            /** Reason */
+            reason: string;
+            /** Choice */
+            choice: string;
         };
         /** ApplySent */
         ApplySent: {
@@ -2723,6 +3148,16 @@ export interface components {
             submittedAt: string;
             /** Postedtoapplieds */
             postedToAppliedS: number | null;
+        };
+        /** ApplyVariant */
+        ApplyVariant: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /** OutcomeBucket */
         OutcomeBucket: {
@@ -2968,6 +3403,27 @@ export interface components {
             /** Usd */
             usd: number;
         };
+        /**
+         * ExtensionTokenRow
+         * @description One of the user's browser-extension tokens (#22). The secret itself was shown once,
+         *     when it was made; only its hash is kept, so there is nothing more to show.
+         */
+        ExtensionTokenRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Lastusedat */
+            lastUsedAt: string | null;
+        };
         /** ModelSpend */
         ModelSpend: {
             /** Provider */
@@ -3059,6 +3515,8 @@ export interface components {
             providers: components["schemas"]["ProviderKeys"];
             /** Ntfyserver */
             ntfyServer: string;
+            /** Extensiontokens */
+            extensionTokens: components["schemas"]["ExtensionTokenRow"][];
         };
         /** SettingsUser */
         SettingsUser: {
@@ -4585,6 +5043,52 @@ export interface operations {
             };
         };
     };
+    apps_applications_api_get_proof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The picture's bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_applications_api_put_resume_choice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResumeChoiceIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
     apps_applications_api_patch_application: {
         parameters: {
             query?: never;
@@ -4597,6 +5101,214 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ApplicationPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_applications_api_post_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenCreated"];
+                };
+            };
+        };
+    };
+    apps_applications_api_delete_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_applications_api_ext_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionMe"];
+                };
+            };
+        };
+    };
+    apps_applications_api_ext_find: {
+        parameters: {
+            query: {
+                url: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FoundOut"];
+                };
+            };
+        };
+    };
+    apps_applications_api_ext_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FillPayload"];
+                };
+            };
+        };
+    };
+    apps_applications_api_ext_resume: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF's bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_applications_api_ext_plan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FillPayload"];
+                };
+            };
+        };
+    };
+    apps_applications_api_ext_filled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FilledIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_applications_api_ext_submitted: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmittedIn"];
             };
         };
         responses: {

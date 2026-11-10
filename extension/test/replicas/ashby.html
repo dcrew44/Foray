@@ -1,0 +1,170 @@
+<!doctype html>
+<!--
+  A hand-written replica of an Ashby application page (jobs.ashbyhq.com/<board>/<id>/application):
+  a page drawn by script after it loads, with no <form>, field entries named by their title
+  labels, Yes / No buttons, a list that opens away from its input, and an "Autofill from
+  resume" upload that must be left alone. None of the site's own scripts or styles; invented
+  questions.
+
+  The posting's own address (without /application) shows an overview with a tab that switches
+  to the form without loading a page, as the real one does.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Platform Engineer @ Northwind Tools</title>
+    <link rel="stylesheet" href="/__replica/replica.css" />
+  </head>
+  <body>
+    <main id="root"></main>
+    <script type="module">
+      import { controlled, el, listCombobox, replica, submit, watchFile } from "/__replica/replica.js";
+
+      const root = document.getElementById("root");
+      const base = location.pathname.replace(/\/application$/, "");
+      const HIDDEN = "border: 0; clip: rect(0, 0, 0, 0); clip-path: inset(50%); height: 1px; overflow: hidden; padding: 0; position: absolute; width: 1px; white-space: nowrap;";
+
+      function entry(path, label, { required = false, tag = "div", kind = "" } = {}, ...children) {
+        return el(
+          tag,
+          { class: `_fieldEntry_1e3gg_28 ${kind || "ashby-application-form-field-entry"}`, "data-field-path": tag === "div" ? path : null },
+          el("label", { class: `_heading_f7cvd_52 ${required ? "_required_f7cvd_91 " : ""}_label_1e3gg_42 ashby-application-form-question-title`, for: path, text: label }),
+          ...children,
+        );
+      }
+
+      function text(path, label, options = {}) {
+        const input = el(options.area ? "textarea" : "input", {
+          id: path,
+          name: path,
+          type: options.area ? null : options.type ?? "text",
+          class: "_input_80epu_28 ashby-application-form-input-text",
+          placeholder: "Type here...",
+          required: options.required,
+        });
+        controlled(input, path);
+        return entry(path, label, options, el("div", {}, input));
+      }
+
+      function yesNo(path, label, options = {}) {
+        replica.state[path] = "";
+        const buttons = ["Yes", "No"].map((answer) =>
+          el("button", { class: "_option_1svni_32 ashby-application-form-input-yesno-option", "aria-pressed": "false", "data-option": answer.toLowerCase(), type: "button", text: answer }),
+        );
+        for (const button of buttons) {
+          button.addEventListener("click", () => {
+            for (const other of buttons) other.setAttribute("aria-pressed", String(other === button));
+            replica.state[path] = button.textContent;
+          });
+        }
+        return entry(
+          path,
+          label,
+          options,
+          el("div", { class: "_yesno_1e3gg_148 ashby-application-form-input-yesno" }, ...buttons, el("input", { type: "checkbox", class: "_input_1svni_78", tabindex: "-1", name: path })),
+        );
+      }
+
+      function choices(path, label, type, answers, options = {}) {
+        replica.state[path] = [];
+        const rows = answers.map((answer, index) => {
+          const id = `e7a0_${path}-labeled-${type}-${index}`;
+          const input = el("input", { type, id, name: type === "radio" ? `e7a0_${path}` : answer });
+          input.addEventListener("change", () => {
+            replica.state[path] = rows.filter((row) => row.querySelector("input").checked).map((row) => row.querySelector("label").textContent);
+          });
+          return el(
+            "div",
+            { class: `_option_1258i_34 ashby-application-form-input-${type}-group-option` },
+            el("span", { class: "_container_1danv_28" }, input),
+            el("label", { for: id, class: `_label_1258i_42 ashby-application-form-input-${type}-group-option-label`, text: answer }),
+          );
+        });
+        return entry(path, label, { ...options, tag: "fieldset", kind: `_container_1258i_28 ashby-application-form-input-${type}-group` }, ...rows);
+      }
+
+      function form() {
+        const autofill = el(
+          "div",
+          { class: "_autofillPane_5yu8i_448 ashby-application-form-autofill-uploader" },
+          el("input", { type: "file", tabindex: "-1", id: "autofill-file", style: HIDDEN }),
+          el("h3", { class: "ashby-application-form-autofill-input-title", text: "Autofill from resume" }),
+          el("button", { type: "button", text: "Upload file" }),
+        );
+        watchFile(autofill.querySelector("input"), "autofill");
+
+        const resume = el("input", { type: "file", tabindex: "-1", id: "_systemfield_resume", required: true, accept: "application/pdf,.pdf,.doc,.docx", style: HIDDEN });
+        watchFile(resume, "_systemfield_resume");
+
+        const location = entry("_systemfield_location", "Current Location", { required: true });
+        listCombobox(location, {
+          key: "_systemfield_location",
+          search: true,
+          options: ["Portland, Maine, United States", "Portland, Oregon, United States", "Portsmouth, New Hampshire, United States"],
+        });
+        const heard = entry("9d1c0000-0000-4000-8000-000000000005", "How did you hear about this job?", { required: true, tag: "fieldset", kind: "_container_wz442_28" });
+        listCombobox(heard, { key: "9d1c0000-0000-4000-8000-000000000005", options: ["A friend", "A job board", "Northwind's own site"] });
+
+        const consent = choices("_systemfield_data_consent_ack", "", "checkbox", ["I agree"]);
+        consent.querySelector("label").after(el("div", { class: "ashby-application-form-question-description" }, el("p", { text: "Do you agree to Northwind keeping your application data?" })));
+
+        const send = el("button", { class: "_button_zyh3g_28 _primary_zyh3g_97 _submitButton_5yu8i_411 ashby-application-form-submit-button", type: "button" }, el("span", { text: "Submit Application" }));
+        send.addEventListener("click", () => {
+          submit();
+          root.querySelector("#form").replaceChildren(
+            el("div", { class: "ashby-application-form-success-container" }, el("h2", { text: "Your application was successfully submitted." }), el("p", { text: "We will be in touch." })),
+          );
+        });
+
+        return el(
+          "div",
+          { id: "form", role: "tabpanel", "aria-labelledby": "job-application-form", tabindex: "0" },
+          autofill,
+          entry("_systemfield_resume", "Resume", { required: true }, el("div", { role: "presentation", class: "ashby-application-form-input-file" }, resume, el("button", { type: "button", text: "Upload File" }))),
+          text("_systemfield_name", "Full Name", { required: true }),
+          text("_systemfield_email", "Email", { required: true, type: "email" }),
+          text("9d1c0000-0000-4000-8000-000000000001", "Phone Number", { type: "tel" }),
+          location,
+          yesNo("9d1c0000-0000-4000-8000-000000000002", "Are you allowed to work where this job is?", { required: true }),
+          yesNo("9d1c0000-0000-4000-8000-000000000003", "Have you worked at Northwind before?", { required: true }),
+          choices("9d1c0000-0000-4000-8000-000000000004", "Which teams interest you?", "checkbox", ["Platform", "Data", "Mobile"]),
+          heard,
+          text("9d1c0000-0000-4000-8000-000000000006", "What would you build first?", { area: true, required: true }),
+          choices("9d1c0000-0000-4000-8000-000000000007", "How do you describe your gender?", "radio", ["Woman", "Man", "Non-binary", "Prefer not to say"]),
+          consent,
+          send,
+        );
+      }
+
+      function draw() {
+        const applying = location.pathname.endsWith("/application");
+        const tab = (id, label, path, active) => {
+          const link = el("a", { id, role: "tab", class: `_tab_5yu8i_29${active ? " _active_5yu8i_56" : ""}`, href: path, text: label });
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            history.pushState({}, "", path);
+            draw();
+          });
+          return link;
+        };
+        root.replaceChildren(
+          el("h1", { class: "ashby-job-posting-heading", text: "Platform Engineer" }),
+          el("nav", { role: "tablist" }, tab("job-overview", "Overview", base, !applying), tab("job-application-form", "Application", `${base}/application`, applying)),
+          applying ? form() : el("div", { id: "overview", role: "tabpanel" }, el("p", { text: "Northwind Tools makes things. This is a test page." })),
+        );
+      }
+
+      // Drawn a moment after the page loads, as a client-rendered page is.
+      setTimeout(draw, 300);
+      window.addEventListener("popstate", draw);
+    </script>
+
+    <!-- The invisible reCAPTCHA: a badge and a challenge frame, both hidden until wanted. -->
+    <div class="grecaptcha-badge" style="visibility: hidden; position: fixed; bottom: 14px; right: 0; width: 256px; height: 60px">
+      <iframe title="reCAPTCHA" src="https://www.recaptcha.net/recaptcha/enterprise/anchor?k=replica"></iframe>
+    </div>
+    <div style="visibility: hidden; position: absolute; top: -10000px">
+      <iframe title="recaptcha challenge expires in two minutes" src="https://www.recaptcha.net/recaptcha/enterprise/bframe?k=replica" style="width: 400px; height: 580px"></iframe>
+    </div>
+  </body>
+</html>

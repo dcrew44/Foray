@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Foray extension settings</title>
+    <link rel="stylesheet" href="../ui/foray.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="../icons/icon-48.png" width="40" height="40" alt="" />
+        <div>
+          <h1>Foray</h1>
+          <p class="muted">
+            Fills application forms with the answers Foray prepared, in your own browser.
+          </p>
+        </div>
+      </header>
+
+      <section aria-labelledby="connect-title">
+        <h2 id="connect-title">Connect to Foray</h2>
+        <p class="muted">
+          Foray runs on your own machine or server. The extension talks to it and to nothing
+          else.
+        </p>
+        <form id="connect" novalidate>
+          <div class="field">
+            <label for="address">Foray address</label>
+            <p class="hint" id="address-hint">
+              The address you open Foray at, for example http://localhost:3000.
+            </p>
+            <input
+              id="address"
+              type="text"
+              inputmode="url"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="http://localhost:3000"
+              aria-describedby="address-hint"
+            />
+          </div>
+          <div class="field">
+            <label for="token">Token</label>
+            <p class="hint" id="token-hint">
+              In Foray, open Settings, find Browser extension and make a token, then paste it
+              here. Foray shows it once, and this page never shows it again.
+            </p>
+            <input
+              id="token"
+              type="password"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="foray_ext_…"
+              aria-describedby="token-hint"
+            />
+          </div>
+          <div class="row">
+            <button type="submit" id="save" class="primary">Save and test connection</button>
+            <button type="button" id="forget" hidden>Disconnect</button>
+          </div>
+          <p id="status" role="status"></p>
+        </form>
+      </section>
+
+      <section aria-labelledby="does-title">
+        <h2 id="does-title">What it does</h2>
+        <ul>
+          <li>
+            On a job application page it asks your Foray whether an application is prepared
+            for that page. If one is, it shows a small panel.
+          </li>
+          <li>
+            When you press Fill the form, it puts the prepared answers into the form and
+            attaches your resume. It marks what it filled and what it left, and stops.
+          </li>
+          <li>You read the form and press submit.</li>
+          <li>
+            When the employer's page confirms the application went in, it tells Foray, with
+            the page's words and, if you started from the toolbar button, a picture of the page.
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="never-title">
+        <h2 id="never-title">What it never does</h2>
+        <ul>
+          <li>
+            It never presses submit, unless you turned that on in Foray's Settings, and then
+            only for an application answered entirely from what you saved. Even then it stops
+            when the page shows a CAPTCHA, a sign-in or an account to create.
+          </li>
+          <li>It never solves or works around a CAPTCHA.</li>
+          <li>It never signs in and never creates an account.</li>
+          <li>
+            It never makes up an answer, and never ticks an agreement box: terms, privacy,
+            marketing.
+          </li>
+          <li>It never disguises itself: no fake typing, no hiding that a script filled a field.</li>
+          <li>It sends nothing anywhere except to your own Foray.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="reach-title">
+        <h2 id="reach-title">What it can reach</h2>
+        <ul>
+          <li>
+            The job boards Foray reads (Greenhouse, Lever, Ashby, Gem, Workable, Recruitee,
+            SmartRecruiters, iCIMS and Workday), to show its panel there.
+          </li>
+          <li>Any other page only when you click Foray in the toolbar on it, and only that tab.</li>
+          <li>Your Foray address, which Chrome asks you to allow when you press Save.</li>
+          <li>The address and token above, kept in this browser profile and nowhere else.</li>
+        </ul>
+      </section>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

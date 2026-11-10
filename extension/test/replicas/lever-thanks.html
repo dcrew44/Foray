@@ -1,0 +1,21 @@
+<!doctype html>
+<!-- A hand-written replica of the page Lever shows after an application (…/thanks). -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Northwind Tools</title>
+    <link rel="stylesheet" href="/__replica/replica.css" />
+  </head>
+  <body>
+    <main>
+      <div class="section page-centered">
+        <h3 data-qa="msg-submit-success">Application submitted!</h3>
+        <p>Thanks for your interest in Northwind Tools.</p>
+      </div>
+    </main>
+    <script type="module">
+      import { replica } from "/__replica/replica.js";
+      Object.assign(replica, JSON.parse(sessionStorage.getItem("replica") ?? "{}"));
+    </script>
+  </body>
+</html>

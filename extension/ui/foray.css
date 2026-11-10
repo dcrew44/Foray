@@ -1,0 +1,134 @@
+/*
+ * Foray's look for the extension's own pages (the popup and the options page). The colours
+ * are the app's tokens (src/app/globals.css), copied here because an extension cannot import
+ * the app's stylesheet. Dark first; light when the system asks for it.
+ */
+:root {
+  color-scheme: dark light;
+  --canvas: #0d1310;
+  --background: #141b17;
+  --card: #172019;
+  --foreground: #e3eae5;
+  --muted-foreground: #92a199;
+  --border: #25302a;
+  --input: #2e3a33;
+  --accent: #1d2a23;
+  --primary: #5dbd91;
+  --primary-foreground: #0a1a12;
+  --success: #5dbd91;
+  --destructive: #e1735e;
+  --signal: #f0b84c;
+  --signal-soft: #372b11;
+  --signal-foreground: #fff3d6;
+  --ring: #5dbd91;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --canvas: #ecefea;
+    --background: #ffffff;
+    --card: #ffffff;
+    --foreground: #17221d;
+    --muted-foreground: #5b6962;
+    --border: #e0e5df;
+    --input: #d6ddd5;
+    --accent: #ebf2ed;
+    --primary: #1e5c45;
+    --primary-foreground: #f3faf6;
+    --success: #2f7a5c;
+    --destructive: #b8432f;
+    --signal: #e2a01a;
+    --signal-soft: #fcf1d8;
+    --signal-foreground: #4a3400;
+    --ring: #2f7a5c;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--foreground);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+p,
+ul {
+  margin: 0;
+}
+
+a {
+  color: var(--primary);
+  text-underline-offset: 3px;
+}
+
+.muted {
+  color: var(--muted-foreground);
+}
+
+.error {
+  color: var(--destructive);
+}
+
+.ok {
+  color: var(--success);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--primary);
+  filter: brightness(1.06);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  font: inherit;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+[hidden] {
+  display: none !important;
+}

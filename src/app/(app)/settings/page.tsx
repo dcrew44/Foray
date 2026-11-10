@@ -4,6 +4,7 @@ import { PageBody, PageHeader, Section, SignalDot, Stat } from "@/components/for
 import { PageNav } from "@/components/profile/page-nav";
 import { BehaviourForm } from "@/components/settings/behaviour-form";
 import { AppearanceForm } from "@/components/settings/appearance-form";
+import { ExtensionForm } from "@/components/settings/extension-form";
 import { NotificationsForm } from "@/components/settings/notifications-form";
 import { SignOutButton } from "@/components/settings/sign-out-button";
 import {
@@ -38,8 +39,9 @@ const EFFORT_LABEL: Record<ReasoningEffort, string> = {
 const PROVIDERS: ProviderId[] = ["openai", "anthropic", "google", "deepseek", "compat"];
 
 /**
- * How the agents behave for the user, where new matches are sent, what they
- * have cost this month, what they run on, and whether the worker is up. One
+ * How the agents behave for the user, where new matches are sent, the browser
+ * extension that fills application forms, what the agents have cost this
+ * month, what they run on, and whether the worker is up. One
  * read of Django's settings page; provider keys never leave the server, only
  * which ones are set.
  */
@@ -89,6 +91,15 @@ export default async function SettingsPage() {
               title="Phone notifications"
             >
               <NotificationsForm initial={settings} server={page.ntfyServer} />
+            </Section>
+          </div>
+
+          <div className="scroll-mt-20 lg:scroll-mt-8" id="extension">
+            <Section
+              description="Fills application forms in your own browser with the answers Foray prepared. You read each form and press submit."
+              title="Browser extension"
+            >
+              <ExtensionForm initial={settings} tokens={page.extensionTokens} />
             </Section>
           </div>
 
@@ -280,6 +291,7 @@ export default async function SettingsPage() {
             items={[
               { id: "behaviour", label: "How Foray works for you" },
               { id: "notifications", label: "Phone notifications" },
+              { id: "extension", label: "Browser extension" },
               { id: "usage", label: "Spend this month", detail: formatUsd(total.usd) },
               { id: "models", label: "Models" },
               { id: "worker", label: "Worker" },

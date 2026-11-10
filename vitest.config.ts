@@ -7,6 +7,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/test/**/*.test.ts"],
+    // The app's pure helpers, and the browser extension's (plain JavaScript, no build step).
+    include: ["src/test/**/*.test.ts", "extension/test/unit/**/*.test.js"],
   },
 });

@@ -96,6 +96,7 @@ def test_user_emails_are_lowercased() -> None:
 # Every column the application stamps itself; each is the database's present by default.
 ROW_STAMPS = {"created_at", "updated_at", "stage_changed_at"}
 STAMPED_COLUMNS = {
+    "extension_tokens.created_at",
     "applications.created_at",
     "applications.updated_at",
     "application_answers.created_at",

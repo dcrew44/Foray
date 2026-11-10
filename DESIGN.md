@@ -755,6 +755,69 @@ Ashby and Lever.
   prepared, became ready, was opened and was sent, which is what posted-to-applied time is
   measured from. No model is involved, and the only request is the GET that reads the form.
 
+  **The browser extension** (#22, #23, `extension/`; [docs/extension.md](docs/extension.md)).
+  A Manifest V3 Chrome extension of plain JavaScript, with no build step and no dependency,
+  so what runs in the user's browser is exactly the files in the repository. It has two
+  halves on purpose. The service worker holds the token and makes every request to Foray
+  (`Authorization: Bearer`, never a cookie); the content scripts run inside employers' pages,
+  in the extension's own world, and are told only what a fill needs: they cannot read the
+  extension's storage, and the worker answers them only for the page Chrome says they are in
+  and the application Foray found for it. The panel they draw lives in a closed shadow root
+  and starts a fill only on a real click, so a page can neither read it nor have its own form
+  filled with the user's answers.
+
+  The fill is deterministic: one strategy per kind of control (text through the element's
+  own value setter, so React notices; `<select>`; radios and tick boxes by their labels;
+  Yes / No buttons; ARIA comboboxes opened and chosen from; a `File` for the resume) and one
+  adapter per board that says where the form is, where a question begins and ends, and what
+  a confirmation looks like. Greenhouse is filled from the plan Foray made ahead, by field
+  name. Lever, Ashby and any other form are read from the page by their labels, planned by
+  the same planner (`POST …/plan`), and filled from the answer; a drop-down that only shows
+  its options when opened is opened once, after the user asked for the fill and not before.
+  Options are matched by their words, never by likeness: an answer no option says is left
+  for the user and the field outlined. Agreements are never ticked, a field with no answer
+  is never touched, and a CAPTCHA that asks for something, a sign-in or an account form ends
+  the extension's part with a sentence saying so.
+
+  Submitting is the user's. The exception is `maySubmit` (#40), which Foray decides per
+  application; the extension still refuses when anything on the page asks for a person,
+  when any answer did not go in, or when a required question is empty, and it reports a
+  press of its own as `auto`.
+
+  Proof of arrival is reported once, and only when three things are true: the extension
+  filled the form in that tab, submit was pressed after that, and the page is then the
+  board's own confirming address or says so in a few fixed phrases with the form gone. A
+  missed confirmation costs one press of "I sent it"; a wrong one would record an
+  application that never went in. The press of submit is noted in the worker and also on
+  the page itself (`sessionStorage`), because the page usually navigates in the same
+  moment and Chrome may have put the worker to sleep while the user read the form. The
+  picture needs `activeTab`: Chrome allows `captureVisibleTab` only on a tab where the user
+  clicked the extension's toolbar button, or with access to every site, which this
+  extension will not ask for. So a fill started from the toolbar is recorded with a
+  picture, and one started from the panel with the page's words alone.
+
+  Its tests load it into a real Chromium against hand-written replicas of the three boards'
+  forms and of an employer's own, served at the boards' addresses with every real host
+  unresolvable, and against a fake Foray; one test uses Django's own API. No test touches a
+  real form, so what differs between a replica and the real page is found on first use:
+  docs/extension.md lists what to look at.
+
+  **The extension's half of the server** (#22, #23, #24, #40,
+  `apps/applications/extension.py`). The extension has no session: it carries a token the
+  user makes in Settings, of which only the SHA-256 is stored, and its routes accept nothing
+  else. It is given one application at a time as a plan to carry out: each field's value, the
+  resume to attach, `blocked` and `may_submit`. Restraint lives on the server: Foray fills at
+  most two applications to one employer in sixty days and twenty-five in a day (both the
+  user's to change), and says why when it will not; applying by hand is never limited. By
+  default the user presses submit. With the auto-submit setting on, the extension may press
+  it for an application in the automated lane whose every answer is the user's own (from the
+  resume, a saved answer, a declined disclosure, the resume file, or an optional field left
+  empty), within those limits; a missing answer, a generated one, another lane, a CAPTCHA,
+  a login or an account to create still stops for the user, and autopilot does not turn it
+  on. When the employer's page confirms, the extension reports it and the application keeps
+  the proof for good: what went into each field, the resume that was attached, the confirming
+  page's address and words and a picture of it. The activity feed says who pressed submit.
+
   It adds the `applications` and `application_answers` tables, the `apply` and
   `career_page_scan` run kinds and the `apply_submit` approval. Tests use local replicas of
   the forms; a real application is submitted only on the user's explicit yes.

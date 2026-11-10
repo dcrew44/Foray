@@ -163,6 +163,8 @@ def _json_number(value: Any) -> Any:
 ScoreThreshold = Annotated[int, Field(ge=0, le=100), BeforeValidator(_json_number)]
 DeepEvalTopN = Annotated[int, Field(ge=0, le=60), BeforeValidator(_json_number)]
 WatchDailyReviews = Annotated[int, Field(ge=0, le=60), BeforeValidator(_json_number)]
+ApplyPerEmployer = Annotated[int, Field(ge=1, le=10), BeforeValidator(_json_number)]
+ApplyDailyCap = Annotated[int, Field(ge=1, le=100), BeforeValidator(_json_number)]
 
 
 def _trimmed(value: Any) -> Any:
@@ -197,6 +199,9 @@ class SettingsPatch(ApiModel):
     ntfy_topic: NtfyTopic | SkipJsonSchema[None] = None  # "" turns phone notifications off
     quiet_hours_start: ClockTime | SkipJsonSchema[None] = None
     quiet_hours_end: ClockTime | SkipJsonSchema[None] = None
+    apply_per_employer: ApplyPerEmployer | SkipJsonSchema[None] = None
+    apply_daily_cap: ApplyDailyCap | SkipJsonSchema[None] = None
+    auto_submit: StrictBool | SkipJsonSchema[None] = None
     # Not one of the stored settings: the browser's IANA zone, kept on `users.timezone` (as the
     # chat view keeps it), which is the clock quiet hours are read on.
     time_zone: TimeZone | SkipJsonSchema[None] = None
@@ -219,6 +224,9 @@ class SettingsOut(ApiModel):
     ntfy_topic: str
     quiet_hours_start: str
     quiet_hours_end: str
+    apply_per_employer: int
+    apply_daily_cap: int
+    auto_submit: bool
     time_zone: str  # `users.timezone`: the clock quiet hours are read on
 
 

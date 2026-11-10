@@ -7,6 +7,7 @@ import type { components } from "@/lib/api/schema";
 export type ApplyItem = components["schemas"]["ApplyItem"];
 export type ApplyAnswer = components["schemas"]["ApplyAnswer"];
 export type ApplySent = components["schemas"]["ApplySent"];
+export type ApplyVariant = components["schemas"]["ApplyVariant"];
 
 /** The required questions nothing could be put in: what the user has to answer. */
 export function missingAnswers(answers: readonly ApplyAnswer[]): ApplyAnswer[] {

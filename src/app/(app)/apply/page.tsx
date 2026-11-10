@@ -20,7 +20,7 @@ type ApplyPageData = components["schemas"]["ApplyPage"];
  */
 export default async function ApplyPage() {
   const page = await django<ApplyPageData>("/api/pages/apply");
-  const { ready, needsAnswers, failed, preparing, sent } = page;
+  const { ready, needsAnswers, failed, preparing, sent, variants } = page;
   const nothing = ready.length + needsAnswers.length + failed.length + preparing + sent.length === 0;
 
   return (
@@ -53,7 +53,7 @@ export default async function ApplyPage() {
             >
               <div className="space-y-3">
                 {ready.map((item) => (
-                  <ApplicationCard item={item} key={item.id} />
+                  <ApplicationCard item={item} key={item.id} variants={variants} />
                 ))}
               </div>
             </Section>
@@ -66,7 +66,7 @@ export default async function ApplyPage() {
             >
               <div className="space-y-3">
                 {needsAnswers.map((item) => (
-                  <ApplicationCard item={item} key={item.id} />
+                  <ApplicationCard item={item} key={item.id} variants={variants} />
                 ))}
               </div>
             </Section>
@@ -76,7 +76,7 @@ export default async function ApplyPage() {
             <Section title={`Could not be read (${failed.length})`}>
               <div className="space-y-3">
                 {failed.map((item) => (
-                  <ApplicationCard item={item} key={item.id} />
+                  <ApplicationCard item={item} key={item.id} variants={variants} />
                 ))}
               </div>
             </Section>

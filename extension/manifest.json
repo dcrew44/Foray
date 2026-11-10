@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Foray",
+  "version": "0.1.0",
+  "description": "Puts the answers Foray prepared into a job application form, in your own browser. You read the form and press submit.",
+  "minimum_chrome_version": "120",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Fill this page with Foray",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://boards.greenhouse.io/*",
+        "https://job-boards.greenhouse.io/*",
+        "https://boards.eu.greenhouse.io/*",
+        "https://job-boards.eu.greenhouse.io/*",
+        "https://jobs.lever.co/*",
+        "https://jobs.eu.lever.co/*",
+        "https://jobs.ashbyhq.com/*",
+        "https://jobs.gem.com/*",
+        "https://apply.workable.com/*",
+        "https://*.recruitee.com/*",
+        "https://jobs.smartrecruiters.com/*",
+        "https://careers.smartrecruiters.com/*",
+        "https://*.icims.com/*",
+        "https://*.myworkdayjobs.com/*",
+        "https://*.myworkdaysite.com/*"
+      ],
+      "js": [
+        "content/text.js",
+        "content/dom.js",
+        "content/controls.js",
+        "content/reader.js",
+        "content/boards.js",
+        "content/handoff.js",
+        "content/panel.js",
+        "content/fill.js",
+        "content/main.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://boards.greenhouse.io/embed/job_app*",
+        "https://job-boards.greenhouse.io/embed/job_app*",
+        "https://boards.eu.greenhouse.io/embed/job_app*",
+        "https://job-boards.eu.greenhouse.io/embed/job_app*"
+      ],
+      "js": [
+        "content/text.js",
+        "content/dom.js",
+        "content/controls.js",
+        "content/reader.js",
+        "content/boards.js",
+        "content/handoff.js",
+        "content/panel.js",
+        "content/fill.js",
+        "content/main.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

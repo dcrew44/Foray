@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+  A page that wants a person before it shows any form: a sign-in, or with `?create=1` an
+  account to make. Hand-written; it stands for the step some application sites put first.
+  Foray fills nothing here and types no password.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sign in | Northwind Tools careers</title>
+    <link rel="stylesheet" href="/__replica/replica.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Platform Engineer</h1>
+      <form id="account" action="/session" method="post"></form>
+    </main>
+    <script type="module">
+      import { el, replica, submit } from "/__replica/replica.js";
+
+      const creating = new URLSearchParams(location.search).has("create");
+      const form = document.getElementById("account");
+      const field = (id, label, type) => [el("label", { for: id, text: label }), el("input", { id, name: id, type })];
+      form.append(
+        el("h2", { text: creating ? "Create account" : "Sign in" }),
+        ...field("email", "Email address", "email"),
+        ...field("password", "Password", "password"),
+        ...(creating ? field("verify", "Verify new password", "password") : []),
+        el("button", { type: "submit", text: creating ? "Create account" : "Sign in" }),
+      );
+      const read = () => Object.fromEntries(new FormData(form));
+      Object.defineProperty(replica, "state", { get: read });
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        submit(read());
+      });
+    </script>
+  </body>
+</html>

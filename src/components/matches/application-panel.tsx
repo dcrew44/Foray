@@ -85,8 +85,80 @@ export function ApplicationPanel({
           >
             {application.status === "ready" ? "Review and send" : "Answer on the Apply page"}
           </Button>
+        ) : application.status === "submitted" ? (
+          <Proof application={application} />
         ) : null}
       </div>
     </Section>
+  );
+}
+
+/**
+ * Proof of arrival (#23): when it went, who pressed submit, what the employer's page said,
+ * the picture of that page, the resume that was attached and what went into the form.
+ */
+function Proof({ application }: { application: MatchApplication }) {
+  const { submittedAt, confirmationText, hasPicture, documentId, sent } = application;
+  return (
+    <div className="space-y-3">
+      <dl>
+        {submittedAt && (
+          <div className="flex justify-between gap-4 border-b py-2">
+            <dt className="text-muted-foreground">Sent</dt>
+            <dd className="tabular text-right">
+              {new Date(submittedAt).toLocaleString("en-US", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </dd>
+          </div>
+        )}
+        <div className="flex justify-between gap-4 border-b py-2 last:border-b-0">
+          <dt className="text-muted-foreground">Submit pressed by</dt>
+          <dd className="text-right">{application.autoSubmitted ? "Foray, as you allowed" : "You"}</dd>
+        </div>
+      </dl>
+      {confirmationText && (
+        <blockquote className="text-muted-foreground border-l-2 pl-3 leading-snug">
+          {confirmationText.length > 280 ? `${confirmationText.slice(0, 280)}…` : confirmationText}
+        </blockquote>
+      )}
+      <ul className="space-y-1">
+        {hasPicture && (
+          <li>
+            <a
+              className="underline"
+              href={`/api/applications/${application.id}/proof`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              The confirmation page as it looked
+            </a>
+          </li>
+        )}
+        {documentId && (
+          <li>
+            <a className="underline" href={`/api/documents/${documentId}`} rel="noreferrer" target="_blank">
+              The resume that was attached
+            </a>
+          </li>
+        )}
+      </ul>
+      {sent.length > 0 && (
+        <details>
+          <summary className="cursor-pointer select-none">
+            What went into the form ({plural(sent.length, "field")})
+          </summary>
+          <dl className="mt-2 divide-y">
+            {sent.map((item, index) => (
+              <div className="py-1.5" key={`${item.label}-${index}`}>
+                <dt className="text-muted-foreground">{item.label}</dt>
+                <dd className="break-words whitespace-pre-wrap">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
+    </div>
   );
 }

@@ -365,7 +365,7 @@ def test_the_apply_page_lists_what_is_ready_oldest_posting_first(
     make_application(make_user(), status="ready")  # someone else's
 
     client = signed_in(user)
-    with django_assert_num_queries(2 + 2):  # the page's two, after the session and the user
+    with django_assert_num_queries(3 + 2):  # the page's three, after the session and the user
         page = get_page(client, "/api/pages/apply").json()
 
     assert [item["title"] for item in page["ready"]] == [
@@ -384,11 +384,13 @@ def test_the_apply_page_lists_what_is_ready_oldest_posting_first(
 
     # The match page says where its application stands.
     match_page = get_page(client, f"/api/pages/matches/{waiting.match_id}").json()
-    assert match_page["match"]["application"] == {
-        "id": str(waiting.id),
-        "status": "needs_answers",
-        "missing": len(missing),
-    }
+    stands = match_page["match"]["application"]
+    assert (stands["id"], stands["status"], stands["missing"]) == (
+        str(waiting.id),
+        "needs_answers",
+        len(missing),
+    )
+    assert (stands["submittedAt"], stands["sent"], stands["hasPicture"]) == (None, [], False)
 
 
 @pytest.mark.django_db

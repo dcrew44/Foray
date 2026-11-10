@@ -27,6 +27,7 @@ import {
   sourceLabel,
   type ApplyAnswer,
   type ApplyItem,
+  type ApplyVariant,
 } from "@/lib/apply";
 import { formatLocation, plural, postedLabel, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,13 @@ type Action = "dismiss" | "opened" | "submitted" | "reopen";
  * still missing, and what the user can do. Nothing here sends anything to an
  * employer: "Open the form" opens the employer's page, and the user submits.
  */
-export function ApplicationCard({ item }: { item: ApplyItem }) {
+export function ApplicationCard({
+  item,
+  variants,
+}: {
+  item: ApplyItem;
+  variants: ApplyVariant[];
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -132,6 +139,10 @@ export function ApplicationCard({ item }: { item: ApplyItem }) {
         </div>
       )}
 
+      {item.status !== "failed" && (
+        <ResumeChoice applicationId={item.id} resume={item.resume} variants={variants} />
+      )}
+
       {missing.length > 0 && (
         <div className="space-y-4 border-t px-5 py-4">
           <p className="text-[13px] font-medium">
@@ -185,6 +196,72 @@ export function ApplicationCard({ item }: { item: ApplyItem }) {
         </Button>
       </div>
     </article>
+  );
+}
+
+/**
+ * Which resume this application sends (#61): the variant the posting's title chose, why,
+ * and the others to switch to. With no variants there is only the full resume, and nothing
+ * to choose.
+ */
+function ResumeChoice({
+  applicationId,
+  resume,
+  variants,
+}: {
+  applicationId: string;
+  resume: ApplyItem["resume"];
+  variants: ApplyVariant[];
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const id = `resume-${applicationId}`;
+
+  function choose(choice: string) {
+    startTransition(async () => {
+      const result = await call(
+        api.PUT("/api/applications/{id}/resume", {
+          params: { path: { id: applicationId } },
+          body: { choice },
+        }),
+      );
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t px-5 py-3 text-[13px]">
+      <label className="text-muted-foreground" htmlFor={id}>
+        Resume
+      </label>
+      {variants.length === 0 ? (
+        <span>{resume.name}</span>
+      ) : (
+        <select
+          className="hover:border-border h-7 rounded-md border border-transparent bg-transparent px-1.5 text-[13px]"
+          disabled={pending}
+          id={id}
+          onChange={(event) => choose(event.target.value)}
+          value={resume.choice}
+        >
+          <option value="">
+            {resume.choice === "" ? `${resume.name} (chosen for you)` : "Let the title decide"}
+          </option>
+          <option value="base">Full resume</option>
+          {variants.map((variant) => (
+            <option key={variant.id} value={variant.id}>
+              {variant.name}
+            </option>
+          ))}
+        </select>
+      )}
+      <span className="text-muted-foreground min-w-0">{resume.reason}</span>
+    </div>
   );
 }
 

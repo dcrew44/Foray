@@ -32,6 +32,8 @@ export type Slot = S["Slot"];
 export type Settings = S["Settings"];
 /** The settings as the Settings page and `PATCH /api/settings` give them: with `timeZone`. */
 export type SavedSettings = S["SettingsOut"];
+/** One of the browser extension's tokens, as Settings lists it: never the secret. */
+export type ExtensionToken = S["ExtensionTokenRow"];
 
 // Run outputs and event data. `LiveRun.output` and `LiveEvent.data` are open objects; these are
 // the shapes the components that started a run read from its ending event.

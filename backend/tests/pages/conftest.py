@@ -21,7 +21,7 @@ from django.test import Client
 from django.utils import timezone
 
 from apps.accounts.models import User
-from apps.applications.models import Application
+from apps.applications.models import Application, ExtensionToken
 from apps.chat.models import Conversation
 from apps.contacts.models import Contact, OutreachNote
 from apps.jobs.models import Company, Job
@@ -36,6 +36,7 @@ from tests.factories import (
     make_conversation,
     make_document,
     make_event,
+    make_extension_token,
     make_job,
     make_llm_call,
     make_match,
@@ -108,6 +109,7 @@ class Graph:
     application: Application
     contact: Contact
     note: OutreachNote
+    token: ExtensionToken
 
     @property
     def markers(self) -> list[str]:
@@ -383,4 +385,5 @@ def full_graph(
         application=application,
         contact=contact,
         note=note,
+        token=make_extension_token(user, label=f"{marker}'s laptop"),
     )

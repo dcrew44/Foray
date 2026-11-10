@@ -54,7 +54,9 @@ from apps.pages.schemas import (
     ApplyAnswer,
     ApplyItem,
     ApplyPage,
+    ApplyResume,
     ApplySent,
+    ApplyVariant,
     BaseVersion,
     ChatPage,
     ChatSuggestion,
@@ -86,6 +88,7 @@ from apps.pages.schemas import (
     ReviewCost,
     RunSummary,
     SavedAnswer,
+    SentAnswer,
     SettingsPage,
     SettingsUser,
     StageCounts,
@@ -94,7 +97,7 @@ from apps.pages.schemas import (
     VariantPdf,
 )
 from apps.resumes import variants as resume_variants
-from apps.resumes.models import Resume, ResumeKind
+from apps.resumes.models import Resume, ResumeKind, ResumeVariant
 from apps.resumes.schema import Resume as ResumeData
 from apps.runs.catalogue import ApprovalStatus, RunKind, RunStatus
 from apps.runs.live import to_live_run
@@ -816,16 +819,23 @@ def _apply_item(application: Application) -> ApplyItem:
         deep_score=match.deep_score,
         recommendation=_recommendation(match.deep_eval),
         prepared_at=application.prepared_at,
+        resume=ApplyResume(
+            variant_id=application.variant_id,
+            name=application.variant.name if application.variant else "Full resume",
+            reason=application.resume_reason,
+            choice=application.resume_choice,
+        ),
     )
 
 
 def apply_page(user: User) -> ApplyPage:
-    """What is ready to send, oldest posting first, then what waits on an answer (#62). Two
-    queries: the open applications with their matches and postings, and the newest sent."""
+    """What is ready to send, oldest posting first, then what waits on an answer (#62). Three
+    queries: the open applications with their matches, postings and chosen variants, the newest
+    sent, and the user's variants."""
     opened = list(
         Application.objects.for_user(user.pk)
         .filter(status__in=["preparing", "needs_answers", "ready", "failed"])
-        .select_related("match__job")
+        .select_related("match__job", "variant")
         .order_by(Coalesce("match__job__posted_at", "match__job__first_seen_at"), "id")[
             :APPLY_LIMIT
         ]
@@ -856,6 +866,10 @@ def apply_page(user: User) -> ApplyPage:
             )
             for item in sent
         ],
+        variants=[
+            ApplyVariant(id=variant.id, name=variant.name)
+            for variant in ResumeVariant.objects.for_user(user.pk).order_by("created_at", "id")
+        ],
     )
 
 
@@ -873,10 +887,25 @@ def _match_application(match: JobMatch) -> MatchApplication | None:
         application: Application = match.application  # pyright: ignore[reportAttributeAccessIssue]
     except Application.DoesNotExist:
         return None
+    sent = application.sent_answers if isinstance(application.sent_answers, list) else []
     return MatchApplication(
         id=application.id,
         status=cast(Any, application.status),
         missing=len(missing_of(application.answers)),
+        submitted_at=application.submitted_at,
+        auto_submitted=application.auto_submitted,
+        confirmation_text=application.confirmation_text,
+        confirmation_url=application.confirmation_url,
+        has_picture=bool(application.confirmation_image),
+        document_id=application.document_id,
+        sent=[
+            SentAnswer(
+                label=str(item.get("label") or item.get("key") or ""),
+                value=str(item.get("value") or ""),
+            )
+            for item in sent
+            if isinstance(item, dict)
+        ],
     )
 
 

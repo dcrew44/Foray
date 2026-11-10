@@ -159,12 +159,26 @@ class MatchesPage(ApiModel):
 # --- /pages/matches/{id} -------------------------------------------------------------------------
 
 
+class SentAnswer(ApiModel):
+    label: str
+    value: str
+
+
 class MatchApplication(ApiModel):
     """The match's application, when one has been prepared or is being (#60)."""
 
     id: uuid.UUID
     status: ApplicationStatusName
     missing: int  # required questions with no answer yet
+    # Proof of arrival (#23), once it was sent: when, who pressed submit, what the employer's
+    # page said, whether a picture of it is on file, and what went into the form.
+    submitted_at: datetime | None
+    auto_submitted: bool
+    confirmation_text: str
+    confirmation_url: str
+    has_picture: bool
+    document_id: uuid.UUID | None  # the resume PDF that was attached
+    sent: list[SentAnswer]
 
 
 class MatchDetail(ApiModel):
@@ -384,6 +398,20 @@ class ApplyAnswer(ApiModel):
     source: Literal["profile", "file", "saved", "declined", "skipped", "missing"]
 
 
+class ApplyResume(ApiModel):
+    """Which resume an application sends, and why (`applications/resume.py`, #61)."""
+
+    variant_id: uuid.UUID | None  # null: the full resume
+    name: str  # the variant's name, or "Full resume"
+    reason: str
+    choice: str  # the user's own: "" (automatic), "base", or a variant's id
+
+
+class ApplyVariant(ApiModel):
+    id: uuid.UUID
+    name: str
+
+
 class ApplyItem(ApiModel):
     id: uuid.UUID
     match_id: uuid.UUID
@@ -403,6 +431,7 @@ class ApplyItem(ApiModel):
     deep_score: int | None
     recommendation: Recommendation | None
     prepared_at: datetime | None
+    resume: ApplyResume
 
 
 class ApplySent(ApiModel):
@@ -422,6 +451,7 @@ class ApplyPage(ApiModel):
     failed: list[ApplyItem]
     preparing: int
     sent: list[ApplySent]  # newest first, at most 20
+    variants: list[ApplyVariant]  # the user's resume variants, to switch an application to
 
 
 # --- /pages/outcomes -----------------------------------------------------------------------------

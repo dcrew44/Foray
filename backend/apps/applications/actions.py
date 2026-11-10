@@ -19,10 +19,13 @@ from apps.applications.forms import FormField
 from apps.applications.models import AnswerKind, Application, ApplicationStatus
 from apps.matching import queries as match_queries
 from apps.matching.models import Stage
+from apps.runs.events import emit
 
 __all__ = ["AnswerRefused", "answer", "dismiss", "mark_opened", "mark_submitted", "reopen"]
 
 S = ApplicationStatus
+# In the activity feed when an application goes out, whoever pressed submit.
+SUBMITTED_EVENT = "application.submitted"
 WAITING = (S.NEEDS_ANSWERS, S.READY)
 
 
@@ -31,7 +34,12 @@ class AnswerRefused(Exception):
 
 
 def _mine(user_id: str, application_id: uuid.UUID | str) -> Application | None:
-    return Application.objects.for_user(user_id).filter(id=application_id).first()
+    return (
+        Application.objects.for_user(user_id)
+        .filter(id=application_id)
+        .select_related("match__job")
+        .first()
+    )
 
 
 def answer(user_id: str, application_id: uuid.UUID | str, key: str, value: str) -> bool | None:
@@ -100,6 +108,13 @@ def mark_submitted(user_id: str, application_id: uuid.UUID | str) -> bool:
         )
         if updated:
             match_queries.set_match_stage(user_id, application.match_id, Stage.APPLIED)
+            job = application.match.job
+            emit(
+                user_id,
+                SUBMITTED_EVENT,
+                f"You sent your application to {job.company_name} for {job.title}.",
+                data={"applicationId": str(application.id), "auto": False},
+            )
     return bool(updated)
 
 

@@ -341,6 +341,7 @@ FACTORIES: dict[str, Callable[[User], models.Model]] = {
     "backlog": lambda _: f.make_backlog(),
     "answer": lambda u: f.make_answer(u),
     "application": lambda u: f.make_application(u),
+    "extension_token": lambda u: f.make_extension_token(u),
     "job": lambda _: f.make_job(),
     "careers_job": lambda _: f.make_job(company=f.make_company(source_type="careers_page")),
     "match": lambda u: f.make_match(u, fast_score=70, deep_score=82),
@@ -422,6 +423,9 @@ def test_stored_keys_keep_todays_spelling() -> None:
         "ntfyTopic",
         "quietHoursStart",
         "quietHoursEnd",
+        "applyPerEmployer",
+        "applyDailyCap",
+        "autoSubmit",
     ]
     assert list(Preferences().dump()) == [
         "target_roles",

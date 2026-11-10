@@ -80,6 +80,14 @@ class Settings(DefaultedJsonModel):
     # and go out when the second comes. The same time twice means no quiet hours.
     quiet_hours_start: str = Field(default="22:00", pattern=CLOCK_PATTERN)
     quiet_hours_end: str = Field(default="08:00", pattern=CLOCK_PATTERN)
+    # Restraint (#24): how many applications Foray will fill for one employer in sixty days,
+    # and for anyone in a day. Applying by hand is never limited.
+    apply_per_employer: int = Field(default=2, ge=1, le=10)
+    apply_daily_cap: int = Field(default=25, ge=1, le=100)
+    # Off unless the user turns it on (#40): let the extension press submit itself on an
+    # automated-lane application whose every answer is the user's own. Autopilot does not
+    # imply it.
+    auto_submit: bool = False
 
 
 # Complete preferences for throwaway users: `create_test_user --with-resume` and

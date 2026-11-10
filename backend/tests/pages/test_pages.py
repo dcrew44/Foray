@@ -79,7 +79,7 @@ BUDGETS = {
     # One more than before #21 (the saved answers), and two more for #61: the resume variants,
     # and the newest rendered snapshot of each (not read when there are no variants).
     "profile": 8,
-    "apply": 2,
+    "apply": 3,  # the open applications, the newest sent, and the user's variants
     # One for each part (#65, #6): the spans, the buckets, the grouped count behind the funnel.
     "outcomes": 3,
     "settings": 6,
@@ -242,6 +242,9 @@ def test_home_page() -> None:
         "ntfyTopic": "",
         "quietHoursStart": "22:00",
         "quietHoursEnd": "08:00",
+        "applyPerEmployer": 2,
+        "applyDailyCap": 25,
+        "autoSubmit": False,
     }
     assert body["counts"] == {
         "found": 1,
@@ -1026,6 +1029,9 @@ def test_settings_page() -> None:
         "ntfyTopic": "",
         "quietHoursStart": "22:00",
         "quietHoursEnd": "08:00",
+        "applyPerEmployer": 2,
+        "applyDailyCap": 25,
+        "autoSubmit": False,
         "timeZone": "UTC",  # `users.timezone`: the clock quiet hours are read on
     }
     assert body["spend"] == {

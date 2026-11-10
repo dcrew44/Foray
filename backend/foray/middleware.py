@@ -78,6 +78,21 @@ def _allowed(origin: str | None) -> bool:
     return origin is not None and origin in {o.lower() for o in settings.ALLOWED_ORIGINS}
 
 
+EXTENSION_PREFIX = "/api/extension/"
+
+
+def is_extension_call(request: HttpRequest) -> bool:
+    """A request from the browser extension (#22): under its own routes, signed with a bearer
+    token and carrying no session cookie. Those routes accept nothing but the token, which no
+    browser attaches on its own, so there is nothing for a cross-site page to ride on, and the
+    extension's own origin (`chrome-extension://…`) could never be on the allow-list."""
+    return (
+        request.path_info.startswith(EXTENSION_PREFIX)
+        and request.headers.get("Authorization", "").startswith("Bearer ")
+        and settings.SESSION_COOKIE_NAME not in request.COOKIES
+    )
+
+
 def cross_site(request: HttpRequest) -> bool:
     """Whether an unsafe `/api/` request must be refused:
 
@@ -86,8 +101,12 @@ def cross_site(request: HttpRequest) -> bool:
     - otherwise, with no `Origin`, the `Referer`'s origin must be allowed;
     - otherwise a request with neither header passes only if it carries no session cookie (curl,
       tests), because a browser always sends one of them on these methods.
+
+    A call from the browser extension is none of this business (`is_extension_call`).
     """
     if request.method not in UNSAFE_METHODS or not request.path_info.startswith("/api/"):
+        return False
+    if is_extension_call(request):
         return False
     if request.headers.get("Sec-Fetch-Site", "").strip().lower() == "cross-site":
         return True

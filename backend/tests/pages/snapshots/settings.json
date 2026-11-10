@@ -51,6 +51,9 @@
     "perItemUsd": "number"
   },
   "settings": {
+    "applyDailyCap": "number",
+    "applyPerEmployer": "number",
+    "autoSubmit": "boolean",
     "deepEvalTopN": "number",
     "defaultMode": "string",
     "ntfyTopic": "string",

@@ -39,6 +39,7 @@ from django.db.models.functions import Now
 from procrastinate.exceptions import AlreadyEnqueued
 
 from apps.applications import answers as saved_answers
+from apps.applications import resume
 from apps.applications.forms import Form, FormField, FormNotFound, read_form
 from apps.applications.models import Application, ApplicationStatus
 from apps.core.db import db
@@ -326,6 +327,9 @@ def _save(application: Application, form: Form, planned: list[Planned]) -> str:
             )
         )
         if updated:
+            # Which resume it sends, by the posting's title, and its PDF on the way (#61).
+            resume.assign(application.user_id, application)
+            resume.ensure_pdf(application.user_id, application)
             emit(
                 application.user_id,
                 PREPARED_EVENT,

@@ -206,6 +206,8 @@ def test_every_parameterless_get_answers_camel_case() -> None:
     for path, _, operation in _operations():
         if "GET" not in operation.methods or "{" in path or not operation.include_in_schema:
             continue
+        if path.startswith("/extension/"):
+            continue  # a bearer token's routes: `tests/applications/test_extension.py`
         response = client.get(f"/api{path}")
         assert response.status_code == 200, f"GET /api{path} answered {response.status_code}"
         assert response["Content-Type"].startswith("application/json")

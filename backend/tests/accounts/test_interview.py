@@ -227,6 +227,9 @@ def test_onboarding_without_a_resume(django_assert_max_num_queries: Any) -> None
         "ntfyTopic",
         "quietHoursStart",
         "quietHoursEnd",
+        "applyPerEmployer",
+        "applyDailyCap",
+        "autoSubmit",
     }
     assert set(wire["progress"]) == {
         "filled",
@@ -397,6 +400,9 @@ def test_patch_settings_merges_partial_updates(signed_in: Any) -> None:
             "ntfyTopic": "",
             "quietHoursStart": "22:00",
             "quietHoursEnd": "08:00",
+            "applyPerEmployer": 2,
+            "applyDailyCap": 25,
+            "autoSubmit": False,
             "timeZone": "UTC",
         },
     }
@@ -413,6 +419,9 @@ def test_patch_settings_merges_partial_updates(signed_in: Any) -> None:
         "ntfyTopic": "",
         "quietHoursStart": "22:00",
         "quietHoursEnd": "08:00",
+        "applyPerEmployer": 2,
+        "applyDailyCap": 25,
+        "autoSubmit": False,
     }
     # The time zone is the user's column, not one of the stored settings.
     assert second.json()["settings"] == {**saved, "timeZone": "UTC"}

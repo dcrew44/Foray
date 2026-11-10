@@ -74,6 +74,8 @@ ROUTES: tuple[Route, ...] = (
         "application",
         {"key": "question_1", "value": "It is the work I want."},
     ),
+    Route("GET", "/api/applications/{id}/proof", "application", owner_status=404),
+    Route("PUT", "/api/applications/{id}/resume", "application", {"choice": "base"}),
     Route("PATCH", "/api/applications/{id}", "application", {"action": "dismiss"}),
     Route("PATCH", "/api/variants/{id}", "variant", {"keywords": ["backend"], "isDefault": True}),
     Route("POST", "/api/variants/{id}/render", "variant", {}, 202),
@@ -81,6 +83,7 @@ ROUTES: tuple[Route, ...] = (
     Route("PATCH", "/api/outreach/{id}", "note", {"body": "My own words."}),
     Route("DELETE", "/api/outreach/{id}", "note"),
     Route("DELETE", "/api/contacts/{id}", "contact"),
+    Route("DELETE", "/api/extension-tokens/{id}", "token"),
     Route("DELETE", "/api/conversations/{id}", "conversation"),
 )
 
@@ -90,6 +93,9 @@ SHARED = {
     ("POST", "/api/companies/{slug}/refresh"),
 }
 
+# The browser extension's routes take a bearer token, never a session: a signed-in browser gets
+# a 401 from all of them, and `tests/applications/test_extension.py` sweeps them with tokens.
+TOKEN = "/api/extension/"
 # List endpoints that have no per-user rows to show A, so they cannot show A's texts either.
 NOT_PERSONAL = {"/api/health", "/api/auth/config", "/api/pages/companies"}
 # Per-user answers made only of counts and durations: they hold nobody's ids or texts, so the
@@ -117,7 +123,7 @@ def _list_endpoints() -> list[str]:
     return sorted(
         path
         for path, operations in _schema()["paths"].items()
-        if "get" in operations and not _PATH_PARAM.search(path)
+        if "get" in operations and not _PATH_PARAM.search(path) and not path.startswith(TOKEN)
     )
 
 
@@ -197,7 +203,8 @@ def _leaks(body: str, graph: Graph) -> list[str]:
 def test_every_path_id_route_is_listed() -> None:
     listed = {(route.method, route.path) for route in ROUTES}
     assert not listed & SHARED
-    assert listed | SHARED == _path_id_operations(), (
+    by_token = {operation for operation in _path_id_operations() if operation[1].startswith(TOKEN)}
+    assert listed | SHARED | by_token == _path_id_operations(), (
         "a route with a path id must be in ROUTES (per-user) or SHARED (the mirror)"
     )
 

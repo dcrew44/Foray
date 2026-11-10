@@ -31,11 +31,23 @@
       "preparedAt": "string",
       "recommendation": "null",
       "remote": "string",
+      "resume": {
+        "choice": "string",
+        "name": "string",
+        "reason": "string",
+        "variantId": "null"
+      },
       "status": "string",
       "title": "string"
     }
   ],
   "preparing": "number",
   "ready": [],
-  "sent": []
+  "sent": [],
+  "variants": [
+    {
+      "id": "string",
+      "name": "string"
+    }
+  ]
 }

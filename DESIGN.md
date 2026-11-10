@@ -755,6 +755,22 @@ Ashby and Lever.
   prepared, became ready, was opened and was sent, which is what posted-to-applied time is
   measured from. No model is involved, and the only request is the GET that reads the form.
 
+  **The extension's half of the server** (#22, #23, #24, #40,
+  `apps/applications/extension.py`). The extension has no session: it carries a token the
+  user makes in Settings, of which only the SHA-256 is stored, and its routes accept nothing
+  else. It is given one application at a time as a plan to carry out: each field's value, the
+  resume to attach, `blocked` and `may_submit`. Restraint lives on the server: Foray fills at
+  most two applications to one employer in sixty days and twenty-five in a day (both the
+  user's to change), and says why when it will not; applying by hand is never limited. By
+  default the user presses submit. With the auto-submit setting on, the extension may press
+  it for an application in the automated lane whose every answer is the user's own (from the
+  resume, a saved answer, a declined disclosure, the resume file, or an optional field left
+  empty), within those limits; a missing answer, a generated one, another lane, a CAPTCHA,
+  a login or an account to create still stops for the user, and autopilot does not turn it
+  on. When the employer's page confirms, the extension reports it and the application keeps
+  the proof for good: what went into each field, the resume that was attached, the confirming
+  page's address and words and a picture of it. The activity feed says who pressed submit.
+
   It adds the `applications` and `application_answers` tables, the `apply` and
   `career_page_scan` run kinds and the `apply_submit` approval. Tests use local replicas of
   the forms; a real application is submitted only on the user's explicit yes.

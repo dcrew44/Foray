@@ -287,6 +287,17 @@ An issue reads like the ones already there:
   you change them on purpose. Keep every field of a contact out of a run's input, output
   and event messages (the chat agent's tools read those), and add nothing that sends a
   note or contacts anyone: the user copies it and sends it themself.
+- **The browser extension signs in with a token, and the server decides what it may do**
+  (`apps/applications/extension.py`, #22, #23, #24, #40). Its routes live under
+  `/api/extension/`, take only `Authorization: Bearer` (never a session; a request carrying
+  the session cookie is refused) and are exempt from the Origin check for that reason
+  (`middleware.is_extension_call`). The extension is given `payload()` and nothing else:
+  `blocked` (the limits in Settings: per employer in 60 days, and per day) and `may_submit`
+  (off unless the user's `autoSubmit` is on, the match is in the automated lane and every
+  answer's source is in `OWN_ANSWERS`) are worked out here, never in the extension, and "sent
+  on its own" is recorded only when the server's rule allowed it. A new answer source is not
+  auto-submittable until it is added to `OWN_ANSWERS` on purpose. New routes there go in the
+  token sweep in `tests/applications/test_extension.py`.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

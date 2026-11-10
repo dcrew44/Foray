@@ -1310,6 +1310,86 @@
         ]
       }
     },
+    "/api/applications/{id}/proof": {
+      "get": {
+        "operationId": "apps_applications_api_get_proof",
+        "summary": "The confirming page, as it looked",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The picture's bytes"
+          }
+        },
+        "description": "The picture the extension took of the employer's confirmation (#23), for its owner.",
+        "tags": [
+          "applications"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/applications/{id}/resume": {
+      "put": {
+        "operationId": "apps_applications_api_put_resume_choice",
+        "summary": "Choose the resume it sends",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "applications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeChoiceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/applications/{id}": {
       "patch": {
         "operationId": "apps_applications_api_patch_application",
@@ -1354,6 +1434,358 @@
         "security": [
           {
             "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension-tokens": {
+      "post": {
+        "operationId": "apps_applications_api_post_token",
+        "summary": "Make an extension token",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenCreated"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension-tokens/{id}": {
+      "delete": {
+        "operationId": "apps_applications_api_delete_token",
+        "summary": "Remove an extension token",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension/me": {
+      "get": {
+        "operationId": "apps_applications_api_ext_me",
+        "summary": "Who the token belongs to",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtensionMe"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "security": [
+          {
+            "ExtensionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension/applications": {
+      "get": {
+        "operationId": "apps_applications_api_ext_find",
+        "summary": "The application for a page",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "url",
+            "schema": {
+              "title": "Url",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoundOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "security": [
+          {
+            "ExtensionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension/applications/{id}": {
+      "get": {
+        "operationId": "apps_applications_api_ext_application",
+        "summary": "An application to fill",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FillPayload"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "security": [
+          {
+            "ExtensionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension/applications/{id}/resume": {
+      "get": {
+        "operationId": "apps_applications_api_ext_resume",
+        "summary": "The resume an application attaches",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PDF's bytes"
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "security": [
+          {
+            "ExtensionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension/applications/{id}/plan": {
+      "post": {
+        "operationId": "apps_applications_api_ext_plan",
+        "summary": "Plan fields read from a page",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FillPayload"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "ExtensionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension/applications/{id}/filled": {
+      "post": {
+        "operationId": "apps_applications_api_ext_filled",
+        "summary": "The form was filled",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FilledIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "ExtensionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/extension/applications/{id}/submitted": {
+      "post": {
+        "operationId": "apps_applications_api_ext_submitted",
+        "summary": "The form was sent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "extension"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmittedIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "ExtensionAuth": []
           }
         ]
       }
@@ -2536,6 +2968,18 @@
             "title": "Quiethoursend",
             "type": "string"
           },
+          "applyPerEmployer": {
+            "title": "Applyperemployer",
+            "type": "integer"
+          },
+          "applyDailyCap": {
+            "title": "Applydailycap",
+            "type": "integer"
+          },
+          "autoSubmit": {
+            "title": "Autosubmit",
+            "type": "boolean"
+          },
           "timeZone": {
             "title": "Timezone",
             "type": "string"
@@ -2550,6 +2994,9 @@
           "ntfyTopic",
           "quietHoursStart",
           "quietHoursEnd",
+          "applyPerEmployer",
+          "applyDailyCap",
+          "autoSubmit",
           "timeZone"
         ],
         "title": "SettingsOut",
@@ -2625,6 +3072,22 @@
             "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
             "title": "Quiethoursend",
             "type": "string"
+          },
+          "applyPerEmployer": {
+            "maximum": 10,
+            "minimum": 1,
+            "title": "Applyperemployer",
+            "type": "integer"
+          },
+          "applyDailyCap": {
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Applydailycap",
+            "type": "integer"
+          },
+          "autoSubmit": {
+            "title": "Autosubmit",
+            "type": "boolean"
           },
           "timeZone": {
             "maxLength": 64,
@@ -4715,6 +5178,20 @@
         "title": "QuestionAnswerIn",
         "type": "object"
       },
+      "ResumeChoiceIn": {
+        "properties": {
+          "choice": {
+            "maxLength": 64,
+            "title": "Choice",
+            "type": "string"
+          }
+        },
+        "required": [
+          "choice"
+        ],
+        "title": "ResumeChoiceIn",
+        "type": "object"
+      },
       "ApplicationPatch": {
         "properties": {
           "action": {
@@ -4732,6 +5209,403 @@
           "action"
         ],
         "title": "ApplicationPatch",
+        "type": "object"
+      },
+      "TokenCreated": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "id",
+          "token"
+        ],
+        "title": "TokenCreated",
+        "type": "object"
+      },
+      "TokenIn": {
+        "properties": {
+          "label": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "TokenIn",
+        "type": "object"
+      },
+      "ExtensionMe": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "waiting": {
+            "title": "Waiting",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ok",
+          "name",
+          "waiting"
+        ],
+        "title": "ExtensionMe",
+        "type": "object"
+      },
+      "FillField": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "source": {
+            "enum": [
+              "profile",
+              "file",
+              "saved",
+              "declined",
+              "skipped",
+              "missing"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type",
+          "required",
+          "options",
+          "kind",
+          "value",
+          "source"
+        ],
+        "title": "FillField",
+        "type": "object"
+      },
+      "FillPayload": {
+        "description": "One application as the extension fills it (`extension.payload`).",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "applyUrl": {
+            "title": "Applyurl",
+            "type": "string"
+          },
+          "formSource": {
+            "title": "Formsource",
+            "type": "string"
+          },
+          "formRead": {
+            "title": "Formread",
+            "type": "boolean"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FillField"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "resume": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FillResume"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blocked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked"
+          },
+          "maySubmit": {
+            "title": "Maysubmit",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "company",
+          "title",
+          "applyUrl",
+          "formSource",
+          "formRead",
+          "fields",
+          "missing",
+          "resume",
+          "blocked",
+          "maySubmit"
+        ],
+        "title": "FillPayload",
+        "type": "object"
+      },
+      "FillResume": {
+        "properties": {
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "title": "Sizebytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "filename",
+          "sizeBytes"
+        ],
+        "title": "FillResume",
+        "type": "object"
+      },
+      "FoundOut": {
+        "properties": {
+          "application": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FillPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "application"
+        ],
+        "title": "FoundOut",
+        "type": "object"
+      },
+      "PageFieldIn": {
+        "properties": {
+          "key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 2000,
+            "title": "Label",
+            "type": "string"
+          },
+          "type": {
+            "default": "text",
+            "maxLength": 40,
+            "title": "Type",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 300,
+            "title": "Options",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "PageFieldIn",
+        "type": "object"
+      },
+      "PlanIn": {
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/PageFieldIn"
+            },
+            "maxItems": 300,
+            "title": "Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "fields"
+        ],
+        "title": "PlanIn",
+        "type": "object"
+      },
+      "FilledIn": {
+        "properties": {
+          "filled": {
+            "items": {
+              "$ref": "#/components/schemas/SentField"
+            },
+            "maxItems": 300,
+            "title": "Filled",
+            "type": "array"
+          }
+        },
+        "title": "FilledIn",
+        "type": "object"
+      },
+      "SentField": {
+        "properties": {
+          "key": {
+            "maxLength": 200,
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "SentField",
+        "type": "object"
+      },
+      "SubmittedIn": {
+        "properties": {
+          "url": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Url",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 40000,
+            "title": "Text",
+            "type": "string"
+          },
+          "screenshot": {
+            "default": "",
+            "maxLength": 6000000,
+            "title": "Screenshot",
+            "type": "string"
+          },
+          "filled": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SentField"
+                },
+                "maxItems": 300,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filled"
+          },
+          "auto": {
+            "default": false,
+            "title": "Auto",
+            "type": "boolean"
+          }
+        },
+        "title": "SubmittedIn",
         "type": "object"
       },
       "ContactsImported": {
@@ -5308,6 +6182,25 @@
             "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
             "title": "Quiethoursend",
             "type": "string"
+          },
+          "applyPerEmployer": {
+            "default": 2,
+            "maximum": 10,
+            "minimum": 1,
+            "title": "Applyperemployer",
+            "type": "integer"
+          },
+          "applyDailyCap": {
+            "default": 25,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Applydailycap",
+            "type": "integer"
+          },
+          "autoSubmit": {
+            "default": false,
+            "title": "Autosubmit",
+            "type": "boolean"
           }
         },
         "title": "Settings",
@@ -6010,12 +6903,66 @@
           "missing": {
             "title": "Missing",
             "type": "integer"
+          },
+          "submittedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submittedat"
+          },
+          "autoSubmitted": {
+            "title": "Autosubmitted",
+            "type": "boolean"
+          },
+          "confirmationText": {
+            "title": "Confirmationtext",
+            "type": "string"
+          },
+          "confirmationUrl": {
+            "title": "Confirmationurl",
+            "type": "string"
+          },
+          "hasPicture": {
+            "title": "Haspicture",
+            "type": "boolean"
+          },
+          "documentId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documentid"
+          },
+          "sent": {
+            "items": {
+              "$ref": "#/components/schemas/SentAnswer"
+            },
+            "title": "Sent",
+            "type": "array"
           }
         },
         "required": [
           "id",
           "status",
-          "missing"
+          "missing",
+          "submittedAt",
+          "autoSubmitted",
+          "confirmationText",
+          "confirmationUrl",
+          "hasPicture",
+          "documentId",
+          "sent"
         ],
         "title": "MatchApplication",
         "type": "object"
@@ -6363,6 +7310,24 @@
           "strength"
         ],
         "title": "MatchedRequirement",
+        "type": "object"
+      },
+      "SentAnswer": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "SentAnswer",
         "type": "object"
       },
       "TailoredView": {
@@ -7134,6 +8099,9 @@
               }
             ],
             "title": "Preparedat"
+          },
+          "resume": {
+            "$ref": "#/components/schemas/ApplyResume"
           }
         },
         "required": [
@@ -7154,7 +8122,8 @@
           "fastScore",
           "deepScore",
           "recommendation",
-          "preparedAt"
+          "preparedAt",
+          "resume"
         ],
         "title": "ApplyItem",
         "type": "object"
@@ -7192,6 +8161,13 @@
             },
             "title": "Sent",
             "type": "array"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/ApplyVariant"
+            },
+            "title": "Variants",
+            "type": "array"
           }
         },
         "required": [
@@ -7199,9 +8175,47 @@
           "needsAnswers",
           "failed",
           "preparing",
-          "sent"
+          "sent",
+          "variants"
         ],
         "title": "ApplyPage",
+        "type": "object"
+      },
+      "ApplyResume": {
+        "description": "Which resume an application sends, and why (`applications/resume.py`, #61).",
+        "properties": {
+          "variantId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variantid"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "choice": {
+            "title": "Choice",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variantId",
+          "name",
+          "reason",
+          "choice"
+        ],
+        "title": "ApplyResume",
         "type": "object"
       },
       "ApplySent": {
@@ -7250,6 +8264,25 @@
           "postedToAppliedS"
         ],
         "title": "ApplySent",
+        "type": "object"
+      },
+      "ApplyVariant": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "ApplyVariant",
         "type": "object"
       },
       "OutcomeBucket": {
@@ -10466,6 +11499,10 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "sessionid"
+      },
+      "ExtensionAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   },

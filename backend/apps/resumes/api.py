@@ -15,6 +15,14 @@
   that job.", 422 without a resume, 429 past `tailor:<user>`.
 - `GET /api/resumes/{id}/preview`: the resume as HTML with today's CSP and headers; 404, or 422
   "This resume could not be read.".
+- `POST /api/variants {name, keywords}`: 200 `{ok, id, message}`, a resume variant (#61) that
+  starts as everything in the base resume. 422 without a resume, 409 for a name already taken
+  or a seventh variant.
+- `PATCH /api/variants/{id} {name?, keywords?, spec?, isDefault?}`: 200 `{ok, id, message}`;
+  what is left out stays. 400 for a spec that names nothing in the resume.
+- `DELETE /api/variants/{id}`: 200 `{ok, message}`.
+- `POST /api/variants/{id}/render`: 202 `{ok, runId, message}`, a `resume_render` run for the
+  variant as it composes from the newest base. 422 when it selects nothing from that base.
 
 The upload is the one operation that reads its own body: it counts against `upload:<user>`
 before Django parses the multipart stream, so an oversized file still counts (the order of
@@ -29,7 +37,7 @@ import logging
 import re
 import uuid
 from collections.abc import Sequence
-from typing import Any, Literal, cast
+from typing import Annotated, Any, Literal, cast
 from urllib.parse import quote
 
 from django.core.exceptions import RequestDataTooBig, SuspiciousOperation
@@ -37,14 +45,16 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse
 from django.http.multipartparser import MultiPartParserError
 from ninja import Status
-from pydantic import StrictStr
+from pydantic import Field, StrictStr
 
 from apps.accounts.models import User
 from apps.core import throttle
 from apps.core.errors import DEFAULT_INVALID, DEFAULT_NOT_FOUND, ApiError, messages
 from apps.core.router import ApiModel, router
+from apps.core.schemas import OkMessageOut
 from apps.core.storage import StorageError, storage
 from apps.resumes import pipeline
+from apps.resumes import variants as resume_variants
 from apps.resumes.edits import save_user_edit
 from apps.resumes.models import Document
 from apps.resumes.models import Resume as ResumeRow
@@ -60,8 +70,15 @@ uploads = router(tags=["uploads"])
 documents = router(tags=["documents"])
 resume = router(tags=["resume"])
 resumes = router(tags=["resumes"])
+variants = router(tags=["variants"])
 
-ROUTERS = {"/uploads": uploads, "/documents": documents, "/resume": resume, "/resumes": resumes}
+ROUTERS = {
+    "/uploads": uploads,
+    "/documents": documents,
+    "/resume": resume,
+    "/resumes": resumes,
+    "/variants": variants,
+}
 
 NO_FILE = "No file uploaded."
 FILE_MISSING = "The file is missing from storage."
@@ -70,6 +87,10 @@ UPLOAD_FIRST = "Upload a resume before editing your profile."
 PROFILE_SAVED = "Profile saved"
 RESUME_INVALID = "That resume could not be saved. Check the fields and try again."
 NO_JOB_GIVEN = "No job was given to tailor for."
+VARIANT_INVALID = "That variant could not be read."
+VARIANT_CREATED = "Variant created"
+VARIANT_SAVED = "Variant saved"
+VARIANT_DELETED = "Variant deleted"
 
 # The preview is user- and model-written text served from the app's origin, so the CSP allows
 # nothing but inline styles: no scripts, no network, no forms, no framing by other sites. The
@@ -153,7 +174,7 @@ def _file_response(content_type: str, description: str) -> dict[str, Any]:
 
 def _started(started: pipeline.Started) -> dict[str, Any]:
     if not started.ok:
-        raise ApiError(422 if started.refusal == "no_resume" else 404, started.message)
+        raise ApiError(404 if started.refusal == "not_found" else 422, started.message)
     out: dict[str, Any] = {"ok": True, "run_id": started.run_id, "message": started.message}
     if started.match_id is not None:
         out["match_id"] = started.match_id
@@ -388,3 +409,93 @@ def preview_resume(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
     response["X-Content-Type-Options"] = "nosniff"
     response["Referrer-Policy"] = "no-referrer"
     return response
+
+
+# --- /variants -----------------------------------------------------------------------------------
+
+# Loose bounds, so an absurd body is refused before anything reads it; the sentences a person
+# can act on (a name too long, too many keywords) come from `resumes.variants`.
+_LOOSE_TEXT = 400
+_LOOSE_KEYWORDS = 100
+
+_REFUSAL_STATUS: dict[resume_variants.Refusal, int] = {
+    "not_found": 404,
+    "no_resume": 422,
+    "duplicate": 409,
+    "limit": 409,
+    "empty": 400,
+    "invalid": 400,
+}
+
+
+class VariantCreateIn(ApiModel):
+    name: str = Field(max_length=_LOOSE_TEXT)
+    keywords: list[Annotated[str, Field(max_length=_LOOSE_TEXT)]] = Field(
+        default_factory=list, max_length=_LOOSE_KEYWORDS
+    )
+
+
+class VariantPatchIn(ApiModel):
+    # Whatever is left out (or null) stays as it is.
+    name: str | None = Field(default=None, max_length=_LOOSE_TEXT)
+    keywords: list[Annotated[str, Field(max_length=_LOOSE_TEXT)]] | None = Field(
+        default=None, max_length=_LOOSE_KEYWORDS
+    )
+    spec: resume_variants.VariantSpec | None = None
+    is_default: bool | None = None
+
+
+class VariantSavedOut(ApiModel):
+    ok: bool
+    id: uuid.UUID
+    message: str
+
+
+def _refused(refused: resume_variants.VariantRefused) -> ApiError:
+    return ApiError(_REFUSAL_STATUS[refused.refusal], refused.message)
+
+
+@variants.post("", response=VariantSavedOut, summary="Make a resume variant")
+@messages(invalid=VARIANT_INVALID)
+def create_variant(request: HttpRequest, body: VariantCreateIn) -> dict[str, Any]:
+    """A variant starts as everything in the base resume; the editor narrows it."""
+    try:
+        variant = resume_variants.create_variant(_user_id(request), body.name, body.keywords)
+    except resume_variants.VariantRefused as refused:
+        raise _refused(refused) from None
+    return {"ok": True, "id": variant.id, "message": VARIANT_CREATED}
+
+
+@variants.patch("/{id}", response=VariantSavedOut, summary="Change a resume variant")
+@messages(invalid=VARIANT_INVALID, not_found=resume_variants.VARIANT_GONE)
+def patch_variant(request: HttpRequest, id: uuid.UUID, body: VariantPatchIn) -> dict[str, Any]:
+    try:
+        variant = resume_variants.update_variant(
+            _user_id(request),
+            id,
+            name=body.name,
+            keywords=body.keywords,
+            spec=body.spec,
+            is_default=body.is_default,
+        )
+    except resume_variants.VariantRefused as refused:
+        raise _refused(refused) from None
+    return {"ok": True, "id": variant.id, "message": VARIANT_SAVED}
+
+
+@variants.delete("/{id}", response=OkMessageOut, summary="Delete a resume variant")
+@messages(not_found=resume_variants.VARIANT_GONE)
+def delete_variant(request: HttpRequest, id: uuid.UUID) -> dict[str, Any]:
+    try:
+        resume_variants.delete_variant(_user_id(request), id)
+    except resume_variants.VariantRefused as refused:
+        raise _refused(refused) from None
+    return {"ok": True, "message": VARIANT_DELETED}
+
+
+@variants.post(
+    "/{id}/render", response={202: RunStartedOut}, summary="Render a resume variant to PDF"
+)
+@messages(not_found=resume_variants.VARIANT_GONE)
+def render_variant(request: HttpRequest, id: uuid.UUID) -> Status[dict[str, Any]]:
+    return Status(202, _started(pipeline.render_variant(_user_id(request), id)))

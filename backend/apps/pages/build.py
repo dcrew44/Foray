@@ -74,6 +74,7 @@ from apps.pages.schemas import (
     ModelSpend,
     MonthSpend,
     ProfilePage,
+    ProfileVariant,
     ProviderKeys,
     PurposeModel,
     PurposeSpend,
@@ -87,8 +88,11 @@ from apps.pages.schemas import (
     StageCounts,
     TailoredView,
     TokenRate,
+    VariantPdf,
 )
+from apps.resumes import variants as resume_variants
 from apps.resumes.models import Resume, ResumeKind
+from apps.resumes.schema import Resume as ResumeData
 from apps.runs.catalogue import ApprovalStatus, RunKind, RunStatus
 from apps.runs.live import to_live_run
 from apps.runs.models import Approval, Run
@@ -449,6 +453,9 @@ def run_target(
                 return None
             if resume["kind"] == ResumeKind.BASE:
                 return "Your base resume"
+            if resume["kind"] == ResumeKind.VARIANT:
+                name = resume.get("variant__name")
+                return f"Your {name} variant" if name else "A resume variant"
             match_id = resume["match_id"]
             role = role_by_id.get(str(match_id)) if match_id is not None else None
             return f"Tailored for {role}" if role else "A tailored resume"
@@ -490,7 +497,7 @@ def describe_runs(user_id: str, runs: Sequence[Run]) -> list[RunSummary]:
     resume_by_id: dict[str, dict[str, Any]] = {}
     if resume_ids:
         rows = Resume.objects.for_user(user_id).filter(id__in=resume_ids)
-        for row in rows.values("id", "kind", "match_id"):
+        for row in rows.values("id", "kind", "match_id", "variant__name"):
             resume_by_id[str(row["id"])] = row
 
     costs = (
@@ -716,6 +723,24 @@ def saved_answers(user_id: str) -> list[SavedAnswer]:
     return [*shared, *custom]
 
 
+def profile_variants(user_id: str, base: ResumeData | None) -> list[ProfileVariant]:
+    """The resume variants (#61) with their newest PDFs: two queries, one without variants."""
+    return [
+        ProfileVariant(
+            id=view.variant.id,
+            name=view.variant.name,
+            keywords=list(view.variant.keywords),
+            is_default=view.variant.is_default,
+            spec=view.spec,
+            pdf=VariantPdf(document_id=view.document_id, current=view.current)
+            if view.document_id is not None
+            else None,
+            updated_at=view.variant.updated_at,
+        )
+        for view in resume_variants.variant_views(user_id, base)
+    ]
+
+
 def profile_page(user: User) -> ProfilePage:
     onboarding = onboarding_state(user)
     bases = Resume.objects.for_user(user.pk).filter(kind=ResumeKind.BASE).order_by("-version")
@@ -737,6 +762,8 @@ def profile_page(user: User) -> ProfilePage:
         if render
         else None,
         answers=saved_answers(user.pk),
+        variants=profile_variants(user.pk, onboarding.resume),
+        variant_limit=resume_variants.MAX_VARIANTS,
     )
 
 

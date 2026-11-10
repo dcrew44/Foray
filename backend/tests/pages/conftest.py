@@ -1,9 +1,10 @@
 """Fixtures for the page tests (design §5.3, §12.3).
 
-`full_graph(...)` gives one user everything a page can show: a rendered base resume, matches in
-four stages (one deep-evaluated with a tailored, rendered resume), a run of every kind with the
-inputs its start function stores, a pending approval, a conversation with messages, events and
-ledger rows. The tenancy sweep builds two of them; the page tests use one.
+`full_graph(...)` gives one user everything a page can show: a rendered base resume, a resume
+variant with a rendered snapshot, matches in four stages (one deep-evaluated with a tailored,
+rendered resume), a run of every kind with the inputs its start function stores, a pending
+approval, a conversation with messages, events and ledger rows. The tenancy sweep builds two of
+them; the page tests use one.
 
 Every page call carries `X-Foray-SSR: 1`, as `django()` in `src/lib/api/server.ts` sends it, so
 the sliding session never writes during a measured request (§4.1).
@@ -24,7 +25,7 @@ from apps.applications.models import Application
 from apps.chat.models import Conversation
 from apps.jobs.models import Company, Job
 from apps.matching.models import JobMatch
-from apps.resumes.models import Document, Resume
+from apps.resumes.models import Document, Resume, ResumeVariant
 from apps.runs.models import Approval, Run
 from tests.factories import (
     make_application,
@@ -40,6 +41,7 @@ from tests.factories import (
     make_resume,
     make_run,
     make_user,
+    make_variant,
 )
 
 SSR = {"X-Foray-SSR": "1"}
@@ -94,6 +96,9 @@ class Graph:
     upload: Document
     base_pdf: Document
     tailored_pdf: Document
+    variant: ResumeVariant
+    variant_snapshot: Resume
+    variant_pdf: Document
     conversation: Conversation
     runs: dict[str, Run]
     approval: Approval
@@ -115,6 +120,9 @@ class Graph:
             self.upload,
             self.base_pdf,
             self.tailored_pdf,
+            self.variant,
+            self.variant_snapshot,
+            self.variant_pdf,
             self.conversation,
             self.approval,
             self.application,
@@ -179,6 +187,18 @@ def full_graph(
     matches["found"].tailored_resume = tailored
     matches["found"].save(update_fields=["tailored_resume", "updated_at"])
 
+    # A resume variant (#61) whose newest snapshot has a PDF.
+    variant = make_variant(user, name=f"{marker} Backend", keywords=["backend", "platform"])
+    variant_pdf = make_document(
+        # The name a render gives it: the resume's name, then the variant's.
+        user,
+        kind="resume_pdf",
+        filename=f"Avery Quinn - Resume - {marker} Backend.pdf",
+    )
+    variant_snapshot = make_resume(
+        user, kind="variant", variant=variant, rendered_document=variant_pdf
+    )
+
     conversation = make_conversation(user, title=f"{marker} chat")
     make_message(conversation, text=f"{marker} asks about backend roles")
 
@@ -240,6 +260,12 @@ def full_graph(
         kind="resume_render",
         status="completed",
         input={"resumeId": str(tailored.id), "prompt": "Render your tailored resume"},
+    )
+    runs["render_variant"] = make_run(
+        user,
+        kind="resume_render",
+        status="completed",
+        input={"resumeId": str(variant_snapshot.id), "prompt": "Render your Backend resume"},
     )
     runs["import"] = make_run(
         user,
@@ -325,6 +351,9 @@ def full_graph(
         upload=upload,
         base_pdf=base_pdf,
         tailored_pdf=tailored_pdf,
+        variant=variant,
+        variant_snapshot=variant_snapshot,
+        variant_pdf=variant_pdf,
         conversation=conversation,
         runs=runs,
         approval=approval,

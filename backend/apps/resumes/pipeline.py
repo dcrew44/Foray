@@ -14,7 +14,9 @@ Each is a run, so the user sees it on a card and in the feed, and each ends with
 - `start_tailor_run(user_id, id, *, conversation_id)`: `id` is a match id or a job id; a job the
   user has no match for yet gets a `found` one. Throttled `tailor:<user>` (§4.5), so the endpoint
   and the chat tool share the count. A second start while one is active returns that run.
-- `start_render_run(user_id, resume_id, *, conversation_id)` and `render_base_resume(user_id)`.
+- `start_render_run(user_id, resume_id, *, conversation_id)`, `render_base_resume(user_id)` and
+  `render_variant(user_id, variant_id)`, which first writes the variant's snapshot (what it
+  composes to from the newest base) and renders that row, in one transaction with the run.
 
 **Steps** (async, registered in `tasks.py` under `run_step`, which claims the run, attributes
 model calls to it, applies the timeout and turns failures into `run.failed`):
@@ -56,6 +58,7 @@ from apps.llm.untrusted import one_line
 from apps.matching import queries as match_queries
 from apps.matching.models import JobMatch
 from apps.resumes import render as rendering
+from apps.resumes import variants
 from apps.resumes.edits import create_base_version
 from apps.resumes.extract import ResumeReadError, extract_from, read_document
 from apps.resumes.models import Document, DocumentKind, ResumeKind
@@ -104,6 +107,7 @@ __all__ = [
     "read_message",
     "render",
     "render_base_resume",
+    "render_variant",
     "start_render_run",
     "start_tailor_run",
     "tailor",
@@ -166,7 +170,7 @@ class Started:
     message: str
     run_id: uuid.UUID | None = None
     match_id: uuid.UUID | None = None
-    refusal: Literal["no_resume", "not_found"] | None = None
+    refusal: Literal["no_resume", "not_found", "empty"] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """`{ok, runId, matchId, message}` / `{ok: false, message}`, as the chat tools return."""
@@ -318,21 +322,25 @@ def start_tailor_run(
     return Started(True, message, run_id=run.id, match_id=match.id)
 
 
+def _render_prompt(row: ResumeRow) -> str:
+    if row.kind == ResumeKind.BASE:
+        return "Render your resume to PDF"
+    if row.kind == ResumeKind.VARIANT and row.variant is not None:
+        return f"Render your {row.variant.name} resume to PDF"
+    return "Render your tailored resume to PDF"
+
+
 def start_render_run(user_id: str, resume_id: Id, *, conversation_id: Id | None = None) -> Started:
-    """Starts rendering a stored resume (base or tailored) to PDF."""
+    """Starts rendering a stored resume (base, tailored or a variant's snapshot) to PDF."""
     wanted = _as_uuid(resume_id)
     row = (
-        ResumeRow.objects.for_user(user_id).filter(id=wanted).first()
+        ResumeRow.objects.for_user(user_id).select_related("variant").filter(id=wanted).first()
         if wanted is not None
         else None
     )
     if row is None:
         return Started(False, RESUME_GONE, refusal="not_found")
-    prompt = (
-        "Render your resume to PDF"
-        if row.kind == ResumeKind.BASE
-        else "Render your tailored resume to PDF"
-    )
+    prompt = _render_prompt(row)
     run, _ = lifecycle.start_run(
         user_id,
         RunKind.RESUME_RENDER,
@@ -350,6 +358,22 @@ def render_base_resume(user_id: str) -> Started:
     if base is None:
         return Started(False, NO_RESUME_TO_RENDER, refusal="no_resume")
     return start_render_run(user_id, base.id)
+
+
+def render_variant(user_id: str, variant_id: Id, *, conversation_id: Id | None = None) -> Started:
+    """`POST /api/variants/{id}/render`: the variant as it composes from the newest base. Its
+    snapshot row and the run commit together; a variant that has not changed since its last
+    snapshot renders that row again, and the render reuses its PDF by `render_hash`."""
+    try:
+        with transaction.atomic():
+            row = variants.snapshot(user_id, variant_id)
+            return start_render_run(user_id, row.id, conversation_id=conversation_id)
+    except variants.VariantRefused as refused:
+        if refused.refusal == "not_found":
+            return Started(False, refused.message, refusal="not_found")
+        if refused.refusal == "no_resume":
+            return Started(False, refused.message, refusal="no_resume")
+        return Started(False, refused.message, refusal="empty")  # it selects nothing to print
 
 
 # --- Shared step plumbing -------------------------------------------------------------------------

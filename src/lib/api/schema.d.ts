@@ -498,6 +498,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make a resume variant
+         * @description A variant starts as everything in the base resume; the editor narrows it.
+         */
+        post: operations["apps_resumes_api_create_variant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/variants/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a resume variant */
+        delete: operations["apps_resumes_api_delete_variant"];
+        options?: never;
+        head?: never;
+        /** Change a resume variant */
+        patch: operations["apps_resumes_api_patch_variant"];
+        trace?: never;
+    };
+    "/api/variants/{id}/render": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Render a resume variant to PDF */
+        post: operations["apps_resumes_api_render_variant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/answers": {
         parameters: {
             query?: never;
@@ -1509,6 +1564,57 @@ export interface components {
             /** Matchid */
             matchId: string;
         };
+        /** VariantSavedOut */
+        VariantSavedOut: {
+            /** Ok */
+            ok: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Message */
+            message: string;
+        };
+        /** VariantCreateIn */
+        VariantCreateIn: {
+            /** Name */
+            name: string;
+            /** Keywords */
+            keywords?: string[];
+        };
+        /** VariantItem */
+        VariantItem: {
+            /** Id */
+            id: string;
+            /** Highlights */
+            highlights?: string[] | null;
+        };
+        /** VariantPatchIn */
+        VariantPatchIn: {
+            /** Name */
+            name?: string | null;
+            /** Keywords */
+            keywords?: string[] | null;
+            spec?: components["schemas"]["VariantSpec"] | null;
+            /** Isdefault */
+            isDefault?: boolean | null;
+        };
+        /** VariantSpec */
+        VariantSpec: {
+            /** Headline */
+            headline?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** Work */
+            work?: components["schemas"]["VariantItem"][];
+            /** Projects */
+            projects?: components["schemas"]["VariantItem"][];
+            /** Education */
+            education?: string[];
+            /** Skills */
+            skills?: string[];
+        };
         /** AnswerIn */
         AnswerIn: {
             kind: components["schemas"]["AnswerKind"];
@@ -2297,6 +2403,31 @@ export interface components {
             render: components["schemas"]["LatestRender"] | null;
             /** Answers */
             answers: components["schemas"]["SavedAnswer"][];
+            /** Variants */
+            variants: components["schemas"]["ProfileVariant"][];
+            /** Variantlimit */
+            variantLimit: number;
+        };
+        /** ProfileVariant */
+        ProfileVariant: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Keywords */
+            keywords: string[];
+            /** Isdefault */
+            isDefault: boolean;
+            spec: components["schemas"]["VariantSpec"];
+            pdf: components["schemas"]["VariantPdf"] | null;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
         };
         /**
          * SavedAnswer
@@ -2322,6 +2453,16 @@ export interface components {
             hint: string;
             /** Answer */
             answer: string | null;
+        };
+        /** VariantPdf */
+        VariantPdf: {
+            /**
+             * Documentid
+             * Format: uuid
+             */
+            documentId: string;
+            /** Current */
+            current: boolean;
         };
         /** AggregatorUsage */
         AggregatorUsage: {
@@ -3787,6 +3928,100 @@ export interface operations {
                 };
                 content: {
                     "text/html": string;
+                };
+            };
+        };
+    };
+    apps_resumes_api_create_variant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariantCreateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariantSavedOut"];
+                };
+            };
+        };
+    };
+    apps_resumes_api_delete_variant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_resumes_api_patch_variant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariantPatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariantSavedOut"];
+                };
+            };
+        };
+    };
+    apps_resumes_api_render_variant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunStartedOut"];
                 };
             };
         };

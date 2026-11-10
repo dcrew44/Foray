@@ -227,6 +227,17 @@ An issue reads like the ones already there:
   `application.prepared` event refreshes open pages. After anything that changes saved answers,
   call `prepare.replan(user_id)`. The only request this app makes is the GET that reads a form;
   filling and submitting happen in the user's own browser.
+- **A resume variant never stores a fact** (`apps/resumes/variants.py`, #61). A
+  `ResumeVariant` is a name, the title keywords that choose it and a `VariantSpec`: the base
+  resume's item ids it shows, their order, and its own headline, summary and bullets. Read one
+  only through `compose(base, spec)` over `latest_base_resume`, never by copying facts into
+  it; an id the base no longer has is dropped, and an unnamed item is left out. An application
+  asks `resume_for(user_id, title, variant_id)` (deterministic: whole-word keyword matches in
+  the title, then the default variant, then the base resume; no model) and prints
+  `resume_row(user_id, chosen.variant)`. Rendering goes through `pipeline.render_variant`,
+  which writes the composed snapshot (a `resumes` row of kind `variant`) and renders that; a
+  variant's PDF is named and keyed for the variant. A refusal the user reads is a
+  `VariantRefused`. The editor's pure helpers (`src/lib/variants.ts`) mirror `clean_spec`.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

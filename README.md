@@ -122,6 +122,14 @@ The Profile page also keeps your **application answers**: the questions forms ke
 answered once. Foray fills a form only from these, never writes one for you, and leaves
 roles you could not be hired for out of your searches.
 
+Under the resume are your **resume variants**: two to four versions of it, one per kind of
+role (say, backend and data). Each chooses which roles, projects, schools and skills to show,
+in what order, and how to word the headline, summary and bullets; the facts themselves always
+come from the resume, so a variant cannot contradict it and picks up your corrections. You
+give each variant the title words that choose it, Foray picks one for every application by
+the posting's title (no model is asked), and each has its own PDF. A variant is made from your
+resume and edited there; uploading a separate file as a variant is not supported.
+
 <table>
   <tr>
     <td><img src="docs/screenshots/profile.png" alt="Profile: the resume as structured facts"></td>

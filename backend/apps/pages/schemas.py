@@ -28,6 +28,7 @@ from apps.matching.lanes import LaneName
 from apps.matching.queries import MatchRow, Recommendation, RemoteName, StageName
 from apps.matching.schemas import DeepEval, FastScore
 from apps.resumes.schema import Resume
+from apps.resumes.variants import VariantSpec
 from apps.runs.live import LiveRun
 from foray.env import Effort, Purpose
 
@@ -54,6 +55,7 @@ __all__ = [
     "ModelSpend",
     "MonthSpend",
     "ProfilePage",
+    "ProfileVariant",
     "ProviderId",
     "ProviderKeys",
     "PurposeModel",
@@ -65,6 +67,7 @@ __all__ = [
     "StageCounts",
     "TailoredView",
     "TokenRate",
+    "VariantPdf",
 ]
 
 ProviderId = Literal["openai", "google", "anthropic", "deepseek", "compat"]
@@ -329,6 +332,21 @@ class SavedAnswer(ApiModel):
     answer: str | None
 
 
+class VariantPdf(ApiModel):
+    document_id: uuid.UUID  # the newest PDF made of the variant
+    current: bool  # a render now would print the same resume under the same file name
+
+
+class ProfileVariant(ApiModel):
+    id: uuid.UUID
+    name: str
+    keywords: list[str]  # the title words that choose it
+    is_default: bool
+    spec: VariantSpec  # as stored: it may name items the newest base no longer has
+    pdf: VariantPdf | None
+    updated_at: datetime
+
+
 class ProfilePage(ApiModel):
     has_resume: bool
     ready: bool
@@ -340,6 +358,8 @@ class ProfilePage(ApiModel):
     render: LatestRender | None
     # The shared application questions in the order the page asks them, then the user's own.
     answers: list[SavedAnswer]
+    variants: list[ProfileVariant]  # the resume variants (#61), oldest first
+    variant_limit: int  # how many variants a user may keep, so the frontend keeps no copy
 
 
 # --- /pages/apply --------------------------------------------------------------------------------

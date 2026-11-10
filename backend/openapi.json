@@ -1028,6 +1028,166 @@
         ]
       }
     },
+    "/api/variants": {
+      "post": {
+        "operationId": "apps_resumes_api_create_variant",
+        "summary": "Make a resume variant",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantSavedOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "A variant starts as everything in the base resume; the editor narrows it.",
+        "tags": [
+          "variants"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VariantCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/variants/{id}": {
+      "patch": {
+        "operationId": "apps_resumes_api_patch_variant",
+        "summary": "Change a resume variant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantSavedOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "variants"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VariantPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "apps_resumes_api_delete_variant",
+        "summary": "Delete a resume variant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "variants"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/variants/{id}/render": {
+      "post": {
+        "operationId": "apps_resumes_api_render_variant",
+        "summary": "Render a resume variant to PDF",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStartedOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "variants"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/answers": {
       "put": {
         "operationId": "apps_applications_api_put_answers",
@@ -3828,6 +3988,199 @@
         "title": "TailorIn",
         "type": "object"
       },
+      "VariantSavedOut": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "id",
+          "message"
+        ],
+        "title": "VariantSavedOut",
+        "type": "object"
+      },
+      "VariantCreateIn": {
+        "properties": {
+          "name": {
+            "maxLength": 400,
+            "title": "Name",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "maxLength": 400,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Keywords",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "VariantCreateIn",
+        "type": "object"
+      },
+      "VariantItem": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "highlights": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 5000,
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlights"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "VariantItem",
+        "type": "object"
+      },
+      "VariantPatchIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 400,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "keywords": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 400,
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keywords"
+          },
+          "spec": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VariantSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isDefault": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isdefault"
+          }
+        },
+        "title": "VariantPatchIn",
+        "type": "object"
+      },
+      "VariantSpec": {
+        "properties": {
+          "headline": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Headline"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "work": {
+            "items": {
+              "$ref": "#/components/schemas/VariantItem"
+            },
+            "maxItems": 300,
+            "title": "Work",
+            "type": "array"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/VariantItem"
+            },
+            "maxItems": 300,
+            "title": "Projects",
+            "type": "array"
+          },
+          "education": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 300,
+            "title": "Education",
+            "type": "array"
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 300,
+            "title": "Skills",
+            "type": "array"
+          }
+        },
+        "title": "VariantSpec",
+        "type": "object"
+      },
       "AnswerIn": {
         "properties": {
           "kind": {
@@ -6109,6 +6462,17 @@
             },
             "title": "Answers",
             "type": "array"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileVariant"
+            },
+            "title": "Variants",
+            "type": "array"
+          },
+          "variantLimit": {
+            "title": "Variantlimit",
+            "type": "integer"
           }
         },
         "required": [
@@ -6120,9 +6484,64 @@
           "slots",
           "base",
           "render",
-          "answers"
+          "answers",
+          "variants",
+          "variantLimit"
         ],
         "title": "ProfilePage",
+        "type": "object"
+      },
+      "ProfileVariant": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keywords",
+            "type": "array"
+          },
+          "isDefault": {
+            "title": "Isdefault",
+            "type": "boolean"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/VariantSpec"
+          },
+          "pdf": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VariantPdf"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "keywords",
+          "isDefault",
+          "spec",
+          "pdf",
+          "updatedAt"
+        ],
+        "title": "ProfileVariant",
         "type": "object"
       },
       "SavedAnswer": {
@@ -6188,6 +6607,25 @@
           "answer"
         ],
         "title": "SavedAnswer",
+        "type": "object"
+      },
+      "VariantPdf": {
+        "properties": {
+          "documentId": {
+            "format": "uuid",
+            "title": "Documentid",
+            "type": "string"
+          },
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "documentId",
+          "current"
+        ],
+        "title": "VariantPdf",
         "type": "object"
       },
       "AggregatorUsage": {

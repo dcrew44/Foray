@@ -24,8 +24,9 @@ from apps.legacy.models import ImportRecord
 from apps.matching.models import JobMatch
 from apps.matching.schemas import DeepEval, FastScore
 from apps.resumes import schema
-from apps.resumes.models import Resume
+from apps.resumes.models import Resume, ResumeVariant
 from apps.resumes.queries import latest_base_resume, latest_base_resume_row
+from apps.resumes.variants import VariantSpec
 from apps.runs import catalogue
 from apps.runs.catalogue import EventKind, Level, RunKind
 from apps.runs.models import Approval, Event, Run
@@ -127,6 +128,48 @@ def test_duplicate_base_version_rejected() -> None:
         rejected(lambda: Resume.objects.create_for(user.pk, kind="tailored", version=9, data={}))
         == "resumes_kind_match"
     )
+
+
+def test_variant_rows_rejected() -> None:
+    user, other = f.make_user(), f.make_user()
+    backend = f.make_variant(user, name="Backend", is_default=True)
+    # One name per user however it is capitalised, and one default.
+    assert rejected(lambda: f.make_variant(user, name="BACKEND")) == "resume_variants_user_name"
+    assert (
+        rejected(lambda: f.make_variant(user, name="Data", is_default=True))
+        == "resume_variants_one_default"
+    )
+    f.make_variant(other, name="Backend", is_default=True)  # both are per user
+
+    # A snapshot belongs to its variant and to no match; its versions are per variant.
+    f.make_resume(user, kind="variant", variant=backend, version=1)
+    assert (
+        rejected(lambda: f.make_resume(user, kind="variant", variant=backend, version=1))
+        == "resumes_variant_version"
+    )
+    f.make_resume(user, kind="variant", variant=f.make_variant(user), version=1)
+    assert (
+        rejected(lambda: Resume.objects.create_for(user.pk, kind="variant", version=9, data={}))
+        == "resumes_kind_match"
+    )
+    match = f.make_match(user)
+    for kind in ("base", "tailored"):
+        assert (
+            rejected(
+                lambda kind=kind: f.make_resume(
+                    user, kind=kind, match=match if kind == "tailored" else None, variant=backend
+                )
+            )
+            == "resumes_kind_match"
+        )
+    assert (
+        rejected(lambda: f.make_resume(user, kind="variant", variant=backend, match=match))
+        == "resumes_kind_match"
+    )
+    # Deleting a variant takes its snapshots with it.
+    backend_id = backend.id
+    backend.delete()
+    assert not Resume.objects.for_user(user.pk).filter(variant_id=backend_id).exists()
 
 
 @pytest.mark.parametrize(
@@ -275,6 +318,8 @@ def _strict_json(row: models.Model) -> None:
                 DeepEval.model_validate(row.deep_eval)
         case Resume():
             schema.Resume.model_validate(row.data)
+        case ResumeVariant():
+            VariantSpec.model_validate(row.spec)
         case Run():
             catalogue.INPUT_MODELS[row.kind].model_validate(row.input)
         case Approval():
@@ -299,6 +344,8 @@ FACTORIES: dict[str, Callable[[User], models.Model]] = {
     "document": lambda u: f.make_document(u),
     "resume": lambda u: f.make_resume(u),
     "tailored_resume": lambda u: f.make_resume(u, kind="tailored"),
+    "variant": lambda u: f.make_variant(u),
+    "variant_snapshot": lambda u: f.make_resume(u, kind="variant"),
     "approval": lambda u: f.make_approval(u),
     "shortlist_approval": lambda u: f.make_approval(
         u, kind="shortlist_proposal", status="approved"

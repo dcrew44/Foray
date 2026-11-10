@@ -44,6 +44,7 @@ def test_every_per_user_table_is_user_owned() -> None:
         "Message",
         "Notification",
         "Resume",
+        "ResumeVariant",
         "Run",
     }
     for owned in USER_OWNED:

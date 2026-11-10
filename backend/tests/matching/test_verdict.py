@@ -143,3 +143,46 @@ def test_rows_with_a_lead_cost_one_query(django_assert_num_queries: Any) -> None
     with django_assert_num_queries(1):
         rows = list_matches(user.pk)
     assert len(rows) == 6 and all(row.reason and row.blocker for row in rows)
+
+
+# --- the rubric's bands (#87) --------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("score", "band"),
+    [(100, "strong"), (85, "strong"), (84, "apply"), (70, "apply"), (69, "maybe"), (50, "maybe"),
+     (49, "skip"), (0, "skip")],
+)  # fmt: skip
+def test_a_score_is_called_by_the_rubrics_band(score: int, band: str) -> None:
+    from apps.matching.verdict import band_of
+
+    assert band_of(score) == band
+    # The factory's reviews say what a real review at that score would.
+    assert sample_deep_eval(score)["recommendation"] == band
+
+
+@pytest.mark.django_db
+def test_nothing_calls_a_score_strong_below_the_rubrics_line() -> None:
+    """A match reviewed at 84 is "Worth applying" on its row, so it is not one of Home's strong
+    matches or a run summary's either: every count reads the same band."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.matching import queries
+    from apps.pages import build
+
+    user = make_user()
+    at_the_line = make_match(user, deep_score=85)
+    just_under = make_match(user, deep_score=84)
+    plausible = make_match(user, fast_score=70)
+    low = make_match(user, fast_score=69)
+    job_ids = [m.job_id for m in (at_the_line, just_under, plausible, low)]
+
+    assert queries.score_bands_for_jobs(user.pk, job_ids) == (1, 2)
+    since = timezone.now() - timedelta(hours=1)
+    assert queries.count_new_since(user.pk, since) == {"total": 4, "strong": 1}
+    assert build.STRONG_SCORE == 85
+    rows = {row.match_id: row for row in get_match_rows(user.pk, [at_the_line.id, just_under.id])}
+    assert rows[at_the_line.id].recommendation == "strong"
+    assert rows[just_under.id].recommendation == "apply"

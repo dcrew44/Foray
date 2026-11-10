@@ -17,7 +17,34 @@ from __future__ import annotations
 import re
 from typing import Any
 
-__all__ = ["blocker_for", "first_sentence", "reason_for"]
+from apps.matching.schemas import Recommendation
+
+__all__ = [
+    "APPLY_AT",
+    "MAYBE_AT",
+    "STRONG_AT",
+    "band_of",
+    "blocker_for",
+    "first_sentence",
+    "reason_for",
+]
+
+# The deep review's bands (`deep_eval.RUBRIC`), which are the only numbers anything in the app
+# may call a score "strong" or "worth applying to" by (#87): a row's verdict, Home's count of
+# strong matches and a run's summary all read them from here.
+STRONG_AT = 85
+APPLY_AT = 70
+MAYBE_AT = 50
+
+
+def band_of(score: int) -> Recommendation:
+    """A 0-100 score as the rubric's recommendation."""
+    if score >= STRONG_AT:
+        return "strong"
+    if score >= APPLY_AT:
+        return "apply"
+    return "maybe" if score >= MAYBE_AT else "skip"
+
 
 # A sentence ends at ".", "!" or "?" (with any closing quote or bracket) before a space and a
 # capital or a digit, so "Node.js", "3.5 years" and "e.g. the API" do not end one.

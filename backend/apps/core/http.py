@@ -251,11 +251,22 @@ class HttpClient:
         self._resolve = resolve or system_resolve
         self._gates: dict[str, asyncio.Semaphore] = {}
         self._budgets: dict[str, int] = {}
+        self._turns: dict[str, float] = {}
 
     def gate(self, key: str, limit: int) -> asyncio.Semaphore:
         """A semaphore shared by everything this client does under `key`: how a job keeps to a
         few requests at a time against one source, however many boards it is reading."""
         return self._gates.setdefault(key, asyncio.Semaphore(limit))
+
+    async def pace(self, key: str, interval_s: float) -> None:
+        """Waits for this client's next turn under `key`: whatever follows starts at least
+        `interval_s` after the last thing that waited here. How a job keeps to one request a
+        second against a source that asks for it, however many boards it is reading."""
+        now = asyncio.get_running_loop().time()
+        turn = max(now, self._turns.get(key, now))
+        self._turns[key] = turn + interval_s
+        if turn > now:
+            await _sleep(turn - now)
 
     def take(self, key: str, total: int, wanted: int) -> int:
         """Up to `wanted` out of a budget of `total` shared by everything this client does under

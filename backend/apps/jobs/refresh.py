@@ -85,6 +85,10 @@ OWN_HOST_SOURCES = frozenset({"workday", "icims"})
 # the rest wait their turn without even being listed.
 SOURCE_POSTINGS_PER_PASS = 1200
 
+# Sources that answer 429 to anything faster (#86): boards of these are asked one at a time,
+# this many seconds apart, by the scheduled refresh and by `candidates.grow` alike.
+SOURCE_PACE_S: dict[str, float] = {"workable": 1.0}
+
 MULTI_BOARD_GATE = asyncio.Lock()
 
 type RefreshStatus = Literal["ok", "not-found", "unsupported", "error"]
@@ -302,11 +306,15 @@ async def refresh_companies(
     per_source: dict[str, asyncio.Semaphore] = {}
 
     async def one(company: Company) -> RefreshOutcome:
+        pace = SOURCE_PACE_S.get(company.source_type)
         source = per_source.setdefault(
-            company.source_type, asyncio.Semaphore(PER_SOURCE_CONCURRENCY)
+            company.source_type, asyncio.Semaphore(1 if pace else PER_SOURCE_CONCURRENCY)
         )
-        async with source, gate:
-            return await refresh_company(client, company, force=force)
+        async with source:
+            if pace:
+                await client.pace(f"boards:{company.source_type}", pace)
+            async with gate:
+                return await refresh_company(client, company, force=force)
 
     async with asyncio.TaskGroup() as group:
         tasks = [group.create_task(one(company)) for company in companies]

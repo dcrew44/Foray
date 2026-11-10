@@ -54,6 +54,7 @@ from apps.jobs.models import (
     FetchStatus,
     SourceType,
 )
+from apps.jobs.refresh import SOURCE_PACE_S
 from apps.jobs.registry import CompanyInput, record_fetch, upsert_company
 from apps.jobs.sources import board_adapter, listed_adapter, workday
 from apps.jobs.sources.poll import PollState, poll_board
@@ -457,8 +458,11 @@ async def grow(
     gates: dict[str, asyncio.Semaphore] = {}
 
     async def one(candidate: BoardCandidate) -> None:
-        gate = gates.setdefault(candidate.source_type, asyncio.Semaphore(PER_SOURCE))
+        pace = SOURCE_PACE_S.get(candidate.source_type)
+        gate = gates.setdefault(candidate.source_type, asyncio.Semaphore(1 if pace else PER_SOURCE))
         async with gate:
+            if pace:
+                await client.pace(f"boards:{candidate.source_type}", pace)
             checked = await _check(client, candidate, matching, any_board)
             if checked.status == CandidateStatus.LIVE:
                 try:

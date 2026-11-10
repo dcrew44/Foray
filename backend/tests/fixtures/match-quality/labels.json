@@ -1,0 +1,562 @@
+[
+ {
+  "id": "ashby:applied:bc4aa87a-19b0-4b01-951c-6fdb3cce16c6",
+  "company": "Applied Intuition",
+  "title": "Software Integration Engineer",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Onsite in Tokyo, requires Japanese fluency and 5+ years of automotive ECU integration in C/C++, none of which the candidate has.",
+   "Onsite in Tokyo doing automotive ECU integration in C/C++ with required Japanese fluency: wrong location and discipline."
+  ]
+ },
+ {
+  "id": "ashby:baseten:1f7d7fda-5540-4205-890b-cdbf774f0814",
+  "company": "Baseten",
+  "title": "Software Engineer - GPU Networking & Distributed Systems",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Location, hybrid and pay fit, but the core requirement is deep RDMA/InfiniBand and NVIDIA GPU networking expertise that a payments and data backend engineer does not have.",
+   "Bay Area hybrid and well paid, but it requires deep RDMA/InfiniBand and NVIDIA GPU networking expertise the resume has none of."
+  ]
+ },
+ {
+  "id": "ashby:bjakcareer:24359ee7-9edb-4c5d-aa8c-1559c0228a75",
+  "company": "Bjak",
+  "title": "AI Phone - AI Application Integration Engineer",
+  "label": "maybe",
+  "readers": [
+   "maybe",
+   "maybe"
+  ],
+  "why": [
+   "The API, auth and async-workflow requirements match, but the posting is vague on level and pay, leans on mobile/Android app architecture the resume lacks, and is remote rather than hybrid.",
+   "US-remote API and integration work suits a backend engineer, but the posting is thin, states no level or pay, and wants mobile application architecture knowledge the resume does not show."
+  ]
+ },
+ {
+  "id": "ashby:checkly:8d068314-5ef8-4dcb-96a0-f79030a42dc1",
+  "company": "Checkly",
+  "title": "Senior Product Engineer (DevTools & AI reliability, remote)",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Restricted to UTC-3 to UTC+3 time zones with visa-free European travel and pays EUR 79-105k, so an Oakland candidate with a $150k floor cannot take it.",
+   "Remote only within UTC-3 to UTC+3 at EUR 79-105k, so a California candidate cannot work it and the pay is far under the floor."
+  ]
+ },
+ {
+  "id": "ashby:clickhouse:7fa613e3-ed23-47b3-b6d3-6a73c9607be2",
+  "company": "ClickHouse",
+  "title": "Senior Software Engineer - Cloud Infrastructure (APJ-Remote)",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "The role is remote within APJ (Singapore or Australia), which the Bay Area candidate cannot work from.",
+   "APJ-remote role based in Singapore or Australia, a location the candidate cannot work from."
+  ]
+ },
+ {
+  "id": "ashby:cogent-security:47febdb1-b4d5-445a-9dd5-1f70ba3e88be",
+  "company": "Cogent Security",
+  "title": "Software Engineer - Infrastructure (Senior+)",
+  "label": "maybe",
+  "readers": [
+   "maybe",
+   "maybe"
+  ],
+  "why": [
+   "SF hybrid and the 5-7 year band fit, but it is a Senior+ infrastructure role asking for deep core-infra expertise, ClickHouse Cloud and real Spark depth that the resume does not show.",
+   "SF hybrid and the years fit, but it is a Senior+ core-infrastructure role wanting ClickHouse Cloud and real Spark depth that the resume does not show."
+  ]
+ },
+ {
+  "id": "ashby:cohere:96c74af4-b3d7-4960-a666-212ce4debac8",
+  "company": "Cohere",
+  "title": "Software Engineer, Integrations",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "apply"
+  ],
+  "why": [
+   "A general software engineering role building API integrations, open to US remote or an office with pay above the floor, where the only gap is learnable familiarity with evals and prompt tuning.",
+   "US-remote software engineer role building API integrations whose main bar (shipped production code, external APIs, end-to-end ownership, helping peers) the resume meets; agent-eval experience is a learnable gap."
+  ]
+ },
+ {
+  "id": "ashby:exa:98a8bab6-4cbf-4d39-a5a7-0867addc4086",
+  "company": "Exa",
+  "title": "Software Engineer, Full Stack",
+  "label": "maybe",
+  "readers": [
+   "maybe",
+   "maybe"
+  ],
+  "why": [
+   "SF and well paid with real backend API and gateway work, but it requires fluent TypeScript with a strong front-end eye and 3+ years of full-stack experience the backend-only resume lacks, and it is fully in person.",
+   "SF and well paid with real backend API work, but it is in-person full stack requiring fluent TypeScript, front-end design sense and 3+ years of full-stack experience a backend resume lacks."
+  ]
+ },
+ {
+  "id": "ashby:omni:de8286db-3605-4e37-a41d-84979d8d0ae8",
+  "company": "Omni",
+  "title": "Software Engineer, Growth Data Platform",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "strong"
+  ],
+  "why": [
+   "Hybrid at SF headquarters, $170-250k, 2+ years, in Python, SQL, AWS and Terraform, and the BigQuery ingestion and streaming pipeline work is direct evidence, with only the Snowflake/dbt/Dagster tooling to learn.",
+   "Software engineer on a data platform, hybrid at SF HQ, 2+ years, $170-250k, on Python/SQL/AWS/Terraform, with direct resume evidence in the BigQuery ingestion service and the streaming pipeline."
+  ]
+ },
+ {
+  "id": "ashby:openai:52c72cb9-7c44-4cba-b440-e05262a38491",
+  "company": "OpenAI",
+  "title": "Full-Stack Software Engineer, Intelligence & Investigations",
+  "label": "maybe",
+  "readers": [
+   "apply",
+   "maybe"
+  ],
+  "why": [
+   "SF hybrid three days with pay far above the floor, and the stated qualifications (4+ years, Python, SQL, large datasets, end-to-end ownership) are met, though the full-stack title and a stray 7+ years line make it a reach.",
+   "SF hybrid and the Python/SQL/large-data requirements fit, but it is a full-stack product role at a senior pay band with a contradictory 7+ versus 4+ years ask and interface work the resume does not show."
+  ]
+ },
+ {
+  "id": "ashby:zed:a7ef7d02-306a-4108-aad8-4f267686e4eb",
+  "company": "Zed",
+  "title": "Backend Engineer, Cloud",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "apply"
+  ],
+  "why": [
+   "A backend role owning services, billing and infrastructure end to end that matches the payments and AWS/Kubernetes experience, with Rust explicitly not required, though it is remote and lists no salary.",
+   "Backend engineer role owning services, billing, auth and infrastructure matches the resume's ownership and payments evidence, and Rust is explicitly not required; it is remote rather than hybrid and pay is unstated."
+  ]
+ },
+ {
+  "id": "gem:helix:am9icG9zdDpxzsvQPYuX8lxo_S-6cQ74",
+  "company": "Helix",
+  "title": "Software Engineer",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A Mexico-based role paid in pesos at roughly a third of the salary floor, not open to a Bay Area candidate.",
+   "Mexico-based role paid about MXN 63-82k a month: wrong country and far below the salary floor."
+  ]
+ },
+ {
+  "id": "greenhouse:abinbev:8932315002",
+  "company": "AB InBev  | Growth Group",
+  "title": "Intermediate Data Ops Analyst",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "An onsite data operations analyst job in Campinas, Brazil, which is the wrong discipline and the wrong country.",
+   "Onsite data-operations analyst and L2 incident support in Campinas, Brazil: wrong discipline and location."
+  ]
+ },
+ {
+  "id": "greenhouse:astspacemobile:4752692005",
+  "company": "AST SpaceMobile",
+  "title": "Senior Mechanical Engineer",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A mechanical engineering role in Barcelona requiring a mechanical degree and space hardware design experience.",
+   "Mechanical design of space electronics in Barcelona, a different discipline entirely."
+  ]
+ },
+ {
+  "id": "greenhouse:betterment:8319091",
+  "company": "Betterment",
+  "title": "Sr. Manager, Analytics Engineering",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A people-management role in New York requiring 8+ years in analytics engineering and 3+ years managing a team, none of which fits a mid-level backend engineer.",
+   "Senior people-manager role in analytics engineering, onsite in New York, needing 8+ years and 3+ years managing a team."
+  ]
+ },
+ {
+  "id": "greenhouse:coreweave:4681716006",
+  "company": "CoreWeave",
+  "title": "Senior Software Engineer - Perf and Benchmarking",
+  "label": "maybe",
+  "readers": [
+   "maybe",
+   "maybe"
+  ],
+  "why": [
+   "Python/Go, Kubernetes and event-ingestion experience fit the performance data warehouse work and pay clears the floor, but it asks for exposure to GPU systems or model-serving stacks and MLPerf benchmarking the resume lacks, and it is onsite in Sunnyvale.",
+   "Python/Go, Kubernetes and event-ingestion experience fit and Sunnyvale is in the Bay Area, but it is onsite and asks for exposure to GPU performance or model-serving stacks the resume lacks."
+  ]
+ },
+ {
+  "id": "greenhouse:coreweave:4719120006",
+  "company": "CoreWeave",
+  "title": "Senior Software Engineer II, Observability",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "apply"
+  ],
+  "why": [
+   "The required 5+ years, Go or Python, production Kubernetes, on-call experience and high-throughput pipelines are all evidenced, with Kafka and Terraform as preferred extras, leaving only the observability domain and the onsite Sunnyvale schedule as gaps.",
+   "Meets the required 5+ years of distributed systems, Go/Python, production Kubernetes and on-call, with Kafka and Terraform as preferred extras; onsite in Sunnyvale and no observability-platform work are the gaps."
+  ]
+ },
+ {
+  "id": "greenhouse:databricks:4513122002",
+  "company": "Databricks",
+  "title": "Senior Software Engineer - Distributed Data Systems",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Requires 5+ years of production Java, Scala or C++ and Spark-internals style database engineering, while the candidate works in Python and Go.",
+   "Requires 5+ years of production Java, Scala or C++ for Spark and query-engine internals, which a Python/Go service engineer does not have."
+  ]
+ },
+ {
+  "id": "greenhouse:glydways:5200159007",
+  "company": "Glydways",
+  "title": " Software Engineer (Safety & Certification Tooling)",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A build and certification tooling role whose defining requirements are functional-safety standards, certification evidence and MISRA-style static analysis, none of which the resume shows.",
+   "Developer-platform tooling role whose core requirements are functional-safety standards, certification evidence and MISRA-style static analysis, none of which the resume has."
+  ]
+ },
+ {
+  "id": "greenhouse:grafanalabs:6226999004",
+  "company": "Grafana Labs",
+  "title": "Senior FullStack Engineer - Grafana Catalog | US | Remote",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Only candidates in the Eastern or Central time zones are considered, and it is a full-stack role requiring React experience the candidate lacks.",
+   "Open only to candidates in Eastern or Central time zones, and it is a senior full-stack React role, so a Pacific-based backend engineer is out."
+  ]
+ },
+ {
+  "id": "greenhouse:instacart:8233716",
+  "company": "Instacart",
+  "title": "Software Engineer II, Advertiser Optimization",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Open only to residents of four Canadian provinces and requires a PhD in a quantitative discipline, with pay below the floor.",
+   "Canada-only remote role requiring a PhD in a quantitative discipline."
+  ]
+ },
+ {
+  "id": "greenhouse:k2spacecorporation:5197513008",
+  "company": "K2 Space",
+  "title": "Senior Firmware Engineer, Vehicle",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "An embedded firmware role onsite in Los Angeles requiring 5+ years of microcontroller development in Rust, C or C++.",
+   "Embedded firmware for spacecraft microcontrollers, onsite in Los Angeles: wrong discipline and metro."
+  ]
+ },
+ {
+  "id": "greenhouse:nuro:7896063",
+  "company": "Nuro",
+  "title": "Software Engineer, Autonomy Visualization",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A graphics and visualization role requiring C++, OpenGL and Qt experience, which is a different discipline from backend services.",
+   "Graphics and visualization role requiring C++, OpenGL and Qt experience the resume does not have."
+  ]
+ },
+ {
+  "id": "greenhouse:oura:4435517009",
+  "company": "ŌURA",
+  "title": "Staff Full Stack Engineer ",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A staff full-stack role requiring 10+ years and extensive TypeScript and React, well beyond a six-year backend engineer.",
+   "Staff full-stack role requiring 10+ years and extensive React, well beyond a six-year backend engineer."
+  ]
+ },
+ {
+  "id": "greenhouse:platacard:5392528008",
+  "company": "Plata Card",
+  "title": "Engineering Manager - Golang [Telesales]",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "An engineering manager position requiring prior team-management experience and based around hubs in Cyprus, Georgia and Spain.",
+   "Engineering manager role needing people-management experience, built around hubs in Cyprus, Georgia and Spain."
+  ]
+ },
+ {
+  "id": "greenhouse:rapidfortinc:4272902009",
+  "company": "RapidFort, Inc.",
+  "title": "Senior Backend Engineer ((Python / Go)",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "apply"
+  ],
+  "why": [
+   "A Python and Go backend microservices role whose must-haves (service ownership, idempotency, queues, caching, Docker, Kubernetes, rate limiting) are directly evidenced, with one year short of the 7 asked and ClickHouse, Keycloak and Datadog as learnable gaps.",
+   "Python (FastAPI/Django) and Go microservices, Redis, Kubernetes, Docker and idempotency patterns match the resume closely; the 7+ years ask, ClickHouse, Keycloak, Datadog and remote-only are modest gaps."
+  ]
+ },
+ {
+  "id": "greenhouse:scalapaysrl:4955629101",
+  "company": "Scalapay",
+  "title": "Senior Backend Software Engineer - Consumer Banking",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Onsite in Milan at EUR 65-80k, which is the wrong location and far below the salary floor despite the payments overlap.",
+   "Onsite in Milan at EUR 65-80k on a NestJS/TypeScript stack: wrong location and far below the salary floor."
+  ]
+ },
+ {
+  "id": "greenhouse:speechify:6229015004",
+  "company": "Speechify",
+  "title": "Software Engineer, AI Data - San Francisco, CA, USA",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "apply"
+  ],
+  "why": [
+   "Asks for 5+ years of backend engineering in Python with production data pipelines, which the ingestion and BigQuery work shows, though the company is fully remote with no office and the range starts just under the floor.",
+   "SF-tagged role whose requirements (5+ years, Python, production data pipelines, CS degree) the resume meets directly; fully remote rather than hybrid and a range starting under the floor keep it from strong."
+  ]
+ },
+ {
+  "id": "greenhouse:speechify:6229096004",
+  "company": "Speechify",
+  "title": "Software Engineer, AI Data - Reston, VA, USA",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "apply"
+  ],
+  "why": [
+   "The same fully remote data pipeline role as the San Francisco listing with requirements the resume meets, and since the company has no office the Reston title does not clearly bar a Bay Area candidate.",
+   "Same role and requirements as the San Francisco listing at a fully distributed company with no office, so the Reston tag should not exclude a Bay Area candidate; remote rather than hybrid."
+  ]
+ },
+ {
+  "id": "greenhouse:stokespacetechnologies:6122003004",
+  "company": "Stoke Space",
+  "title": "Materials & Process Engineer",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A materials and process engineering role for rocket hardware in Kent, Washington, unrelated to software.",
+   "Materials and process engineering for rockets in Kent, Washington: a different discipline."
+  ]
+ },
+ {
+  "id": "greenhouse:stubhubinc:5015248101",
+  "company": "StubHub",
+  "title": "Senior Software Engineer - Core Platform - Streaming & Storage",
+  "label": "apply",
+  "readers": [
+   "strong",
+   "apply"
+  ],
+  "why": [
+   "A backend platform role, hybrid three days in San Francisco at $200-250k, asking 5-6+ years with distributed systems, message queues, caching, performance work and mentoring, each of which the resume shows directly.",
+   "SF hybrid at $200-250k, and the streaming, caching, message-queue and mentoring requirements have direct resume evidence; it is a senior platform-infrastructure role, a notch above the mid target."
+  ]
+ },
+ {
+  "id": "greenhouse:versaterm:5461978008",
+  "company": "Versaterm",
+  "title": "AI Native Senior Software Engineer",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "Requires Canadian work authorization and a Government of Canada security clearance for a Canada-remote role paid in CAD below the floor.",
+   "Canada-remote role requiring Canadian work authorization and a Government of Canada security clearance."
+  ]
+ },
+ {
+  "id": "greenhouse:waymo:8127006",
+  "company": "Waymo",
+  "title": "Perception Machine Learning Engineer - Continuous Learning",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A perception machine learning role requiring 3+ years of ML or computer vision, production active learning and PyTorch, which is the wrong discipline.",
+   "Perception machine-learning role requiring 3+ years of ML or computer vision and production active learning: wrong discipline."
+  ]
+ },
+ {
+  "id": "greenhouse:xebiacee:6206309004",
+  "company": "Poland and Central-Eastern Europe",
+  "title": "Senior Technical Product Manager – Human Biology",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A senior technical program manager role in Central and Eastern Europe requiring 8+ years of program management and a life sciences background.",
+   "Senior technical program manager in Central-Eastern Europe needing 8+ years and a life-sciences background."
+  ]
+ },
+ {
+  "id": "greenhouse:zyngacareers:5977896004",
+  "company": "Zynga",
+  "title": "Principal Software Developer - FinOps",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A principal-level FinOps data analyst role in Austin or Toronto requiring 8+ years with data warehouses and Tableau.",
+   "Principal-level FinOps data analyst role needing 8+ years of SQL, warehouse and Tableau work, onsite in Austin or Toronto."
+  ]
+ },
+ {
+  "id": "jsearch:linq-global-group:d3VWS1lOd1d6Y2xfUElEWEFBQUFBQT09OkVzd0JDb3dCUVVwcFZEUjBURjl4UTJGMk5Va3RZVXRNUm14V1l6TlBRME56VnpOVlVVMUhVbU5TT0Rsc1VsQnlXa0ZSU1ZORGVWQjFWVlZ2ZUU0NVNreG1Sa1ZoZVRKdU1tMWhMVTU2UlVKNVZsQkxkbDl5ZWxSQmNraE1hekZOZFZwWE1XZERkV1ZyVDNadlNIbzNVRFYzYURac1NGRnVhM1ZGWWtNME5tZGZXblpGYkhBMVdtZDJhRzVKUTJWQk9HUVNGMFowVEdaaGNtWlNSblUzU0d0UVNWQnNOVTlhYzBGRkdpSkJSSE55T1daUmVWbFlNMTkzTjFvNFVGaExWR3N3VDFOTE56VkpRVmxLVDFSQg",
+  "company": "LinQ Global Group.",
+  "title": "Backend Engineer (Early Stage Startup Experience)",
+  "label": "apply",
+  "readers": [
+   "apply",
+   "apply"
+  ],
+  "why": [
+   "A backend engineer role in San Francisco for 4-6 years of experience in Python or Go with relational databases, caching, async processing and data pipelines, all evidenced, though it is fully onsite, lists no pay and wants early-stage startup experience the resume does not confirm.",
+   "Backend engineer with 4-6 years in SF on Python/Go, relational databases, caching, async processing and data pipelines, all evidenced; onsite-only and the unproven early-stage startup requirement are the gaps."
+  ]
+ },
+ {
+  "id": "lever:bluelightconsulting:05b8cb8a-b767-444d-9429-0793b6b0a65a",
+  "company": "Bluelight Consulting",
+  "title": "Full Stack and Backend NodeJS TypeScript/JavaScript Engineer (Senior) - Latin America, Remote",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A Latin America consultancy role built around Node.js and React, neither of which matches the candidate's location or core stack.",
+   "Remote role for Latin America-based consultants centred on Node.js, TypeScript and React: outside the candidate's location and stack."
+  ]
+ },
+ {
+  "id": "lever:bluelightconsulting:0cbbc6cd-3cbb-4d57-8093-dedd637101fc",
+  "company": "Bluelight Consulting",
+  "title": "Senior Python/Flask+React Fullstack Engineer - Remote, Latin America",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A Latin America remote full-stack consultancy role listed in Costa Rica that also needs React, so it is not open to a Bay Area backend engineer.",
+   "Remote role for Latin America-based consultants and full stack with required React, so location and discipline both miss."
+  ]
+ },
+ {
+  "id": "lever:bluelightconsulting:9529bd99-793c-4e27-a2ed-cf33bf8b5764",
+  "company": "Bluelight Consulting",
+  "title": "Senior Software Engineer (Python/Flask+React) - Remote, Latin America",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "The same Latin America remote Python and React consultancy role, listed in Bolivia, outside the candidate's location and discipline.",
+   "Remote role for Latin America-based consultants and full stack with required React, so location and discipline both miss."
+  ]
+ },
+ {
+  "id": "workday:gaig.GAIG_External:Content-Publishing-Developer-Intern---Summer-2027_R9813",
+  "company": "Gaig",
+  "title": "Content Publishing Developer Intern - Summer 2027",
+  "label": "skip",
+  "readers": [
+   "skip",
+   "skip"
+  ],
+  "why": [
+   "A part-time summer internship in Cincinnati for current students, far below a mid-level engineer.",
+   "Part-time summer internship for current students in Cincinnati, far below a mid-level engineer."
+  ]
+ }
+]

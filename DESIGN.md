@@ -545,6 +545,19 @@ Cost is a first-class concern: `apps/llm/pricing.py` holds per-`provider:model` 
 schema-failure rate, and agreement with a reference model. Which models to use is settled
 with those measurements, not guessed.
 
+None of that says whether a score is right, only what it costs and whether two models agree.
+`manage.py match_benchmark` (#2, `apps/llm/benchmark.py`) measures a model against labels:
+forty real postings read against the sample candidate and called strong, apply, maybe or skip
+by the deep review's own rubric. It reports how often the model's band is the label's, how
+often it is at most one band away, and the two shares the product acts on: of the postings
+worth applying to, how many the fast score would keep, and of those to skip, how many it would
+archive. The first measurement, on 2026-11-09: `openai:gpt-5.6-luna` as the fast scorer put 33
+of 40 in the label's band and all 40 within one, kept all 9 worth applying to, and archived 22
+of the 26 to skip (the other four it scored between 55 and 69). The labels are a reading by two
+model readers working alone, who agreed on 37 of 40, not the owner's judgment, there is one
+candidate (mid-level, not a new graduate), and no posting in the set is labelled strong:
+`tests/fixtures/match-quality/LABELS.md` says what they are good for.
+
 ## Phase plan
 
 The milestones on GitHub hold the order and the work; this section keeps what each phase is

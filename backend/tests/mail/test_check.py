@@ -19,6 +19,7 @@ from django.db import IntegrityError, transaction
 from django.db.models.functions import Now
 from django.test import Client
 from django.utils import timezone
+from procrastinate.periodic import PeriodicDeferrer, PeriodicRegistry
 from procrastinate.retry import RetryStrategy
 
 from apps.accounts.models import User
@@ -901,6 +902,18 @@ def test_the_check_runs_every_fifteen_minutes_on_the_system_lane() -> None:
     [entry] = [entry for entry in periodic.SCHEDULE if entry.task == "mail.check"]
     assert (entry.cron, entry.queueing_lock) == ("7-59/15 * * * *", "mail:sweep")
     assert (mail_check.queue, mail_check.lock) == ("system", None)
+    # As procrastinate reads that cron: four ticks an hour, off the boards' quarter hours.
+    registry = PeriodicRegistry()
+    tick: Any = mail_check  # a periodic task takes the tick as `timestamp`
+    registry.register_task(task=tick, cron=entry.cron, periodic_id="", configure_kwargs={})
+    deferrer = PeriodicDeferrer(registry=registry, max_delay=6 * 3600)
+    noon = int(datetime(2026, 11, 9, 12, 0, 30, tzinfo=UTC).timestamp())
+    ticks = {
+        datetime.fromtimestamp(at, tz=UTC).minute
+        for minute in range(60)
+        for _, at in deferrer.get_previous_tasks(at=noon + 60 * minute)
+    }
+    assert ticks == {7, 22, 37, 52}
     # No model is called, so a check a shutdown interrupted may run again; nothing else retries.
     strategy = mail_check.retry_strategy
     assert isinstance(strategy, RetryStrategy) and strategy.max_attempts == 1

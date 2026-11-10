@@ -144,6 +144,17 @@ To be certain at Google's end as well, open your Google Account's
 [third-party access](https://myaccount.google.com/connections) and remove the app there.
 That works even with Foray switched off; its next check then asks you to reconnect.
 
+## When connecting does not work
+
+| Settings says | Look at |
+|---|---|
+| "That connection attempt expired, or did not start here" | You have to be using Foray at exactly `PUBLIC_ORIGIN` when you press Connect: the sign-in cookie for `http://127.0.0.1:3000` is not sent to `http://localhost:3000`, which is where Google sends you back. It also appears when more than ten minutes pass at Google's screen |
+| "Google did not recognise this install's OAuth client" | `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: both from the same "Web application" client, with no spaces or quotes |
+| "The redirect URI registered with Google is not this install's" | The client's authorized redirect URI, character for character against the one Settings shows. (Google usually reports a mismatch on its own error page before you get this far) |
+| "Foray was not given permission to read the mailbox" | The consent screen's scopes: `gmail.readonly` has to be there, and allowed when you connect |
+| "The Gmail API is not enabled…" (after connecting) | Step 2 above, in the same project as the client |
+| Google's page: "Access blocked" or "has not completed the Google verification process" | You are not listed as a test user (step 3), or the consent screen is "In production" and Google wants the warning acknowledged under "Advanced" |
+
 ## Operating notes
 
 - **`SECRET_KEY` opens the stored tokens.** Change it and they can no longer be read:

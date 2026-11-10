@@ -19,7 +19,7 @@ import base64
 import hashlib
 import logging
 import uuid
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qsl, urlsplit
 
 import httpx2
@@ -27,9 +27,11 @@ import pytest
 from django.conf import settings
 from django.db import connection
 from django.test import Client
+from django.test.client import AsyncClient
 
 from apps.accounts.models import User
 from apps.applications.models import Application
+from apps.core.db import db
 from apps.mail import api as mail_api
 from apps.mail import connect, crypto, google, store
 from apps.mail.models import ApplicationEmail, MailAccount
@@ -297,6 +299,43 @@ def test_a_callback_is_bound_to_the_session_that_started(
     connected = account_of(user)
     assert connected is not None and connected.user_id == user.pk
     assert account_of(other) is None
+
+
+async def test_connecting_and_disconnecting_through_the_asgi_handler(
+    configured: None, google_server: FakeGoogle
+) -> None:
+    """The same path as the server runs it: Django's ASGI handler and the async middleware
+    chain (the sliding session included), with the two `async` operations awaited on the event
+    loop and their database steps on `db()` threads."""
+    user = await db(make_user)
+    client = AsyncClient()
+    await cast(Any, client).aforce_login(user)  # django-types does not know the async login
+    origin = {"Origin": "http://localhost:3000"}
+
+    started = await client.post(
+        "/api/mail/google/start", data="{}", content_type="application/json", headers=origin
+    )
+    assert started.status_code == 200, started.content
+    back = await client.get(google_server.consent(started.json()["url"]))
+    assert came_back_with(back) == "connected"
+
+    account = await db(account_of, user)
+    assert account is not None and account.address == MAILBOX
+    [refresh] = google_server.refresh_tokens
+    assert account.refresh_token != refresh and crypto.unseal(account.refresh_token) == refresh
+    # Still signed in afterwards, with the request gone from the session.
+    me = await client.get("/api/me")
+    assert me.status_code == 200 and me.json()["email"] == user.email
+    assert connect.PENDING_KEY not in await db(lambda: dict(client.session))
+
+    gone = await client.delete("/api/mail/google", headers=origin)
+    assert gone.status_code == 200, gone.content
+    assert gone.json() == {"ok": True, "message": mail_api.DISCONNECTED}
+    assert await db(account_of, user) is None and google_server.revoked == [refresh]
+    # A cross-site page cannot disconnect (or start) anything.
+    for method, path in (("delete", "/api/mail/google"), ("post", "/api/mail/google/start")):
+        refused = await getattr(client, method)(path, headers={"Origin": "https://evil.example"})
+        assert refused.status_code == 403, path
 
 
 def test_a_request_lasts_ten_minutes(configured: None, google_server: FakeGoogle) -> None:

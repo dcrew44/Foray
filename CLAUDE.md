@@ -241,6 +241,13 @@ An issue reads like the ones already there:
   which writes the composed snapshot (a `resumes` row of kind `variant`) and renders that; a
   variant's PDF is named and keyed for the variant. A refusal the user reads is a
   `VariantRefused`. The editor's pure helpers (`src/lib/variants.ts`) mirror `clean_spec`.
+- **An outcome number comes with its count** (`apps/applications/outcomes.py`, #65, #6).
+  Django decides when a number is too small to be a rate: `None` under `MIN_DENOMINATOR`, no
+  bucket rates before `RATES_AFTER` recorded applications, no 90th percentile under `P90_MIN`.
+  The frontend words what it was sent and never divides. A stage a match "reached" is only what
+  its current stage proves (`reached()`), because nothing records a stage move; say what a new
+  number cannot know rather than guessing it. A new split is one more key in `funnel()`'s
+  grouped count, not another query.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

@@ -88,6 +88,10 @@ SHARED = {
 
 # List endpoints that have no per-user rows to show A, so they cannot show A's texts either.
 NOT_PERSONAL = {"/api/health", "/api/auth/config", "/api/pages/companies"}
+# Per-user answers made only of counts and durations: they hold nobody's ids or texts, so the
+# sweep cannot tell whose rows went into them. Their own tests do, with numbers
+# (`applications/test_outcomes.py::test_another_users_rows_are_never_counted`).
+COUNTS_ONLY = {"/api/pages/outcomes"}
 
 _PATH_PARAM = re.compile(r"\{[^}]+\}")
 
@@ -215,7 +219,7 @@ def test_tenancy_sweep(graphs: tuple[Graph, Graph]) -> None:
         theirs = as_b.get(url, headers=SSR)
         assert theirs.status_code == 200, url
         assert _leaks(theirs.content.decode(), a) == [], f"{url} shows B what is A's"
-        if path not in NOT_PERSONAL:
+        if path not in NOT_PERSONAL | COUNTS_ONLY:
             mine = as_a.get(url, headers=SSR)
             assert _leaks(mine.content.decode(), a), f"{url} shows A nothing of A's"
 

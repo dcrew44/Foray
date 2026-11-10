@@ -79,6 +79,19 @@ approved, what it cost and how long it took.
 
 ![Activity: runs with their cost and duration, and the event log](docs/screenshots/activity.png)
 
+### What came of it
+
+The Outcomes page measures what Foray is for: how long your applications took to go out
+after the posting went up, as the median of three spans (until Foray saw the posting, until
+the application was ready, until you sent it), over all time and the last 30 days. Then
+whether sending sooner helped: applications sent the same day, within three days and later,
+with how many of each reached an interview. Then the funnel from found to offer, and the
+interview rate by source, by the review's recommendation, by lane and by tailored resume.
+Every number says how many applications it rests on, and a rate appears only when that is
+enough to mean something (10 in a group, 50 before the same-day comparison). Stages are
+still moved by hand, and Foray keeps where a match is now rather than where it has been,
+so the page says which counts are floors.
+
 ### The boards Foray watches
 
 A shared registry of company job boards on Greenhouse, Lever, Ashby, Workable, Recruitee,

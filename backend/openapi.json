@@ -1752,6 +1752,33 @@
         ]
       }
     },
+    "/api/pages/outcomes": {
+      "get": {
+        "operationId": "apps_pages_api_outcomes",
+        "summary": "Outcomes page",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomesPage"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "pages"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/pages/profile": {
       "get": {
         "operationId": "apps_pages_api_profile",
@@ -6345,6 +6372,370 @@
           "postedToAppliedS"
         ],
         "title": "ApplySent",
+        "type": "object"
+      },
+      "OutcomeBucket": {
+        "properties": {
+          "bucket": {
+            "enum": [
+              "same_day",
+              "three_days",
+              "later"
+            ],
+            "title": "Bucket",
+            "type": "string"
+          },
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "interviews": {
+            "title": "Interviews",
+            "type": "integer"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate"
+          }
+        },
+        "required": [
+          "bucket",
+          "applications",
+          "interviews",
+          "rate"
+        ],
+        "title": "OutcomeBucket",
+        "type": "object"
+      },
+      "OutcomeClosed": {
+        "properties": {
+          "stage": {
+            "enum": [
+              "rejected",
+              "archived"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          },
+          "applied": {
+            "title": "Applied",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "stage",
+          "matches",
+          "applied"
+        ],
+        "title": "OutcomeClosed",
+        "type": "object"
+      },
+      "OutcomeFunnel": {
+        "properties": {
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "closed": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeClosed"
+            },
+            "title": "Closed",
+            "type": "array"
+          },
+          "bySource": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeGroup"
+            },
+            "title": "Bysource",
+            "type": "array"
+          },
+          "byRecommendation": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeGroup"
+            },
+            "title": "Byrecommendation",
+            "type": "array"
+          },
+          "byLane": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeGroup"
+            },
+            "title": "Bylane",
+            "type": "array"
+          },
+          "byResume": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeGroup"
+            },
+            "title": "Byresume",
+            "type": "array"
+          },
+          "minDenominator": {
+            "title": "Mindenominator",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "steps",
+          "closed",
+          "bySource",
+          "byRecommendation",
+          "byLane",
+          "byResume",
+          "minDenominator"
+        ],
+        "title": "OutcomeFunnel",
+        "type": "object"
+      },
+      "OutcomeGroup": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "interviews": {
+            "title": "Interviews",
+            "type": "integer"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate"
+          }
+        },
+        "required": [
+          "key",
+          "applications",
+          "interviews",
+          "rate"
+        ],
+        "title": "OutcomeGroup",
+        "type": "object"
+      },
+      "OutcomeSpan": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "medianS": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medians"
+          },
+          "p90S": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90S"
+          }
+        },
+        "required": [
+          "applications",
+          "medianS",
+          "p90S"
+        ],
+        "title": "OutcomeSpan",
+        "type": "object"
+      },
+      "OutcomeSpeed": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "needed": {
+            "title": "Needed",
+            "type": "integer"
+          },
+          "enough": {
+            "title": "Enough",
+            "type": "boolean"
+          },
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeBucket"
+            },
+            "title": "Buckets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "applications",
+          "needed",
+          "enough",
+          "buckets"
+        ],
+        "title": "OutcomeSpeed",
+        "type": "object"
+      },
+      "OutcomeStep": {
+        "properties": {
+          "stage": {
+            "enum": [
+              "found",
+              "shortlisted",
+              "applied",
+              "interviewing",
+              "offer"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate"
+          }
+        },
+        "required": [
+          "stage",
+          "matches",
+          "rate"
+        ],
+        "title": "OutcomeStep",
+        "type": "object"
+      },
+      "OutcomeTiming": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "byHand": {
+            "title": "Byhand",
+            "type": "integer"
+          },
+          "postedToSeen": {
+            "$ref": "#/components/schemas/OutcomeSpan"
+          },
+          "seenToReady": {
+            "$ref": "#/components/schemas/OutcomeSpan"
+          },
+          "readyToApplied": {
+            "$ref": "#/components/schemas/OutcomeSpan"
+          },
+          "postedToApplied": {
+            "$ref": "#/components/schemas/OutcomeSpan"
+          }
+        },
+        "required": [
+          "applications",
+          "byHand",
+          "postedToSeen",
+          "seenToReady",
+          "readyToApplied",
+          "postedToApplied"
+        ],
+        "title": "OutcomeTiming",
+        "type": "object"
+      },
+      "OutcomeTimings": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "p90After": {
+            "title": "P90After",
+            "type": "integer"
+          },
+          "allTime": {
+            "$ref": "#/components/schemas/OutcomeTiming"
+          },
+          "recent": {
+            "$ref": "#/components/schemas/OutcomeTiming"
+          },
+          "untimed": {
+            "title": "Untimed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "p90After",
+          "allTime",
+          "recent",
+          "untimed"
+        ],
+        "title": "OutcomeTimings",
+        "type": "object"
+      },
+      "OutcomesPage": {
+        "description": "How long applications took to go out and what came of them (`applications/outcomes.py`,\n#65, #6). Every number comes with the count it rests on; a rate is null on too few.",
+        "properties": {
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          },
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "timing": {
+            "$ref": "#/components/schemas/OutcomeTimings"
+          },
+          "speed": {
+            "$ref": "#/components/schemas/OutcomeSpeed"
+          },
+          "funnel": {
+            "$ref": "#/components/schemas/OutcomeFunnel"
+          }
+        },
+        "required": [
+          "matches",
+          "applications",
+          "timing",
+          "speed",
+          "funnel"
+        ],
+        "title": "OutcomesPage",
         "type": "object"
       },
       "AnswerOption": {

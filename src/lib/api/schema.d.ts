@@ -797,6 +797,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pages/outcomes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Outcomes page */
+        get: operations["apps_pages_api_outcomes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pages/profile": {
         parameters: {
             query?: never;
@@ -2360,6 +2377,128 @@ export interface components {
             submittedAt: string;
             /** Postedtoapplieds */
             postedToAppliedS: number | null;
+        };
+        /** OutcomeBucket */
+        OutcomeBucket: {
+            /**
+             * Bucket
+             * @enum {string}
+             */
+            bucket: "same_day" | "three_days" | "later";
+            /** Applications */
+            applications: number;
+            /** Interviews */
+            interviews: number;
+            /** Rate */
+            rate: number | null;
+        };
+        /** OutcomeClosed */
+        OutcomeClosed: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "rejected" | "archived";
+            /** Matches */
+            matches: number;
+            /** Applied */
+            applied: number;
+        };
+        /** OutcomeFunnel */
+        OutcomeFunnel: {
+            /** Steps */
+            steps: components["schemas"]["OutcomeStep"][];
+            /** Closed */
+            closed: components["schemas"]["OutcomeClosed"][];
+            /** Bysource */
+            bySource: components["schemas"]["OutcomeGroup"][];
+            /** Byrecommendation */
+            byRecommendation: components["schemas"]["OutcomeGroup"][];
+            /** Bylane */
+            byLane: components["schemas"]["OutcomeGroup"][];
+            /** Byresume */
+            byResume: components["schemas"]["OutcomeGroup"][];
+            /** Mindenominator */
+            minDenominator: number;
+        };
+        /** OutcomeGroup */
+        OutcomeGroup: {
+            /** Key */
+            key: string;
+            /** Applications */
+            applications: number;
+            /** Interviews */
+            interviews: number;
+            /** Rate */
+            rate: number | null;
+        };
+        /** OutcomeSpan */
+        OutcomeSpan: {
+            /** Applications */
+            applications: number;
+            /** Medians */
+            medianS: number | null;
+            /** P90S */
+            p90S: number | null;
+        };
+        /** OutcomeSpeed */
+        OutcomeSpeed: {
+            /** Applications */
+            applications: number;
+            /** Needed */
+            needed: number;
+            /** Enough */
+            enough: boolean;
+            /** Buckets */
+            buckets: components["schemas"]["OutcomeBucket"][];
+        };
+        /** OutcomeStep */
+        OutcomeStep: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "found" | "shortlisted" | "applied" | "interviewing" | "offer";
+            /** Matches */
+            matches: number;
+            /** Rate */
+            rate: number | null;
+        };
+        /** OutcomeTiming */
+        OutcomeTiming: {
+            /** Applications */
+            applications: number;
+            /** Byhand */
+            byHand: number;
+            postedToSeen: components["schemas"]["OutcomeSpan"];
+            seenToReady: components["schemas"]["OutcomeSpan"];
+            readyToApplied: components["schemas"]["OutcomeSpan"];
+            postedToApplied: components["schemas"]["OutcomeSpan"];
+        };
+        /** OutcomeTimings */
+        OutcomeTimings: {
+            /** Days */
+            days: number;
+            /** P90After */
+            p90After: number;
+            allTime: components["schemas"]["OutcomeTiming"];
+            recent: components["schemas"]["OutcomeTiming"];
+            /** Untimed */
+            untimed: number;
+        };
+        /**
+         * OutcomesPage
+         * @description How long applications took to go out and what came of them (`applications/outcomes.py`,
+         *     #65, #6). Every number comes with the count it rests on; a rate is null on too few.
+         */
+        OutcomesPage: {
+            /** Matches */
+            matches: number;
+            /** Applications */
+            applications: number;
+            timing: components["schemas"]["OutcomeTimings"];
+            speed: components["schemas"]["OutcomeSpeed"];
+            funnel: components["schemas"]["OutcomeFunnel"];
         };
         /** AnswerOption */
         AnswerOption: {
@@ -4353,6 +4492,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplyPage"];
+                };
+            };
+        };
+    };
+    apps_pages_api_outcomes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomesPage"];
                 };
             };
         };

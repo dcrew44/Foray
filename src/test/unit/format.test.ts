@@ -7,6 +7,7 @@ import {
   formatDuration,
   formatLag,
   formatLocation,
+  formatPercent,
   formatSalary,
   formatUsd,
   initials,
@@ -238,6 +239,31 @@ describe("formatLag", () => {
     expect(formatLag(2 * 3600 + 600)).toBe("2 hours");
     expect(formatLag(35 * 3600)).toBe("35 hours");
     expect(formatLag(3 * 86400)).toBe("3 days");
+  });
+
+  it("says a long wait in weeks, then months", () => {
+    expect(formatLag(13 * 86400)).toBe("13 days");
+    expect(formatLag(14 * 86400)).toBe("2 weeks");
+    expect(formatLag(45 * 86400)).toBe("6 weeks");
+    expect(formatLag(59 * 86400)).toBe("8 weeks");
+    expect(formatLag(60 * 86400)).toBe("2 months");
+    expect(formatLag(213 * 86400)).toBe("7 months");
+  });
+});
+
+describe("formatPercent", () => {
+  it("rounds a share to a whole percentage", () => {
+    expect(formatPercent(0.3)).toBe("30%");
+    expect(formatPercent(7 / 31)).toBe("23%");
+    expect(formatPercent(0)).toBe("0%");
+    expect(formatPercent(1)).toBe("100%");
+  });
+
+  it("never rounds a rare thing to never or a common one to always", () => {
+    expect(formatPercent(0.004)).toBe("under 1%");
+    expect(formatPercent(0.005)).toBe("1%");
+    expect(formatPercent(0.996)).toBe("over 99%");
+    expect(formatPercent(0.994)).toBe("99%");
   });
 });
 

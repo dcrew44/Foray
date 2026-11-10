@@ -240,8 +240,9 @@ export function formatDuration(ms: number): string {
 }
 
 /**
- * A lag in words, coarse on purpose: "under a minute", "9 minutes", "2 hours", "3 days".
- * Rounded to the nearest unit, since nobody acts on the seconds of a quarter-hour wait.
+ * A lag in words, coarse on purpose: "under a minute", "9 minutes", "2 hours", "3 days",
+ * "5 weeks", "4 months". Rounded to the nearest unit, since nobody acts on the seconds of a
+ * quarter-hour wait or the days of a three-month one.
  */
 export function formatLag(seconds: number): string {
   if (seconds < 60) return "under a minute";
@@ -249,7 +250,24 @@ export function formatLag(seconds: number): string {
   if (minutes < 90) return plural(minutes, "minute");
   const hours = Math.round(minutes / 60);
   if (hours < 36) return plural(hours, "hour");
-  return plural(Math.round(hours / 24), "day");
+  const days = Math.round(hours / 24);
+  if (days < 14) return plural(days, "day");
+  if (days < 60) return plural(Math.round(days / 7), "week");
+  return plural(Math.round(days / 30.44), "month");
+}
+
+/**
+ * A share as a whole percentage: "30%". One that is not nothing but rounds to it says
+ * "under 1%", and one that is not everything says "over 99%", so a rare thing is never shown
+ * as never and a common one never as always.
+ */
+export function formatPercent(fraction: number): string {
+  if (fraction <= 0) return "0%";
+  if (fraction >= 1) return "100%";
+  const percent = Math.round(fraction * 100);
+  if (percent === 0) return "under 1%";
+  if (percent === 100) return "over 99%";
+  return `${percent}%`;
 }
 
 /** A stored time of day ("22:00", "08:30") as people say it: "10:00 pm", "8:30 am". */

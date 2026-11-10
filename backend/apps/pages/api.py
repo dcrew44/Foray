@@ -11,6 +11,7 @@ Each server component makes one call here (plus `/api/me` from the layout), with
 - `GET /api/pages/activity`: `{runs: RunSummary[]}`;
 - `GET /api/pages/chat`: `{suggestions}`;
 - `GET /api/pages/companies`: `{companies: CompanyRow[], active, openPostings}`;
+- `GET /api/pages/outcomes`: `{matches, applications, timing, speed, funnel}`;
 - `GET /api/pages/profile`: `{hasResume, ready, resume, preferences, progress, slots, base,
   render}`;
 - `GET /api/pages/settings`: `{user, settings, review, spend, byPurpose, byModel, byDay,
@@ -41,6 +42,7 @@ from apps.pages.schemas import (
     HomePage,
     MatchDetailPage,
     MatchesPage,
+    OutcomesPage,
     ProfilePage,
     SettingsPage,
 )
@@ -102,6 +104,11 @@ def companies(request: HttpRequest) -> CompaniesPage:
 @pages.get("/apply", response=ApplyPage, summary="Apply page")
 def apply(request: HttpRequest) -> ApplyPage:
     return build.apply_page(_user(request))
+
+
+@pages.get("/outcomes", response=OutcomesPage, summary="Outcomes page")
+def outcomes(request: HttpRequest) -> OutcomesPage:
+    return build.outcomes_page(_user(request))
 
 
 @pages.get("/profile", response=ProfilePage, summary="Profile page")

@@ -228,12 +228,15 @@ def _same_page(candidate: str, url: str) -> bool:
 def find_for_url(user_id: str, url: str) -> Application | None:
     """The open application whose form this page is: the same address as the application's
     apply link or its posting, or (Greenhouse, whose forms also live on employers' own sites as
-    `?gh_jid=`) the same job id. Sync."""
+    `?gh_jid=`, and inside a frame as `/embed/job_app?token=`) the same job id. Sync."""
     try:
         parts = urlsplit(url)
     except ValueError:
         return None
-    job_id = (parse_qs(parts.query).get("gh_jid") or [None])[0]
+    query = parse_qs(parts.query)
+    job_id = (query.get("gh_jid") or [None])[0]
+    if job_id is None and parts.path.rstrip("/").endswith("/embed/job_app"):
+        job_id = (query.get("token") or [None])[0]
     in_path = _GREENHOUSE_ID.search(parts.path)
     greenhouse_id = job_id or (in_path.group(1) if in_path else None)
     rows = (

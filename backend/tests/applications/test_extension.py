@@ -189,6 +189,11 @@ def test_the_application_for_a_page_is_found_by_its_address_or_its_job_id() -> N
     assert found("https://job-boards.greenhouse.io/figma/jobs/6241542004") == str(application.id)
     # The same form embedded on the employer's own careers site.
     assert found("https://www.figma.com/careers/job/?gh_jid=6241542004") == str(application.id)
+    # And inside the frame Greenhouse serves for it, which names the job as `token`.
+    embedded = "https://job-boards.greenhouse.io/embed/job_app?for=figma&token=6241542004"
+    assert found(embedded) == str(application.id)
+    # A `token` anywhere else is not a job id.
+    assert found("https://example.com/apply?token=6241542004") is None
     assert found("https://job-boards.greenhouse.io/figma/jobs/999") is None
     assert found("not a url") is None
     # One already sent is not waiting to be filled.

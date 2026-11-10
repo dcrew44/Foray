@@ -26,11 +26,6 @@ import { timeAgo } from "@/lib/format";
  */
 
 type SettingsPatch = components["schemas"]["SettingsPatch"];
-/**
- * `autoSubmit` (#40) is in Django's settings but not yet in the types
- * generated on this branch, so it is read and sent through this one widening.
- */
-type WithAutoSubmit<T> = T & { autoSubmit?: boolean };
 
 const PER_EMPLOYER = { min: 1, max: 10 };
 const PER_DAY = { min: 1, max: 100 };
@@ -58,7 +53,7 @@ export function ExtensionForm({
   const baseline = {
     perEmployer: String(initial.applyPerEmployer),
     perDay: String(initial.applyDailyCap),
-    autoSubmit: (initial as WithAutoSubmit<SavedSettings>).autoSubmit ?? false,
+    autoSubmit: initial.autoSubmit,
   };
   const [perEmployer, setPerEmployer] = useState(baseline.perEmployer);
   const [perDay, setPerDay] = useState(baseline.perDay);
@@ -86,13 +81,13 @@ export function ExtensionForm({
       return;
     }
     startTransition(async () => {
-      const body: WithAutoSubmit<SettingsPatch> = {
+      const body: SettingsPatch = {
         applyPerEmployer: employer,
         applyDailyCap: day,
         // Sent only when it changed, so the limits save on their own.
         ...(autoSubmit !== baseline.autoSubmit ? { autoSubmit } : {}),
       };
-      const result = await call(api.PATCH("/api/settings", { body: body as SettingsPatch }));
+      const result = await call(api.PATCH("/api/settings", { body }));
       if (!result.ok) {
         toast.error(result.message);
         return;

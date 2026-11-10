@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.runs",
     "apps.chat",
     "apps.notifications",
+    "apps.mail",
     "apps.pages",
     "apps.legacy",
 ]

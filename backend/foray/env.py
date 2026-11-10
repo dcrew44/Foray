@@ -169,6 +169,12 @@ class Env(BaseSettings):
     # posts to comes from here alone.
     ntfy_server: str = "https://ntfy.sh"
 
+    # --- mail (#26) ---
+    # The Google OAuth client a user connects Gmail through, read-only (docs/gmail.md). Both or
+    # neither: without them nothing can be connected and Settings says what is missing.
+    google_client_id: str | None = None
+    google_client_secret: SecretStr | None = None
+
     # --- runtime ---
     pdf_browser_channel: str | None = None
     worker_concurrency: int = Field(default=3, ge=1, le=8)
@@ -248,6 +254,11 @@ class Env(BaseSettings):
         attr = PROVIDER_CREDENTIAL.get(provider)
         return attr is not None and getattr(self, attr.lower()) is not None
 
+    @property
+    def mail_configured(self) -> bool:
+        """Whether a mailbox can be connected: the Google OAuth client is set."""
+        return self.google_client_id is not None and self.google_client_secret is not None
+
 
 class ConfigurationError(Exception):
     """Raised by `build_env()`; `lines` hold one problem each, values never included."""
@@ -283,6 +294,8 @@ FIX = {
     "ntfy_server": (
         "set it to your ntfy server's public address, e.g. https://ntfy.sh, or leave it empty"
     ),
+    "google_client_id": "set it to the OAuth client's id from Google Cloud, or leave it empty",
+    "google_client_secret": "set it to the OAuth client's secret, or leave it empty",
     "worker_concurrency": "set it to a whole number from 1 to 8",
     "db_pool_max": "set it to a whole number from 4 to 50",
 }
@@ -349,6 +362,12 @@ def boot_checks(env: Env) -> list[str]:
     overlap = _storage_overlap(env)
     if overlap:
         lines.append(overlap)
+    if (env.google_client_id is None) != (env.google_client_secret is None):
+        missing = "GOOGLE_CLIENT_SECRET" if env.google_client_id else "GOOGLE_CLIENT_ID"
+        lines.append(
+            f"{missing} is not set, but the other half of the Google OAuth client is. Fix: set "
+            "both (docs/gmail.md), or neither to leave Gmail off."
+        )
     if env.llm_fake and not env.debug:
         lines.append("LLM_FAKE is only allowed with DEBUG=true. Fix: unset LLM_FAKE.")
     if not env.llm_fake:

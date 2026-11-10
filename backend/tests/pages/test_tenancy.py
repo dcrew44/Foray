@@ -36,6 +36,7 @@ from apps.chat.models import Conversation, Message
 from apps.contacts.models import Contact, OutreachNote
 from apps.core.ids import generate_message_id
 from apps.core.storage import storage
+from apps.mail.models import ApplicationEmail, MailAccount
 from apps.matching.models import JobMatch
 from apps.resumes.models import Document, Resume, ResumeVariant
 from apps.runs.models import Approval, Event, Run
@@ -77,6 +78,7 @@ ROUTES: tuple[Route, ...] = (
     Route("GET", "/api/applications/{id}/proof", "application", owner_status=404),
     Route("PUT", "/api/applications/{id}/resume", "application", {"choice": "base"}),
     Route("PATCH", "/api/applications/{id}", "application", {"action": "dismiss"}),
+    Route("POST", "/api/mail/suggestions/{id}", "email", {"action": "dismiss"}),
     Route("PATCH", "/api/variants/{id}", "variant", {"keywords": ["backend"], "isDefault": True}),
     Route("POST", "/api/variants/{id}/render", "variant", {}, 202),
     Route("DELETE", "/api/variants/{id}", "variant"),
@@ -191,6 +193,14 @@ def _state(graph: Graph) -> dict[str, Any]:
         ),
         "notes": sorted(
             OutreachNote.objects.for_user(user_id).values_list("id", "body", "updated_at")
+        ),
+        "mail": sorted(
+            MailAccount.objects.for_user(user_id).values_list("id", "address", "status")
+        ),
+        "emails": sorted(
+            ApplicationEmail.objects.for_user(user_id).values_list(
+                "id", "match_id", "decision", "updated_at"
+            )
         ),
     }
 

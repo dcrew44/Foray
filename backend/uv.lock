@@ -363,6 +363,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "ada-url" },
     { name = "asgiref" },
+    { name = "cryptography" },
     { name = "dj-database-url" },
     { name = "django" },
     { name = "django-ninja" },
@@ -395,6 +396,7 @@ dev = [
 requires-dist = [
     { name = "ada-url", specifier = "~=4.0.0" },
     { name = "asgiref", specifier = "~=3.12.1" },
+    { name = "cryptography", specifier = "~=50.0" },
     { name = "dj-database-url", specifier = "~=3.1.2" },
     { name = "django", specifier = "==6.1.1" },
     { name = "django-ninja", specifier = "==1.7.1" },

@@ -39,6 +39,8 @@ from apps.contacts.models import Contact, OutreachNote
 from apps.core.ids import generate_message_id
 from apps.jobs.models import BoardBacklog, BoardCandidate, Company, Job
 from apps.llm.models import LlmCall
+from apps.mail import crypto as mail_crypto
+from apps.mail.models import ApplicationEmail, MailAccount
 from apps.matching.models import JobMatch
 from apps.matching.schemas import DeepEval, EvalGap, FastScore, MatchedRequirement
 from apps.matching.verdict import band_of
@@ -598,6 +600,47 @@ def make_outreach_note(
         contact = make_contact(user, company=match.job.company)
     fields.setdefault("body", "A short note, as the model drafted it.")
     return OutreachNote.objects.create_for(user.pk, match=match, contact=contact, **fields)
+
+
+# --- mail ----------------------------------------------------------------------------------------
+
+
+def make_mail_account(user: User, **fields: Any) -> MailAccount:
+    """A connected mailbox (#26) whose stored tokens are sealed, as connecting stores them. The
+    access token has an hour left, so a check reuses it."""
+    defaults: dict[str, Any] = {
+        "address": f"sam-{_n()}@mailbox.example",
+        "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
+        "refresh_token": mail_crypto.seal(fields.pop("refresh", f"refresh-{uuid.uuid4().hex}")),
+        "access_token": mail_crypto.seal(fields.pop("access", f"access-{uuid.uuid4().hex}")),
+        "access_expires_at": timezone.now() + timedelta(hours=1),
+    }
+    return MailAccount.objects.create_for(user.pk, **{**defaults, **fields})
+
+
+def make_application_email(
+    user: User,
+    *,
+    account: MailAccount | None = None,
+    kind: str = "confirmation",
+    match: JobMatch | None = None,
+    **fields: Any,
+) -> ApplicationEmail:
+    """A message a check read (#26): an employer's confirmation unless told otherwise. `other`
+    keeps nothing it said, as the table requires."""
+    if account is None:
+        account = MailAccount.objects.for_user(user.pk).first() or make_mail_account(user)
+    defaults: dict[str, Any] = {"message_id": f"m{_n():06d}", "received_at": timezone.now()}
+    if kind != "other":
+        defaults |= {
+            "sender_name": "Acme Recruiting",
+            "sender_domain": "greenhouse-mail.io",
+            "subject": "Thank you for applying to Acme",
+            "snippet": "Hi Sam, we received your application and will review it shortly.",
+        }
+    return ApplicationEmail.objects.create_for(
+        user.pk, account=account, kind=kind, match=match, **{**defaults, **fields}
+    )
 
 
 # --- llm -----------------------------------------------------------------------------------------

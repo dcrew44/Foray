@@ -136,6 +136,11 @@ class Application(UserOwned, Timestamped):
     confirmation_url = models.TextField(default="")
     confirmation_text = models.TextField(default="")
     confirmation_image = models.TextField(default="")
+    # Proof of arrival (#23, #26): when the employer's own confirmation email arrived, and its
+    # subject line. Written by the mail check (`mail/store.py`) and by nothing else; kept when
+    # the mailbox is disconnected, because it is the application's record by then.
+    confirmed_at = models.DateTimeField(null=True)
+    confirmation_subject = models.TextField(default="")
 
     user_id: str
     match_id: uuid.UUID

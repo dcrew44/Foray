@@ -131,6 +131,10 @@ STAMPED_COLUMNS = {
     "notifications.updated_at",
     "outreach_notes.created_at",
     "outreach_notes.updated_at",
+    "mail_accounts.created_at",
+    "mail_accounts.updated_at",
+    "application_emails.created_at",
+    "application_emails.updated_at",
 }
 
 

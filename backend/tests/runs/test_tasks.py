@@ -46,6 +46,8 @@ MAY_RETRY = {"resume.render", "worker.ping", "maintenance.reap", "approvals.expi
 MAY_RETRY |= {"maintenance.prune"}
 # Reads a public form and plans from saved answers: no model is called (#60).
 MAY_RETRY |= {"application.prepare"}
+# Reads message metadata from Gmail and sorts it by patterns: no model is called (#26).
+MAY_RETRY |= {"mail.check"}
 
 
 def _ours(name: str) -> bool:

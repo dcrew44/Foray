@@ -411,16 +411,28 @@ behind it are in [DESIGN.md](DESIGN.md).
 
 - **Phase 1: find, rank, tailor.** Done, and running on the Django backend since
   October 2026.
-- **Better matches, sooner.** Every match leads with its verdict and why, new strong
-  matches reach you soon after they're posted, and listings get legitimacy checks.
+- **The first-day applicant.** Foray is judged by how soon after a posting goes up your
+  application goes out. Built in November 2026, in four parts:
+  - **Radar.** A few thousand boards polled every fifteen minutes, Workday, iCIMS and
+    SmartRecruiters among them; each posting's level, years, work authorization and
+    clearance read at ingest; every match led by its verdict, with warning signs on the
+    listing and new matches sent to your phone.
+  - **Apply in one motion.** A watch prepares the application from your saved answers and
+    the resume variant that suits the title; a browser extension fills the form in your own
+    browser and you press submit; proof that it arrived is kept. No cloud browser and no
+    CAPTCHA solving.
+  - **Referrals.** Your contacts, imported from a file you export; a match says who you know
+    there; a short note drafted for you to send.
+  - **Outcome loop.** Read-only Gmail matching of employers' replies, and the Outcomes page:
+    posted-to-applied time, then the funnel.
+
+  Still to be proven on real use, and tracked in the milestones: the extension on live forms,
+  Gmail against Google, and a week of always-on polling to measure how soon Foray sees a
+  posting.
 - **Model choice.** Pick the model for each purpose and each chat, with OpenRouter as a
   provider.
 - **Career coach.** For strong matches Foray coaches and you write: what's missing, what to
   put first and what to change.
-- **Applying in two lanes.** For strong matches you write and submit while Foray fills the
-  form. For matches worth applying to but not strong, Foray applies from your own browser
-  and waits for your approval of each filled form. No cloud browser and no CAPTCHA solving.
-- **Warm paths.** A referral or a named contact before any cold email.
 - **Ready for other people.** Self-hosted with your own API keys, plus a hosted mirror of
   job postings that installs sync from.
 

@@ -694,6 +694,18 @@ candidate (mid-level, not a new graduate), and no posting in the set is labelled
 The milestones on GitHub hold the order and the work; this section keeps what each phase is
 and why.
 
+**Where it stands (2026-11-10).** All four parts of the order below are built and merged:
+the radar (polling, listed sources, the registry grown from Common Crawl, facts at ingest,
+the worker lock and an always-on worker container), applying (saved answers, prepared
+applications, lanes, resume variants, the browser extension with its caps, proof and
+auto-submit rule), referrals (contacts, who-you-know alerts, drafted notes) and the outcome
+loop (the Outcomes page, stage times, Gmail matching, the match benchmark). What has run only
+against fakes and replicas, and so is not yet known to work: the extension on a real
+employer's form, the Gmail connection against Google, a note or a match verdict from the
+configured model at scale, and the posted-to-seen lag over a week of unattended polling
+(#55, which needs the always-on machine of #54). The open issues in each milestone are what
+first real use is expected to turn up.
+
 **Order since 2026-11-09** (Direction, under Settled decisions). The phases below were
 written before it and keep their designs; the order of work is now:
 

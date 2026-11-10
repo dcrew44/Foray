@@ -9,7 +9,12 @@ import { DeepEvaluation, FastEvaluation } from "@/components/matches/evaluation"
 import { ApplicationPanel } from "@/components/matches/application-panel";
 import { JobFactsList } from "@/components/matches/job-facts";
 import { ClosedMark, JobSignals } from "@/components/matches/job-signals";
-import { EvaluateButton, MatchNotes, StageSelect } from "@/components/matches/match-controls";
+import {
+  EvaluateButton,
+  LaneSelect,
+  MatchNotes,
+  StageSelect,
+} from "@/components/matches/match-controls";
 import { Posting } from "@/components/matches/posting";
 import { TailorPanel } from "@/components/matches/tailor-panel";
 import { buttonVariants } from "@/components/ui/button";
@@ -51,6 +56,15 @@ export default async function MatchPage({ params }: Params) {
   const fast = match.fastEval;
   const salary = formatSalary(job);
   const remote = remoteLabel(job.remote);
+  // The apply lane and its picker: under the verdict when there is one, else on its own.
+  const lane = (
+    <LaneSelect
+      lane={match.lane}
+      matchId={match.id}
+      override={match.laneOverride}
+      reviewLane={match.reviewLane}
+    />
+  );
 
   return (
     <PageBody>
@@ -115,10 +129,20 @@ export default async function MatchPage({ params }: Params) {
             title="Why it fits"
           >
             {deep ? (
-              <DeepEvaluation blocker={match.blocker} evaluation={deep} reason={match.reason} />
+              <DeepEvaluation
+                blocker={match.blocker}
+                evaluation={deep}
+                lane={lane}
+                reason={match.reason}
+              />
             ) : fast ? (
               <div className="space-y-6">
-                <FastEvaluation blocker={match.blocker} evaluation={fast} reason={match.reason} />
+                <FastEvaluation
+                  blocker={match.blocker}
+                  evaluation={fast}
+                  lane={lane}
+                  reason={match.reason}
+                />
                 <EvaluateButton matchId={match.id} />
               </div>
             ) : (
@@ -126,6 +150,7 @@ export default async function MatchPage({ params }: Params) {
                 <p className="text-muted-foreground text-[13.5px]">
                   This role has not been scored yet.
                 </p>
+                {lane}
                 <EvaluateButton matchId={match.id} />
               </div>
             )}

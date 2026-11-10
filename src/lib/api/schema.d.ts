@@ -644,8 +644,9 @@ export interface paths {
         };
         /**
          * Matches page
-         * @description `view=list` or a real `stage` shows the list; `closed=1` adds closed matches to the board.
-         *     Anything else is ignored, as the page ignored it.
+         * @description `view=list` or a real `stage` shows the list; `closed=1` adds closed matches to the board;
+         *     a real `lane` keeps the matches in that apply lane. Anything else is ignored, as the page
+         *     ignored it.
          */
         get: operations["apps_pages_api_matches"];
         put?: never;
@@ -1148,6 +1149,11 @@ export interface components {
             reason: string | null;
             /** Blocker */
             blocker: string | null;
+            /**
+             * Lane
+             * @enum {string}
+             */
+            lane: "coached" | "automated" | "none";
             /** Title */
             title: string;
             /** Company */
@@ -1192,11 +1198,14 @@ export interface components {
         };
         /**
          * MatchPatch
-         * @description Any of the three; a field left out is left alone, `null` clears notes or the rating.
+         * @description Any of the four; a field left out is left alone, `null` clears notes or the rating.
          *
          *     `stageChangedAt` goes only with `stage`: the board's Undo sends the time the match had
          *     entered the stage it goes back to, so an undone move leaves "found … ago" as it was (a
          *     later time than now is taken as now).
+         *
+         *     `laneOverride` puts the match in the apply lane the user chose (`matching/lanes.py`), and
+         *     `null` hands it back to the review.
          */
         MatchPatch: {
             /** Stage */
@@ -1207,6 +1216,8 @@ export interface components {
             notes?: string | null;
             /** Userrating */
             userRating?: number | null;
+            /** Laneoverride */
+            laneOverride?: ("coached" | "automated" | "none") | null;
         };
         /** CompanyRunOut */
         CompanyRunOut: {
@@ -1785,6 +1796,8 @@ export interface components {
             stage: ("found" | "shortlisted" | "applied" | "interviewing" | "offer" | "rejected" | "archived") | null;
             /** Showclosed */
             showClosed: boolean;
+            /** Lane */
+            lane: ("coached" | "automated" | "none") | null;
         };
         /** DeepEval */
         DeepEval: {
@@ -1975,6 +1988,18 @@ export interface components {
             reason: string | null;
             /** Blocker */
             blocker: string | null;
+            /**
+             * Lane
+             * @enum {string}
+             */
+            lane: "coached" | "automated" | "none";
+            /** Laneoverride */
+            laneOverride: ("coached" | "automated" | "none") | null;
+            /**
+             * Reviewlane
+             * @enum {string}
+             */
+            reviewLane: "coached" | "automated" | "none";
             /** Tailoredresumeid */
             tailoredResumeId: string | null;
             /** Notes */
@@ -3976,6 +4001,7 @@ export interface operations {
                 view?: string | null;
                 stage?: string | null;
                 closed?: string | null;
+                lane?: string | null;
             };
             header?: never;
             path?: never;

@@ -3,7 +3,7 @@
 - `POST /api/searches {prompt?, mode?, againFrom?}`: `202 {ok, runId, message}`; `422` when a
   required preference is missing; `409 {ok:false, runId, message}` while a search is active.
 - `GET /api/matches?ids=a,b`: `{matches: MatchRow[]}`; strict UUIDs, at most 20, best first.
-- `PATCH /api/matches/{id} {stage?, notes?, userRating?}`: `{ok, message}`.
+- `PATCH /api/matches/{id} {stage?, notes?, userRating?, laneOverride?}`: `{ok, message}`.
 - `POST /api/matches/{id}/evaluate`: `202 {ok, runId, message}` (`200` when that evaluation is
   already running).
 
@@ -42,6 +42,7 @@ from apps.matching import queries
 from apps.matching import tasks as _tasks  # noqa: F401 (registers the tasks this API defers)
 from apps.matching.deep_eval import NoResumeError, cost_phrase, estimate_eval_cost
 from apps.matching.evaluate import UnknownMatchError, start_match_evaluation
+from apps.matching.lanes import LaneName
 from apps.matching.models import Stage
 from apps.matching.queries import MatchRow, StageName
 from apps.matching.search import (
@@ -85,6 +86,18 @@ STAGE_LABELS: dict[str, str] = {
     "rejected": "Rejected",
     "archived": "Archived",
 }
+# What a change of lane answers: the lane the user chose, with what it means, and the lane the
+# review gives once they hand the match back to it.
+LANE_CHOSEN: dict[str, str] = {
+    "coached": "Moved to the coached lane: Foray coaches, you write and send.",
+    "automated": "Moved to the automated lane: Foray fills the form; you press submit.",
+    "none": "Set to no lane.",
+}
+LANE_FOLLOWS_REVIEW: dict[str, str] = {
+    "coached": "Following the review again: the coached lane.",
+    "automated": "Following the review again: the automated lane.",
+    "none": "Following the review again: no lane.",
+}
 
 
 def _user_id(request: HttpRequest) -> str:
@@ -121,17 +134,21 @@ Rating = Annotated[int, Field(ge=-10, le=10), BeforeValidator(_json_number)]
 
 
 class MatchPatch(ApiModel):
-    """Any of the three; a field left out is left alone, `null` clears notes or the rating.
+    """Any of the four; a field left out is left alone, `null` clears notes or the rating.
 
     `stageChangedAt` goes only with `stage`: the board's Undo sends the time the match had
     entered the stage it goes back to, so an undone move leaves "found … ago" as it was (a
-    later time than now is taken as now)."""
+    later time than now is taken as now).
+
+    `laneOverride` puts the match in the apply lane the user chose (`matching/lanes.py`), and
+    `null` hands it back to the review."""
 
     stage: StageName | None = None
     stage_changed_at: AwareDatetime | None = None
     notes: Annotated[StrictStr, Field(max_length=20_000)] | None = None
     # The UI decides the scale (thumbs as -1/1, or stars as 1-5); this keeps it a small integer.
     user_rating: Rating | None = None
+    lane_override: LaneName | None = None
 
     @field_validator("stage", mode="before")
     @classmethod
@@ -209,13 +226,15 @@ def get_matches(request: HttpRequest, ids: str | None = None) -> dict[str, Any]:
 def patch_match(request: HttpRequest, id: uuid.UUID, body: MatchPatch) -> dict[str, Any]:
     user_id = _user_id(request)
     sent = body.model_fields_set
-    if not sent & {"stage", "notes", "user_rating"}:
+    if not sent & {"stage", "notes", "user_rating", "lane_override"}:
         return {"ok": True, "message": NOTHING_TO_CHANGE}
     changes: dict[str, Any] = {}
     if "notes" in sent:
         changes["notes"] = body.notes
     if "user_rating" in sent:
         changes["user_rating"] = body.user_rating
+    if "lane_override" in sent:
+        changes["lane_override"] = body.lane_override
     with transaction.atomic():
         if body.stage is not None and not queries.set_match_stage(
             user_id, id, body.stage, entered_at=body.stage_changed_at
@@ -223,14 +242,22 @@ def patch_match(request: HttpRequest, id: uuid.UUID, body: MatchPatch) -> dict[s
             raise ApiError(404, MATCH_GONE)
         if changes and not queries.update_match(user_id, id, **changes):
             raise ApiError(404, MATCH_GONE)
-    if body.stage is None:
-        return {"ok": True, "message": SAVED}
-    label = STAGE_LABELS[body.stage]
-    rows = queries.get_match_rows(user_id, [id])
-    message = (
-        f"Moved {rows[0].title} at {rows[0].company} to {label}." if rows else f"Moved to {label}."
-    )
-    return {"ok": True, "message": message}
+    # A move is what the answer says; then a change of lane; anything else is just saved.
+    if body.stage is not None:
+        label = STAGE_LABELS[body.stage]
+        rows = queries.get_match_rows(user_id, [id])
+        message = (
+            f"Moved {rows[0].title} at {rows[0].company} to {label}."
+            if rows
+            else f"Moved to {label}."
+        )
+        return {"ok": True, "message": message}
+    if body.lane_override is not None:
+        return {"ok": True, "message": LANE_CHOSEN[body.lane_override]}
+    if "lane_override" in sent:
+        rows = queries.get_match_rows(user_id, [id])
+        return {"ok": True, "message": LANE_FOLLOWS_REVIEW[rows[0].lane] if rows else SAVED}
+    return {"ok": True, "message": SAVED}
 
 
 @matches.post(

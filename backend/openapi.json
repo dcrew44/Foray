@@ -1405,6 +1405,22 @@
               "title": "Closed"
             },
             "required": false
+          },
+          {
+            "in": "query",
+            "name": "lane",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lane"
+            },
+            "required": false
           }
         ],
         "responses": {
@@ -1419,7 +1435,7 @@
             }
           }
         },
-        "description": "`view=list` or a real `stage` shows the list; `closed=1` adds closed matches to the board.\nAnything else is ignored, as the page ignored it.",
+        "description": "`view=list` or a real `stage` shows the list; `closed=1` adds closed matches to the board;\na real `lane` keeps the matches in that apply lane. Anything else is ignored, as the page\nignored it.",
         "tags": [
           "pages"
         ],
@@ -2706,6 +2722,15 @@
             ],
             "title": "Blocker"
           },
+          "lane": {
+            "enum": [
+              "coached",
+              "automated",
+              "none"
+            ],
+            "title": "Lane",
+            "type": "string"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -2847,6 +2872,7 @@
           "headline",
           "reason",
           "blocker",
+          "lane",
           "title",
           "company",
           "locations",
@@ -2883,7 +2909,7 @@
         "type": "object"
       },
       "MatchPatch": {
-        "description": "Any of the three; a field left out is left alone, `null` clears notes or the rating.\n\n`stageChangedAt` goes only with `stage`: the board's Undo sends the time the match had\nentered the stage it goes back to, so an undone move leaves \"found … ago\" as it was (a\nlater time than now is taken as now).",
+        "description": "Any of the four; a field left out is left alone, `null` clears notes or the rating.\n\n`stageChangedAt` goes only with `stage`: the board's Undo sends the time the match had\nentered the stage it goes back to, so an undone move leaves \"found … ago\" as it was (a\nlater time than now is taken as now).\n\n`laneOverride` puts the match in the apply lane the user chose (`matching/lanes.py`), and\n`null` hands it back to the review.",
         "properties": {
           "stage": {
             "anyOf": [
@@ -2941,6 +2967,22 @@
               }
             ],
             "title": "Userrating"
+          },
+          "laneOverride": {
+            "anyOf": [
+              {
+                "enum": [
+                  "coached",
+                  "automated",
+                  "none"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Laneoverride"
           }
         },
         "title": "MatchPatch",
@@ -4522,6 +4564,22 @@
           "showClosed": {
             "title": "Showclosed",
             "type": "boolean"
+          },
+          "lane": {
+            "anyOf": [
+              {
+                "enum": [
+                  "coached",
+                  "automated",
+                  "none"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lane"
           }
         },
         "required": [
@@ -4530,7 +4588,8 @@
           "ready",
           "view",
           "stage",
-          "showClosed"
+          "showClosed",
+          "lane"
         ],
         "title": "MatchesPage",
         "type": "object"
@@ -5127,6 +5186,40 @@
             ],
             "title": "Blocker"
           },
+          "lane": {
+            "enum": [
+              "coached",
+              "automated",
+              "none"
+            ],
+            "title": "Lane",
+            "type": "string"
+          },
+          "laneOverride": {
+            "anyOf": [
+              {
+                "enum": [
+                  "coached",
+                  "automated",
+                  "none"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Laneoverride"
+          },
+          "reviewLane": {
+            "enum": [
+              "coached",
+              "automated",
+              "none"
+            ],
+            "title": "Reviewlane",
+            "type": "string"
+          },
           "tailoredResumeId": {
             "anyOf": [
               {
@@ -5200,6 +5293,9 @@
           "fastEval",
           "reason",
           "blocker",
+          "lane",
+          "laneOverride",
+          "reviewLane",
           "tailoredResumeId",
           "notes",
           "createdAt",

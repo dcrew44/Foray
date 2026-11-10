@@ -1,7 +1,8 @@
 """A user's relationship to one job (design §2.2).
 
 `fast_eval` and `deep_eval` hold `matching.schemas.FastScore` / `DeepEval` exactly; each score
-is written together with its evaluation (`jm_fast_paired`, `jm_deep_paired`).
+is written together with its evaluation (`jm_fast_paired`, `jm_deep_paired`). `lane_override` is
+the user's own choice of apply lane; the lane a match is in is `matching.lanes.effective_lane`.
 """
 
 from __future__ import annotations
@@ -34,6 +35,14 @@ class Stage(models.TextChoices):
     ARCHIVED = "archived"
 
 
+class Lane(models.TextChoices):
+    """How an application to a match is made (design "Apply lanes", #39)."""
+
+    COACHED = "coached"  # Foray coaches; the user writes and sends
+    AUTOMATED = "automated"  # Foray fills the form; the user presses submit
+    NONE = "none"  # neither
+
+
 class JobMatch(UserOwned, Timestamped):
     id = models.UUIDField(primary_key=True, default=new_id, editable=False)
     # Indexed by the (user, ...) constraints and indexes below.
@@ -46,6 +55,9 @@ class JobMatch(UserOwned, Timestamped):
     deep_score = models.SmallIntegerField(null=True)
     deep_eval = models.JSONField(null=True)  # DeepEval
     user_rating = models.SmallIntegerField(null=True)
+    # The lane the user put this match in; NULL follows the deep review (`matching/lanes.py`).
+    # Nothing but the user's own change writes it, so a re-review never moves it.
+    lane_override = models.TextField(choices=Lane.choices, null=True)  # noqa: DJ001
     notes = models.TextField(null=True)  # noqa: DJ001 (appended with blank-line separators)
     # The newest tailored resume for this match (was a soft uuid).
     tailored_resume: models.ForeignKey[Resume | None] = models.ForeignKey(
@@ -74,7 +86,7 @@ class JobMatch(UserOwned, Timestamped):
                 condition=Q(user_rating__isnull=True) | Q(user_rating__range=(-10, 10)),
                 name="jm_rating_range",
             ),
-            *choices_checks("job_matches", stage=Stage),
+            *choices_checks("job_matches", stage=Stage, lane_override=Lane),
         ]
         indexes = [
             models.Index(fields=["user", "stage"], name="job_matches_user_stage"),

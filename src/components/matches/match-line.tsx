@@ -16,6 +16,7 @@ import {
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+import { LaneLabel } from "./lane";
 import { Why } from "./verdict";
 
 /**
@@ -37,6 +38,8 @@ export type MatchLineData = {
   /** One line of why, and what would rule it out: shown where `showReason` asks. */
   reason?: string | null;
   blocker?: string | null;
+  /** The apply lane, where the line came from a row that says it (a stored chat card does not). */
+  lane?: string | null;
 };
 
 export function fromMatchRow(row: MatchRow): MatchLineData {
@@ -53,6 +56,7 @@ export function fromMatchRow(row: MatchRow): MatchLineData {
     stage: row.stage,
     reason: row.reason,
     blocker: row.blocker,
+    lane: row.lane,
   };
 }
 
@@ -78,6 +82,7 @@ export function MatchLine({
             recommendation={match.recommendation}
             reviewed={match.evaluated}
           />
+          <LaneLabel className="hidden sm:inline" lane={match.lane} />
         </div>
         <div className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-3 text-[13px]">
           <span className="text-foreground/80 truncate">{match.company}</span>

@@ -10,6 +10,7 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "lane": "string",
       "locations": [
         "string"
       ],
@@ -40,6 +41,7 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "lane": "string",
       "locations": [
         "string"
       ],
@@ -85,6 +87,7 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "lane": "string",
       "locations": [
         "string"
       ],

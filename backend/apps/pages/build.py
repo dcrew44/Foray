@@ -40,6 +40,7 @@ from apps.llm.pricing import rate_for
 from apps.llm.reasoning import effort_for
 from apps.matching import queries as match_queries
 from apps.matching.deep_eval import estimate_eval_cost
+from apps.matching.lanes import as_lane, lane_of, review_lane
 from apps.matching.models import JobMatch
 from apps.matching.queries import ALL_STAGES, OPEN_STAGES, MatchRow
 from apps.matching.schemas import DeepEval, FastScore
@@ -278,21 +279,26 @@ def home_page(user: User) -> HomePage:
 
 
 def matches_page(
-    user: User, *, view: str | None, stage: str | None, closed: str | None
+    user: User, *, view: str | None, stage: str | None, closed: str | None, lane: str | None = None
 ) -> MatchesPage:
     """The board shows open matches unless closed ones are asked for; a stage link from Home
-    lands on the list, filtered, rather than the board."""
+    lands on the list, filtered, rather than the board. A real `lane` narrows either view to the
+    matches in that apply lane, in the same read; the counts stay the user's totals."""
     stage_param = stage if stage in ALL_STAGES else None
     view_name = "list" if view == "list" or stage_param else "board"
     show_closed = closed == "1"
     stages = OPEN_STAGES if view_name == "board" and not show_closed else ALL_STAGES
+    lane_param = as_lane(lane)
     return MatchesPage(
         counts=_stage_counts(user.pk),
-        matches=match_queries.list_matches(user.pk, stages=stages, limit=MATCHES_LIMIT),
+        matches=match_queries.list_matches(
+            user.pk, stages=stages, lane=lane_param, limit=MATCHES_LIMIT
+        ),
         ready=onboarding_state(user).ready,
         view=view_name,
         stage=cast(Any, stage_param),
         show_closed=show_closed,
+        lane=cast(Any, lane_param.value if lane_param else None),
     )
 
 
@@ -359,6 +365,7 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
     if match.tailored_resume_id is not None:
         tailored = Resume.objects.for_user(user.pk).filter(id=match.tailored_resume_id).first()
     has_base = Resume.objects.for_user(user.pk).filter(kind=ResumeKind.BASE).exists()
+    lane_override = as_lane(match.lane_override)
     return MatchDetailPage(
         match=MatchDetail(
             id=match.id,
@@ -367,6 +374,9 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
             fast_eval=FastScore.read(match.fast_eval),
             reason=reason_for(match.deep_eval, match.fast_eval),
             blocker=blocker_for(match.deep_eval, match.fast_eval),
+            lane=cast(Any, lane_of(match).value),
+            lane_override=cast(Any, lane_override.value if lane_override else None),
+            review_lane=cast(Any, review_lane(match.deep_eval).value),
             tailored_resume_id=match.tailored_resume_id,
             notes=match.notes,
             created_at=match.created_at,

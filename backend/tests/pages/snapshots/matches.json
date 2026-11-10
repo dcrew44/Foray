@@ -8,6 +8,7 @@
     "rejected": "number",
     "shortlisted": "number"
   },
+  "lane": "null",
   "matches": [
     {
       "applyUrl": "string",
@@ -19,6 +20,7 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "lane": "string",
       "locations": [
         "string"
       ],
@@ -49,6 +51,7 @@
       "headline": "string",
       "isActive": "boolean",
       "jobId": "string",
+      "lane": "string",
       "locations": [
         "string"
       ],

@@ -157,6 +157,7 @@ ROW_KEYS = {
     "headline",
     "reason",
     "blocker",
+    "lane",
     "title",
     "company",
     "locations",
@@ -191,6 +192,8 @@ def test_matches_by_id_best_first_own_only(signed_in: Any) -> None:
     assert rows[1]["headline"] == "Backend work in Python"  # the first fast reason
     assert (rows[0]["reason"], rows[0]["blocker"]) == (sample_deep_eval(91)["summary"], None)
     assert (rows[1]["reason"], rows[1]["blocker"]) == ("Backend work in Python", None)
+    # A strong review puts a match in the coached lane; a fast score alone, in none (#39).
+    assert (rows[0]["lane"], rows[1]["lane"]) == ("coached", "none")
     assert (rows[1]["salaryMin"], rows[1]["salaryMax"]) == (150000.0, None)
     assert rows[1]["stageChangedAt"].endswith("Z")
     assert api.get("/api/matches").json() == {"matches": []}
@@ -289,6 +292,59 @@ def test_notes_and_rating(signed_in: Any) -> None:
     assert JobMatch.objects.for_user(user.pk).get(id=match.id).notes == "Sent."
 
 
+def test_the_user_chooses_a_lane_and_hands_it_back(signed_in: Any) -> None:
+    """`laneOverride` (#39): a lane puts the match there and says what the lane means; null
+    follows the review again and says where that leaves it."""
+    api, user = signed_in()
+    match = make_match(user, fast_score=80, deep_score=72)  # worth applying: automated
+
+    def lane() -> tuple[str, str | None]:
+        [row] = api.get(f"/api/matches?ids={match.id}").json()["matches"]
+        stored = JobMatch.objects.for_user(user.pk).get(id=match.id).lane_override
+        return row["lane"], stored
+
+    assert lane() == ("automated", None)
+    for chosen, message in (
+        ("coached", "Moved to the coached lane: Foray coaches, you write and send."),
+        ("none", "Set to no lane."),
+        ("automated", "Moved to the automated lane: Foray fills the form; you press submit."),
+    ):
+        answer = api.patch(f"/api/matches/{match.id}", {"laneOverride": chosen})
+        assert (answer.status_code, answer.json()) == (200, {"ok": True, "message": message})
+        assert lane() == (chosen, chosen)
+
+    api.patch(f"/api/matches/{match.id}", {"laneOverride": "coached"})
+    # A field left out is left alone: notes and a move keep the lane the user chose.
+    assert api.patch(f"/api/matches/{match.id}", {"notes": "Call Dana."}).json()["message"] == (
+        "Saved."
+    )
+    moved = api.patch(f"/api/matches/{match.id}", {"stage": "shortlisted", "laneOverride": "none"})
+    assert moved.json()["message"].endswith("to Shortlisted.")  # the move is what it says
+    assert lane() == ("none", "none")
+
+    back = api.patch(f"/api/matches/{match.id}", {"laneOverride": None})
+    assert back.json() == {"ok": True, "message": "Following the review again: the automated lane."}
+    assert lane() == ("automated", None)
+
+
+@pytest.mark.parametrize(
+    ("deep_score", "message"),
+    [
+        (90, "Following the review again: the coached lane."),
+        (50, "Following the review again: no lane."),
+        (None, "Following the review again: no lane."),
+    ],
+)
+def test_handing_a_match_back_names_the_reviews_lane(
+    signed_in: Any, deep_score: int | None, message: str
+) -> None:
+    api, user = signed_in()
+    match = make_match(user, fast_score=80, deep_score=deep_score, lane_override="automated")
+    answer = api.patch(f"/api/matches/{match.id}", {"laneOverride": None})
+    assert answer.json() == {"ok": True, "message": message}
+    assert JobMatch.objects.for_user(user.pk).get(id=match.id).lane_override is None
+
+
 @pytest.mark.parametrize(
     ("body", "message"),
     [
@@ -300,6 +356,12 @@ def test_notes_and_rating(signed_in: Any) -> None:
         ({"userRating": "5"}, "That change could not be read."),
         ({"userRating": True}, "That change could not be read."),
         ({"userRating": 2.5}, "That change could not be read."),
+        ({"laneOverride": "vip"}, "That change could not be read."),
+        ({"laneOverride": "Coached"}, "That change could not be read."),
+        ({"laneOverride": ""}, "That change could not be read."),
+        ({"laneOverride": 1}, "That change could not be read."),
+        ({"laneOverride": ["coached"]}, "That change could not be read."),
+        ({"stage": "applied", "laneOverride": "vip"}, "That change could not be read."),
     ],
 )
 def test_unreadable_changes(signed_in: Any, body: Any, message: str) -> None:
@@ -308,7 +370,8 @@ def test_unreadable_changes(signed_in: Any, body: Any, message: str) -> None:
     answer = api.patch(f"/api/matches/{match.id}", body)
     assert answer.status_code == 400
     assert answer.json() == {"ok": False, "message": message}
-    assert JobMatch.objects.for_user(user.pk).get(id=match.id).stage == "found"
+    unchanged = JobMatch.objects.for_user(user.pk).get(id=match.id)
+    assert (unchanged.stage, unchanged.lane_override) == ("found", None)
 
 
 @pytest.mark.parametrize("target", ["not-a-uuid", "theirs", "missing"])
@@ -316,11 +379,17 @@ def test_a_match_that_is_not_the_users_no_longer_exists(signed_in: Any, target: 
     api, _ = signed_in()
     theirs = make_match(make_user())
     match_id = {"not-a-uuid": "not-a-uuid", "theirs": str(theirs.id), "missing": str(uuid.uuid4())}
-    for body in ({"stage": "applied"}, {"notes": "x"}):
+    for body in (
+        {"stage": "applied"},
+        {"notes": "x"},
+        {"laneOverride": "coached"},
+        {"laneOverride": None},
+    ):
         answer = api.patch(f"/api/matches/{match_id[target]}", body)
         assert answer.status_code == 404
         assert answer.json() == {"ok": False, "message": "That match no longer exists."}
-    assert JobMatch.objects.for_user(theirs.user_id).get(id=theirs.id).stage == "found"
+    untouched = JobMatch.objects.for_user(theirs.user_id).get(id=theirs.id)
+    assert (untouched.stage, untouched.lane_override) == ("found", None)
 
 
 # --- POST /api/matches/{id}/evaluate -------------------------------------------------------------

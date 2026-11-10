@@ -973,6 +973,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mail/google/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start connecting Gmail */
+        post: operations["apps_mail_api_google_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Disconnect Gmail */
+        delete: operations["apps_mail_api_google_disconnect"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/suggestions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer a suggestion */
+        post: operations["apps_mail_api_post_suggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pages/home": {
         parameters: {
             query?: never;
@@ -1158,7 +1209,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Settings page */
+        /**
+         * Settings page
+         * @description `mail` is the word a mailbox connection came back with (`/settings?mail=connected`);
+         *     anything else is ignored.
+         */
         get: operations["apps_pages_api_settings"];
         put?: never;
         post?: never;
@@ -2342,6 +2397,23 @@ export interface components {
             /** Jobid */
             jobId: number;
         };
+        /** ConnectStarted */
+        ConnectStarted: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+            /** Url */
+            url: string;
+        };
+        /** SuggestionDecision */
+        SuggestionDecision: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "accept" | "dismiss";
+        };
         /** HomeHeadline */
         HomeHeadline: {
             /** Headline */
@@ -2677,6 +2749,33 @@ export interface components {
             /** Detail */
             detail: string;
         };
+        /** MailSuggestion */
+        MailSuggestion: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "rejection" | "interview";
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "found" | "shortlisted" | "applied" | "interviewing" | "offer" | "rejected" | "archived";
+            /** Sender */
+            sender: string;
+            /**
+             * Receivedat
+             * Format: date-time
+             */
+            receivedAt: string;
+            /** Subject */
+            subject: string;
+        };
         /**
          * MatchApplication
          * @description The match's application, when one has been prepared or is being (#60).
@@ -2782,6 +2881,15 @@ export interface components {
             /** Hasbaseresume */
             hasBaseResume: boolean;
             knows: components["schemas"]["MatchPeople"];
+            mail: components["schemas"]["MatchMail"];
+        };
+        /** MatchMail */
+        MatchMail: {
+            /** Confirmedat */
+            confirmedAt: string | null;
+            /** Confirmationsubject */
+            confirmationSubject: string | null;
+            suggestion: components["schemas"]["MailSuggestion"] | null;
         };
         /** MatchNote */
         MatchNote: {
@@ -3424,6 +3532,79 @@ export interface components {
             /** Lastusedat */
             lastUsedAt: string | null;
         };
+        /** MailAccountView */
+        MailAccountView: {
+            /** Address */
+            address: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "connected" | "reconnect";
+            /**
+             * Connectedat
+             * Format: date-time
+             */
+            connectedAt: string;
+            /** Lastcheckedat */
+            lastCheckedAt: string | null;
+            /** Lasterror */
+            lastError: string;
+            found: components["schemas"]["MailFound"];
+            /** Waiting */
+            waiting: components["schemas"]["MailWaiting"][];
+        };
+        /** MailFound */
+        MailFound: {
+            /** Confirmations */
+            confirmations: number;
+            /** Rejections */
+            rejections: number;
+            /** Interviews */
+            interviews: number;
+            /** Matched */
+            matched: number;
+            /** Waiting */
+            waiting: number;
+        };
+        /** MailNotice */
+        MailNotice: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+        };
+        /** MailSettings */
+        MailSettings: {
+            /** Configured */
+            configured: boolean;
+            /** Redirecturi */
+            redirectUri: string;
+            account: components["schemas"]["MailAccountView"] | null;
+            notice: components["schemas"]["MailNotice"] | null;
+        };
+        /** MailWaiting */
+        MailWaiting: {
+            /**
+             * Matchid
+             * Format: uuid
+             */
+            matchId: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "rejection" | "interview";
+            /** Company */
+            company: string;
+            /** Title */
+            title: string;
+            /**
+             * Receivedat
+             * Format: date-time
+             */
+            receivedAt: string;
+        };
         /** ModelSpend */
         ModelSpend: {
             /** Provider */
@@ -3517,6 +3698,7 @@ export interface components {
             ntfyServer: string;
             /** Extensiontokens */
             extensionTokens: components["schemas"]["ExtensionTokenRow"][];
+            mail: components["schemas"]["MailSettings"];
         };
         /** SettingsUser */
         SettingsUser: {
@@ -5577,6 +5759,72 @@ export interface operations {
             };
         };
     };
+    apps_mail_api_google_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectStarted"];
+                };
+            };
+        };
+    };
+    apps_mail_api_google_disconnect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_mail_api_post_suggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestionDecision"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
     apps_pages_api_home: {
         parameters: {
             query?: never;
@@ -5788,7 +6036,9 @@ export interface operations {
     };
     apps_pages_api_settings: {
         parameters: {
-            query?: never;
+            query?: {
+                mail?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;

@@ -2189,6 +2189,108 @@
         ]
       }
     },
+    "/api/mail/google/start": {
+      "post": {
+        "operationId": "apps_mail_api_google_start",
+        "summary": "Start connecting Gmail",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectStarted"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/mail/google": {
+      "delete": {
+        "operationId": "apps_mail_api_google_disconnect",
+        "summary": "Disconnect Gmail",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/mail/suggestions/{id}": {
+      "post": {
+        "operationId": "apps_mail_api_post_suggestion",
+        "summary": "Answer a suggestion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "mail"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/pages/home": {
       "get": {
         "operationId": "apps_pages_api_home",
@@ -2558,7 +2660,24 @@
       "get": {
         "operationId": "apps_pages_api_settings",
         "summary": "Settings page",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mail",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mail"
+            },
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2571,6 +2690,7 @@
             }
           }
         },
+        "description": "`mail` is the word a mailbox connection came back with (`/settings?mail=connected`);\nanything else is ignored.",
         "tags": [
           "pages"
         ],
@@ -5909,6 +6029,46 @@
         "title": "NotificationTestOut",
         "type": "object"
       },
+      "ConnectStarted": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "url"
+        ],
+        "title": "ConnectStarted",
+        "type": "object"
+      },
+      "SuggestionDecision": {
+        "properties": {
+          "action": {
+            "enum": [
+              "accept",
+              "dismiss"
+            ],
+            "title": "Action",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "SuggestionDecision",
+        "type": "object"
+      },
       "HomeHeadline": {
         "properties": {
           "headline": {
@@ -6880,6 +7040,59 @@
         "title": "JobSignal",
         "type": "object"
       },
+      "MailSuggestion": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "rejection",
+              "interview"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "found",
+              "shortlisted",
+              "applied",
+              "interviewing",
+              "offer",
+              "rejected",
+              "archived"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "sender": {
+            "title": "Sender",
+            "type": "string"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "title": "Receivedat",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "stage",
+          "sender",
+          "receivedAt",
+          "subject"
+        ],
+        "title": "MailSuggestion",
+        "type": "object"
+      },
       "MatchApplication": {
         "description": "The match's application, when one has been prepared or is being (#60).",
         "properties": {
@@ -7214,6 +7427,9 @@
           },
           "knows": {
             "$ref": "#/components/schemas/MatchPeople"
+          },
+          "mail": {
+            "$ref": "#/components/schemas/MatchMail"
           }
         },
         "required": [
@@ -7221,9 +7437,54 @@
           "job",
           "tailored",
           "hasBaseResume",
-          "knows"
+          "knows",
+          "mail"
         ],
         "title": "MatchDetailPage",
+        "type": "object"
+      },
+      "MatchMail": {
+        "properties": {
+          "confirmedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmedat"
+          },
+          "confirmationSubject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmationsubject"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MailSuggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "confirmedAt",
+          "confirmationSubject",
+          "suggestion"
+        ],
+        "title": "MatchMail",
         "type": "object"
       },
       "MatchNote": {
@@ -9011,6 +9272,194 @@
         "title": "ExtensionTokenRow",
         "type": "object"
       },
+      "MailAccountView": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "connected",
+              "reconnect"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "connectedAt": {
+            "format": "date-time",
+            "title": "Connectedat",
+            "type": "string"
+          },
+          "lastCheckedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastcheckedat"
+          },
+          "lastError": {
+            "title": "Lasterror",
+            "type": "string"
+          },
+          "found": {
+            "$ref": "#/components/schemas/MailFound"
+          },
+          "waiting": {
+            "items": {
+              "$ref": "#/components/schemas/MailWaiting"
+            },
+            "title": "Waiting",
+            "type": "array"
+          }
+        },
+        "required": [
+          "address",
+          "status",
+          "connectedAt",
+          "lastCheckedAt",
+          "lastError",
+          "found",
+          "waiting"
+        ],
+        "title": "MailAccountView",
+        "type": "object"
+      },
+      "MailFound": {
+        "properties": {
+          "confirmations": {
+            "title": "Confirmations",
+            "type": "integer"
+          },
+          "rejections": {
+            "title": "Rejections",
+            "type": "integer"
+          },
+          "interviews": {
+            "title": "Interviews",
+            "type": "integer"
+          },
+          "matched": {
+            "title": "Matched",
+            "type": "integer"
+          },
+          "waiting": {
+            "title": "Waiting",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "confirmations",
+          "rejections",
+          "interviews",
+          "matched",
+          "waiting"
+        ],
+        "title": "MailFound",
+        "type": "object"
+      },
+      "MailNotice": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "message"
+        ],
+        "title": "MailNotice",
+        "type": "object"
+      },
+      "MailSettings": {
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "redirectUri": {
+            "title": "Redirecturi",
+            "type": "string"
+          },
+          "account": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MailAccountView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MailNotice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "configured",
+          "redirectUri",
+          "account",
+          "notice"
+        ],
+        "title": "MailSettings",
+        "type": "object"
+      },
+      "MailWaiting": {
+        "properties": {
+          "matchId": {
+            "format": "uuid",
+            "title": "Matchid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "rejection",
+              "interview"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "title": "Receivedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "matchId",
+          "kind",
+          "company",
+          "title",
+          "receivedAt"
+        ],
+        "title": "MailWaiting",
+        "type": "object"
+      },
       "ModelSpend": {
         "properties": {
           "provider": {
@@ -9292,6 +9741,9 @@
             },
             "title": "Extensiontokens",
             "type": "array"
+          },
+          "mail": {
+            "$ref": "#/components/schemas/MailSettings"
           }
         },
         "required": [
@@ -9307,7 +9759,8 @@
           "purposes",
           "providers",
           "ntfyServer",
-          "extensionTokens"
+          "extensionTokens",
+          "mail"
         ],
         "title": "SettingsPage",
         "type": "object"

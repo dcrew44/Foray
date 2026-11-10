@@ -66,11 +66,12 @@ UPDATE = os.environ.get("FORAY_UPDATE_SNAPSHOTS") == "1"
 BUDGETS = {
     "home": 10,
     "matches": 5,
-    # All six are spent: the match with its job, its tailored resume, whether a base resume
+    # All seven are spent: the match with its job, its tailored resume, whether a base resume
     # exists, (#7) the one read behind the posting's signals, (#64) the people the user
-    # knows at the company and (#25), when they know someone, the notes drafted to them;
+    # knows at the company, (#25) when they know someone, the notes drafted to them, and
+    # (#26) for a match that was applied to, what its employer wrote back;
     # pinned exactly by `test_match_page_reads_once_for_its_signals`.
-    "match": 6,
+    "match": 7,
     "activity": 6,
     "chat": 3,
     "companies": 3,
@@ -82,7 +83,8 @@ BUDGETS = {
     "apply": 3,  # the open applications, the newest sent, and the user's variants
     # One for each part (#65, #6): the spans, the buckets, the grouped count behind the funnel.
     "outcomes": 3,
-    "settings": 7,  # one more than before #22: the browser extension's tokens
+    # One more than before #22 (the browser extension's tokens) and one for #26 (the mailbox).
+    "settings": 8,
 }
 # The session row and the user row, read before any endpoint runs.
 AUTH_QUERIES = 2

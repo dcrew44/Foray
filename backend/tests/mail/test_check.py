@@ -549,7 +549,7 @@ def test_the_match_page_reads_mail_once_and_only_where_an_answer_is_expected(
     google_server: FakeGoogle, django_assert_num_queries: Any
 ) -> None:
     """A match nobody has applied to costs the page nothing; one in `applied` costs one query,
-    which is the fifth of the page's budget of five."""
+    which is the last of the page's budget (`tests/pages/test_pages.py`)."""
     user = make_user(with_resume=True)
     waiting = make_match(user, job=make_job(company=make_company(name="Globex Systems")))
     sent = applied(user, "Acme")
@@ -559,7 +559,9 @@ def test_the_match_page_reads_mail_once_and_only_where_an_answer_is_expected(
     client = Client()
     client.force_login(user)
 
-    auth, page_without_mail = 2, 3  # no tailored resume: the match, the base resume, the signals
+    # No tailored resume and nobody known at either company: the match, the base resume, the
+    # signals, and (#64) the people the user knows there.
+    auth, page_without_mail = 2, 4
     with django_assert_num_queries(auth + page_without_mail):
         response = client.get(f"/api/pages/matches/{waiting.id}", headers=SSR)
     assert response.json()["mail"]["suggestion"] is None

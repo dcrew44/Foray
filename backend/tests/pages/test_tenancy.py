@@ -33,6 +33,7 @@ from django.test import Client
 
 from apps.applications.models import Application, ApplicationAnswer
 from apps.chat.models import Conversation, Message
+from apps.contacts.models import Contact
 from apps.core.ids import generate_message_id
 from apps.core.storage import storage
 from apps.matching.models import JobMatch
@@ -77,6 +78,7 @@ ROUTES: tuple[Route, ...] = (
     Route("PATCH", "/api/variants/{id}", "variant", {"keywords": ["backend"], "isDefault": True}),
     Route("POST", "/api/variants/{id}/render", "variant", {}, 202),
     Route("DELETE", "/api/variants/{id}", "variant"),
+    Route("DELETE", "/api/contacts/{id}", "contact"),
     Route("DELETE", "/api/conversations/{id}", "conversation"),
 )
 
@@ -175,6 +177,9 @@ def _state(graph: Graph) -> dict[str, Any]:
             ResumeVariant.objects.for_user(user_id).values_list(
                 "id", "name", "keywords", "is_default", "spec", "updated_at"
             )
+        ),
+        "contacts": sorted(
+            Contact.objects.for_user(user_id).values_list("id", "company_id", "updated_at")
         ),
     }
 

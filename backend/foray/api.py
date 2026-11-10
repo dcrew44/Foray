@@ -20,6 +20,7 @@ from ninja.security import SessionAuth
 from apps.accounts import api as accounts_api
 from apps.applications import api as applications_api
 from apps.chat import api as chat_api
+from apps.contacts import api as contacts_api
 from apps.core import api as core_api
 from apps.core import errors, openapi
 from apps.jobs import api as jobs_api
@@ -37,6 +38,7 @@ ROUTER_MODULES = (
     jobs_api,
     resumes_api,
     applications_api,
+    contacts_api,
     chat_api,
     notifications_api,
     pages_api,

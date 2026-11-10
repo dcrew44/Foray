@@ -273,7 +273,7 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
   default autonomy, score threshold, deep-review count — interview state and time zone; there
   is no separate profile row that might be missing), then `documents`, `resumes`,
   `resume_variants`, `job_matches`, `runs`, `events`, `approvals`, `conversations`,
-  `messages`, `notifications` and `llm_calls`.
+  `messages`, `notifications`, `contacts` and `llm_calls`.
   Each of these carries `user_id` (a ledger row of system work has none) and inherits
   `UserOwned`, whose manager refuses any query that is not `for_user(...)` or
   `unscoped(reason)`.
@@ -445,6 +445,28 @@ left is an answer lost after ntfy had accepted the message. Settings' "Send a te
 notification" is a job as well (`notify.test`, answered with a `notification.test` event, like
 the worker's own test), so no request waits on ntfy (invariant 12) and a test that arrives has
 taken the path a real notification takes.
+
+**Referrals** (`apps/contacts/`). A referral asked for on the day a role is posted counts for
+more than one asked for after five hundred applications, so Foray has to know who the user
+knows. It learns that only from files the user exports themself (#63): LinkedIn's own
+"Connections.csv" (or the archive it arrives in), and any other CSV with a name column, such
+as an alumni list. `parse.py` reads the file (the notes above LinkedIn's header, a BOM, quoted
+commas, both date formats the export has used, lenient header names), and
+`importer.import_contacts` writes one `contacts` row per person in the request itself, since
+it calls no model and fetches nothing. A person is their profile address, else their email,
+else their name and company (`dedupe_key`, unique per user): importing the same file again
+writes nothing, and a newer export updates the people it already knows. Each contact is linked
+to the registered company they work at (`link.CompanyIndex`, the registry read once): by name
+as the mirror normalises company names, then by the domain of a work email against
+`companies.domain`, never for a free-mail domain. Unmatched contacts are kept, and
+`link.rematch()` links them once their company is registered. The Contacts page
+(`GET /api/pages/contacts`, four reads) shows how many people the user knows at each company
+in the mirror, the companies the mirror lacks by how many contacts name them, and a search.
+From there the user can start a lookup: the next twenty unmatched company names go to the
+existing `company_discovery` run, which registers the boards it can read. That is the only
+thing that leaves: company names, on the user's press, to the job boards Foray asks (and web
+search when a key is set). A person's name, email or profile address is never sent anywhere,
+and Foray makes no request to LinkedIn of any kind.
 
 Tailoring is separate and on demand: the strong model reorders, selects and rephrases
 only what the base resume says; a verifier (deterministic rules plus a cheap-model
@@ -675,6 +697,12 @@ Ashby and Lever.
   tokens, ID tokens verified against Google's JWKS; the "Continue with Google" sign-in
   returns with it) matches employers' confirmation emails to applications, and later moves
   stages on rejections and interview invitations.
+
+  Built so far: **contacts** (#63, `apps/contacts/`; "Referrals" under the search pipeline).
+  The user imports their LinkedIn connections export or any list with a name column; each
+  person is linked to the registered company they work at, and the Contacts page counts them
+  per company and offers to look for the boards of the companies the mirror lacks. It adds
+  the `contacts` table.
 - **Phase 4 — ready for other people.** One-command setup with the user's own keys
   (OpenRouter as a provider makes one key enough), the hosted posting mirror that installs
   sync from, a company list built from Foray's own discovery in place of the seed list

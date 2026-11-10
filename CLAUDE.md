@@ -59,7 +59,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
   headers).
 - `backend/apps/<app>/`: `core` (the `db()` bridge, `defer_in_tx`, scoping, errors, the router
   factory, the HTTP client, storage, throttles), `accounts`, `llm`, `jobs` (with
-  `sources/<source>.py`), `matching`, `resumes`, `applications`, `runs`, `chat`,
+  `sources/<source>.py`), `matching`, `resumes`, `applications`, `contacts`, `runs`, `chat`,
   `notifications`, `pages`, `legacy`. An app
   keeps its models and services, and as it needs them `api.py` (its routers), `tasks.py` (its
   procrastinate tasks), `fakes.py` (its `LLM_FAKE` answers) and `management/commands/`.
@@ -248,6 +248,17 @@ An issue reads like the ones already there:
   its current stage proves (`reached()`), because nothing records a stage move; say what a new
   number cannot know rather than guessing it. A new split is one more key in `funnel()`'s
   grouped count, not another query.
+- **Contacts come from a file the user exported, and go nowhere** (`apps/contacts/`, #63).
+  `parse.parse_contacts` reads LinkedIn's Connections.csv (or the archive it comes in) and any
+  CSV with a name column; it is pure, and its fixtures hold made-up people only.
+  `importer.import_contacts` runs in the request, makes no request of its own and defers
+  nothing; a person is one row per `dedupe_key`, so the same file again writes nothing. A
+  contact is linked to a registered company through `link.CompanyIndex` (the name as the mirror
+  normalises it, then a work email's domain, never a free-mail one), and `link.rematch()` links
+  the rest when their company is registered later. No LinkedIn request of any kind, ever. The
+  one thing that leaves is a company *name*, and only when the user presses "Look for the
+  boards" (`page.start_lookup`, the existing `company_discovery` run): never start that
+  unasked, and never put a person's field in it.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

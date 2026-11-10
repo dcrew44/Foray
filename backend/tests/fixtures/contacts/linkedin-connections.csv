@@ -1,0 +1,15 @@
+Notes:
+"When you export your connections, some email addresses will be missing: you only see the address of a connection who chose to share it, as set at https://www.linkedin.com/psettings/privacy/email."
+
+First Name,Last Name,URL,Email Address,Company,Position,Connected On
+Priya,Rao,https://www.linkedin.com/in/priya-rao-example,,Stripe,Staff Engineer,15 Mar 2024
+Marcus,Bell,https://www.linkedin.com/in/marcus-bell-example,marcus.bell@northwind-robotics.example,"Northwind Robotics, Inc.","Senior Recruiter, Engineering",02 Jan 2023
+Ines,Ortega,https://www.linkedin.com/in/ines-ortega-example,,,,28 Nov 2022
+Tomasz,Zielinski,https://www.linkedin.com/in/tomasz-zielinski-example,tomasz.zielinski@example.com,"Stripe, Inc.",Engineering Manager,09 Sep 2021
+Aiko,Tanaka,https://www.linkedin.com/in/aiko-tanaka-example,,Linear,Product Designer,30 Jun 2020
+Devon,Clarke,https://www.linkedin.com/in/devon-clarke-example,,Self-employed,Consultant,11 Feb 2019
+,,,,,,
+,,,,Globex Analytics,Analyst,04 Apr 2018
+Lena,Fischer,https://www.linkedin.com/in/lena-fischer-example,,Globex Analytics,Data Scientist,05 May 2018
+Lena,Fischer,https://www.linkedin.com/in/lena-fischer-example,,Globex Analytics,Senior Data Scientist,05 May 2018
+Omar,Haddad,https://www.linkedin.com/in/omar-haddad-example,,"Globex Analytics, LLC","Data Engineer ""Platform""",19 Jul 2017

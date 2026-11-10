@@ -73,6 +73,8 @@ BUDGETS = {
     "activity": 6,
     "chat": 3,
     "companies": 3,
+    # The contacts, the registry, the open postings of the companies shown, the lookups (#63).
+    "contacts": 4,
     # One more than before #21 (the saved answers), and two more for #61: the resume variants,
     # and the newest rendered snapshot of each (not read when there are no variants).
     "profile": 8,
@@ -91,6 +93,7 @@ PAGES = {
     "activity": "/api/pages/activity",
     "chat": "/api/pages/chat",
     "companies": "/api/pages/companies",
+    "contacts": "/api/pages/contacts?q=engineer",
     "profile": "/api/pages/profile",
     "settings": "/api/pages/settings",
     "apply": "/api/pages/apply",

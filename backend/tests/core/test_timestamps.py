@@ -106,6 +106,8 @@ STAMPED_COLUMNS = {
     "users.updated_at",
     "companies.created_at",
     "companies.updated_at",
+    "contacts.created_at",
+    "contacts.updated_at",
     "api_usage.updated_at",
     "job_matches.created_at",
     "job_matches.updated_at",

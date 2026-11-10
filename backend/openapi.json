@@ -1358,6 +1358,145 @@
         ]
       }
     },
+    "/api/contacts/import": {
+      "post": {
+        "operationId": "apps_contacts_api_import_file",
+        "summary": "Import contacts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsImported"
+                }
+              }
+            }
+          }
+        },
+        "description": "Reads the uploaded list into the user's contacts. Like the resume upload, it reads its\nown body, so it counts against its throttle before Django parses the multipart stream.",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/contacts/lookup": {
+      "post": {
+        "operationId": "apps_contacts_api_lookup",
+        "summary": "Look for boards",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsLookupStarted"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/contacts": {
+      "delete": {
+        "operationId": "apps_contacts_api_delete_all",
+        "summary": "Remove every contact",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/contacts/{id}": {
+      "delete": {
+        "operationId": "apps_contacts_api_delete_one",
+        "summary": "Remove a contact",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/conversations": {
       "get": {
         "operationId": "apps_chat_api_list_conversations",
@@ -1715,6 +1854,51 @@
             }
           }
         },
+        "tags": [
+          "pages"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/pages/contacts": {
+      "get": {
+        "operationId": "apps_pages_api_contacts",
+        "summary": "Contacts page",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsPage"
+                }
+              }
+            }
+          }
+        },
+        "description": "`q` searches the user's contacts by name, company, position or school.",
         "tags": [
           "pages"
         ],
@@ -4357,6 +4541,86 @@
         "title": "ApplicationPatch",
         "type": "object"
       },
+      "ContactsImported": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "updated": {
+            "title": "Updated",
+            "type": "integer"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "matched": {
+            "title": "Matched",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "added",
+          "updated",
+          "unchanged",
+          "skipped",
+          "total",
+          "matched"
+        ],
+        "title": "ContactsImported",
+        "type": "object"
+      },
+      "ContactsLookupStarted": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "runId": {
+            "format": "uuid",
+            "title": "Runid",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Names",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "runId",
+          "message",
+          "names"
+        ],
+        "title": "ContactsLookupStarted",
+        "type": "object"
+      },
       "ConversationItem": {
         "properties": {
           "id": {
@@ -6048,6 +6312,273 @@
           "p90S"
         ],
         "title": "RadarLag",
+        "type": "object"
+      },
+      "ContactCompany": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "peopleCount": {
+            "title": "Peoplecount",
+            "type": "integer"
+          },
+          "openPostings": {
+            "title": "Openpostings",
+            "type": "integer"
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/ContactPerson"
+            },
+            "title": "People",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "peopleCount",
+          "openPostings",
+          "people"
+        ],
+        "title": "ContactCompany",
+        "type": "object"
+      },
+      "ContactPerson": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position"
+        ],
+        "title": "ContactPerson",
+        "type": "object"
+      },
+      "ContactResult": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "companyName": {
+            "title": "Companyname",
+            "type": "string"
+          },
+          "companySlug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Companyslug"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "profileUrl": {
+            "title": "Profileurl",
+            "type": "string"
+          },
+          "connectedOn": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connectedon"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "companyName",
+          "companySlug",
+          "email",
+          "profileUrl",
+          "connectedOn"
+        ],
+        "title": "ContactResult",
+        "type": "object"
+      },
+      "ContactsLookup": {
+        "properties": {
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Names",
+            "type": "array"
+          },
+          "remaining": {
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "runId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runid"
+          }
+        },
+        "required": [
+          "names",
+          "remaining",
+          "runId"
+        ],
+        "title": "ContactsLookup",
+        "type": "object"
+      },
+      "ContactsPage": {
+        "properties": {
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "matched": {
+            "title": "Matched",
+            "type": "integer"
+          },
+          "withoutCompany": {
+            "title": "Withoutcompany",
+            "type": "integer"
+          },
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/ContactCompany"
+            },
+            "title": "Companies",
+            "type": "array"
+          },
+          "companiesTotal": {
+            "title": "Companiestotal",
+            "type": "integer"
+          },
+          "unmatched": {
+            "items": {
+              "$ref": "#/components/schemas/ContactsUnmatched"
+            },
+            "title": "Unmatched",
+            "type": "array"
+          },
+          "unmatchedTotal": {
+            "title": "Unmatchedtotal",
+            "type": "integer"
+          },
+          "lookup": {
+            "$ref": "#/components/schemas/ContactsLookup"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ContactResult"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results"
+          },
+          "resultsTotal": {
+            "title": "Resultstotal",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "matched",
+          "withoutCompany",
+          "companies",
+          "companiesTotal",
+          "unmatched",
+          "unmatchedTotal",
+          "lookup",
+          "query",
+          "results",
+          "resultsTotal"
+        ],
+        "title": "ContactsPage",
+        "type": "object"
+      },
+      "ContactsUnmatched": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "peopleCount": {
+            "title": "Peoplecount",
+            "type": "integer"
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/ContactPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "lookedUp": {
+            "title": "Lookedup",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "peopleCount",
+          "people",
+          "lookedUp"
+        ],
+        "title": "ContactsUnmatched",
         "type": "object"
       },
       "ApplyAnswer": {

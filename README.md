@@ -121,6 +121,22 @@ if it is reachable from the internet on port 80 or 443). The worker does the sen
 has to be running, and the link in a notification opens `PUBLIC_ORIGIN`, so set that to an
 address your phone can reach.
 
+### People you know
+
+A referral asked for on the day a role is posted is worth more than one asked for weeks
+later, so Foray keeps a list of who you know. You give it the list: on LinkedIn, open
+Settings & Privacy, then Data privacy, then Get a copy of your data, choose Connections,
+and upload the file LinkedIn emails you (the archive, or the Connections.csv inside it) on
+the **Contacts** page. Any other CSV with a name column works too, such as an alumni list.
+The page shows how many people you know at each company Foray reads, and which companies
+your contacts name that it does not read yet; one button looks for those companies' job
+boards, twenty at a time. Importing the same file again changes nothing, and a newer export
+updates the people it already knows.
+
+Foray never signs in to LinkedIn and never looks anyone up. Your contacts stay in your own
+database: the only thing the board lookup sends out is company names, and only when you
+press the button.
+
 ### Your profile and settings
 
 Your resume becomes structured facts that every score, review and tailored resume is

@@ -34,6 +34,8 @@ from apps.accounts.models import User
 from apps.accounts.schemas import SAMPLE_PREFERENCES
 from apps.applications.models import Application, ApplicationAnswer
 from apps.chat.models import Conversation, Message
+from apps.contacts.link import company_key
+from apps.contacts.models import Contact
 from apps.core.ids import generate_message_id
 from apps.jobs.models import BoardCandidate, Company, Job
 from apps.llm.models import LlmCall
@@ -522,6 +524,33 @@ def make_notification(
         user.pk,
         match=match if match is not None else make_match(user, fast_score=88, deep_score=86),
         channel=channel,
+        **fields,
+    )
+
+
+# --- contacts ------------------------------------------------------------------------------------
+
+
+def make_contact(
+    user: User,
+    *,
+    name: str | None = None,
+    company: Company | None = None,
+    company_name: str | None = None,
+    **fields: Any,
+) -> Contact:
+    """Someone the user knows (#63). With `company`, a contact already linked to that
+    registered company, under its name unless `company_name` says how the file spelled it."""
+    n = _n()
+    written = company_name if company_name is not None else (company.name if company else "")
+    fields.setdefault("source", "linkedin")
+    fields.setdefault("dedupe_key", _sha1(f"contact-{n}"))
+    return Contact.objects.create_for(
+        user.pk,
+        name=name or f"Contact {n}",
+        company=company,
+        company_name=written,
+        company_key=company_key(written),
         **fields,
     )
 

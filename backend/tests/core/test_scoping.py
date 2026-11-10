@@ -36,6 +36,7 @@ def test_every_per_user_table_is_user_owned() -> None:
         "Application",
         "ApplicationAnswer",
         "Approval",
+        "Contact",
         "Conversation",
         "Document",
         "Event",

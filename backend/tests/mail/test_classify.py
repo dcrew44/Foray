@@ -1,15 +1,17 @@
 """The mail classifier against its fixture set (#26), and the rules one at a time.
 
 **The fixtures** (`tests/fixtures/mail/messages.json`) are made-up messages, written for this
-repository: no person, employer or address in them is real, and no sentence is copied from a
-real email. The employers (Northwind Robotics, Halcyon Labs, Brightloom, …) and job boards
-(Jobhop, HireLadder, CareerNest) do not exist; the applicant is "Sam". The relay domains
-(`greenhouse-mail.io`, `hire.lever.co`, `ashbyhq.com`, `myworkday.com`) are the
-applicant-tracking systems' own, because telling a relay from an employer's domain is part of
-what is tested; every other domain ends in `.example`. A message is what Foray would keep of
-it: the sender's display name and domain, the subject, and the snippet as Gmail gives it (HTML
-entities included, cut where Gmail would cut it). `kind` is what a person who read the whole
-message would call it, not what the classifier says.
+repository: no sentence is copied from a real email, and nobody in them is a real person (the
+applicant is "Sam"; senders have first names only). The employers (Northwind Robotics,
+Halcyon Labs, Brightloom, …) and job boards (Jobhop, HireLadder, CareerNest) are invented
+names; if one happens to belong to a real company, nothing here is about it. No address
+appears at all: a message carries the sender's display name and domain only. The relay domains
+(`greenhouse-mail.io`, `hire.lever.co`, `ashbyhq.com`, `myworkday.com`) and the display name
+"Workday" are the applicant-tracking systems' own, because telling a relay from an employer
+is part of what is tested; every other domain ends in `.example`. A message is what Foray
+would keep of it: the sender's display name and domain, the subject, and the snippet as Gmail
+gives it (HTML entities included, cut where Gmail would cut it). `kind` is what a person who
+read the whole message would call it, not what the classifier says.
 
 **How the set was made, and what its numbers mean.** The same author wrote the patterns and
 the messages, so every number here flatters the classifier compared with real mail.

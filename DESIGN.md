@@ -87,7 +87,10 @@ register below enforce and prove one, it names them.
 12. **Nothing heavy runs inside a request.** Model calls, third-party fetches and PDF
     rendering run in the worker as runs (uploads, adding a company and refreshing one
     included). The one exception is the chat stream, capped at 8 steps, a 180 s turn and a
-    per-user throttle.
+    per-user throttle. Connecting and disconnecting a mailbox each wait on Google inside a
+    request too, because an authorization code lasts minutes and a deleted account's token
+    should not sit in a job queue: at most two requests, ten seconds each, never retried,
+    with no transaction open (`apps/mail/api.py`). Every read of the mailbox is the worker's.
 13. **One set of resume facts.** The latest base `resumes` row
     (`apps.resumes.queries.latest_base_resume`) is what scoring, deep review, tailoring and
     the chat agent read. Editor saves create a new base version; base versions are unique.
@@ -152,6 +155,7 @@ fails too), so a row cannot outlive its proof.
 | R20 | A watch announces a match at most once, and never one a search made: it works only on the matches it created, and announces only those it reviewed itself | `matching.queries.insert_new_matches`; `matching.watch.run_watch` | `matching/test_watch.py::test_a_second_watch_reads_only_what_arrived_since_and_never_announces_twice`, `::test_a_search_s_matches_are_the_search_s` |
 | R21 | A match is sent to a user's phone at most once per channel, however often a watch or a send job runs again, and never to a user who has set no topic. A send is repeated only after an attempt recorded as failed or abandoned, three attempts at most | unique `(user, match, channel)` on `notifications`; `notifications.outbox.queue_matches` (in the watch's completing transaction) and `claim` (row locks and a lease taken before any request) | `notifications/test_notify.py::test_a_watch_s_strong_match_reaches_the_phone_exactly_once`, `::test_a_second_watch_sends_only_what_is_new`, `::test_two_jobs_never_send_the_same_notification`, `::test_a_failed_send_is_retried_twice_and_then_given_up`, `::test_a_user_with_no_topic_sees_no_change` |
 | R22 | A contact goes nowhere but its owner's pages. An import makes no request and queues nothing; a board lookup is given company names and starts only on the user's press; a phone notification counts contacts and never names one; a model reads a contact's fields only wrapped, in a watch's chat update and in the note's prompt; a run's input, output and events hold none of them; and nothing can send a note | `contacts.importer`; `contacts.page.start_lookup`; `notifications.compose.match_message`; `llm.untrusted` in `chat.follow_up` and `contacts.outreach`; `UserOwned` | `contacts/test_import.py::test_an_import_sends_nothing_anywhere`, `contacts/test_api.py::test_a_lookup_takes_the_companies_most_contacts_work_at_and_only_when_asked`, `notifications/test_notify.py::test_a_notification_counts_the_people_the_user_knows_at_the_company`, `chat/test_follow_up_text.py::test_a_contact_s_fields_cannot_leave_their_wrapper_or_their_line`, `contacts/test_outreach.py::test_the_outreach_prompt_wraps_everything_a_file_or_a_posting_supplied`, `::test_drafting_a_note_is_a_run_that_writes_one_note_and_sends_nothing`, `pages/test_tenancy.py::test_tenancy_sweep` |
+| R23 | A connected mailbox is only read: nothing but GETs for message metadata go to Gmail and no body is asked for. Its tokens are stored sealed. A stage moves only when the user accepts a suggestion, and a grant Google has revoked is not tried again | `mail.google` (the only module that talks to Google; `format=metadata`); `mail.crypto.seal`; `mail.suggestions.accept`; `mail.store.need_reconnect` | `mail/test_check.py::test_a_check_reads_only_the_metadata_of_messages_it_has_not_seen`, `::test_a_rejection_and_an_invitation_are_suggested_and_move_nothing_until_accepted`, `::test_a_revoked_token_asks_to_be_reconnected_and_is_never_tried_again`, `mail/test_connect.py::test_connecting_stores_the_mailbox_and_its_tokens_sealed` |
 
 `manage.py acceptance_checks` re-checks the database-level rows (R3, R4, R10, and the ledger's
 attribution) against live data after a browser rehearsal. Its run-level lines cover only runs
@@ -274,7 +278,8 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
   default autonomy, score threshold, deep-review count — interview state and time zone; there
   is no separate profile row that might be missing), then `documents`, `resumes`,
   `resume_variants`, `job_matches`, `runs`, `events`, `approvals`, `conversations`,
-  `messages`, `notifications`, `contacts`, `outreach_notes` and `llm_calls`.
+  `messages`, `notifications`, `contacts`, `outreach_notes`, `mail_accounts`,
+  `application_emails` and `llm_calls`.
   Each of these carries `user_id` (a ledger row of system work has none) and inherits
   `UserOwned`, whose manager refuses any query that is not `for_user(...)` or
   `unscoped(reason)`.
@@ -533,6 +538,38 @@ state. The note is kept in `outreach_notes`, one row per match and contact: draf
 replaces it, the user's edits are saved to it, and it goes with its match or its contact.
 No field of the contact enters the run's input, output or events, since the chat agent's
 tools read those. Nothing sends a note: there is no endpoint, task or client that could.
+
+**From the mailbox** (#26, `apps/mail/`, `docs/gmail.md`). What became of an application is
+in the user's email, so Foray reads it: Gmail, through an OAuth client the install's owner
+creates, with the one scope `gmail.readonly`. It is built to be easy to trust. Everything
+asked of Google is in one module (`google.py`); a message is fetched as `format=metadata`
+(From, Subject, Date and Gmail's snippet) and its body is never requested; nothing but a GET
+goes to Gmail; and no email reaches a model. Classifying a message (`classify.py`:
+confirmation, rejection, interview or other) and matching it to an application
+(`matching.py`: the employer's name on the From line or in the subject, or the employer's
+own domain, within ninety days of sending) are deterministic patterns that prefer saying
+nothing: applicant-tracking systems' relay domains carry no employer, a one-word employer
+name counts only where a company's name would stand, and two employers named equally well is
+no match. The tokens are stored sealed (Fernet under a key HKDF derives from `SECRET_KEY`),
+the callback is bound to the session that started by a `state` and a PKCE verifier kept
+server-side, and a grant Google no longer honours (an OAuth app in "Testing" loses its
+refresh token after seven days) marks the account `reconnect` and is never retried.
+
+What it changes is deliberately uneven. A **confirmation** is proof of arrival (#23) and is
+recorded without anyone looking, on `applications.confirmed_at` and `confirmation_subject`
+(columns, so the match page reads them through the join it already makes, and they outlive a
+disconnect as the application's own record). Because nobody checks it, it has to be the
+employer's own word (its domain, its name on the From line, or an ATS relay with its name in
+the subject; not a job board saying it passed the application on) and to arrive within a
+week of sending. A **rejection** or an **interview invitation** only suggests: the match page
+asks "move this match to Rejected?", and only the user's Move changes the stage, through
+`set_match_stage`. The match page spends one query on this, and only for a match in
+`applied`, `interviewing` or `offer`; Settings spends one, for the account, its counts and
+the suggestions still waiting. Of mail that is none of the three, only the id is kept, so it
+is not read again (the table refuses anything more). The classifier is measured on made-up
+mail (`tests/fixtures/mail/`): nearly everything in wording it was tuned to, about half of
+what it had not seen, and wrong almost only by leaving an answer unrecognised. That is the
+intended failure: a missed email changes nothing.
 
 Tailoring is separate and on demand: the strong model reorders, selects and rephrases
 only what the base resume says; a verifier (deterministic rules plus a cheap-model
@@ -823,10 +860,10 @@ Ashby and Lever.
   the forms; a real application is submitted only on the user's explicit yes.
 - **Phase 3 — warm paths.** For each shortlisted company, look for a warm path first
   (alumni, former colleagues, a named hiring manager) and draft a short note the user edits
-  and approves. Gmail through Google OAuth (an `oauth_accounts` table with encrypted offline
-  tokens, ID tokens verified against Google's JWKS; the "Continue with Google" sign-in
-  returns with it) matches employers' confirmation emails to applications, and later moves
-  stages on rejections and interview invitations.
+  and approves. Gmail through Google OAuth matches employers' confirmation emails to
+  applications and suggests a stage on a rejection or an interview invitation: built in
+  November 2026 (#26, "From the mailbox" under Architecture) as a read-only connection with
+  its own `mail_accounts` table, not as a sign-in. "Continue with Google" is still not built.
 
   Built so far: **contacts** (#63, `apps/contacts/`; "Referrals" under the search pipeline).
   The user imports their LinkedIn connections export or any list with a name column; each
@@ -837,7 +874,7 @@ Ashby and Lever.
   posting is at a company where the user knows someone. **The note** (#25): on the match
   page, a short note to a contact, drafted from the user's resume and the posting, edited
   and sent by the user. It adds the `outreach_notes` table, the `outreach` run kind and
-  the `outreach` purpose. Not built: finding a hiring manager nobody imported, and Gmail.
+  the `outreach` purpose. Not built: finding a hiring manager nobody imported.
 - **Phase 4 — ready for other people.** One-command setup with the user's own keys
   (OpenRouter as a provider makes one key enough), the hosted posting mirror that installs
   sync from, a company list built from Foray's own discovery in place of the seed list

@@ -25,7 +25,7 @@ import re
 import shutil
 import threading
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -327,7 +327,7 @@ def packaged(target: Path, *, allow: str) -> Path:
     return target
 
 
-type Pages = dict[str, str | Callable[[str], str]]
+type Pages = dict[str, str]  # an address without its query: a replica's file name, or HTML
 
 
 class World:
@@ -460,6 +460,23 @@ class Browser:
         self.click_toolbar(page)
         return Popup(self)
 
+    def chrome_says(self) -> dict[str, list[str]]:
+        """What chrome://extensions holds against the extension: warnings from installing it,
+        errors in its manifest, and errors and warnings its scripts raised while running."""
+        page = self.context.new_page()
+        try:
+            page.goto("chrome://extensions/")
+            info = page.evaluate(
+                "(id) => new Promise((done) => chrome.developerPrivate.getExtensionInfo(id, done))",
+                self.extension_id,
+            )
+        finally:
+            page.close()
+        said: dict[str, list[str]] = {"installWarnings": list(info["installWarnings"])}
+        for kind in ("manifestErrors", "runtimeErrors", "runtimeWarnings"):
+            said[kind] = [f"{e.get('source', '')}: {e.get('message', '')}" for e in info[kind]]
+        return said
+
     def connect(self, *, origin: str | None = None, token: str | None = None) -> None:
         """Saves the connection as the options page does, without the page."""
         value = {"origin": origin or self.foray.origin, "token": token or self.foray.token}
@@ -554,7 +571,7 @@ def _fulfil(route: Route, pages: Pages, aborted: list[str]) -> None:
     parts = urlsplit(url)
     # This machine: the fake Foray, or Django's own test server.
     local = parts.hostname in ("127.0.0.1", "localhost")
-    if local or parts.scheme in ("chrome-extension", "data", "blob", "about"):
+    if local or parts.scheme in ("chrome-extension", "chrome", "data", "blob", "about"):
         return route.continue_()
     if parts.path.startswith("/__replica/"):
         name = parts.path.removeprefix("/__replica/")
@@ -567,9 +584,7 @@ def _fulfil(route: Route, pages: Pages, aborted: list[str]) -> None:
     if served is None:
         aborted.append(url)
         return route.abort()
-    body = served(url) if callable(served) else served
-    if body.endswith(".html") and "\n" not in body:
-        body = (REPLICAS / body).read_text()
+    body = (REPLICAS / served).read_text() if served.endswith(".html") else served
     return route.fulfill(status=200, content_type="text/html; charset=utf-8", body=body)
 
 
@@ -584,6 +599,14 @@ def playwright_chromium() -> Iterator[Playwright]:
         yield playwright
 
 
+NOTHING_WRONG: dict[str, list[str]] = {
+    "installWarnings": [],
+    "manifestErrors": [],
+    "runtimeErrors": [],
+    "runtimeWarnings": [],
+}
+
+
 @contextmanager
 def browser(
     playwright: Playwright,
@@ -593,10 +616,15 @@ def browser(
     pages: Pages | None = None,
     connected: bool = True,
     headless: bool = True,
+    as_shipped: bool = False,
 ) -> Iterator[Browser]:
-    """Chromium with the extension loaded and the replicas at the boards' own addresses."""
+    """Chromium with the extension loaded and the replicas at the boards' own addresses.
+    `as_shipped` loads the `extension/` folder itself, as a person does, with nothing
+    granted: it cannot reach the fake Foray, which is the point of loading it that way."""
     host = urlsplit(foray.origin).hostname
-    extension = packaged(tmp_path / "extension", allow=f"http://{host}/*")
+    extension = (
+        EXTENSION if as_shipped else packaged(tmp_path / "extension", allow=f"http://{host}/*")
+    )
     context = playwright.chromium.launch_persistent_context(
         str(tmp_path / "profile"),
         channel="chromium",  # the full browser: the headless shell cannot load extensions
@@ -626,6 +654,18 @@ def browser(
         )
         session = Browser(context, worker, worker.url.split("/")[2], foray, aborted)
         session._pages = served
+        # Developer mode with "Collect errors" on, as chrome://extensions offers for an unpacked
+        # extension: Chrome then keeps every error the extension's scripts raise.
+        setup = context.new_page()
+        setup.goto("chrome://extensions/")
+        setup.evaluate(
+            """(id) => new Promise((done) =>
+                chrome.developerPrivate.updateProfileConfiguration({ inDeveloperMode: true }, () =>
+                    chrome.developerPrivate.updateExtensionConfiguration(
+                        { extensionId: id, errorCollection: true }, done)))""",
+            session.extension_id,
+        )
+        setup.close()
         if connected:
             session.connect()
         yield session

@@ -14,7 +14,14 @@ from pathlib import Path
 import pytest
 from playwright.sync_api import Playwright
 
-from tests.extension.support import Browser, FakeForay, Pages, browser, playwright_chromium
+from tests.extension.support import (
+    NOTHING_WRONG,
+    Browser,
+    FakeForay,
+    Pages,
+    browser,
+    playwright_chromium,
+)
 
 
 @pytest.fixture
@@ -42,10 +49,16 @@ type Open = Callable[..., Browser]
 
 @pytest.fixture
 def open_browser(chromium: Playwright, foray: FakeForay, tmp_path: Path) -> Iterator[Open]:
-    """`open_browser(pages, connected=True)`: the browser, closed when the test ends."""
-    with ExitStack() as stack:
+    """`open_browser(pages, connected=True)`: the browser, closed when the test ends.
 
-        def start(pages: Pages | None = None, *, connected: bool = True) -> Browser:
+    Every test also ends by asking Chrome what it holds against the extension. An error one
+    of its scripts raised anywhere in the test fails the test, whatever else it checked."""
+    with ExitStack() as stack:
+        opened: list[Browser] = []
+
+        def start(
+            pages: Pages | None = None, *, connected: bool = True, as_shipped: bool = False
+        ) -> Browser:
             manager: AbstractContextManager[Browser] = browser(
                 chromium,
                 foray,
@@ -53,7 +66,11 @@ def open_browser(chromium: Playwright, foray: FakeForay, tmp_path: Path) -> Iter
                 pages=pages,
                 connected=connected,
                 headless=os.environ.get("FORAY_EXTENSION_HEADED") != "1",
+                as_shipped=as_shipped,
             )
-            return stack.enter_context(manager)
+            opened.append(stack.enter_context(manager))
+            return opened[-1]
 
         yield start
+        for session in opened:
+            assert session.chrome_says() == NOTHING_WRONG

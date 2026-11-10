@@ -72,6 +72,13 @@ saved answers, and anything it could not answer named. The Apply page lists what
 the posting that has been up longest first. Answer a question once and every application
 that asks it is filled. Foray sends nothing: you open the form, check it and submit.
 
+A [browser extension](docs/extension.md) does the typing. Loaded into your own Chrome and
+connected with a token from Settings, it puts the prepared answers into the employer's form,
+attaches your resume, marks what it filled and what it left, and stops for you to read and
+submit. It never solves a CAPTCHA, signs in, creates an account or ticks an agreement, and
+when the employer's page confirms the application it records that in Foray with the page's
+words and a picture.
+
 ### Everything the agents did
 
 Every run and every step is recorded: what was found, scored, archived, reviewed and
@@ -375,12 +382,17 @@ src/
   app/              Next pages only (no route handlers, no server actions)
   components/       UI
   lib/api/          the typed client and the generated schema
+extension/          the Chrome extension that fills application forms (docs/extension.md)
 ```
 
 Tests never touch the dev database or the network: pytest builds its own database from
 the migrations, ignores `.env`, and blocks every non-loopback connection, so no test reads
 your keys or spends. Goldens pin prompts, adapter output and the chat stream protocol byte
 for byte. Run `pnpm check` before committing.
+
+The extension is plain JavaScript with no build step. Its tests load it into a real Chromium
+against hand-written replicas of the boards' forms, never a real one:
+[docs/extension.md](docs/extension.md) says how to load it, connect it and test it.
 
 ## Roadmap
 

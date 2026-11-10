@@ -180,6 +180,48 @@ def test_the_token_never_reaches_a_page_and_no_request_carries_a_cookie(
     assert browser.aborted == []
 
 
+def test_a_script_in_a_page_can_ask_only_about_its_own_page(
+    open_browser: Open, foray: FakeForay
+) -> None:
+    """The content script runs inside an employer's page. Should that page ever get hold of
+    it, the worker still answers only for the page Chrome says it is in, and only about the
+    application Foray found for that page: not another application, not the connection."""
+    foray.add(greenhouse())
+    foray.add(unread(LEVER_ID, f"{LEVER}/apply", "lever"))
+    foray.answers = dict(LEVER_ANSWERS)
+    browser = open_browser(PAGES | LEVER_PAGES)
+    page = browser.context.new_page()
+    page.goto(f"{LEVER}/apply")
+    browser.wait_for_panel(page, "Fill the form")
+    world = browser.world(page)
+
+    def ask(message: dict[str, object]) -> object:
+        answered = world.evaluate(
+            f"chrome.runtime.sendMessage({json.dumps(message)})"
+            ".then((answer) => JSON.stringify(answer ?? null), () => 'null')"
+        )
+        return json.loads(answered)
+
+    before = len(foray.calls)
+    # Another page's application, by its id: refused before anything is asked of Foray.
+    for kind in ("get", "resume", "plan", "filled", "held", "submit-seen", "confirmed"):
+        assert ask({"type": kind, "id": ID, "fields": [], "filled": []}) == {"ok": False}, kind
+    assert ask({"type": "get", "id": "../me"}) == {"ok": False}
+    # What only the extension's own pages may ask is not answered at all.
+    assert ask({"type": "test-connection"}) is None
+    assert ask({"type": "popup-state", "tabId": 1}) is None
+    assert ask({"type": "popup-fill", "tabId": 1}) is None
+    assert len(foray.calls) == before
+
+    # Naming another address changes nothing: the answer is for the page it is in.
+    found = ask({"type": "find", "url": FORM})
+    assert isinstance(found, dict) and found["application"]["id"] == LEVER_ID
+    assert foray.calls[-1].query["url"] == [f"{LEVER}/apply"]
+    own = ask({"type": "get", "id": LEVER_ID})
+    assert isinstance(own, dict) and own["ok"] is True
+    assert TOKEN not in json.dumps([found, own])
+
+
 def test_without_a_connection_the_extension_is_silent_and_says_so_when_asked(
     open_browser: Open, foray: FakeForay
 ) -> None:
@@ -238,3 +280,13 @@ def test_a_form_in_a_frame_on_an_employers_site_is_found_by_its_job(
     browser.wait_for_panel(inner, "Check everything, then press submit yourself.")
     assert inner.evaluate("window.replica.state.first_name") == "Avery"
     assert page.evaluate("document.getElementById('foray-fill-panel')") is None
+
+    # From the toolbar the same frame is filled, and the employer's page around it, which
+    # Foray also knows by its `gh_jid`, shows no second panel.
+    inner.evaluate("document.getElementById('question_5000001').value = ''")
+    browser.popup(page).press("#fill")
+    browser.pump(2500)
+    browser.wait_for_panel(inner, "Check everything, then press submit yourself.")
+    assert inner.evaluate("document.getElementById('question_5000001').value") != ""
+    assert page.evaluate("document.getElementById('foray-fill-panel')") is None
+    assert page.evaluate("window.replica") is None  # the employer's page has no form of its own

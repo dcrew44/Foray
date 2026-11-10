@@ -24,8 +24,8 @@ worker.
 | `pnpm auth:set-password <email>` | set a forgotten password at a hidden prompt (no mail transport yet); signs out every session |
 | `pnpm seed:companies [--fetch]` | load `backend/apps/jobs/seed.json` into `companies`; `--fetch` also fills the mirror |
 | `pnpm fetch:board` / `verify:boards` | print what an adapter makes of one board / check that board slugs are real (neither touches the database) |
-| `pnpm test` | `test:web` (Vitest, the pure helpers in `src/test/unit/`), then `test:api` (pytest) |
-| `pnpm lint` / `typecheck` | ESLint, `ruff check` and `ruff format --check` / `tsc --noEmit` and pyright |
+| `pnpm test` | `test:web` (Vitest, the pure helpers in `src/test/unit/` and `extension/test/unit/`), then `test:api` (pytest) |
+| `pnpm lint` / `typecheck` | ESLint (the app, and `extension/` under its own rules), `ruff check` and `ruff format --check` / `tsc --noEmit` and pyright |
 | `pnpm api:types` | export `backend/openapi.json` and regenerate `src/lib/api/schema.d.ts` from it |
 | `pnpm check` | lint, typecheck, test, `api:types`, then fails if the generated files changed; run it before committing |
 | `pnpm llm:smoke [purpose …]` | one call per configured purpose, to check keys and pricing (`LLM_FAKE=1` for $0) |
@@ -68,6 +68,11 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
   `src/lib/api/`: `server.ts` (`django()`, `getMe()` for server components), `client.ts`
   (`api` and `call()` for client components), `types.ts` and `chat-types.ts` (friendly names
   over the generated `schema.d.ts`), `auth.ts`.
+- `extension/`: the Chrome extension that fills application forms in the user's own browser
+  (#22; [docs/extension.md](docs/extension.md)). Plain JavaScript that Chrome loads as it is:
+  `background.js` (the service worker, the only code that holds the token and calls Foray),
+  `lib/`, `content/` (what runs in an application page), `options/`, `popup/`, and
+  `test/replicas/` (hand-written stand-ins for the boards' forms).
 - `notes/` (git-ignored): a clone of the private `dcrew44/foray-notes` repo, for research and
   strategy that isn't public. It may be absent; nothing in the app depends on it.
 
@@ -298,6 +303,18 @@ An issue reads like the ones already there:
   on its own" is recorded only when the server's rule allowed it. A new answer source is not
   auto-submittable until it is added to `OWN_ANSWERS` on purpose. New routes there go in the
   token sweep in `tests/applications/test_extension.py`.
+- **The extension fills; the user submits** (`extension/`, #22). It puts in only the answers
+  Foray planned (a field whose `value` is null is left alone), never ticks an agreement, never
+  touches a CAPTCHA, a sign-in or an account form, and presses submit only when the payload
+  says `maySubmit` and none of those is on the page. No build step, no dependency and no
+  remote code: content scripts are classic scripts on one `Foray` object in the isolated
+  world, the worker and the two pages are ES modules. The token is read only in
+  `lib/api.js`, by the worker; a content script asks by message and is answered only for
+  the page Chrome says it is in. A control gets a strategy in `content/controls.js`, a board
+  an adapter in `content/boards.js` with its host in the manifest, a replica and a test.
+  **Never fill, upload to or submit a real application form to test it**: the tests
+  (`backend/tests/extension/`, `slow`) load the extension into Playwright's Chromium against
+  the replicas and a fake Foray, with every real host unresolvable.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads
@@ -406,8 +423,12 @@ not the only check.
   `run_deferred()` or `db()` threads are `django_db(transaction=True)`.
 - Goldens in `tests/goldens/` pin prompts, adapter output, templates and the UI-stream
   protocol byte for byte; `tests/contract/` checks streams with the installed `ai` package
-  (it needs `node` and `pnpm install`). Tests marked `slow` render PDFs with a local
-  Chromium or Chrome; `-m "not slow"` skips them.
+  (it needs `node` and `pnpm install`). Tests marked `slow` need a browser: they render PDFs
+  with a local Chromium or Chrome, and `tests/extension/` loads the extension into
+  Playwright's own Chromium (`uv run playwright install chromium`; skipped without it).
+  `-m "not slow"` skips them. Playwright's sync API keeps an event loop running on its thread,
+  so open it per test (the `chromium` fixture), never per session, and read the database from
+  another thread while it is open (`tests/extension/test_against_django.py`).
 - `FORAY_REGISTER_STRICT=1` makes `tests/test_register.py` fail when a test that DESIGN.md's
   invariant register names does not exist. Run the full suite with it before committing.
 - **CI** (`.github/workflows/`): `ci.yml` runs `check` (lint, typecheck, both suites with
@@ -415,7 +436,10 @@ not the only check.
   and `slow` on every pull request, push to `main` and nightly; `docker.yml` builds both image
   targets when an image input changes. CI has no secrets and no `.env`, so a step that boots
   `settings.py` outside pytest sets its own variables (see the `api:types` step).
-- Vitest covers only the frontend's pure helpers (`src/test/unit/*.test.ts`: formatting, the sign-in `next` guard, the upload size check).
+- Vitest covers only pure helpers: the frontend's (`src/test/unit/*.test.ts`: formatting, the
+  sign-in `next` guard, the upload size check) and the extension's
+  (`extension/test/unit/*.test.js`: label and option matching, the address on its options
+  page).
 
 ## API drift warning
 

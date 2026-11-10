@@ -4,19 +4,23 @@
  * Content scripts run inside employers' pages, so they are told as little as possible: they
  * ask by message for an application to fill and report what they did, and what comes back is
  * the application and nothing about the connection. Messages are checked for who sent them:
- * a page's script may only ask for the few things a fill needs, and only the extension's own
- * pages (the popup, the options page) may ask about the connection or start a fill.
+ * a page's script may only ask for the few things a fill needs, about the page Chrome says
+ * it is in and the application Foray found for that page, and only the extension's own pages
+ * (the popup, the options page) may ask about the connection or start a fill.
  *
  * What a tab is in the middle of is kept in `chrome.storage.session` (memory only, gone when
  * the browser closes), because a worker is stopped whenever it is idle:
- *   tab:<id>       {id, origin, company, title, filled, submitSeen, auto, at}: a form filled
+ *   tab:<tab>      {id, origin, company, title, filled, submitSeen, auto, at}: a form filled
  *                  in that tab, waiting for the board's page to confirm it; `filled` is what
  *                  the form held when it was last heard from
- *   invoked:<id>   the origin a tab was on when the user clicked Foray in the toolbar, which
+ *   invoked:<tab>  the origin a tab was on when the user clicked Foray in the toolbar, which
  *                  is when Chrome lets the extension take a picture of that tab
- *   reported:<id>  an application whose confirmation has been sent to Foray
+ *   found:<tab>    the applications Foray found for pages in that tab, each with the site it
+ *                  was found on: the only ones a script in that tab may fetch or report on
+ *   reported:<application>  an application whose confirmation has been sent to Foray
  */
 import { connection, request } from "./lib/api.js";
+import { lookupUrl } from "./lib/urls.js";
 
 const CONTENT_FILES = [
   "content/text.js",
@@ -44,7 +48,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  chrome.storage.session.remove([`tab:${tabId}`, `invoked:${tabId}`]);
+  chrome.storage.session.remove([`tab:${tabId}`, `invoked:${tabId}`, `found:${tabId}`]);
 });
 
 // --- what a tab is in the middle of ---------------------------------------------------------
@@ -67,6 +71,25 @@ function originOf(url) {
   } catch {
     return "";
   }
+}
+
+/** Notes that Foray found this application for a page in the sender's tab. */
+async function remember(sender, id) {
+  const tabId = sender.tab?.id;
+  if (tabId === undefined) return;
+  const found = (await session.get(`found:${tabId}`)) ?? [];
+  const origin = originOf(sender.url);
+  const rest = found.filter((item) => item.id !== id || item.origin !== origin).slice(-7);
+  await session.set(`found:${tabId}`, [...rest, { id, origin }]);
+}
+
+/** Whether a script may act on this application: Foray found it for its tab, on its site. */
+async function mayActOn(sender, id) {
+  const tabId = sender.tab?.id;
+  if (tabId === undefined) return false;
+  const found = (await session.get(`found:${tabId}`)) ?? [];
+  const origin = originOf(sender.url);
+  return found.some((item) => item.id === id && item.origin === origin);
 }
 
 /** The fill a tab is waiting on, when the page asking is still on the site it was done on. */
@@ -188,9 +211,12 @@ const fromPage = {
     const saved = await connection();
     if (!saved) return { configured: false };
     const pending = await pendingFor(sender);
-    const found = await request(
-      `/api/extension/applications?url=${encodeURIComponent(String(message.url ?? ""))}`,
-    );
+    // The address is the one Chrome reports for the frame, never one the page's script names.
+    const url = lookupUrl(sender.url ?? "");
+    const found = url
+      ? await request(`/api/extension/applications?url=${encodeURIComponent(url)}`)
+      : { ok: true, data: { application: null } };
+    if (found.ok && found.data.application) await remember(sender, found.data.application.id);
     return {
       configured: true,
       forayUrl: saved.origin,
@@ -326,7 +352,9 @@ const fromExtension = {
   /** The popup opened on a tab: the connection, and (for later) that the tab was invoked. */
   async "popup-state"(message) {
     const saved = await connection();
-    const tab = Number.isInteger(message.tabId) ? await chrome.tabs.get(message.tabId) : null;
+    const tab = Number.isInteger(message.tabId)
+      ? await chrome.tabs.get(message.tabId).catch(() => null)
+      : null;
     if (tab?.url) await session.set(`invoked:${tab.id}`, originOf(tab.url));
     if (!saved) return { configured: false };
     return { configured: true, forayUrl: saved.origin, me: await me() };
@@ -348,12 +376,16 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const offered = own ? fromExtension : fromPage;
   const handler = Object.hasOwn(offered, message.type) ? offered[message.type] : null;
   if (!handler) return undefined;
-  // An id from a page goes into a path: it must be an application's id and nothing else.
-  if (!own && message.type !== "find" && !UUID.test(String(message.id ?? ""))) {
-    respond({ ok: false });
-    return undefined;
-  }
-  Promise.resolve(handler(message, sender)).then(respond, () =>
+  const answer = async () => {
+    if (!own && message.type !== "find") {
+      // An id from a page goes into a path: it must be an application's id, and the one
+      // Foray found for a page in that tab.
+      const id = String(message.id ?? "");
+      if (!UUID.test(id) || !(await mayActOn(sender, id))) return { ok: false };
+    }
+    return handler(message, sender);
+  };
+  answer().then(respond, () =>
     respond({ ok: false, error: { kind: "worker", message: "The extension hit an error." } }),
   );
   return true; // the answer comes later

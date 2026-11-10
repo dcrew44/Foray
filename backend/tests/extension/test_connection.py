@@ -7,7 +7,7 @@ import pytest
 from playwright.sync_api import Page
 
 from tests.extension.conftest import Open
-from tests.extension.support import TOKEN, Browser, FakeForay
+from tests.extension.support import NOTHING_WRONG, TOKEN, Browser, FakeForay
 from tests.extension.test_greenhouse import (
     CONFIRMATION,
     FORM,
@@ -90,6 +90,34 @@ def test_the_options_page_saves_the_connection_and_never_shows_the_token_again(
         "document.getElementById('status').textContent.startsWith('Disconnected')"
     )
     assert saved(browser) is None
+
+
+def test_the_folder_loads_as_it_ships_and_reaches_nothing_until_it_is_allowed(
+    open_browser: Open, foray: FakeForay
+) -> None:
+    """`extension/` loaded unpacked, exactly as it is in the repository. Chrome holds nothing
+    against it (checked as every test here ends), and until the user allows their Foray's
+    address from the options page it cannot make a request at all."""
+    foray.add(greenhouse())
+    browser = open_browser(PAGES, connected=False, as_shipped=True)
+    assert browser.chrome_says() == NOTHING_WRONG
+    assert "It never solves or works around a CAPTCHA." in options(browser).inner_text("main")
+
+    page = browser.context.new_page()
+    page.goto(FORM)
+    browser.pump(1500)
+    assert browser.panel(page) == ""
+    browser.popup(page).wait_for("Not connected to Foray yet.")
+
+    # An address and a token saved without Chrome's permission for the address (which only
+    # the user can give, at Chrome's own prompt): still nothing leaves the browser.
+    browser.connect()
+    page.reload()
+    browser.pump(1500)
+    assert browser.panel(page) == ""
+    popup = browser.popup(page)
+    popup.wait_for(f"The extension is not allowed to reach {foray.origin}.")
+    assert foray.calls == []
 
 
 def test_a_fill_is_remembered_when_chrome_stops_the_worker(

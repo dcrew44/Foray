@@ -1,8 +1,9 @@
 /*
  * What happens on a page, in order:
  *
- * 1. Ask the service worker whether Foray has an application for this address. The worker
- *    holds the token and does every request; this script never sees it.
+ * 1. Ask the service worker whether Foray has an application for this page. The worker
+ *    holds the token and does every request; this script never sees it, and it can ask only
+ *    about the page it is in and act only on the application found for it.
  * 2. If it has, show the panel: which application, how many answers are ready, what is
  *    missing. A form Foray could not read ahead is read from the page first and planned by
  *    Foray. Nothing on the page is touched before the user presses "Fill the form".
@@ -71,6 +72,10 @@
 
   // --- views --------------------------------------------------------------------------------
 
+  const BOARD_FRAME = 'iframe[src*="greenhouse.io/embed/job_app"]';
+  // Where this page is, without what follows ? or #: a form's own scripts change those.
+  const here = () => location.origin + location.pathname;
+
   const heading = () => ({ title: state.app?.title ?? "", company: state.app?.company ?? "" });
   const NOT_SENT = "Nothing is sent. You read the form and press submit.";
 
@@ -135,12 +140,14 @@
     const lines = [
       { text: `Filled ${filled.length} of ${T.plural(outcomes.length, "answer")}.`, kind: "strong" },
     ];
-    if (handoff) lines.push({ text: handoff.message, kind: "signal" });
-    else if (pressed) {
-      lines.push({ text: "Foray pressed submit, as you allowed for this application.", kind: "signal" });
-    } else {
-      lines.push({ text: "Check everything, then press submit yourself.", kind: "signal" });
-    }
+    lines.push({
+      text: pressed
+        ? "Foray pressed submit, as you allowed for this application."
+        : "Check everything, then press submit yourself.",
+      kind: "signal",
+    });
+    // A CAPTCHA, a sign-in or an account to create: said in full, because it is the user's.
+    if (handoff) lines.push({ text: handoff.message });
     if (consent) {
       lines.push({
         text: `Foray never ticks agreement boxes: ${T.plural(consent, "box", "boxes")} left for you to read.`,
@@ -218,6 +225,8 @@
     state.hasForm = !!adapter.root();
     if (app.blocked) return say(app.blocked, "quiet", options);
     if (!state.hasForm) {
+      // The form is the board's own frame inside this page: the panel is in there.
+      if (document.querySelector(BOARD_FRAME)) return P.remove();
       const handoff = H.detect();
       return say(
         handoff?.message ??
@@ -235,9 +244,9 @@
 
   /** Asks Foray about this page and shows what it says. `forced`: the user asked. */
   async function look({ forced = false } = {}) {
-    state.url = location.href;
+    state.url = here();
     const options = { always: forced };
-    const answer = await send({ type: "find", url: adapter.lookupUrl() });
+    const answer = await send({ type: "find" });
     if (answer.gone || state.stopped) return;
     state.app = null;
     state.results = null;
@@ -272,6 +281,7 @@
     }
     if (answer.error) {
       if (forced && top) say(answer.error.message, "error", options);
+      else P.remove();
       return;
     }
     state.app = answer.application ?? null;
@@ -575,7 +585,7 @@
 
   async function tick() {
     if (state.stopped) return;
-    if (location.href !== state.url) return void (await look());
+    if (here() !== state.url) return void (await look());
     if (state.pending && (await confirmIfShown())) return;
     // A word to the worker now and then keeps it awake while a filled form waits to be
     // sent, so it is there to hear the press of submit.

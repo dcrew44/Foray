@@ -147,7 +147,7 @@ def test_the_extension_fills_reports_and_proves_arrival_against_the_real_api(
         session.pump(1500)
         row = stored()
         assert row.status == "needs_answers" and row.filled_at is not None
-        sent = {item["key"]: item["value"] for item in row.sent_answers}
+        sent = {item["key"]: item["value"] for item in row.sent_answers or []}
         assert sent["first_name"] == "Avery" and sent["resume"] == RESUME_NAME
         assert row.submitted_at is None
 
@@ -163,7 +163,7 @@ def test_the_extension_fills_reports_and_proves_arrival_against_the_real_api(
         assert row.confirmation_text.startswith("Thank you for applying.")
         with storage().open(row.confirmation_image) as handle:
             assert handle.read(8) == b"\x89PNG\r\n\x1a\n"
-        sent = {item["key"]: item["value"] for item in row.sent_answers}
+        sent = {item["key"]: item["value"] for item in row.sent_answers or []}
         assert sent["question_20471324004"] == "Because the tools are good."
         match = from_django(lambda: JobMatch.objects.for_user(user.pk).get(id=application.match_id))
         assert match.stage == "applied"

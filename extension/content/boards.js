@@ -59,11 +59,6 @@
     name: "generic",
     hooks: {},
 
-    /** The address to ask Foray about. */
-    lookupUrl() {
-      return location.href;
-    },
-
     /**
      * The form: the `<form>` with the most questions, when it has at least three, else the
      * page's main content when that does (React pages often have no `<form>`). A form that
@@ -118,18 +113,6 @@
   const greenhouse = {
     ...generic,
     name: "greenhouse",
-
-    // The form on an employer's own site is this board's page in a frame, addressed by
-    // `for` and `token`. Foray knows the posting by its board address.
-    lookupUrl() {
-      const url = new URL(location.href);
-      const board = url.searchParams.get("for");
-      const job = url.searchParams.get("token");
-      if (url.pathname.startsWith("/embed/job_app") && board && /^\d+$/.test(job ?? "")) {
-        return `https://job-boards.greenhouse.io/${encodeURIComponent(board)}/jobs/${job}`;
-      }
-      return location.href;
-    },
 
     root() {
       return document.querySelector("#application-form, #application_form");

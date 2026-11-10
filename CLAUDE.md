@@ -48,6 +48,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 | `facts_benchmark [--show]` | how often the fact reader agrees with the 210 hand labels in `tests/fixtures/facts/`; the posting texts come from `notes/benchmarks/posting-facts/` or the mirror; exits 1 under 90% on level or years |
 | `find_boards --latest 2` / `--crawl CC-MAIN-…` / `--file f.tsv` / `--urls any.yml --found-in list:owner/repo` | collect board ids as registry candidates, from Common Crawl's index, a TSV (`source<TAB>id`) or every board URL in a text file; asks no board anything |
 | `grow_registry [--sources greenhouse,ashby,lever] [--limit N] [--from place] [--matching text] [--any-board] [--write-seed]` | ask candidates' boards, newest-seen first, and register the ones that list a software role (`--any-board`: any posting; `--matching`: a Workday site must answer its own search for the text); prints the registry's width before and after; `--write-seed` rewrites `seed.json` from boards seen somewhere public |
+| `match_benchmark --models a:b[,c:d@effort] [--purpose score\|evaluate] [--out f.json]` | how often a model's verdict is the label's, on the 40 postings in `tests/fixtures/match-quality/` (their text comes from `notes/benchmarks/match-quality/` or the mirror); real calls ledgered as `bakeoff`, about $0.03 for the fast scorer; with `LLM_FAKE` on it refuses any model but `fake:score` |
 | `watch_now [--email e] [--days N] [--fan-out]` | a watch over the newest postings now instead of after the next scheduled refresh; `--days` widens its window, `--fan-out` starts every watching user's (DEBUG only) |
 
 ## Layout
@@ -321,6 +322,10 @@ not the only check.
 - The watch-mode worker restarts on every `.py` save and interrupts whatever it was running;
   the reaper fails such runs ("Interrupted…") within about two minutes, so re-run after edits
   settle. A worker killed with `kill -9` is not restarted until the next save.
+- A model named on a command line (`llm:bakeoff --models …`) is called for real whatever
+  `LLM_FAKE` says: the fake only stands in for the models the purposes are configured with.
+  `match_benchmark` refuses that under `LLM_FAKE`; `llm:bakeoff` does not, so never run it on
+  the rehearsal stack expecting it to be free.
 - `LLM_FAKE=1` (with `DEBUG=true`) runs every model as a deterministic fake at $0;
   `LLM_FAKE_DELAY_MS` slows it enough to press Stop, and `LLM_FAKE_FAIL=<purpose>` makes one
   fail. Set them in the process environment for a rehearsal rather than editing `.env`.

@@ -162,13 +162,19 @@ def scoring_instructions() -> str:
 
 
 async def run_scoring_fixture(
-    model_ref: str, effort: Effort | None = None, *, limit: int = SAMPLE_SIZE
+    model_ref: str,
+    effort: Effort | None = None,
+    *,
+    limit: int = SAMPLE_SIZE,
+    sample: Sequence[ScorePosting] | None = None,
 ) -> FixtureResult:
     """Scores the sample with one model, sequentially. A failure is counted, not raised: a
     model that fails a fifth of the time is exactly what this is meant to reveal. The budget
     guard's refusal is the exception: it says nothing about the model, so it ends the run
-    (`llm_bakeoff` exits 1 with its sentence, design §8.6)."""
-    sample = await db(scoring_sample, limit)
+    (`llm_bakeoff` exits 1 with its sentence, design §8.6). `sample` replaces the mirror's own
+    (the labelled postings of `benchmark.py`)."""
+    if sample is None:
+        sample = await db(scoring_sample, limit)
     instructions = scoring_instructions()
     stack = registry.build_stack("score", model_ref, effort=effort)
     result = FixtureResult()
@@ -308,11 +314,16 @@ def evaluation_sample(limit: int = EVAL_SAMPLE_SIZE) -> list[tuple[str, EvalPost
 
 
 async def run_evaluation_fixture(
-    model_ref: str, effort: Effort | None = None, *, limit: int = EVAL_SAMPLE_SIZE
+    model_ref: str,
+    effort: Effort | None = None,
+    *,
+    limit: int = EVAL_SAMPLE_SIZE,
+    sample: Sequence[tuple[str, EvalPosting]] | None = None,
 ) -> FixtureResult:
     """Evaluates the sample with one model, sequentially, as `run_scoring_fixture` scores."""
     candidate = sample_candidate()
-    sample = await db(evaluation_sample, limit)
+    if sample is None:
+        sample = await db(evaluation_sample, limit)
     # Midnight today, so "posted N days ago" reads the same for every model in a run.
     now = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     stack = registry.build_stack("evaluate", model_ref, effort=effort)

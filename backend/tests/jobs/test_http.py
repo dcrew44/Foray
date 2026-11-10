@@ -572,3 +572,13 @@ async def test_a_budget_is_shared_by_everything_one_client_does_under_a_key() ->
         assert client.take("postings:workday", 5, 3) == 2
         assert client.take("postings:workday", 5, 3) == 0
         assert client.take("postings:icims", 5, 3) == 3  # another key, another budget
+
+
+async def test_a_pace_keeps_calls_under_one_key_apart(no_backoff: list[float]) -> None:
+    """#86: a source that answers 429 to anything faster is asked a board a second."""
+    async with mock_client(lambda request: httpx2.Response(200)) as client:
+        for _ in range(3):
+            await client.pace("boards:workable", 1.0)
+        await client.pace("boards:other", 1.0)  # another key waits for nobody
+    # The first goes at once; the second and third wait for their turns.
+    assert [round(wait) for wait in no_backoff] == [1, 2]

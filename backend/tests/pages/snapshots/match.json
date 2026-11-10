@@ -37,6 +37,12 @@
       {
         "id": "string",
         "name": "string",
+        "note": {
+          "body": "string",
+          "draftedAt": "string",
+          "edited": "boolean",
+          "id": "string"
+        },
         "position": "string",
         "profileUrl": "string"
       }

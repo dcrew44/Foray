@@ -128,6 +128,8 @@ STAMPED_COLUMNS = {
     "llm_calls.created_at",
     "notifications.created_at",
     "notifications.updated_at",
+    "outreach_notes.created_at",
+    "outreach_notes.updated_at",
 }
 
 

@@ -5,16 +5,30 @@ import { Section } from "@/components/foray/primitives";
 import type { components } from "@/lib/api/schema";
 import { plural } from "@/lib/format";
 
+import { ContactNote } from "./contact-note";
+
 type MatchPeople = components["schemas"]["MatchPeople"];
 
 /**
  * The people the user knows at this posting's company (#64), from the contacts they imported:
- * who they are, what they do there, and their profile when the file gave one. A posting where
- * the user knows nobody has no such section.
+ * who they are, what they do there, their profile when the file gave one, and a short note to
+ * each that Foray drafts on request (#25). A posting where the user knows nobody has no such
+ * section.
  *
- * Foray contacts nobody. This says who could be asked; asking is the user's to do.
+ * Foray contacts nobody. It says who could be asked and drafts what could be said; the user
+ * edits the note, copies it and sends it themself.
  */
-export function PeoplePanel({ knows, company }: { knows: MatchPeople; company: string }) {
+export function PeoplePanel({
+  knows,
+  company,
+  matchId,
+  hasResume,
+}: {
+  knows: MatchPeople;
+  company: string;
+  matchId: string;
+  hasResume: boolean;
+}) {
   if (knows.count === 0) return null;
   const more = knows.count - knows.people.length;
 
@@ -25,7 +39,7 @@ export function PeoplePanel({ knows, company }: { knows: MatchPeople; company: s
     >
       <ul className="divide-y rounded-xl border text-[13px]">
         {knows.people.map((person) => (
-          <li className="px-3.5 py-2.5" key={person.id}>
+          <li className="px-3.5 py-3" key={person.id}>
             <div className="flex items-baseline justify-between gap-3">
               <span className="min-w-0 truncate font-medium">{person.name}</span>
               {person.profileUrl && (
@@ -43,6 +57,7 @@ export function PeoplePanel({ knows, company }: { knows: MatchPeople; company: s
             {person.position && (
               <p className="text-muted-foreground mt-0.5 leading-snug">{person.position}</p>
             )}
+            <ContactNote hasResume={hasResume} matchId={matchId} person={person} />
           </li>
         ))}
       </ul>
@@ -56,8 +71,8 @@ export function PeoplePanel({ knows, company }: { knows: MatchPeople; company: s
             .{" "}
           </>
         )}
-        A referral asked for while a posting is new counts for more. Foray contacts nobody:
-        reaching out is yours to do.
+        A referral asked for while a posting is new counts for more. Foray sends nothing and
+        contacts nobody: you edit the note, copy it and send it yourself.
       </p>
     </Section>
   );

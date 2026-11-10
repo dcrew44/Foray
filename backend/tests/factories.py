@@ -35,7 +35,7 @@ from apps.accounts.schemas import SAMPLE_PREFERENCES
 from apps.applications.models import Application, ApplicationAnswer
 from apps.chat.models import Conversation, Message
 from apps.contacts.link import company_key
-from apps.contacts.models import Contact
+from apps.contacts.models import Contact, OutreachNote
 from apps.core.ids import generate_message_id
 from apps.jobs.models import BoardCandidate, Company, Job
 from apps.llm.models import LlmCall
@@ -372,6 +372,12 @@ def _default_input(kind: str) -> dict[str, Any]:
             ).dump(exclude_none=True)
         case RunKind.WATCH:
             return catalogue.WatchInput(prompt="Check new postings").dump(exclude_none=True)
+        case RunKind.OUTREACH:
+            return catalogue.OutreachInput(
+                match_id=str(uuid.uuid4()),
+                contact_id=str(uuid.uuid4()),
+                prompt="Draft a note to a contact",
+            ).dump()
         case _:
             raise ValueError(f"Unknown run kind {kind!r}")
 
@@ -553,6 +559,22 @@ def make_contact(
         company_key=company_key(written),
         **fields,
     )
+
+
+def make_outreach_note(
+    user: User,
+    *,
+    match: JobMatch | None = None,
+    contact: Contact | None = None,
+    **fields: Any,
+) -> OutreachNote:
+    """A note drafted to a contact about a match (#25): by default to a new contact at the
+    company of a new match."""
+    match = match if match is not None else make_match(user)
+    if contact is None:
+        contact = make_contact(user, company=match.job.company)
+    fields.setdefault("body", "A short note, as the model drafted it.")
+    return OutreachNote.objects.create_for(user.pk, match=match, contact=contact, **fields)
 
 
 # --- llm -----------------------------------------------------------------------------------------

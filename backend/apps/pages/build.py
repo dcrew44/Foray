@@ -29,7 +29,7 @@ from apps.applications import outcomes
 from apps.applications.answers import CATALOGUE, YES_NO
 from apps.applications.models import AnswerKind, Application, ApplicationAnswer
 from apps.applications.prepare import missing_of
-from apps.contacts.known import match_people
+from apps.contacts.outreach import match_people
 from apps.core import clock
 from apps.core.jsonio import js_locale
 from apps.jobs import legitimacy, radar
@@ -419,7 +419,7 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
         ),
         tailored=_tailored_view(tailored) if tailored is not None else None,
         has_base_resume=has_base,
-        knows=match_people(user.pk, job),
+        knows=match_people(user.pk, match),
     )
 
 
@@ -454,7 +454,7 @@ def run_target(
             if len(ids) == 1:
                 return first or "1 role"
             return f"{first} and {len(ids) - 1} more" if first else f"{len(ids)} roles"
-        case RunKind.TAILOR:
+        case RunKind.TAILOR | RunKind.OUTREACH:
             match_id = value.get("matchId")
             return role_by_id.get(match_id) if isinstance(match_id, str) else None
         case RunKind.RESUME_RENDER:

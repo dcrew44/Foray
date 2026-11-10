@@ -28,7 +28,7 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOTENV_PATH = REPO_ROOT / ".env"
 
-Purpose = Literal["chat", "extract", "score", "evaluate", "tailor", "verify", "merge"]
+Purpose = Literal["chat", "extract", "score", "evaluate", "tailor", "verify", "merge", "outreach"]
 PURPOSES: tuple[Purpose, ...] = get_args(Purpose)
 
 Effort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
@@ -135,6 +135,7 @@ class Env(BaseSettings):
     llm_tailor: ModelRef | None = None
     llm_verify: ModelRef | None = None
     llm_merge: ModelRef | None = None
+    llm_outreach: ModelRef | None = None
 
     llm_reasoning_chat: Effort | None = None
     llm_reasoning_extract: Effort | None = None
@@ -143,6 +144,7 @@ class Env(BaseSettings):
     llm_reasoning_tailor: Effort | None = None
     llm_reasoning_verify: Effort | None = None
     llm_reasoning_merge: Effort | None = None
+    llm_reasoning_outreach: Effort | None = None
 
     llm_rpm_openai: int = Field(default=300, gt=0)
     llm_rpm_deepseek: int = Field(default=300, gt=0)

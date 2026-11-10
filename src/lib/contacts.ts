@@ -39,6 +39,17 @@ export function knowsLabel(knows: Knows | null | undefined): string | null {
   return `You know ${first.name} and ${others} ${others === 1 ? "other" : "others"}`;
 }
 
+/** How long a note to a contact may be once the user has edited it (`outreach.BODY_MAX`). */
+export const NOTE_MAX_LENGTH = 5000;
+
+/**
+ * What to call a contact in a button or a toast: the first word of their name as the file wrote
+ * it, or "them" when there is none.
+ */
+export function firstName(name: string | null | undefined): string {
+  return (name ?? "").trim().split(/\s+/)[0] || "them";
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /**

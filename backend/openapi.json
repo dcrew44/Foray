@@ -1497,6 +1497,138 @@
         ]
       }
     },
+    "/api/outreach": {
+      "post": {
+        "operationId": "apps_contacts_api_post_note",
+        "summary": "Draft a note to a contact",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutreachStarted"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutreachStarted"
+                }
+              }
+            }
+          }
+        },
+        "description": "Queues the draft and answers at once: a request never waits on a model.",
+        "tags": [
+          "outreach"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutreachIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/outreach/{id}": {
+      "patch": {
+        "operationId": "apps_contacts_api_patch_note",
+        "summary": "Edit a note",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "outreach"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutreachEdit"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "apps_contacts_api_delete_note",
+        "summary": "Discard a note",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkMessageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "outreach"
+        ],
+        "security": [
+          {
+            "SessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/conversations": {
       "get": {
         "operationId": "apps_chat_api_list_conversations",
@@ -2798,7 +2930,8 @@
           "profile_import",
           "company_discovery",
           "company_refresh",
-          "watch"
+          "watch",
+          "outreach"
         ],
         "title": "RunKind",
         "type": "string"
@@ -4681,6 +4814,65 @@
         "title": "ContactsLookupStarted",
         "type": "object"
       },
+      "OutreachStarted": {
+        "properties": {
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "runId": {
+            "format": "uuid",
+            "title": "Runid",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "runId",
+          "message"
+        ],
+        "title": "OutreachStarted",
+        "type": "object"
+      },
+      "OutreachIn": {
+        "properties": {
+          "matchId": {
+            "format": "uuid",
+            "title": "Matchid",
+            "type": "string"
+          },
+          "contactId": {
+            "format": "uuid",
+            "title": "Contactid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "matchId",
+          "contactId"
+        ],
+        "title": "OutreachIn",
+        "type": "object"
+      },
+      "OutreachEdit": {
+        "properties": {
+          "body": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "OutreachEdit",
+        "type": "object"
+      },
       "ConversationItem": {
         "properties": {
           "id": {
@@ -5828,6 +6020,46 @@
         "title": "MatchApplication",
         "type": "object"
       },
+      "MatchContact": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "profileUrl": {
+            "title": "Profileurl",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchNote"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "profileUrl",
+          "note"
+        ],
+        "title": "MatchContact",
+        "type": "object"
+      },
       "MatchDetail": {
         "properties": {
           "id": {
@@ -6047,6 +6279,36 @@
         "title": "MatchDetailPage",
         "type": "object"
       },
+      "MatchNote": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "draftedAt": {
+            "format": "date-time",
+            "title": "Draftedat",
+            "type": "string"
+          },
+          "edited": {
+            "title": "Edited",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "body",
+          "draftedAt",
+          "edited"
+        ],
+        "title": "MatchNote",
+        "type": "object"
+      },
       "MatchPeople": {
         "properties": {
           "count": {
@@ -6055,7 +6317,7 @@
           },
           "people": {
             "items": {
-              "$ref": "#/components/schemas/MatchPerson"
+              "$ref": "#/components/schemas/MatchContact"
             },
             "title": "People",
             "type": "array"
@@ -7776,7 +8038,8 @@
               "evaluate",
               "tailor",
               "verify",
-              "merge"
+              "merge",
+              "outreach"
             ],
             "title": "Purpose",
             "type": "string"
@@ -7846,7 +8109,8 @@
               "evaluate",
               "tailor",
               "verify",
-              "merge"
+              "merge",
+              "outreach"
             ],
             "title": "Purpose",
             "type": "string"

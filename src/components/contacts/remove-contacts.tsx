@@ -44,7 +44,8 @@ export function RemoveContactButton({ id, name }: { id: string; name: string }) 
 
 /**
  * Removes every contact, in two presses: the first asks, the second does it. The files they
- * came from are the user's own, so nothing is lost that an import cannot bring back.
+ * came from are the user's own, so an import brings the people back; the notes drafted to them
+ * (#25) go with them and do not come back, which the question says.
  */
 export function RemoveAllContacts({ total }: { total: number }) {
   const router = useRouter();
@@ -80,8 +81,8 @@ export function RemoveAllContacts({ total }: { total: number }) {
       role="group"
     >
       <span>
-        Remove all {plural(total, "contact")} from Foray? Your files are not touched, and you
-        can import them again.
+        Remove all {plural(total, "contact")} from Foray, with any notes drafted to them? Your
+        files are not touched, and you can import them again.
       </span>
       <Button disabled={pending} onClick={remove} size="sm" variant="destructive">
         {pending && <Spinner />}

@@ -105,6 +105,7 @@ TASKS: dict[str, TaskSpec] = {
     "notify.send": TaskSpec(SYSTEM, 2 * MINUTE),
     "notify.test": TaskSpec(SYSTEM, 1 * MINUTE),
     "application.prepare": TaskSpec(INTERACTIVE, 3 * MINUTE),
+    "outreach.draft": TaskSpec(INTERACTIVE, 5 * MINUTE),
     "worker.ping": TaskSpec(SYSTEM, 1 * MINUTE),
     "maintenance.reap": TaskSpec(SYSTEM, 5 * MINUTE),
     "approvals.expire": TaskSpec(SYSTEM, 5 * MINUTE),

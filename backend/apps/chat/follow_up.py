@@ -228,7 +228,9 @@ def _known_lines(known: Sequence[KnownRole]) -> list[str]:
         + untrusted(listed, CONTACTS),
         "For each of those roles, say who they know there, by name: a referral asked for on the "
         "day a role is posted counts for more than one asked for later. Say only that they know "
-        "the person; you do not know how. Foray contacts nobody.",
+        "the person; you do not know how. Then offer the way to ask: the role's page has "
+        '"Draft a note" beside each person, which writes a short note for the user to edit and '
+        "send themself. You cannot draft or send a note, and Foray contacts nobody.",
     ]
 
 

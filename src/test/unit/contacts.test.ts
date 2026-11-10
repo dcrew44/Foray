@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  NOTE_MAX_LENGTH,
   NOT_A_CONTACT_LIST,
   connectedLabel,
   contactsFileProblem,
+  firstName,
   knowsLabel,
 } from "@/lib/contacts";
 
@@ -62,6 +64,21 @@ describe("knowsLabel", () => {
   it("falls back to the count when no name came with it", () => {
     expect(knowsLabel({ count: 1, people: [] })).toBe("You know 1 person here");
     expect(knowsLabel({ count: 5, people: [] })).toBe("You know 5 people here");
+  });
+});
+
+describe("firstName", () => {
+  it("is the first word of a name, or a word that still reads", () => {
+    expect(firstName("Priya Rao")).toBe("Priya");
+    expect(firstName("  Tomasz   Zielinski ")).toBe("Tomasz");
+    expect(firstName("Cher")).toBe("Cher");
+    expect(firstName("")).toBe("them");
+    expect(firstName(null)).toBe("them");
+  });
+
+  it("keeps the note's limit Django's", () => {
+    // The same number as backend/apps/contacts/outreach.py BODY_MAX.
+    expect(NOTE_MAX_LENGTH).toBe(5000);
   });
 });
 

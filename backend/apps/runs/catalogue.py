@@ -20,7 +20,8 @@ it for the next serial step.
 
 Dedupe keys (`runs.dedupe_key`, one active run per key, R2): `search`; `evaluate:<sha1 of the
 sorted match ids>`; `tailor:<matchId>`; `render:<resumeId>`; `import:<documentId>`;
-`add:<normalised query>`; `refresh:<slug>` or `refresh:stale`; `watch`.
+`add:<normalised query>`; `refresh:<slug>` or `refresh:stale`; `watch`;
+`outreach:<matchId>:<contactId>`.
 
 **Approvals.** `PAYLOAD_MODELS` gives each approval kind's payload; `StoredDecision` is
 `approvals.decision`; `APPROVAL_NEXT_STEP` names the continuation a decision defers. A
@@ -58,6 +59,7 @@ class RunKind(models.TextChoices):
     COMPANY_DISCOVERY = "company_discovery"
     COMPANY_REFRESH = "company_refresh"
     WATCH = "watch"
+    OUTREACH = "outreach"
 
 
 class RunStatus(models.TextChoices):
@@ -241,6 +243,7 @@ KIND_TITLE: dict[str, str] = {
     RunKind.COMPANY_DISCOVERY: "Company discovery",
     RunKind.COMPANY_REFRESH: "Board refresh",
     RunKind.WATCH: "New postings",
+    RunKind.OUTREACH: "Note to a contact",
 }
 
 # `run_step` fails a run with `FAILURE_PREFIX[kind] + <short error>` (§9.2). Search and deep
@@ -254,6 +257,7 @@ FAILURE_PREFIX: dict[str, str] = {
     RunKind.COMPANY_DISCOVERY: "Could not add that company: ",
     RunKind.COMPANY_REFRESH: "The refresh failed: ",
     RunKind.WATCH: "Checking new postings failed: ",
+    RunKind.OUTREACH: "Could not draft that note: ",
 }
 
 # The follow-up notice: "<name> has finished" (§7.7).
@@ -266,6 +270,7 @@ FOLLOW_UP_KIND_NAME: dict[str, str] = {
     RunKind.COMPANY_DISCOVERY: "company discovery",
     RunKind.COMPANY_REFRESH: "a board refresh",
     RunKind.WATCH: "checking new postings",
+    RunKind.OUTREACH: "drafting a note",
 }
 
 # The follow-up label: "<title> finished" / "<title> stopped" (§7.7).
@@ -278,6 +283,7 @@ FOLLOW_UP_KIND_TITLE: dict[str, str] = {
     RunKind.COMPANY_DISCOVERY: "Discovery",
     RunKind.COMPANY_REFRESH: "Board refresh",
     RunKind.WATCH: "New matches",
+    RunKind.OUTREACH: "Note",
 }
 
 # `stats.phase`, in order (§9.4). `shortlisting` (search) and `starting` (tailor) are now written.
@@ -301,6 +307,7 @@ PHASES: dict[str, tuple[str, ...]] = {
     RunKind.COMPANY_DISCOVERY: ("discovering", "refreshing", "done"),
     RunKind.COMPANY_REFRESH: ("waiting", "refreshing", "done"),
     RunKind.WATCH: ("starting", "filtering", "scoring", "evaluating", "done"),
+    RunKind.OUTREACH: ("drafting", "done"),
 }
 
 # The documented keys of `runs.stats` (`map/worker.md` §9.10, §11.3).
@@ -363,6 +370,7 @@ STATS_KEYS: dict[str, tuple[str, ...]] = {
         "notReviewed",
         "announced",  # 0 marks a quiet watch, which the activity feed leaves out
     ),
+    RunKind.OUTREACH: ("phase",),
 }
 
 # --- runs.input ----------------------------------------------------------------------------------
@@ -440,6 +448,16 @@ class WatchInput(DefaultedJsonModel):
     criteria: dict[str, Any] | None = None  # `DerivedCriteria`, reused while preferences hold
     candidate_job_ids: list[str] | None = None  # what the prefilter chose
     new_job_ids: list[str] | None = None  # the matches this watch created: its own work
+
+
+class OutreachInput(JsonModel):
+    # A note to one contact about one match (#25). No field of the contact is kept here
+    # or in any event: a run's input and messages are read by the chat agent's tools.
+    model_config = CAMEL
+
+    match_id: str
+    contact_id: str
+    prompt: str  # "Draft a note to a contact", for the activity page
 
 
 # --- runs.output ---------------------------------------------------------------------------------
@@ -568,6 +586,15 @@ class WatchOutput(JsonModel):
     message: str
 
 
+class OutreachOutput(JsonModel):
+    model_config = CAMEL
+
+    note_id: str  # the `outreach_notes` row the draft was written to
+    match_id: str
+    contact_id: str
+    message: str
+
+
 # --- events.data ---------------------------------------------------------------------------------
 
 
@@ -597,6 +624,7 @@ INPUT_MODELS: dict[str, type[JsonModel]] = {
     RunKind.COMPANY_DISCOVERY: CompanyAddInput,
     RunKind.COMPANY_REFRESH: CompanyRefreshInput,
     RunKind.WATCH: WatchInput,
+    RunKind.OUTREACH: OutreachInput,
 }
 
 # A kind may have more than one output shape; `read_output` tries them in order.
@@ -609,6 +637,7 @@ OUTPUT_MODELS: dict[str, tuple[type[JsonModel], ...]] = {
     RunKind.COMPANY_DISCOVERY: (CompanyAddOutput, CompanyNamesOutput),
     RunKind.COMPANY_REFRESH: (CompanyRefreshOutput,),
     RunKind.WATCH: (WatchOutput,),
+    RunKind.OUTREACH: (OutreachOutput,),
 }
 
 

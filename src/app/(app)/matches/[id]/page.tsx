@@ -166,7 +166,12 @@ export default async function MatchPage({ params }: Params) {
         <aside className="space-y-10">
           <JobSignals signals={job.signals} />
 
-          <PeoplePanel company={job.companyName} knows={knows} />
+          <PeoplePanel
+            company={job.companyName}
+            hasResume={hasBaseResume}
+            knows={knows}
+            matchId={match.id}
+          />
 
           <ApplicationPanel
             application={match.application}

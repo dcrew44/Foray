@@ -18,6 +18,7 @@ export const KIND_TITLE: Record<LiveRun["kind"], string> = {
   company_refresh: "Board refresh",
   profile_import: "Profile import",
   watch: "New postings",
+  outreach: "Note to a contact",
 };
 
 /**

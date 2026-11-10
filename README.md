@@ -138,6 +138,12 @@ Priya Rao and 2 others"), on its page under **People you know here**, in the "Ne
 chat, where Foray names who you know at each new role, and on your phone ("You know 2
 people there": a count only, since that message passes through a notification server).
 
+Beside each person on the match page, **Draft a note** writes three to five sentences to
+them about the role: what it is, one or two things from your resume that fit it, and a
+plain ask for their view or a referral. It says only what your resume says and only what
+the file says about how you know each other, so it will not pretend you are old friends.
+The note is yours to edit and copy. Foray sends nothing and contacts nobody.
+
 Foray never signs in to LinkedIn and never looks anyone up. Your contacts stay in your own
 database: the only thing the board lookup sends out is company names, and only when you
 press the button.

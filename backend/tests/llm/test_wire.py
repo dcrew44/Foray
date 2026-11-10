@@ -303,4 +303,5 @@ def test_effort_defaults() -> None:
         "tailor": "high",
         "verify": "low",
         "merge": "low",
+        "outreach": "low",
     }

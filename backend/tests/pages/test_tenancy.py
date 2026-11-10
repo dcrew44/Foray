@@ -33,7 +33,7 @@ from django.test import Client
 
 from apps.applications.models import Application, ApplicationAnswer
 from apps.chat.models import Conversation, Message
-from apps.contacts.models import Contact
+from apps.contacts.models import Contact, OutreachNote
 from apps.core.ids import generate_message_id
 from apps.core.storage import storage
 from apps.matching.models import JobMatch
@@ -78,6 +78,8 @@ ROUTES: tuple[Route, ...] = (
     Route("PATCH", "/api/variants/{id}", "variant", {"keywords": ["backend"], "isDefault": True}),
     Route("POST", "/api/variants/{id}/render", "variant", {}, 202),
     Route("DELETE", "/api/variants/{id}", "variant"),
+    Route("PATCH", "/api/outreach/{id}", "note", {"body": "My own words."}),
+    Route("DELETE", "/api/outreach/{id}", "note"),
     Route("DELETE", "/api/contacts/{id}", "contact"),
     Route("DELETE", "/api/conversations/{id}", "conversation"),
 )
@@ -181,6 +183,9 @@ def _state(graph: Graph) -> dict[str, Any]:
         "contacts": sorted(
             Contact.objects.for_user(user_id).values_list("id", "company_id", "updated_at")
         ),
+        "notes": sorted(
+            OutreachNote.objects.for_user(user_id).values_list("id", "body", "updated_at")
+        ),
     }
 
 
@@ -242,6 +247,18 @@ def test_tenancy_sweep(graphs: tuple[Graph, Graph]) -> None:
     )
     assert chat.status_code == 404
     assert chat.content.decode() == "That chat does not exist."
+
+    # Ids in a body are A's too: B cannot have a note drafted about A's match or to A's
+    # contact, even with one of its own beside it.
+    for match, contact in ((a.matches["found"], a.contact), (b.matches["found"], a.contact)):
+        drafted = as_b.post(
+            "/api/outreach",
+            data=json.dumps({"matchId": str(match.pk), "contactId": str(contact.pk)}),
+            content_type="application/json",
+            headers={"Origin": ORIGIN},
+        )
+        assert drafted.status_code == 404, drafted.content
+    assert not Run.objects.for_user(b.user.pk).filter(kind="outreach").exists()
 
     # An id in a body is A's too: B cannot tailor for A's match.
     tailor = as_b.post(

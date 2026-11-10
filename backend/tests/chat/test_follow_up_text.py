@@ -218,12 +218,25 @@ def test_a_watch_names_who_the_user_knows_at_an_announced_company() -> None:
         "</untrusted>\n"
         "For each of those roles, say who they know there, by name: a referral asked for on the "
         "day a role is posted counts for more than one asked for later. Say only that they know "
-        "the person; you do not know how. Foray contacts nobody."
+        "the person; you do not know how. Then offer the way to ask: the role's page has "
+        '"Draft a note" beside each person, which writes a short note for the user to edit and '
+        "send themself. You cannot draft or send a note, and Foray contacts nobody."
         + "\nEnd with one concrete next step"
         + after
     )
     one = describe_update(WATCH, ANNOUNCED, None, [], known[1:])
     assert "The user knows people at one of these companies" in one.text
+
+
+def test_a_watch_s_update_offers_the_draft_and_keeps_the_sending_with_the_user() -> None:
+    """#64 and #25 together: the announcement names the contact and offers the note; drafting
+    is the user's press on the match page, and sending is theirs alone."""
+    known = [KnownRole(title="Engineer", company="Acme", people=(("Priya Rao", ""),), count=1)]
+    text = describe_update(WATCH, ANNOUNCED, None, [], known).text
+    assert '"Draft a note" beside each person' in text
+    assert "for the user to edit and send themself" in text
+    assert "You cannot draft or send a note, and Foray contacts nobody." in text
+    assert "Draft a note" not in WATCH_UPDATE  # nobody known: nothing is offered
 
 
 def test_a_contact_s_fields_cannot_leave_their_wrapper_or_their_line() -> None:

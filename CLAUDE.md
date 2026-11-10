@@ -268,6 +268,17 @@ An issue reads like the ones already there:
   says only how many: a name never goes to a notification server. With nobody known, each of
   the three is byte for byte what it was, and tests pin both cases. Anything new that tells a
   model about a contact wraps the name and position the same way.
+- **A note to a contact is drafted, never sent** (`apps/contacts/outreach.py`, #25).
+  `start_note(user_id, match_id, contact_id)` starts an `outreach` run (one model call is
+  still a run: `run_step` gives it the ledger, the timeout, the budget's sentence and a
+  Stop), and the step writes `outreach_notes` and completes the run in one transaction.
+  The prompt is `note_instructions` (the rules and the user's own resume) plus `note_prompt`
+  (the contact, the posting and the review, each through `untrusted()`, and one line Foray
+  writes about how they know each other, which says only what the data says). Both are
+  pinned in `tests/goldens/prompts/outreach/`; re-pin with `FORAY_UPDATE_SNAPSHOTS=1` when
+  you change them on purpose. Keep every field of a contact out of a run's input, output
+  and event messages (the chat agent's tools read those), and add nothing that sends a
+  note or contacts anyone: the user copies it and sends it themself.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

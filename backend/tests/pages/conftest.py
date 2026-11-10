@@ -3,8 +3,8 @@
 `full_graph(...)` gives one user everything a page can show: a rendered base resume, a resume
 variant with a rendered snapshot, matches in four stages (one deep-evaluated with a tailored,
 rendered resume), a run of every kind with the inputs its start function stores, a pending
-approval, a conversation with messages, events and ledger rows, and two contacts. The tenancy
-sweep builds two of them; the page tests use one.
+approval, a conversation with messages, events, ledger rows, two contacts and a note to one of
+them. The tenancy sweep builds two of them; the page tests use one.
 
 Every page call carries `X-Foray-SSR: 1`, as `django()` in `src/lib/api/server.ts` sends it, so
 the sliding session never writes during a measured request (§4.1).
@@ -23,7 +23,7 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.applications.models import Application
 from apps.chat.models import Conversation
-from apps.contacts.models import Contact
+from apps.contacts.models import Contact, OutreachNote
 from apps.jobs.models import Company, Job
 from apps.matching.models import JobMatch
 from apps.resumes.models import Document, Resume, ResumeVariant
@@ -40,6 +40,7 @@ from tests.factories import (
     make_llm_call,
     make_match,
     make_message,
+    make_outreach_note,
     make_resume,
     make_run,
     make_user,
@@ -106,6 +107,7 @@ class Graph:
     approval: Approval
     application: Application
     contact: Contact
+    note: OutreachNote
 
     @property
     def markers(self) -> list[str]:
@@ -130,6 +132,7 @@ class Graph:
             self.approval,
             self.application,
             self.contact,
+            self.note,
         ]
         return [str(row.pk) for row in rows] + [str(self.user.pk)]
 
@@ -231,6 +234,14 @@ def full_graph(
     )
     make_contact(
         user, name=f"{marker} Lindgren", company_name="Northwind Robotics", position="Recruiter"
+    )
+
+    # A note drafted to that contact about the first match (#25).
+    note = make_outreach_note(
+        user,
+        match=matches["found"],
+        contact=contact,
+        body=f"{marker}, I saw the backend role at your company and I am applying.",
     )
 
     found, shortlisted = str(matches["found"].id), str(matches["shortlisted"].id)
@@ -371,4 +382,5 @@ def full_graph(
         approval=approval,
         application=application,
         contact=contact,
+        note=note,
     )

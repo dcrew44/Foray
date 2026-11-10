@@ -206,6 +206,7 @@ def test_the_match_page_lists_the_people_the_user_knows_there() -> None:
         "name": "Person 00",
         "position": "Engineer",
         "profileUrl": "https://www.linkedin.com/in/person-00-example",
+        "note": None,  # nothing drafted to them yet (#25)
     }
     # A posting where they know nobody: the page says so with an empty list, as before.
     nobody = client.get(f"/api/pages/matches/{unknown.id}", headers=SSR).json()

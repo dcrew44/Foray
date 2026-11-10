@@ -94,9 +94,14 @@ function describe(run: LiveRun, workerOnline: boolean): string {
       const counts = (o.counts ?? {}) as Record<string, unknown>;
       return `Read ${plural(num(counts, "work") ?? 0, "role")}, ${plural(num(counts, "education") ?? 0, "school")} and ${plural(num(counts, "skills") ?? 0, "skill")}.`;
     }
-    // Adding or refreshing a company, or a watch, finishes with the sentence its run.completed
-    // carried.
-    if (run.kind === "company_discovery" || run.kind === "company_refresh" || run.kind === "watch") {
+    // Adding or refreshing a company, a watch, or a note to a contact finishes with the
+    // sentence its run.completed carried.
+    if (
+      run.kind === "company_discovery" ||
+      run.kind === "company_refresh" ||
+      run.kind === "watch" ||
+      run.kind === "outreach"
+    ) {
       return text(o, "message") ?? "Done.";
     }
     return "Done.";
@@ -124,6 +129,7 @@ function describe(run: LiveRun, workerOnline: boolean): string {
   if (run.kind === "watch" && (phase === "starting" || phase === "filtering")) {
     return "Checking the postings that arrived since the last look";
   }
+  if (run.kind === "outreach") return "Writing a short note from your resume and the posting";
 
   switch (phase) {
     case "refreshing":

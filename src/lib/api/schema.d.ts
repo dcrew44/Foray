@@ -693,6 +693,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/outreach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draft a note to a contact
+         * @description Queues the draft and answers at once: a request never waits on a model.
+         */
+        post: operations["apps_contacts_api_post_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/outreach/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Discard a note */
+        delete: operations["apps_contacts_api_delete_note"];
+        options?: never;
+        head?: never;
+        /** Edit a note */
+        patch: operations["apps_contacts_api_patch_note"];
+        trace?: never;
+    };
     "/api/conversations": {
         parameters: {
             query?: never;
@@ -1225,7 +1263,7 @@ export interface components {
          * RunKind
          * @enum {string}
          */
-        RunKind: "search" | "rank_deep" | "tailor" | "resume_render" | "profile_import" | "company_discovery" | "company_refresh" | "watch";
+        RunKind: "search" | "rank_deep" | "tailor" | "resume_render" | "profile_import" | "company_discovery" | "company_refresh" | "watch" | "outreach";
         /**
          * RunStatus
          * @enum {string}
@@ -1837,6 +1875,36 @@ export interface components {
             /** Names */
             names: string[];
         };
+        /** OutreachStarted */
+        OutreachStarted: {
+            /** Ok */
+            ok: boolean;
+            /**
+             * Runid
+             * Format: uuid
+             */
+            runId: string;
+            /** Message */
+            message: string;
+        };
+        /** OutreachIn */
+        OutreachIn: {
+            /**
+             * Matchid
+             * Format: uuid
+             */
+            matchId: string;
+            /**
+             * Contactid
+             * Format: uuid
+             */
+            contactId: string;
+        };
+        /** OutreachEdit */
+        OutreachEdit: {
+            /** Body */
+            body: string;
+        };
         /** ConversationItem */
         ConversationItem: {
             /**
@@ -2240,6 +2308,21 @@ export interface components {
             /** Missing */
             missing: number;
         };
+        /** MatchContact */
+        MatchContact: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: string;
+            /** Profileurl */
+            profileUrl: string;
+            note: components["schemas"]["MatchNote"] | null;
+        };
         /** MatchDetail */
         MatchDetail: {
             /**
@@ -2299,12 +2382,29 @@ export interface components {
             hasBaseResume: boolean;
             knows: components["schemas"]["MatchPeople"];
         };
+        /** MatchNote */
+        MatchNote: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Body */
+            body: string;
+            /**
+             * Draftedat
+             * Format: date-time
+             */
+            draftedAt: string;
+            /** Edited */
+            edited: boolean;
+        };
         /** MatchPeople */
         MatchPeople: {
             /** Count */
             count: number;
             /** People */
-            people: components["schemas"]["MatchPerson"][];
+            people: components["schemas"]["MatchContact"][];
         };
         /** MatchedRequirement */
         MatchedRequirement: {
@@ -2905,7 +3005,7 @@ export interface components {
              * Purpose
              * @enum {string}
              */
-            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge";
+            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge" | "outreach";
             /** Ref */
             ref: string | null;
             /** Error */
@@ -2923,7 +3023,7 @@ export interface components {
              * Purpose
              * @enum {string}
              */
-            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge";
+            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge" | "outreach";
             /** Usd */
             usd: number;
             /** Calls */
@@ -4588,6 +4688,87 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_post_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutreachIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutreachStarted"];
+                };
+            };
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutreachStarted"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_delete_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_patch_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutreachEdit"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

@@ -34,6 +34,7 @@ class Purpose(models.TextChoices):
     TAILOR = "tailor"
     VERIFY = "verify"
     MERGE = "merge"
+    OUTREACH = "outreach"
 
 
 if tuple(Purpose.values) != PURPOSES:  # pragma: no cover - a guard for whoever adds a purpose

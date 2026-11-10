@@ -1,4 +1,5 @@
-"""`/api/contacts` (#63): the people a user knows, from files they exported themself.
+"""`/api/contacts` (#63) and `/api/outreach` (#25): the people a user knows, from files they
+exported themself, and the notes they draft to them.
 
 - `POST /api/contacts/import` (multipart `file`): reads LinkedIn's Connections.csv (or the
   archive it comes in) or any CSV with a name column, and answers `200 {ok, message, added,
@@ -12,8 +13,17 @@
   that looks for the job boards of the next unmatched companies the contacts name
   (`page.start_lookup`). 400 when there is nothing left to look up.
 
-The contacts themselves are read with the Contacts page (`GET /api/pages/contacts`). No
-endpoint here or anywhere returns another user's.
+- `POST /api/outreach {matchId, contactId}`: `202 {ok, runId, message}`, an `outreach` run
+  that drafts a short note to that contact about that match (`outreach.start_note`); 200
+  with the same body when that note is already being drafted. 404 for a match or contact
+  that is not the user's, 400 when the contact does not work at the posting's company, 422
+  without a resume, 429 past `outreach:<user>`.
+- `PATCH /api/outreach/{id} {body}`: saves the user's own wording over a note.
+- `DELETE /api/outreach/{id}`: discards a note.
+
+Nothing here sends a note anywhere: the user copies it and sends it themself. The contacts
+are read with the Contacts page (`GET /api/pages/contacts`) and a match's notes with its
+page (`GET /api/pages/matches/{id}`). No endpoint here or anywhere returns another user's.
 """
 
 from __future__ import annotations
@@ -26,9 +36,11 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest
 from django.http.multipartparser import MultiPartParserError
 from ninja import Status
+from pydantic import Field
 
 from apps.accounts.models import User
-from apps.contacts import importer, page
+from apps.contacts import importer, outreach, page
+from apps.contacts import tasks as _tasks  # noqa: F401 (registers the task this API defers)
 from apps.contacts.parse import Unreadable
 from apps.core import throttle
 from apps.core.errors import DEFAULT_INVALID, ApiError, messages
@@ -38,7 +50,9 @@ from apps.resumes.parse.sniff import UploadRejected
 
 contacts = router(tags=["contacts"])
 
-ROUTERS = {"/contacts": contacts}
+notes = router(tags=["outreach"])
+
+ROUTERS = {"/contacts": contacts, "/outreach": notes}
 
 NO_FILE = "No file uploaded."
 CONTACT_GONE = "That contact was not found."
@@ -147,3 +161,60 @@ def delete_one(request: HttpRequest, id: uuid.UUID) -> dict[str, Any]:
     if not importer.delete_one(_user_id(request), id):
         raise ApiError(404, CONTACT_GONE)
     return {"ok": True, "message": "Contact removed."}
+
+
+# --- /outreach -----------------------------------------------------------------------------------
+
+NOTE_INVALID = (
+    "That note could not be saved. Write something first, and keep it under 5,000 characters."
+)
+
+
+class OutreachIn(ApiModel):
+    match_id: uuid.UUID
+    contact_id: uuid.UUID
+
+
+class OutreachStarted(ApiModel):
+    ok: bool
+    run_id: uuid.UUID
+    message: str
+
+
+class OutreachEdit(ApiModel):
+    body: str = Field(min_length=1, max_length=outreach.BODY_MAX)
+
+
+@notes.post(
+    "", response={200: OutreachStarted, 202: OutreachStarted}, summary="Draft a note to a contact"
+)
+def post_note(request: HttpRequest, body: OutreachIn) -> Status[dict[str, Any]]:
+    """Queues the draft and answers at once: a request never waits on a model."""
+    started = outreach.start_note(_user_id(request), body.match_id, body.contact_id)
+    return Status(
+        200 if started.reused else 202,
+        {
+            "ok": True,
+            "run_id": started.run.id,
+            "message": outreach.ALREADY if started.reused else outreach.STARTED,
+        },
+    )
+
+
+@notes.patch("/{id}", response=OkMessageOut, summary="Edit a note")
+@messages(invalid=NOTE_INVALID, not_found=outreach.NOTE_GONE)
+def patch_note(request: HttpRequest, id: uuid.UUID, body: OutreachEdit) -> dict[str, Any]:
+    text = body.body.strip()
+    if not text:
+        raise ApiError(400, NOTE_INVALID)
+    if not outreach.save_edit(_user_id(request), id, text):
+        raise ApiError(404, outreach.NOTE_GONE)
+    return {"ok": True, "message": "Saved"}
+
+
+@notes.delete("/{id}", response=OkMessageOut, summary="Discard a note")
+@messages(not_found=outreach.NOTE_GONE)
+def delete_note(request: HttpRequest, id: uuid.UUID) -> dict[str, Any]:
+    if not outreach.discard(_user_id(request), id):
+        raise ApiError(404, outreach.NOTE_GONE)
+    return {"ok": True, "message": "Note discarded."}

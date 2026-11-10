@@ -36,17 +36,15 @@ __all__ = [
     "ROW_SHOWN",
     "KnownPerson",
     "MatchKnows",
-    "MatchPeople",
     "MatchPerson",
     "count_matches_with_contacts",
     "known_at",
     "known_at_jobs",
-    "match_people",
     "row_knows",
 ]
 
 ROW_SHOWN: Final = 3  # people a match's row, a notice or a tooltip names
-PAGE_SHOWN: Final = 8  # people a match's page lists
+PAGE_SHOWN: Final = 8  # people a match's page lists (`outreach.match_people`)
 
 type Posting = tuple[str, uuid.UUID | None, str]  # job id, company id, company name
 
@@ -139,12 +137,6 @@ class MatchKnows(ApiModel):
     people: list[MatchPerson]  # at most 3
 
 
-# Who the match page lists under "People you know here".
-class MatchPeople(ApiModel):
-    count: int
-    people: list[MatchPerson]  # at most 8
-
-
 def _out(person: KnownPerson) -> MatchPerson:
     return MatchPerson(
         id=person.id, name=person.name, position=person.position, profile_url=person.profile_url
@@ -156,9 +148,3 @@ def row_knows(people: Sequence[KnownPerson]) -> MatchKnows | None:
     if not people:
         return None
     return MatchKnows(count=len(people), people=[_out(person) for person in people[:ROW_SHOWN]])
-
-
-def match_people(user_id: str, job: Job) -> MatchPeople:
-    """Who the user knows at one posting's company, for its match page. One query."""
-    people = known_at_jobs(user_id, [job]).get(job.id, [])
-    return MatchPeople(count=len(people), people=[_out(person) for person in people[:PAGE_SHOWN]])

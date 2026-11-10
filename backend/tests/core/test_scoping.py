@@ -44,6 +44,7 @@ def test_every_per_user_table_is_user_owned() -> None:
         "LlmCall",
         "Message",
         "Notification",
+        "OutreachNote",
         "Resume",
         "ResumeVariant",
         "Run",

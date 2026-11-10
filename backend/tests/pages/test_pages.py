@@ -82,7 +82,7 @@ BUDGETS = {
     "apply": 3,  # the open applications, the newest sent, and the user's variants
     # One for each part (#65, #6): the spans, the buckets, the grouped count behind the funnel.
     "outcomes": 3,
-    "settings": 6,
+    "settings": 7,  # one more than before #22: the browser extension's tokens
 }
 # The session row and the user row, read before any endpoint runs.
 AUTH_QUERIES = 2
@@ -1079,6 +1079,19 @@ def test_settings_page() -> None:
     assert body["review"]["perItemUsd"] > 0
     assert body["providers"] == {"present": ["openai", "google", "anthropic", "deepseek"]}
     assert body["ntfyServer"] == "https://ntfy.sh"  # where the phone subscribes (#59)
+    # The browser extension's tokens (#22): what each is called and when it was made and used,
+    # newest first, and never the secret or its hash.
+    assert body["extensionTokens"] == [
+        {
+            "id": str(graph.token.id),
+            "label": "Avery's laptop",
+            "createdAt": graph.token.created_at.isoformat(timespec="milliseconds").replace(
+                "+00:00", "Z"
+            ),
+            "lastUsedAt": None,
+        }
+    ]
+    assert graph.token.token_hash not in json.dumps(body)
 
 
 def test_settings_page_shows_key_presence_only(settings: Any) -> None:

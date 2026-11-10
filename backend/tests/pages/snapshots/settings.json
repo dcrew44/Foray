@@ -27,6 +27,14 @@
       "usd": "number"
     }
   ],
+  "extensionTokens": [
+    {
+      "createdAt": "string",
+      "id": "string",
+      "label": "string",
+      "lastUsedAt": "null"
+    }
+  ],
   "monthStart": "string",
   "ntfyServer": "string",
   "providers": {

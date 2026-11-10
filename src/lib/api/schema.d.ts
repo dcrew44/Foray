@@ -3403,6 +3403,27 @@ export interface components {
             /** Usd */
             usd: number;
         };
+        /**
+         * ExtensionTokenRow
+         * @description One of the user's browser-extension tokens (#22). The secret itself was shown once,
+         *     when it was made; only its hash is kept, so there is nothing more to show.
+         */
+        ExtensionTokenRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Lastusedat */
+            lastUsedAt: string | null;
+        };
         /** ModelSpend */
         ModelSpend: {
             /** Provider */
@@ -3494,6 +3515,8 @@ export interface components {
             providers: components["schemas"]["ProviderKeys"];
             /** Ntfyserver */
             ntfyServer: string;
+            /** Extensiontokens */
+            extensionTokens: components["schemas"]["ExtensionTokenRow"][];
         };
         /** SettingsUser */
         SettingsUser: {

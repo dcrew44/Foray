@@ -531,6 +531,16 @@ class ProviderKeys(ApiModel):
     present: list[ProviderId]  # providers whose key is set; keys never leave the server
 
 
+class ExtensionTokenRow(ApiModel):
+    """One of the user's browser-extension tokens (#22). The secret itself was shown once,
+    when it was made; only its hash is kept, so there is nothing more to show."""
+
+    id: uuid.UUID
+    label: str
+    created_at: datetime
+    last_used_at: datetime | None  # noted at most once a minute; null until first used
+
+
 class SettingsPage(ApiModel):
     user: SettingsUser
     settings: SettingsOut  # with the defaults applied
@@ -544,3 +554,4 @@ class SettingsPage(ApiModel):
     purposes: list[PurposeModel]
     providers: ProviderKeys
     ntfy_server: str  # `NTFY_SERVER`: where the user's phone subscribes to their topic (#59)
+    extension_tokens: list[ExtensionTokenRow]  # newest first (#22)

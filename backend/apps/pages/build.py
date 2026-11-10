@@ -27,7 +27,12 @@ from apps.accounts.profile import SLOTS, OnboardingState, onboarding_state
 from apps.accounts.schemas import Settings
 from apps.applications import outcomes
 from apps.applications.answers import CATALOGUE, YES_NO
-from apps.applications.models import AnswerKind, Application, ApplicationAnswer
+from apps.applications.models import (
+    AnswerKind,
+    Application,
+    ApplicationAnswer,
+    ExtensionToken,
+)
 from apps.applications.prepare import missing_of
 from apps.contacts.outreach import match_people
 from apps.core import clock
@@ -62,6 +67,7 @@ from apps.pages.schemas import (
     ChatSuggestion,
     CompaniesPage,
     DaySpend,
+    ExtensionTokenRow,
     HomeHeadline,
     HomePage,
     HomeSpend,
@@ -934,8 +940,9 @@ def _usd(value: Decimal | None) -> float:
 
 
 def settings_page(user: User) -> SettingsPage:
-    """Behaviour, this month's spend, the models in use and the aggregator quota. Keys never
-    leave the server: only which providers have one."""
+    """Behaviour, this month's spend, the models in use, the aggregator quota and the
+    browser extension's tokens. Keys never leave the server: only which providers have one.
+    Nor do tokens: only their labels and when each was made and last used."""
     since = month_start()
     calls = LlmCall.objects.for_user(user.pk).filter(created_at__gte=since)
     by_purpose = list(
@@ -1013,4 +1020,13 @@ def settings_page(user: User) -> SettingsPage:
         purposes=purposes,
         providers=ProviderKeys(present=cast(Any, registry.configured_providers())),
         ntfy_server=settings.ENV.ntfy_server,
+        extension_tokens=[
+            ExtensionTokenRow(
+                id=token.id,
+                label=token.label,
+                created_at=token.created_at,
+                last_used_at=token.last_used_at,
+            )
+            for token in ExtensionToken.objects.for_user(user.pk).order_by("-created_at", "id")
+        ],
     )

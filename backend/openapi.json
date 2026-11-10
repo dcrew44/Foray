@@ -8972,6 +8972,45 @@
         "title": "DaySpend",
         "type": "object"
       },
+      "ExtensionTokenRow": {
+        "description": "One of the user's browser-extension tokens (#22). The secret itself was shown once,\nwhen it was made; only its hash is kept, so there is nothing more to show.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastusedat"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "createdAt",
+          "lastUsedAt"
+        ],
+        "title": "ExtensionTokenRow",
+        "type": "object"
+      },
       "ModelSpend": {
         "properties": {
           "provider": {
@@ -9246,6 +9285,13 @@
           "ntfyServer": {
             "title": "Ntfyserver",
             "type": "string"
+          },
+          "extensionTokens": {
+            "items": {
+              "$ref": "#/components/schemas/ExtensionTokenRow"
+            },
+            "title": "Extensiontokens",
+            "type": "array"
           }
         },
         "required": [
@@ -9260,7 +9306,8 @@
           "aggregator",
           "purposes",
           "providers",
-          "ntfyServer"
+          "ntfyServer",
+          "extensionTokens"
         ],
         "title": "SettingsPage",
         "type": "object"

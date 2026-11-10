@@ -173,6 +173,7 @@ ROW_KEYS = {
     "tailoredResumeId",
     "userRating",
     "createdAt",
+    "knows",
 }
 
 

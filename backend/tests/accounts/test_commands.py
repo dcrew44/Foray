@@ -86,6 +86,21 @@ def test_create_test_user_with_resume_and_match(debug: None) -> None:
 
 
 @pytest.mark.django_db
+def test_create_test_user_with_a_contact_at_the_matched_company(debug: None) -> None:
+    """`--with-contact` implies `--with-match`: someone to know where the match is (#64)."""
+    from apps.contacts.known import known_at_jobs
+
+    job = make_job()
+    lines, _ = run("create_test_user", "--with-contact")
+    assert [line.split(": ")[0] for line in lines] == ["user", "match", "contact"]
+    assert lines[2] == "contact: Priya Rao"
+    user = User.objects.get(email=lines[0].removeprefix("user: "))
+    assert JobMatch.objects.for_user(user.pk).get().job_id == job.pk
+    [known] = known_at_jobs(user.pk, [job])[job.pk]
+    assert (known.name, known.position) == ("Priya Rao", "Staff Engineer")
+
+
+@pytest.mark.django_db
 def test_create_test_user_refusals(debug: None, settings: Any) -> None:
     assert refused("create_test_user", "--with-match") == (
         "The job mirror is empty, so there is no job to match."

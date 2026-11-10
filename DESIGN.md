@@ -33,7 +33,7 @@ pre-migration commit of `main` still runs it against the untouched `foray` datab
 | Applying | **One motion, and the user presses submit** (2026-11-09; it reorders the lanes below). Every eligible new posting gets a prepared application: answers planned from saved answers, one of the user's own resume variants chosen, the form filled by the extension. The deep review is no longer a gate in front of applying; eligibility (level, years, work authorization, clearance, place) is, and it is read once per posting at ingest. Unattended auto-submit comes after one-tap applying works, under the rules in the next row |
 | Apply lanes | **The deep review decides.** `strong` goes to the coached lane: Foray coaches, the user writes, Foray fills the form and the user submits. `apply` goes to the automated lane: Foray applies from the user's browser. `maybe` and `skip` go to neither. A match is deep-reviewed before the automated lane takes it, because the fast score is least reliable in the band where a cutoff would fall, and the user can move any match between lanes or out of both: their choice is kept on the match (`lane_override`) and holds through a re-review until they hand the match back to the review. Every automated application waits for an approval that shows the filled form; auto-submit is an opt-in, only for applications answered entirely from saved answers, within daily and per-employer caps |
 | Tailoring | **Variants the user wrote, chosen per role** (2026-11-09). The user keeps two to four resume variants, one per role family, and Foray picks one for each application: a per-posting rewrite is what the flood sends, and it costs minutes when hours matter. The tailoring pipeline and its verifier stay in the code; sending a tailored resume with an application is deferred |
-| Outreach | **Warm paths before cold email**: alumni, former colleagues or a named hiring manager, with a short note the user edits and approves. Contacts come from files the user exports themself (LinkedIn's connections export, an alumni list), never from automating LinkedIn, and the alert worth most is a fresh posting at a company where the user knows someone. Gmail through Google OAuth matches employers' confirmations and replies to applications. No cold email at volume |
+| Outreach | **Warm paths before cold email**: alumni, former colleagues or a named hiring manager, with a short note the user edits and approves. Contacts come from files the user exports themself (LinkedIn's connections export, an alumni list), never from automating LinkedIn, and the alert worth most is a fresh posting at a company where the user knows someone. The note is drafted on request, from the user's resume and the posting, and kept for the user to edit, copy and send themself: Foray has no way to send it, and a contact's row goes nowhere (R22). Gmail through Google OAuth matches employers' confirmations and replies to applications. No cold email at volume |
 | Hosting | **Self-hosted on something that stays on** (2026-11-09): a small server or a home machine runs the `prod` compose profile, because a worker that runs only during a laptop session cannot be timely (the dev mirror went a week without a refresh). Applying still happens in the user's browser on their own machine. Four processes, the same in dev and prod: Postgres, Next, Django (api), the worker. Postgres runs in Docker Compose; web, api and worker run natively in dev (`pnpm dev:all`); one `Dockerfile` (a `backend` image for api, worker and migrate, a `web` image) and a `prod` compose profile run the same containers |
 | Resume output | Structured resume → **PDF via HTML template**; a renderer interface can be added when a LaTeX (tectonic) renderer is compared |
 | Budget | ~$100/month of third-party APIs; model calls stop for the month at `LLM_MONTHLY_BUDGET_USD` (default $90) of ledger spend |
@@ -151,6 +151,7 @@ fails too), so a row cannot outlive its proof.
 | R19 | The chat agent can neither start paid work nor answer an approval: the runs it asks for wait behind a `run_start` approval that only the user answers, and a no or a lapse cancels them before they run | `runs.lifecycle.start_run(gate=…)`; `runs.approvals.decide()` and `expire_lapsed()`; no chat tool answers an approval | `runs/test_start_gate.py::test_a_gated_start_waits_and_defers_nothing`, `::test_a_no_cancels_the_run_before_it_ever_ran`, `chat/test_chat_view.py::test_approvals_are_listed_in_chat_and_answered_only_on_their_cards` |
 | R20 | A watch announces a match at most once, and never one a search made: it works only on the matches it created, and announces only those it reviewed itself | `matching.queries.insert_new_matches`; `matching.watch.run_watch` | `matching/test_watch.py::test_a_second_watch_reads_only_what_arrived_since_and_never_announces_twice`, `::test_a_search_s_matches_are_the_search_s` |
 | R21 | A match is sent to a user's phone at most once per channel, however often a watch or a send job runs again, and never to a user who has set no topic. A send is repeated only after an attempt recorded as failed or abandoned, three attempts at most | unique `(user, match, channel)` on `notifications`; `notifications.outbox.queue_matches` (in the watch's completing transaction) and `claim` (row locks and a lease taken before any request) | `notifications/test_notify.py::test_a_watch_s_strong_match_reaches_the_phone_exactly_once`, `::test_a_second_watch_sends_only_what_is_new`, `::test_two_jobs_never_send_the_same_notification`, `::test_a_failed_send_is_retried_twice_and_then_given_up`, `::test_a_user_with_no_topic_sees_no_change` |
+| R22 | A contact goes nowhere but its owner's pages. An import makes no request and queues nothing; a board lookup is given company names and starts only on the user's press; a phone notification counts contacts and never names one; a model reads a contact's fields only wrapped, in a watch's chat update and in the note's prompt; a run's input, output and events hold none of them; and nothing can send a note | `contacts.importer`; `contacts.page.start_lookup`; `notifications.compose.match_message`; `llm.untrusted` in `chat.follow_up` and `contacts.outreach`; `UserOwned` | `contacts/test_import.py::test_an_import_sends_nothing_anywhere`, `contacts/test_api.py::test_a_lookup_takes_the_companies_most_contacts_work_at_and_only_when_asked`, `notifications/test_notify.py::test_a_notification_counts_the_people_the_user_knows_at_the_company`, `chat/test_follow_up_text.py::test_a_contact_s_fields_cannot_leave_their_wrapper_or_their_line`, `contacts/test_outreach.py::test_the_outreach_prompt_wraps_everything_a_file_or_a_posting_supplied`, `::test_drafting_a_note_is_a_run_that_writes_one_note_and_sends_nothing`, `pages/test_tenancy.py::test_tenancy_sweep` |
 
 `manage.py acceptance_checks` re-checks the database-level rows (R3, R4, R10, and the ledger's
 attribution) against live data after a browser rehearsal. Its run-level lines cover only runs
@@ -273,7 +274,7 @@ There is no Redis, no Caddy and no push hub: four processes, the same in dev and
   default autonomy, score threshold, deep-review count — interview state and time zone; there
   is no separate profile row that might be missing), then `documents`, `resumes`,
   `resume_variants`, `job_matches`, `runs`, `events`, `approvals`, `conversations`,
-  `messages`, `notifications` and `llm_calls`.
+  `messages`, `notifications`, `contacts`, `outreach_notes` and `llm_calls`.
   Each of these carries `user_id` (a ledger row of system work has none) and inherits
   `UserOwned`, whose manager refuses any query that is not `for_user(...)` or
   `unscoped(reason)`.
@@ -477,6 +478,62 @@ notification" is a job as well (`notify.test`, answered with a `notification.tes
 the worker's own test), so no request waits on ntfy (invariant 12) and a test that arrives has
 taken the path a real notification takes.
 
+**Referrals** (`apps/contacts/`). A referral asked for on the day a role is posted counts for
+more than one asked for after five hundred applications, so Foray has to know who the user
+knows. It learns that only from files the user exports themself (#63): LinkedIn's own
+"Connections.csv" (or the archive it arrives in), and any other CSV with a name column, such
+as an alumni list. `parse.py` reads the file (the notes above LinkedIn's header, a BOM, quoted
+commas, both date formats the export has used, lenient header names), and
+`importer.import_contacts` writes one `contacts` row per person in the request itself, since
+it calls no model and fetches nothing. A person is their profile address, else their email,
+else their name and company (`dedupe_key`, unique per user): importing the same file again
+writes nothing, and a newer export updates the people it already knows. Each contact is linked
+to the registered company they work at (`link.CompanyIndex`, the registry read once): by name
+as the mirror normalises company names, then by the domain of a work email against
+`companies.domain`, never for a free-mail domain. Unmatched contacts are kept, and
+`link.rematch()` links them once their company is registered. The Contacts page
+(`GET /api/pages/contacts`, four reads) shows how many people the user knows at each company
+in the mirror, the companies the mirror lacks by how many contacts name them, and a search.
+From there the user can start a lookup: the next twenty unmatched company names go to the
+existing `company_discovery` run, which registers the boards it can read. That is the only
+thing that leaves: company names, on the user's press, to the job boards Foray asks (and web
+search when a key is set). A person's name, email or profile address is never sent anywhere,
+and Foray makes no request to LinkedIn of any kind.
+
+The alert worth most is a fresh posting at a company where the user knows someone (#64), so
+everything that announces a match says so. `known.known_at` answers "who does this user know
+at these postings' companies" in one query: a contact linked to the posting's registered
+company, or one whose company name has the key of the posting's own company name (which covers
+an aggregator's posting and a company registered a moment ago). Every `MatchRow` a page or a
+card shows carries `knows` (the first three people and the count, `queries.with_known`: one
+more read for Home, the Matches page and a run card's results), and the match page lists them
+under "People you know here". When a watch completes, its message adds "You know someone at
+one of them"; its chat update names the people at each such role, wrapped as third-party text
+because a name and a position are whatever a file said; and the phone notification ends "You
+know 2 people there", a count and never a name, since that message goes through a notification
+server. The contacts are counted when the notification is sent, and `watch.fan_out` links
+contacts to newly registered companies before it starts the watches. A posting where the user
+knows nobody is announced exactly as it was before any of this: the message, the update and
+the notification are each pinned in both cases.
+
+Then the warm path itself (#25, `contacts/outreach.py`). Beside each person on the match
+page, "Draft a note" writes three to five sentences the user edits, copies and sends
+themself, and a watch's chat update offers it for the roles where they know someone. The
+draft is one model call, so it is a run (`outreach`, purpose `outreach`), as one match's
+"Review again" is: a request never waits on a model, and `run_step` gives the call its
+ledger row under the run, a timeout, the budget's sentence, a Stop and the reaper, which a
+plain task (what preparing an application is, because it calls no model) would have to
+rebuild. The stable half of the prompt is the rules and the sender (the user's name and
+resume text, without the ids other prompts cite); the other half is the contact, the
+posting and the deep review's summary, each wrapped as third-party text, and one line
+Foray writes itself about how the two know each other. That line says only what the data
+says ("connected on LinkedIn, since March 2024", or "on a list the sender imported"), and
+the rules forbid a shared history beyond it, flattery, and any fact the resume does not
+state. The note is kept in `outreach_notes`, one row per match and contact: drafting again
+replaces it, the user's edits are saved to it, and it goes with its match or its contact.
+No field of the contact enters the run's input, output or events, since the chat agent's
+tools read those. Nothing sends a note: there is no endpoint, task or client that could.
+
 Tailoring is separate and on demand: the strong model reorders, selects and rephrases
 only what the base resume says; a verifier (deterministic rules plus a cheap-model
 check) flags any claim it cannot trace to a base fact, unsupported lines are reverted
@@ -553,8 +610,9 @@ Defined now so later phases are additive, not a rewrite.
 `deepseek`, `anthropic` and an OpenAI-compatible `compat` slot, with keys passed from the
 validated environment. There is **no vendor default in code**: `LLM_DEFAULT=<provider>:<model>`
 is required at boot, and `LLM_CHAT`, `LLM_EXTRACT`, `LLM_SCORE`, `LLM_EVALUATE`, `LLM_TAILOR`,
-`LLM_VERIFY`, `LLM_MERGE` override it per purpose (`extract` and `merge` need a
-vision-capable model for the PDF-image fallback). A purpose never falls back to another
+`LLM_VERIFY`, `LLM_MERGE`, `LLM_OUTREACH` override it per purpose (`extract` and `merge`
+need a vision-capable model for the PDF-image fallback; `outreach` writes the short note
+to a contact and has not been baked off yet). A purpose never falls back to another
 vendor, and every purpose's provider must have its key, or the process does not start.
 
 Every call site gets the same stack for its purpose:
@@ -706,6 +764,17 @@ Ashby and Lever.
   tokens, ID tokens verified against Google's JWKS; the "Continue with Google" sign-in
   returns with it) matches employers' confirmation emails to applications, and later moves
   stages on rejections and interview invitations.
+
+  Built so far: **contacts** (#63, `apps/contacts/`; "Referrals" under the search pipeline).
+  The user imports their LinkedIn connections export or any list with a name column; each
+  person is linked to the registered company they work at, and the Contacts page counts them
+  per company and offers to look for the boards of the companies the mirror lacks. It adds
+  the `contacts` table. **Who you know, where a match is announced** (#64): a match's row and
+  page, a watch's message and chat update, and the phone notification each say when the
+  posting is at a company where the user knows someone. **The note** (#25): on the match
+  page, a short note to a contact, drafted from the user's resume and the posting, edited
+  and sent by the user. It adds the `outreach_notes` table, the `outreach` run kind and
+  the `outreach` purpose. Not built: finding a hiring manager nobody imported, and Gmail.
 - **Phase 4 — ready for other people.** One-command setup with the user's own keys
   (OpenRouter as a provider makes one key enough), the hosted posting mirror that installs
   sync from, a company list built from Foray's own discovery in place of the seed list

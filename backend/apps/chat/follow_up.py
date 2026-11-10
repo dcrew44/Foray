@@ -27,6 +27,11 @@ The user's own turn always has priority, and the follow-up never waits inside a 
 
 Every `chat.followup` event is level `debug` and has no run in its `run_id` column, so it never
 triggers another follow-up. Model calls are attributed to `(user, run, conversation)`.
+
+A watch's update also says who the user knows at the companies it announces (#64,
+`known_roles`): their names and positions, from the contacts the user imported, wrapped as
+third-party text like the roles of a gate. A watch that announces nothing at such a company
+gets the update it always got.
 """
 
 from __future__ import annotations
@@ -62,7 +67,7 @@ from apps.core.queue import defer_in_tx
 from apps.llm.context import llm_context
 from apps.llm.untrusted import one_line, untrusted
 from apps.matching.brief import describe_brief, parse_brief
-from apps.matching.queries import get_match_rows
+from apps.matching.queries import get_match_rows, with_known
 from apps.resumes.text import js_trim
 from apps.runs import step
 from apps.runs.approvals import payload_item_ids
@@ -87,10 +92,12 @@ __all__ = [
     "STALE_AFTER",
     "ApprovalView",
     "EventView",
+    "KnownRole",
     "ProposedRole",
     "RunView",
     "Update",
     "describe_update",
+    "known_roles",
     "post_follow_up",
     "proposed_roles",
     "run_follow_up",
@@ -158,6 +165,16 @@ class ProposedRole:
 
 
 @dataclass(frozen=True, slots=True)
+class KnownRole:
+    """A role a watch announces at a company where the user knows someone (#64)."""
+
+    title: str
+    company: str
+    people: tuple[tuple[str, str], ...]  # (name, position): the first few
+    count: int  # everyone the user knows there
+
+
+@dataclass(frozen=True, slots=True)
 class Update:
     label: str  # the divider's text, e.g. "Search finished"
     text: str
@@ -187,6 +204,34 @@ def _role_lines(roles: Sequence[ProposedRole]) -> str:
         ),
         "job postings",
     )
+
+
+CONTACTS: Final = "the user's contacts"
+
+
+def _known_lines(known: Sequence[KnownRole]) -> list[str]:
+    """What a watch's update adds for the roles at companies where the user knows someone
+    (#64). The names and positions came from a file the user imported, and the titles and
+    companies from postings, so the list is wrapped like any other third-party text."""
+    listed = "\n".join(
+        f"- {one_line(role.title)} at {one_line(role.company)}: "
+        + ", ".join(
+            one_line(name) + (f" ({one_line(position)})" if position else "")
+            for name, position in role.people
+        )
+        + (f", and {role.count - len(role.people)} more" if role.count > len(role.people) else "")
+        for role in known
+    )
+    where = "one of these companies" if len(known) == 1 else f"{len(known)} of these companies"
+    return [
+        f"The user knows people at {where}, from the contacts they imported:\n"
+        + untrusted(listed, CONTACTS),
+        "For each of those roles, say who they know there, by name: a referral asked for on the "
+        "day a role is posted counts for more than one asked for later. Say only that they know "
+        "the person; you do not know how. Then offer the way to ask: the role's page has "
+        '"Draft a note" beside each person, which writes a short note for the user to edit and '
+        "send themself. You cannot draft or send a note, and Foray contacts nobody.",
+    ]
 
 
 def _capitalize(text: str) -> str:
@@ -222,9 +267,12 @@ def describe_update(
     event: EventView,
     approval: ApprovalView | None,
     proposed: Sequence[ProposedRole] = (),
+    known: Sequence[KnownRole] = (),
 ) -> Update:
     """The automatic update: what happened, in plain words, and what a useful report back looks
-    like for this kind of moment. Pinned by `goldens/strings/describe_update.json`."""
+    like for this kind of moment. Pinned by `goldens/strings/describe_update.json`. `known` are
+    the roles a watch announces where the user knows someone; without any, a watch's update is
+    what it was before contacts existed."""
     what = _what(run)
     head = f"[Automatic update about run {run.id}, not written by the user]"
     list_it = (
@@ -345,6 +393,7 @@ def describe_update(
                     f"the best of them on its own. Its result: {event.message}",
                     f"{list_it} Show them (limit 5), then say in a sentence each why it fits. They "
                     "are new: applying early is the point of this check, so say so once.",
+                    *(_known_lines(known) if known else ()),
                     "End with one concrete next step you could take for them.",
                     RULES,
                 ]
@@ -416,6 +465,25 @@ def proposed_roles(user_id: str, approval: Approval) -> list[ProposedRole]:
     ]
 
 
+def known_roles(user_id: str, run: Run) -> list[KnownRole]:
+    """The matches a watch announced that are at a company where the user knows someone, best
+    first, each with the first few of those people (#64). Empty for any other run, and for a
+    watch whose matches are all at companies where they know nobody. Sync."""
+    if run.kind != RunKind.WATCH or not isinstance(run.output, Mapping):
+        return []
+    rows = with_known(user_id, get_match_rows(user_id, run.output.get("announcedMatchIds") or []))
+    return [
+        KnownRole(
+            title=js_trim(row.title),
+            company=row.company,
+            people=tuple((person.name, person.position) for person in row.knows.people),
+            count=row.knows.count,
+        )
+        for row in rows
+        if row.knows is not None
+    ]
+
+
 # --- the task's steps (sync, through db()) --------------------------------------------------------
 
 
@@ -442,6 +510,7 @@ class Loaded:
     history: list[dict[str, Any]]
     history_read_at: datetime  # conversation.updated_at when the history was read
     instructions: str
+    known: list[KnownRole]  # a watch's announced roles where the user knows someone
 
 
 def _turn_streaming(conversation: Conversation, now: datetime) -> bool:
@@ -504,6 +573,7 @@ def load(event_id: int) -> Loaded | Skip | Wait | None:
         history=load_history(user_id, conversation.id),
         history_read_at=conversation.updated_at,
         instructions=instructions_for(user_id),
+        known=known_roles(user_id, run) if event.kind == EventKind.RUN_COMPLETED else [],
     )
 
 
@@ -714,6 +784,7 @@ async def run_follow_up(event_id: int) -> str:
         EventView.of(event),
         ApprovalView.of(loaded.approval) if loaded.approval is not None else None,
         loaded.proposed,
+        loaded.known,
     )
     notice = {
         "id": generate_message_id(),

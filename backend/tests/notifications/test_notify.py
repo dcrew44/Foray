@@ -38,6 +38,7 @@ from apps.runs.step import TASKS
 from tests.accounts.helpers import Api
 from tests.factories import (
     make_company,
+    make_contact,
     make_job,
     make_match,
     make_notification,
@@ -663,3 +664,71 @@ def test_the_test_button_is_throttled(ntfy_server: FakeNtfy) -> None:
     assert len(jobs(task_name="notify.test")) == 5
     # Per user: someone else can still test theirs.
     assert signed_in(other).post("/api/notifications/test").status_code == 202
+
+
+# --- where the user knows someone (#64) ----------------------------------------------------------
+
+
+def test_a_notification_counts_the_people_the_user_knows_at_the_company(
+    company: Company, scores: FakeLLM, ntfy_server: FakeNtfy
+) -> None:
+    """A watch's match at a company with contacts says so on the phone, with a count and no
+    name; its match at a company without any is sent exactly as before."""
+    user = phone_user()
+    elsewhere = make_company(name="Globex", last_fetched_at=timezone.now())
+    post(company, STRONG)
+    post(elsewhere, APPLY)
+    make_contact(user, name="Priya Rao", company=company, position="Staff Engineer")
+    make_contact(user, name="Marcus Bell", company=company)
+    make_contact(phone_user(), name="Not Mine", company=elsewhere)
+
+    run = watch_now(user)
+    assert len(announced(run)) == 2
+    run_deferred(["system"])
+
+    queued = by_title(user)
+    assert ntfy_server.published == [
+        {
+            "topic": TOPIC,
+            "title": f"Acme: {STRONG}",
+            "message": "Strong fit. Posted 40 minutes ago. You know 2 people there.",
+            "click": f"{ORIGIN}/matches/{queued[STRONG].match_id}",
+            "tags": ["briefcase"],
+        },
+        {
+            "topic": TOPIC,
+            "title": f"Globex: {APPLY}",
+            "message": "Worth applying. Posted 40 minutes ago.",
+            "click": f"{ORIGIN}/matches/{queued[APPLY].match_id}",
+            "tags": ["briefcase"],
+        },
+    ]
+    # No contact's name, position or address is in anything that left.
+    sent = b"".join(request.content for request in ntfy_server.requests).decode()
+    assert "Priya" not in sent and "Marcus" not in sent and "Staff Engineer" not in sent
+
+
+def test_contacts_are_counted_when_the_notification_goes_out(ntfy_server: FakeNtfy) -> None:
+    user = phone_user()
+    match = strong_match(user)
+    make_notification(user, match=match)
+    # Imported after the match was queued, before it was sent.
+    make_contact(user, company=match.job.company)
+    assert send(user).sent == 1
+    [published] = ntfy_server.published
+    assert published["message"].endswith("You know 1 person there.")
+
+
+def test_a_contact_count_that_fails_still_sends_the_notification(
+    ntfy_server: FakeNtfy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken(user_id: str, jobs: Any) -> dict[str, Any]:
+        raise RuntimeError("no contacts today")
+
+    monkeypatch.setattr(outbox, "known_at_jobs", broken)
+    user = phone_user()
+    match = strong_match(user)
+    make_notification(user, match=match)
+    make_contact(user, company=match.job.company)
+    assert send(user).sent == 1
+    assert ntfy_server.published[0]["message"] == "Strong fit. Posted 2 days ago."

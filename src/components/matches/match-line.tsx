@@ -16,6 +16,7 @@ import {
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+import { KnowsMark } from "./knows";
 import { LaneLabel } from "./lane";
 import { Why } from "./verdict";
 
@@ -40,6 +41,8 @@ export type MatchLineData = {
   blocker?: string | null;
   /** The apply lane, where the line came from a row that says it (a stored chat card does not). */
   lane?: string | null;
+  /** Who the user knows at the company, where the line came from a row that says it. */
+  knows?: MatchRow["knows"];
 };
 
 export function fromMatchRow(row: MatchRow): MatchLineData {
@@ -57,6 +60,7 @@ export function fromMatchRow(row: MatchRow): MatchLineData {
     reason: row.reason,
     blocker: row.blocker,
     lane: row.lane,
+    knows: row.knows,
   };
 }
 
@@ -94,6 +98,7 @@ export function MatchLine({
         {showReason && (
           <Why blocker={match.blocker} className="mt-1.5 text-[13px]" clamp={2} reason={match.reason} />
         )}
+        <KnowsMark className="mt-1" knows={match.knows} />
       </div>
       <div className="text-muted-foreground hidden shrink-0 flex-col items-end gap-0.5 text-right text-[12.5px] sm:flex">
         {showStage && match.stage ? (

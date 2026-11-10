@@ -265,3 +265,22 @@ def test_a_server_the_client_could_not_use_is_refused_at_boot(
     [line] = refused.value.lines
     assert line.startswith("NTFY_SERVER is invalid") and "Fix: set it to your ntfy server" in line
     assert "secret" not in line  # values are never printed
+
+
+# --- who the user knows there (#64) ---------------------------------------------------------------
+
+
+def test_a_match_where_the_user_knows_people_says_how_many_and_never_who() -> None:
+    plain = match_message(a_match(), NOW)
+    assert match_message(a_match(), NOW, 0) == plain  # nobody: the message it always was
+    assert match_message(a_match(), NOW, 1).body == (
+        "Strong fit. Posted 40 minutes ago. You know 1 person there."
+    )
+    assert match_message(a_match(), NOW, 2).body == (
+        "Strong fit. Posted 40 minutes ago. You know 2 people there."
+    )
+    unreviewed = match_message(a_match(deep=None), NOW, 3)
+    assert unreviewed.body == "Posted 40 minutes ago. You know 3 people there."
+    # Only the body changes: the title, the link and the tag are the match's.
+    known = match_message(a_match(), NOW, 2)
+    assert (known.title, known.click, known.tags) == (plain.title, plain.click, plain.tags)

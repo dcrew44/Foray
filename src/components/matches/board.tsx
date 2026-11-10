@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { ClosedMark } from "./job-signals";
+import { KnowsMark } from "./knows";
 import { LaneLabel } from "./lane";
 import { moveMatch } from "./match-api";
 import { CLOSED_STAGES as CLOSED, OPEN_STAGES as OPEN } from "./stages";
@@ -66,6 +67,7 @@ export type BoardMatch = Pick<
   | "isActive"
   | "stageChangedAt"
   | "tailoredResumeId"
+  | "knows"
 >;
 
 export function Board({ matches, showClosed }: { matches: BoardMatch[]; showClosed: boolean }) {
@@ -242,6 +244,7 @@ function Card({ match, dragging = false }: { match: BoardMatch; dragging?: boole
           <LaneLabel lane={match.lane} />
         </span>
         <Why blocker={match.blocker} clamp={2} reason={match.reason} />
+        <KnowsMark knows={match.knows} />
       </div>
       <div className="text-muted-foreground mt-2.5 flex items-center gap-1 text-[12px]">
         <MapPin className="size-3 shrink-0 opacity-60" />

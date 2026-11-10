@@ -1,0 +1,57 @@
+{
+  "companies": [
+    {
+      "name": "string",
+      "openPostings": "number",
+      "people": [
+        {
+          "id": "string",
+          "name": "string",
+          "position": "string"
+        }
+      ],
+      "peopleCount": "number",
+      "slug": "string"
+    }
+  ],
+  "companiesTotal": "number",
+  "lookup": {
+    "names": [
+      "string"
+    ],
+    "remaining": "number",
+    "runId": "null"
+  },
+  "matched": "number",
+  "query": "string",
+  "results": [
+    {
+      "companyName": "string",
+      "companySlug": "string",
+      "connectedOn": "null",
+      "email": "string",
+      "id": "string",
+      "name": "string",
+      "position": "string",
+      "profileUrl": "string"
+    }
+  ],
+  "resultsTotal": "number",
+  "total": "number",
+  "unmatched": [
+    {
+      "lookedUp": "boolean",
+      "name": "string",
+      "people": [
+        {
+          "id": "string",
+          "name": "string",
+          "position": "string"
+        }
+      ],
+      "peopleCount": "number"
+    }
+  ],
+  "unmatchedTotal": "number",
+  "withoutCompany": "number"
+}

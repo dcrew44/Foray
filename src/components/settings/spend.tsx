@@ -14,6 +14,7 @@ export const PURPOSE_LABEL: Record<string, string> = {
   tailor: "Tailoring",
   verify: "Fact-checking",
   merge: "Merging imports",
+  outreach: "Notes to contacts",
 };
 
 export const PROVIDER_LABEL: Record<string, string> = {

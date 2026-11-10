@@ -62,6 +62,7 @@ DEFAULT_EFFORT: dict[Purpose, Effort] = {
     "tailor": "high",
     "verify": "low",
     "merge": "low",
+    "outreach": "low",
 }
 
 UNIFIED_THINKING = frozenset({"openai", "anthropic", "google"})

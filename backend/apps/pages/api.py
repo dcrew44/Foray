@@ -7,11 +7,12 @@ Each server component makes one call here (plus `/api/me` from the layout), with
   headline}`;
 - `GET /api/pages/matches?view=&stage=&closed=&lane=`: `{counts, matches, ready, view, stage,
   showClosed, lane}`;
-- `GET /api/pages/matches/{id}`: `{match, job, tailored, hasBaseResume}`, or 404;
+- `GET /api/pages/matches/{id}`: `{match, job, tailored, hasBaseResume, knows}`, or 404;
 - `GET /api/pages/activity`: `{runs: RunSummary[]}`;
 - `GET /api/pages/chat`: `{suggestions}`;
 - `GET /api/pages/companies`: `{companies: CompanyRow[], active, openPostings}`;
 - `GET /api/pages/outcomes`: `{matches, applications, timing, speed, funnel}`;
+- `GET /api/pages/contacts?q=`: the people the user knows, by company (`contacts/page.py`);
 - `GET /api/pages/profile`: `{hasResume, ready, resume, preferences, progress, slots, base,
   render}`;
 - `GET /api/pages/settings`: `{user, settings, review, spend, byPurpose, byModel, byDay,
@@ -31,6 +32,7 @@ from typing import cast
 from django.http import HttpRequest
 
 from apps.accounts.models import User
+from apps.contacts.page import ContactsPage, contacts_page
 from apps.core.errors import ApiError, messages
 from apps.core.router import router
 from apps.pages import build
@@ -99,6 +101,12 @@ def chat(request: HttpRequest) -> ChatPage:
 @pages.get("/companies", response=CompaniesPage, summary="Companies page")
 def companies(request: HttpRequest) -> CompaniesPage:
     return build.companies_page()
+
+
+@pages.get("/contacts", response=ContactsPage, summary="Contacts page")
+def contacts(request: HttpRequest, q: str | None = None) -> ContactsPage:
+    """`q` searches the user's contacts by name, company, position or school."""
+    return contacts_page(_user(request).pk, q)
 
 
 @pages.get("/apply", response=ApplyPage, summary="Apply page")

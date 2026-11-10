@@ -11,6 +11,7 @@ import {
   Settings2,
   SquareKanban,
   UserRound,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -81,6 +82,12 @@ const SECONDARY: NavItem[] = [
     label: "Companies",
     icon: Building,
     match: (p) => p.startsWith("/companies"),
+  },
+  {
+    href: "/contacts",
+    label: "Contacts",
+    icon: Users,
+    match: (p) => p.startsWith("/contacts"),
   },
   {
     href: "/settings",

@@ -218,7 +218,8 @@ def get_matches(request: HttpRequest, ids: str | None = None) -> dict[str, Any]:
     not a UUID is ignored; at most 20; another user's ids find nothing."""
     wanted = [part.strip() for part in (ids or "").split(",")]
     valid = [part for part in wanted if STRICT_UUID.fullmatch(part)][:MAX_IDS]
-    return {"matches": queries.get_match_rows(_user_id(request), valid)}
+    user_id = _user_id(request)
+    return {"matches": queries.with_known(user_id, queries.get_match_rows(user_id, valid))}
 
 
 @matches.patch("/{id}", response=OkMessageOut, summary="Move or annotate a match")

@@ -121,6 +121,33 @@ if it is reachable from the internet on port 80 or 443). The worker does the sen
 has to be running, and the link in a notification opens `PUBLIC_ORIGIN`, so set that to an
 address your phone can reach.
 
+### People you know
+
+A referral asked for on the day a role is posted is worth more than one asked for weeks
+later, so Foray keeps a list of who you know. You give it the list: on LinkedIn, open
+Settings & Privacy, then Data privacy, then Get a copy of your data, choose Connections,
+and upload the file LinkedIn emails you (the archive, or the Connections.csv inside it) on
+the **Contacts** page. Any other CSV with a name column works too, such as an alumni list.
+The page shows how many people you know at each company Foray reads, and which companies
+your contacts name that it does not read yet; one button looks for those companies' job
+boards, twenty at a time. Importing the same file again changes nothing, and a newer export
+updates the people it already knows.
+
+From then on a match at a company where you know someone says so: on its row ("You know
+Priya Rao and 2 others"), on its page under **People you know here**, in the "New matches"
+chat, where Foray names who you know at each new role, and on your phone ("You know 2
+people there": a count only, since that message passes through a notification server).
+
+Beside each person on the match page, **Draft a note** writes three to five sentences to
+them about the role: what it is, one or two things from your resume that fit it, and a
+plain ask for their view or a referral. It says only what your resume says and only what
+the file says about how you know each other, so it will not pretend you are old friends.
+The note is yours to edit and copy. Foray sends nothing and contacts nobody.
+
+Foray never signs in to LinkedIn and never looks anyone up. Your contacts stay in your own
+database: the only thing the board lookup sends out is company names, and only when you
+press the button.
+
 ### Your profile and settings
 
 Your resume becomes structured facts that every score, review and tailored resume is

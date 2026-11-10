@@ -34,6 +34,7 @@ export const config = {
     "/outcomes/:path*",
     "/profile/:path*",
     "/companies/:path*",
+    "/contacts/:path*",
     "/settings/:path*",
   ],
 };

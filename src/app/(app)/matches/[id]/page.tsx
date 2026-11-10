@@ -15,6 +15,7 @@ import {
   MatchNotes,
   StageSelect,
 } from "@/components/matches/match-controls";
+import { PeoplePanel } from "@/components/matches/people-panel";
 import { Posting } from "@/components/matches/posting";
 import { TailorPanel } from "@/components/matches/tailor-panel";
 import { buttonVariants } from "@/components/ui/button";
@@ -34,7 +35,8 @@ type Params = { params: Promise<{ id: string }> };
 
 /**
  * One match in one read (`GET /api/pages/matches/{id}`): the match with its stored
- * evaluations, the posting, its tailored resume and whether a base resume exists. A malformed
+ * evaluations, the posting, its tailored resume, whether a base resume exists, and the people
+ * the user knows at the company. A malformed
  * id, an unknown one and another user's all answer 404, which `django()` turns into
  * `notFound()`. The title and the page make the same GET, which Next memoises within a render,
  * so they cost one call between them.
@@ -50,7 +52,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function MatchPage({ params }: Params) {
   const { id } = await params;
-  const { match, job, tailored, hasBaseResume } = await load(id);
+  const { match, job, tailored, hasBaseResume, knows } = await load(id);
 
   const deep = match.deepEval;
   const fast = match.fastEval;
@@ -163,6 +165,13 @@ export default async function MatchPage({ params }: Params) {
 
         <aside className="space-y-10">
           <JobSignals signals={job.signals} />
+
+          <PeoplePanel
+            company={job.companyName}
+            hasResume={hasBaseResume}
+            knows={knows}
+            matchId={match.id}
+          />
 
           <ApplicationPanel
             application={match.application}

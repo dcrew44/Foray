@@ -75,7 +75,7 @@ def test_smoke_calls_every_purpose(monkeypatch: pytest.MonkeyPatch) -> None:
     assert code == 0
     assert lines[0] == "providers with credentials: openai, google, anthropic, deepseek"
     checks = [line for line in lines if line.startswith("✓")]
-    assert len(checks) == 7
+    assert len(checks) == len(PURPOSES)
     assert checks[0].startswith("✓ chat      openai:gpt-5.6-luna              ")
     assert "ms  in=1000 cached=600 out=300  → " in checks[0]
     assert checks[0].endswith('→ {"city":"San Francisco","confident":true}')
@@ -107,10 +107,10 @@ def test_smoke_under_llm_fake(env: Any, monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr(registry, "_MODELS", {})
     code, out, _ = run("llm_smoke")
     assert code == 0
-    assert sum(line.startswith("✓") for line in out.splitlines()) == 7
+    assert sum(line.startswith("✓") for line in out.splitlines()) == len(PURPOSES)
     assert "(unpriced" not in out
     rows = ledger()
-    assert len(rows) == 7
+    assert len(rows) == len(PURPOSES)
     assert {(r["provider"], r["label"], r["cost_usd"]) for r in rows} == {
         ("fake", "fake", Decimal(0))
     }

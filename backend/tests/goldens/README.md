@@ -23,6 +23,8 @@ Conventions:
 - The TypeScript is gone, so a deliberate change to a Python builder now re-pins its golden in
   the same commit. Re-pinned so far: `prompts/fast_score/integral_salary_long_description.json`
   (the 12,000-character cap and its cut note, #34).
+- `prompts/outreach/*.json` were never TypeScript: `tests/contacts/test_outreach.py` writes them
+  from the Python builders with `FORAY_UPDATE_SNAPSHOTS=1` and compares them otherwise (#25).
 - Library versions: ai 7.0.106, better-auth 1.7.5,
   unpdf 1.8.1, mammoth 1.12.3.
 
@@ -82,6 +84,9 @@ Files:
 - `prompts/fast_score/integral_salary_long_description.json`
 - `prompts/fast_score/missing_max_no_resume.json`
 - `prompts/fast_score/no_salary_empty_resume.json`
+- `prompts/outreach/imported_list_with_a_school_and_no_review.json`
+- `prompts/outreach/linkedin_connection_with_a_review.json`
+- `prompts/outreach/long_posting_and_many_talking_points.json`
 - `prompts/tailor/html_only_no_notes.json`
 - `prompts/tailor/no_description_fast_only.json`
 - `prompts/tailor/with_notes_and_goals.json`

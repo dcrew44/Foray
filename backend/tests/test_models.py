@@ -63,6 +63,7 @@ def rejected(build: Callable[[], object]) -> str:
         ("llm_calls", "purpose"),
         ("notifications", "status"),
         ("notifications", "channel"),
+        ("contacts", "source"),
     ],
 )
 def test_bad_status_rejected(table: str, column: str) -> None:
@@ -78,6 +79,7 @@ def test_bad_status_rejected(table: str, column: str) -> None:
         "messages": f.make_message(f.make_conversation(user)),
         "llm_calls": f.make_llm_call(user),
         "notifications": f.make_notification(user),
+        "contacts": f.make_contact(user),
     }
     row = rows[table]
     model = type(row)
@@ -357,6 +359,9 @@ FACTORIES: dict[str, Callable[[User], models.Model]] = {
     "llm_call": lambda u: f.make_llm_call(u),
     "system_llm_call": lambda _: f.make_llm_call(None),
     "notification": lambda u: f.make_notification(u),
+    "contact": lambda u: f.make_contact(u, company=f.make_company()),
+    "unmatched_contact": lambda u: f.make_contact(u, company_name="Northwind Robotics"),
+    "outreach_note": lambda u: f.make_outreach_note(u),
     **{f"run_{kind}": (lambda u, kind=kind: f.make_run(u, kind=kind)) for kind in RunKind.values},
 }
 
@@ -616,6 +621,7 @@ RUN_KINDS = {
     "company_discovery",
     "company_refresh",
     "watch",
+    "outreach",
 }
 
 # `map/worker.md` §19 (copied here: docs/migration/ goes away in step 13). Where §19 gives two

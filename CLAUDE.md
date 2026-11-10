@@ -39,7 +39,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 
 | Command | What it does |
 |---|---|
-| `create_test_user [--email e] [--with-resume] [--with-match]` | a throwaway `test-…@example.test` user with an unusable password (DEBUG only); `--with-resume` adds a sample resume and complete preferences, `--with-match` one match on the newest job |
+| `create_test_user [--email e] [--with-resume] [--with-match] [--with-contact]` | a throwaway `test-…@example.test` user with an unusable password (DEBUG only); `--with-resume` adds a sample resume and complete preferences, `--with-match` one match on the newest job, `--with-contact` that match and a made-up contact at its company |
 | `create_test_user --purge` | delete every `@example.test` user with their rows, sessions and files |
 | `worker` | the worker itself (what `dev:worker` runs, without the reload) |
 | `acceptance_checks [--since ISO]` | re-check the database-level invariants after a rehearsal; exits 1 on any FAIL |
@@ -59,7 +59,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
   headers).
 - `backend/apps/<app>/`: `core` (the `db()` bridge, `defer_in_tx`, scoping, errors, the router
   factory, the HTTP client, storage, throttles), `accounts`, `llm`, `jobs` (with
-  `sources/<source>.py`), `matching`, `resumes`, `applications`, `runs`, `chat`,
+  `sources/<source>.py`), `matching`, `resumes`, `applications`, `contacts`, `runs`, `chat`,
   `notifications`, `pages`, `legacy`. An app
   keeps its models and services, and as it needs them `api.py` (its routers), `tasks.py` (its
   procrastinate tasks), `fakes.py` (its `LLM_FAKE` answers) and `management/commands/`.
@@ -256,6 +256,37 @@ An issue reads like the ones already there:
   its current stage proves (`reached()`), because nothing records a stage move; say what a new
   number cannot know rather than guessing it. A new split is one more key in `funnel()`'s
   grouped count, not another query.
+- **Contacts come from a file the user exported, and go nowhere** (`apps/contacts/`, #63).
+  `parse.parse_contacts` reads LinkedIn's Connections.csv (or the archive it comes in) and any
+  CSV with a name column; it is pure, and its fixtures hold made-up people only.
+  `importer.import_contacts` runs in the request, makes no request of its own and defers
+  nothing; a person is one row per `dedupe_key`, so the same file again writes nothing. A
+  contact is linked to a registered company through `link.CompanyIndex` (the name as the mirror
+  normalises it, then a work email's domain, never a free-mail one), and `link.rematch()` links
+  the rest when their company is registered later. No LinkedIn request of any kind, ever. The
+  one thing that leaves is a company *name*, and only when the user presses "Look for the
+  boards" (`page.start_lookup`, the existing `company_discovery` run): never start that
+  unasked, and never put a person's field in it.
+- **A match says who the user knows there** (`apps/contacts/known.py`, #64). `known_at` answers
+  for any number of postings in one query (the contact's linked company, or its company name's
+  key against the posting's). Rows a page or card shows get `knows` from
+  `matching.queries.with_known(user_id, rows)`; rows a pipeline only reads do not ask. A watch's
+  message counts the announced matches where the user knows someone, its chat update names the
+  people (`chat.follow_up.known_roles`, wrapped with `untrusted()`), and the phone notification
+  says only how many: a name never goes to a notification server. With nobody known, each of
+  the three is byte for byte what it was, and tests pin both cases. Anything new that tells a
+  model about a contact wraps the name and position the same way.
+- **A note to a contact is drafted, never sent** (`apps/contacts/outreach.py`, #25).
+  `start_note(user_id, match_id, contact_id)` starts an `outreach` run (one model call is
+  still a run: `run_step` gives it the ledger, the timeout, the budget's sentence and a
+  Stop), and the step writes `outreach_notes` and completes the run in one transaction.
+  The prompt is `note_instructions` (the rules and the user's own resume) plus `note_prompt`
+  (the contact, the posting and the review, each through `untrusted()`, and one line Foray
+  writes about how they know each other, which says only what the data says). Both are
+  pinned in `tests/goldens/prompts/outreach/`; re-pin with `FORAY_UPDATE_SNAPSHOTS=1` when
+  you change them on purpose. Keep every field of a contact out of a run's input, output
+  and event messages (the chat agent's tools read those), and add nothing that sends a
+  note or contacts anyone: the user copies it and sends it themself.
 - **What a posting asks is read once** (`apps/jobs/facts.py`): level, years, work authorization
   and clearance, by patterns, at ingest. Filter on the `jobs` columns; do not ask a model for
   them. When the reading changes, bump `facts.VERSION` (the scheduled refresh then re-reads

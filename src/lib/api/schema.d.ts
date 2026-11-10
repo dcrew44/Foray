@@ -621,6 +621,116 @@ export interface paths {
         patch: operations["apps_applications_api_patch_application"];
         trace?: never;
     };
+    "/api/contacts/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import contacts
+         * @description Reads the uploaded list into the user's contacts. Like the resume upload, it reads its
+         *     own body, so it counts against its throttle before Django parses the multipart stream.
+         */
+        post: operations["apps_contacts_api_import_file"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contacts/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Look for boards */
+        post: operations["apps_contacts_api_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove every contact */
+        delete: operations["apps_contacts_api_delete_all"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contacts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a contact */
+        delete: operations["apps_contacts_api_delete_one"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/outreach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draft a note to a contact
+         * @description Queues the draft and answers at once: a request never waits on a model.
+         */
+        post: operations["apps_contacts_api_post_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/outreach/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Discard a note */
+        delete: operations["apps_contacts_api_delete_note"];
+        options?: never;
+        head?: never;
+        /** Edit a note */
+        patch: operations["apps_contacts_api_patch_note"];
+        trace?: never;
+    };
     "/api/conversations": {
         parameters: {
             query?: never;
@@ -772,6 +882,26 @@ export interface paths {
         };
         /** Companies page */
         get: operations["apps_pages_api_companies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Contacts page
+         * @description `q` searches the user's contacts by name, company, position or school.
+         */
+        get: operations["apps_pages_api_contacts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1133,7 +1263,7 @@ export interface components {
          * RunKind
          * @enum {string}
          */
-        RunKind: "search" | "rank_deep" | "tailor" | "resume_render" | "profile_import" | "company_discovery" | "company_refresh" | "watch";
+        RunKind: "search" | "rank_deep" | "tailor" | "resume_render" | "profile_import" | "company_discovery" | "company_refresh" | "watch" | "outreach";
         /**
          * RunStatus
          * @enum {string}
@@ -1187,6 +1317,27 @@ export interface components {
             mode?: ("approve_each" | "autopilot") | null;
             /** Againfrom */
             againFrom?: string | null;
+        };
+        /** MatchKnows */
+        MatchKnows: {
+            /** Count */
+            count: number;
+            /** People */
+            people: components["schemas"]["MatchPerson"][];
+        };
+        /** MatchPerson */
+        MatchPerson: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: string;
+            /** Profileurl */
+            profileUrl: string;
         };
         /** MatchRow */
         MatchRow: {
@@ -1262,6 +1413,7 @@ export interface components {
              * Format: date-time
              */
             createdAt: string;
+            knows?: components["schemas"]["MatchKnows"] | null;
         };
         /** MatchesOut */
         MatchesOut: {
@@ -1690,6 +1842,69 @@ export interface components {
              */
             action: "dismiss" | "opened" | "submitted" | "reopen";
         };
+        /** ContactsImported */
+        ContactsImported: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+            /** Added */
+            added: number;
+            /** Updated */
+            updated: number;
+            /** Unchanged */
+            unchanged: number;
+            /** Skipped */
+            skipped: number;
+            /** Total */
+            total: number;
+            /** Matched */
+            matched: number;
+        };
+        /** ContactsLookupStarted */
+        ContactsLookupStarted: {
+            /** Ok */
+            ok: boolean;
+            /**
+             * Runid
+             * Format: uuid
+             */
+            runId: string;
+            /** Message */
+            message: string;
+            /** Names */
+            names: string[];
+        };
+        /** OutreachStarted */
+        OutreachStarted: {
+            /** Ok */
+            ok: boolean;
+            /**
+             * Runid
+             * Format: uuid
+             */
+            runId: string;
+            /** Message */
+            message: string;
+        };
+        /** OutreachIn */
+        OutreachIn: {
+            /**
+             * Matchid
+             * Format: uuid
+             */
+            matchId: string;
+            /**
+             * Contactid
+             * Format: uuid
+             */
+            contactId: string;
+        };
+        /** OutreachEdit */
+        OutreachEdit: {
+            /** Body */
+            body: string;
+        };
         /** ConversationItem */
         ConversationItem: {
             /**
@@ -2093,6 +2308,21 @@ export interface components {
             /** Missing */
             missing: number;
         };
+        /** MatchContact */
+        MatchContact: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: string;
+            /** Profileurl */
+            profileUrl: string;
+            note: components["schemas"]["MatchNote"] | null;
+        };
         /** MatchDetail */
         MatchDetail: {
             /**
@@ -2150,6 +2380,31 @@ export interface components {
             tailored: components["schemas"]["TailoredView"] | null;
             /** Hasbaseresume */
             hasBaseResume: boolean;
+            knows: components["schemas"]["MatchPeople"];
+        };
+        /** MatchNote */
+        MatchNote: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Body */
+            body: string;
+            /**
+             * Draftedat
+             * Format: date-time
+             */
+            draftedAt: string;
+            /** Edited */
+            edited: boolean;
+        };
+        /** MatchPeople */
+        MatchPeople: {
+            /** Count */
+            count: number;
+            /** People */
+            people: components["schemas"]["MatchContact"][];
         };
         /** MatchedRequirement */
         MatchedRequirement: {
@@ -2261,6 +2516,97 @@ export interface components {
             medianS: number;
             /** P90S */
             p90S: number;
+        };
+        /** ContactCompany */
+        ContactCompany: {
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Peoplecount */
+            peopleCount: number;
+            /** Openpostings */
+            openPostings: number;
+            /** People */
+            people: components["schemas"]["ContactPerson"][];
+        };
+        /** ContactPerson */
+        ContactPerson: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: string;
+        };
+        /** ContactResult */
+        ContactResult: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: string;
+            /** Companyname */
+            companyName: string;
+            /** Companyslug */
+            companySlug: string | null;
+            /** Email */
+            email: string;
+            /** Profileurl */
+            profileUrl: string;
+            /** Connectedon */
+            connectedOn: string | null;
+        };
+        /** ContactsLookup */
+        ContactsLookup: {
+            /** Names */
+            names: string[];
+            /** Remaining */
+            remaining: number;
+            /** Runid */
+            runId: string | null;
+        };
+        /** ContactsPage */
+        ContactsPage: {
+            /** Total */
+            total: number;
+            /** Matched */
+            matched: number;
+            /** Withoutcompany */
+            withoutCompany: number;
+            /** Companies */
+            companies: components["schemas"]["ContactCompany"][];
+            /** Companiestotal */
+            companiesTotal: number;
+            /** Unmatched */
+            unmatched: components["schemas"]["ContactsUnmatched"][];
+            /** Unmatchedtotal */
+            unmatchedTotal: number;
+            lookup: components["schemas"]["ContactsLookup"];
+            /** Query */
+            query: string;
+            /** Results */
+            results: components["schemas"]["ContactResult"][] | null;
+            /** Resultstotal */
+            resultsTotal: number;
+        };
+        /** ContactsUnmatched */
+        ContactsUnmatched: {
+            /** Name */
+            name: string;
+            /** Peoplecount */
+            peopleCount: number;
+            /** People */
+            people: components["schemas"]["ContactPerson"][];
+            /** Lookedup */
+            lookedUp: boolean;
         };
         /**
          * ApplyAnswer
@@ -2659,7 +3005,7 @@ export interface components {
              * Purpose
              * @enum {string}
              */
-            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge";
+            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge" | "outreach";
             /** Ref */
             ref: string | null;
             /** Error */
@@ -2677,7 +3023,7 @@ export interface components {
              * Purpose
              * @enum {string}
              */
-            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge";
+            purpose: "chat" | "extract" | "score" | "evaluate" | "tailor" | "verify" | "merge" | "outreach";
             /** Usd */
             usd: number;
             /** Calls */
@@ -4265,6 +4611,176 @@ export interface operations {
             };
         };
     };
+    apps_contacts_api_import_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactsImported"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactsLookupStarted"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_delete_all: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_delete_one: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_post_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutreachIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutreachStarted"];
+                };
+            };
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutreachStarted"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_delete_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
+    apps_contacts_api_patch_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutreachEdit"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkMessageOut"];
+                };
+            };
+        };
+    };
     apps_chat_api_list_conversations: {
         parameters: {
             query?: never;
@@ -4472,6 +4988,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompaniesPage"];
+                };
+            };
+        };
+    };
+    apps_pages_api_contacts: {
+        parameters: {
+            query?: {
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactsPage"];
                 };
             };
         };

@@ -18,7 +18,9 @@ message) is the one case that can reach a phone twice.
 **Decided when it is due, not when it is queued.** `claim` reads the user's settings at send
 time: no topic any more → `skipped`; inside quiet hours → `send_after` moves to their end and
 the sweep picks the row up then; a match the user has already moved out of `found` (they saw
-it in the app while the notification waited) → `skipped`.
+it in the app while the notification waited) → `skipped`. How many people the user knows at
+the posting's company (#64) is counted then too, so the message is true of their contacts as
+they are when it goes out.
 """
 
 from __future__ import annotations
@@ -37,6 +39,7 @@ from procrastinate.exceptions import AlreadyEnqueued
 
 from apps.accounts.models import User
 from apps.accounts.schemas import Settings
+from apps.contacts.known import known_at_jobs
 from apps.core import throttle
 from apps.core.clock import database_now
 from apps.core.errors import ApiError
@@ -185,6 +188,18 @@ def due_user_ids() -> list[str]:
     )
 
 
+def _contacts_at(user_id: str, rows: Sequence[Notification]) -> dict[str, int]:
+    """By posting, how many people the user knows at its company (#64): what a notification
+    counts. One read, in a savepoint: failing to count must never cost the notification."""
+    try:
+        with transaction.atomic():
+            found = known_at_jobs(user_id, [row.match.job for row in rows])
+    except Exception:
+        log.warning("could not count contacts for user %s", user_id, exc_info=True)
+        return {}
+    return {job_id: len(people) for job_id, people in found.items()}
+
+
 def claim(user_id: str) -> Batch | None:
     """Take the user's due notifications for sending: at most `MAX_SINGLE` messages of their
     own, best match first, and one line for the rest. None when nothing is to be sent now
@@ -240,7 +255,13 @@ def claim(user_id: str) -> Batch | None:
             attempts=F("attempts") + 1, send_after=Now() + LEASE, updated_at=Now()
         )
         singles, rest = rows[:MAX_SINGLE], rows[MAX_SINGLE:]
-        deliveries = [Delivery((row.id,), compose.match_message(row.match, now)) for row in singles]
+        knows = _contacts_at(user_id, singles)
+        deliveries = [
+            Delivery(
+                (row.id,), compose.match_message(row.match, now, knows.get(row.match.job_id, 0))
+            )
+            for row in singles
+        ]
         if rest:
             deliveries.append(
                 Delivery(tuple(row.id for row in rest), compose.summary_message(len(rest)))

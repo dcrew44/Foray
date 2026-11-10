@@ -23,7 +23,9 @@ from django.db import connection, transaction
 from django.db.models import F, Q, QuerySet
 from django.db.models.fields.json import KT
 from django.db.models.functions import Coalesce, Length, Now
+from pydantic import PrivateAttr
 
+from apps.contacts.known import MatchKnows, known_at, row_knows
 from apps.core.router import ApiModel
 from apps.jobs import registry
 from apps.jobs.models import Job
@@ -66,6 +68,7 @@ __all__ = [
     "update_match",
     "upsert_matches",
     "valid_uuids",
+    "with_known",
 ]
 
 OPEN_STAGES: tuple[str, ...] = ("found", "shortlisted", "applied", "interviewing", "offer")
@@ -139,6 +142,12 @@ class MatchRow(ApiModel):
     tailored_resume_id: uuid.UUID | None
     user_rating: int | None
     created_at: datetime
+    # Who the user knows at the posting's company (#64). Null where they know nobody, and on
+    # rows nobody looks at: `with_known` fills it in for the rows a page or a card shows.
+    knows: MatchKnows | None = None
+
+    # The posting's registered company, for `with_known`; not part of the row on the wire.
+    _company_id: uuid.UUID | None = PrivateAttr(default=None)
 
 
 def _rows(user_id: str) -> QuerySet[JobMatch]:
@@ -157,7 +166,7 @@ def _row(match: Any) -> MatchRow:
     job: Job = match.job
     recommendation = match.recommendation if match.recommendation in RECOMMENDATIONS else None
     lane = lane_of(match)
-    return MatchRow(
+    row = MatchRow(
         match_id=match.id,
         job_id=job.id,
         stage=match.stage,
@@ -186,6 +195,23 @@ def _row(match: Any) -> MatchRow:
         user_rating=match.user_rating,
         created_at=match.created_at,
     )
+    row._company_id = job.company_id
+    return row
+
+
+def with_known(user_id: str, rows: Sequence[MatchRow]) -> list[MatchRow]:
+    """These rows, each saying who the user knows at its posting's company (`knows`; #64).
+    One query for any number of rows, and none for no rows. The pages and cards that show rows
+    call it; the pipelines that only read them do not."""
+    found = known_at(user_id, [(row.job_id, row._company_id, row.company) for row in rows])
+    if not found:
+        return list(rows)
+    return [
+        row.model_copy(update={"knows": row_knows(found[row.job_id])})
+        if row.job_id in found
+        else row
+        for row in rows
+    ]
 
 
 _BEST_FIRST = (F("score").desc(nulls_last=True), F("job__posted_at").desc(nulls_last=True), "id")

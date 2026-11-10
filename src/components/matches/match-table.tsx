@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import type { BoardMatch } from "./board";
 import { ClosedMark } from "./job-signals";
+import { KnowsMark } from "./knows";
 import { LaneLabel } from "./lane";
 import { moveMatch } from "./match-api";
 import { ALL_STAGES as STAGES } from "./stages";
@@ -199,6 +200,7 @@ export function MatchTable({
                         {!match.isActive && <ClosedMark />}
                       </span>
                       <Why blocker={match.blocker} className="mt-1" reason={match.reason} />
+                      <KnowsMark className="mt-1" knows={match.knows} />
                     </Link>
                   </td>
                   <td className="text-muted-foreground hidden truncate py-2.5 pr-4 xl:table-cell">

@@ -44,6 +44,7 @@ from playwright.sync_api import (
     Worker,
     sync_playwright,
 )
+from playwright.sync_api import Error as PlaywrightError
 
 REPO = Path(__file__).resolve().parents[3]
 EXTENSION = REPO / "extension"
@@ -463,9 +464,8 @@ class Browser:
     def chrome_says(self) -> dict[str, list[str]]:
         """What chrome://extensions holds against the extension: warnings from installing it,
         errors in its manifest, and errors and warnings its scripts raised while running."""
-        page = self.context.new_page()
+        page = chrome_extensions_page(self.context)
         try:
-            page.goto("chrome://extensions/")
             info = page.evaluate(
                 "(id) => new Promise((done) => chrome.developerPrivate.getExtensionInfo(id, done))",
                 self.extension_id,
@@ -566,6 +566,24 @@ class Popup:
         return any(t["targetId"] == self.target_id for t in found["targetInfos"])
 
 
+def chrome_extensions_page(context: BrowserContext) -> Page:
+    """chrome://extensions in a tab of its own. When it is installed the extension opens its
+    settings page, and Chrome may put that in the blank tab this has just opened, which ends
+    the navigation here ("interrupted by another navigation"). That tab is left to it and
+    another is opened: it happens once, at install."""
+    for attempt in range(4):
+        page = context.new_page()
+        try:
+            page.goto("chrome://extensions/")
+        except PlaywrightError as error:
+            page.close()
+            if "interrupted by another navigation" not in str(error) or attempt == 3:
+                raise
+        else:
+            return page
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
 def _fulfil(route: Route, pages: Pages, aborted: list[str]) -> None:
     url = route.request.url
     parts = urlsplit(url)
@@ -656,8 +674,7 @@ def browser(
         session._pages = served
         # Developer mode with "Collect errors" on, as chrome://extensions offers for an unpacked
         # extension: Chrome then keeps every error the extension's scripts raise.
-        setup = context.new_page()
-        setup.goto("chrome://extensions/")
+        setup = chrome_extensions_page(context)
         setup.evaluate(
             """(id) => new Promise((done) =>
                 chrome.developerPrivate.updateProfileConfiguration({ inDeveloperMode: true }, () =>

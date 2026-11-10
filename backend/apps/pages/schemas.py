@@ -26,6 +26,7 @@ from apps.contacts.outreach import MatchPeople
 from apps.core.router import ApiModel
 from apps.jobs.legitimacy import SignalKind
 from apps.jobs.pipeline import CompanyRow
+from apps.mail.pages import MailSettings, MatchMail
 from apps.matching.lanes import LaneName
 from apps.matching.queries import MatchRow, Recommendation, RemoteName, StageName
 from apps.matching.schemas import DeepEval, FastScore
@@ -262,6 +263,7 @@ class MatchDetailPage(ApiModel):
     # Who the user knows at the posting's company (#64), each with the note drafted to them
     # (#25); empty for nobody.
     knows: MatchPeople
+    mail: MatchMail  # the employer's confirmation, and what its later mail suggests (#26)
 
 
 # --- /pages/activity -----------------------------------------------------------------------------
@@ -555,3 +557,4 @@ class SettingsPage(ApiModel):
     providers: ProviderKeys
     ntfy_server: str  # `NTFY_SERVER`: where the user's phone subscribes to their topic (#59)
     extension_tokens: list[ExtensionTokenRow]  # newest first (#22)
+    mail: MailSettings  # the connected mailbox and what was found in it (#26); never a token

@@ -9,6 +9,7 @@ import { DeepEvaluation, FastEvaluation } from "@/components/matches/evaluation"
 import { ApplicationPanel } from "@/components/matches/application-panel";
 import { JobFactsList } from "@/components/matches/job-facts";
 import { ClosedMark, JobSignals } from "@/components/matches/job-signals";
+import { MatchMailPanel } from "@/components/matches/mail-panel";
 import {
   EvaluateButton,
   LaneSelect,
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function MatchPage({ params }: Params) {
   const { id } = await params;
-  const { match, job, tailored, hasBaseResume, knows } = await load(id);
+  const { match, job, tailored, hasBaseResume, knows, mail } = await load(id);
 
   const deep = match.deepEval;
   const fast = match.fastEval;
@@ -172,6 +173,7 @@ export default async function MatchPage({ params }: Params) {
             knows={knows}
             matchId={match.id}
           />
+          <MatchMailPanel mail={mail} />
 
           <ApplicationPanel
             application={match.application}

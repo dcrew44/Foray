@@ -17,6 +17,7 @@ limit, so the API and the worker share counts with no Redis. Run it in autocommi
 | `notify-test:<user>` | 5 / 10 min (Settings' test notification) |
 | `contacts-import:<user>` | 20 / hour |
 | `outreach:<user>` | 30 / hour (notes drafted to contacts) |
+| `mail-connect:<user>` | 10 / 10 min (starting to connect a mailbox) |
 
 The sign-in key is read with `check()` **before** the password is checked, so a locked key gets
 429 without hashing, even for the right password; only a failure counts (`throttle()`).
@@ -58,6 +59,7 @@ TAILOR = Limit(30, 3600)
 NOTIFY_TEST = Limit(5, 10 * 60)
 CONTACTS_IMPORT = Limit(20, 3600)
 OUTREACH = Limit(30, 3600)
+MAIL_CONNECT = Limit(10, 10 * 60)
 
 _BUMP = """
 INSERT INTO rate_limits (key, window_start, count)

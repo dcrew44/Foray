@@ -15,6 +15,7 @@ dependencies = [
   "procrastinate[django]~=3.10.0",
   "pydantic-ai-slim[openai,anthropic,google,ui]==2.54.0",  # exact: releases ship several times a week
   "httpx2~=2.13.1",
+  "cryptography~=50.0",  # seals mail tokens at rest (apps/mail/crypto.py)
   "pypdfium2~=5.14.0",
   "mammoth==1.13.0",
   "ada-url~=4.0.0",

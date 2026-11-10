@@ -35,6 +35,34 @@
       "lastUsedAt": "null"
     }
   ],
+  "mail": {
+    "account": {
+      "address": "string",
+      "connectedAt": "string",
+      "found": {
+        "confirmations": "number",
+        "interviews": "number",
+        "matched": "number",
+        "rejections": "number",
+        "waiting": "number"
+      },
+      "lastCheckedAt": "null",
+      "lastError": "string",
+      "status": "string",
+      "waiting": [
+        {
+          "company": "string",
+          "kind": "string",
+          "matchId": "string",
+          "receivedAt": "string",
+          "title": "string"
+        }
+      ]
+    },
+    "configured": "boolean",
+    "notice": "null",
+    "redirectUri": "string"
+  },
   "monthStart": "string",
   "ntfyServer": "string",
   "providers": {

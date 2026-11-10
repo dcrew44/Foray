@@ -155,6 +155,16 @@ Foray never signs in to LinkedIn and never looks anyone up. Your contacts stay i
 database: the only thing the board lookup sends out is company names, and only when you
 press the button.
 
+### What employers wrote back
+
+Connect Gmail under **Settings, Email** and Foray reads, and only reads, the employer's
+replies to applications you sent: a confirmation is recorded on the application as proof it
+arrived, and a rejection or an interview invitation is pointed out on its match, where you
+decide whether the match moves. It reads senders, subject lines and Gmail's one-line
+previews, never a message's body, and no email is shown to a model. It needs a Google OAuth
+client of your own: [docs/gmail.md](docs/gmail.md) has the setup and exactly what is read
+and kept.
+
 ### Your profile and settings
 
 Your resume becomes structured facts that every score, review and tailored resume is

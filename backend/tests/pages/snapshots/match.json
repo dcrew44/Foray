@@ -48,6 +48,11 @@
       }
     ]
   },
+  "mail": {
+    "confirmationSubject": "null",
+    "confirmedAt": "null",
+    "suggestion": "null"
+  },
   "match": {
     "application": "null",
     "blocker": "null",

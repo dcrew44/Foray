@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class MailConfig(AppConfig):
+    name = "apps.mail"
+    label = "mail"
+    verbose_name = "Mail"

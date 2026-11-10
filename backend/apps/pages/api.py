@@ -7,7 +7,7 @@ Each server component makes one call here (plus `/api/me` from the layout), with
   headline}`;
 - `GET /api/pages/matches?view=&stage=&closed=&lane=`: `{counts, matches, ready, view, stage,
   showClosed, lane}`;
-- `GET /api/pages/matches/{id}`: `{match, job, tailored, hasBaseResume, knows}`, or 404;
+- `GET /api/pages/matches/{id}`: `{match, job, tailored, hasBaseResume, knows, mail}`, or 404;
 - `GET /api/pages/activity`: `{runs: RunSummary[]}`;
 - `GET /api/pages/chat`: `{suggestions}`;
 - `GET /api/pages/companies`: `{companies: CompanyRow[], active, openPostings}`;
@@ -15,8 +15,8 @@ Each server component makes one call here (plus `/api/me` from the layout), with
 - `GET /api/pages/contacts?q=`: the people the user knows, by company (`contacts/page.py`);
 - `GET /api/pages/profile`: `{hasResume, ready, resume, preferences, progress, slots, base,
   render}`;
-- `GET /api/pages/settings`: `{user, settings, review, spend, byPurpose, byModel, byDay,
-  monthStart, aggregator, purposes, providers}`.
+- `GET /api/pages/settings?mail=`: `{user, settings, review, spend, byPurpose, byModel, byDay,
+  monthStart, aggregator, purposes, providers, ntfyServer, mail}`.
 
 `onboarding` is `accounts.profile.OnboardingState` (`map/_gaps.md` §3.7 without `hasProfile`);
 the profile and settings pages have no `hasProfile` either, because preferences and settings live
@@ -125,5 +125,7 @@ def profile(request: HttpRequest) -> ProfilePage:
 
 
 @pages.get("/settings", response=SettingsPage, summary="Settings page")
-def settings(request: HttpRequest) -> SettingsPage:
-    return build.settings_page(_user(request))
+def settings(request: HttpRequest, mail: str | None = None) -> SettingsPage:
+    """`mail` is the word a mailbox connection came back with (`/settings?mail=connected`);
+    anything else is ignored."""
+    return build.settings_page(_user(request), mail=mail)

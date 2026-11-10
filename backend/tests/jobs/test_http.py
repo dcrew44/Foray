@@ -277,6 +277,89 @@ async def test_a_posted_body_never_follows_a_redirect_to_another_origin() -> Non
     assert seen["other.example"] == ("GET", b"")
 
 
+async def test_post_form_sends_a_form_body_once(no_backoff: list[float]) -> None:
+    """What an OAuth token endpoint takes (#26). The fields are credentials and a code is spent
+    by its first use, so a 5xx is not retried unless the caller asks."""
+    seen: list[tuple[str, str | None, str | None, bytes]] = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen.append(
+            (
+                request.method,
+                request.headers.get("content-type"),
+                request.headers.get("accept"),
+                request.content,
+            )
+        )
+        return httpx2.Response(503 if len(seen) == 1 else 200, text='{"access_token":"t"}')
+
+    fields = {
+        "grant_type": "authorization_code",
+        "code": "4/a b+c&d",
+        "redirect_uri": "https://x/y",
+    }
+    async with mock_client(handler) as client:
+        with pytest.raises(HttpError) as raised:
+            await client.post_form("https://example.com/token", fields)
+        assert raised.value.status == 503 and no_backoff == []
+        body = await client.post_form("https://example.com/token", fields, retries=1)
+    assert body == '{"access_token":"t"}'
+    encoded = b"grant_type=authorization_code&code=4%2Fa+b%2Bc%26d&redirect_uri=https%3A%2F%2Fx%2Fy"
+    assert seen == [("POST", "application/x-www-form-urlencoded", "application/json", encoded)] * 2
+
+
+async def test_a_posted_form_keeps_the_clients_guarantees() -> None:
+    """The guard, the cap and the redirect rule are the same for a form as for anything else:
+    the secret in the body goes to the origin it was meant for and nowhere else, and never
+    into an error."""
+    seen: dict[str, tuple[str, bytes]] = {}
+    secret = {"client_secret": "s3cret-value", "refresh_token": "r3fresh-value"}
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen[request.url.host] = (request.method, request.content)
+        if request.url.host == "example.com":
+            return httpx2.Response(307, headers={"location": "https://other.example/token"})
+        if request.url.host == "big.example":
+            return httpx2.Response(200, text="x" * 2048)
+        if request.url.host == "refuses.example":
+            return httpx2.Response(400, json={"error": "invalid_grant"})
+        return httpx2.Response(200, text="{}")
+
+    async with mock_client(handler) as client:
+        await client.post_form("https://example.com/token", secret)
+        assert seen["example.com"][0] == "POST" and b"s3cret-value" in seen["example.com"][1]
+        assert seen["other.example"] == ("GET", b"")  # followed, without the body
+
+        for blocked in (
+            "http://169.254.169.254/token",
+            "http://localhost/token",
+            "https://x:8443/t",
+        ):
+            with pytest.raises(HttpError) as raised:
+                await client.post_form(blocked, secret)
+            assert raised.value.blocked
+
+        with pytest.raises(HttpError) as raised:
+            await client.post_form("https://big.example/token", secret, max_bytes=1024)
+        assert raised.value.status == "too-large"
+
+        with pytest.raises(HttpError) as raised:
+            await client.post_form("https://refuses.example/token", secret)
+    # A refusal carries the server's answer and the URL, never what was sent.
+    error = raised.value
+    assert (error.status, error.body) == (400, '{"error":"invalid_grant"}')
+    for text in (str(error), repr(error), error.body, error.url):
+        assert "s3cret-value" not in text and "r3fresh-value" not in text
+
+    def refuse(request: httpx2.Request) -> httpx2.Response:
+        raise httpx2.ConnectError("connection refused", request=request)
+
+    async with mock_client(refuse) as client:
+        with pytest.raises(NetworkError) as failed:
+            await client.post_form("https://example.com/token", secret)
+    assert "s3cret-value" not in str(failed.value) and "r3fresh-value" not in str(failed.value)
+
+
 async def test_status_of_looks_without_following_or_reading() -> None:
     def handler(request: httpx2.Request) -> httpx2.Response:
         if request.url.path == "/known":

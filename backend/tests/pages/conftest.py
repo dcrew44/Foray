@@ -4,7 +4,8 @@
 variant with a rendered snapshot, matches in four stages (one deep-evaluated with a tailored,
 rendered resume), a run of every kind with the inputs its start function stores, a pending
 approval, a conversation with messages, events, ledger rows, two contacts and a note to one of
-them. The tenancy sweep builds two of them; the page tests use one.
+them, and a connected mailbox with an employer's rejection waiting on the applied match. The
+tenancy sweep builds two of them; the page tests use one.
 
 Every page call carries `X-Foray-SSR: 1`, as `django()` in `src/lib/api/server.ts` sends it, so
 the sliding session never writes during a measured request (§4.1).
@@ -25,11 +26,13 @@ from apps.applications.models import Application, ExtensionToken
 from apps.chat.models import Conversation
 from apps.contacts.models import Contact, OutreachNote
 from apps.jobs.models import Company, Job
+from apps.mail.models import ApplicationEmail, MailAccount
 from apps.matching.models import JobMatch
 from apps.resumes.models import Document, Resume, ResumeVariant
 from apps.runs.models import Approval, Run
 from tests.factories import (
     make_application,
+    make_application_email,
     make_approval,
     make_company,
     make_contact,
@@ -39,6 +42,7 @@ from tests.factories import (
     make_extension_token,
     make_job,
     make_llm_call,
+    make_mail_account,
     make_match,
     make_message,
     make_outreach_note,
@@ -110,6 +114,8 @@ class Graph:
     contact: Contact
     note: OutreachNote
     token: ExtensionToken
+    mail_account: MailAccount
+    email: ApplicationEmail  # an undecided rejection suggestion on the applied match
 
     @property
     def markers(self) -> list[str]:
@@ -135,6 +141,8 @@ class Graph:
             self.application,
             self.contact,
             self.note,
+            self.mail_account,
+            self.email,
         ]
         return [str(row.pk) for row in rows] + [str(self.user.pk)]
 
@@ -244,6 +252,19 @@ def full_graph(
         match=matches["found"],
         contact=contact,
         body=f"{marker}, I saw the backend role at your company and I am applying.",
+    )
+
+    # A connected mailbox (#26), and an employer's rejection matched to the applied match:
+    # a suggestion the user has not answered.
+    mail_account = make_mail_account(user, address=f"{marker.lower()}@mailbox.example")
+    suggestion = make_application_email(
+        user,
+        account=mail_account,
+        kind="rejection",
+        match=matches["applied"],
+        sender_name=f"{other_company.name} Recruiting",
+        subject=f"Update on your application ({marker})",
+        snippet="Unfortunately we have decided to move forward with other candidates.",
     )
 
     found, shortlisted = str(matches["found"].id), str(matches["shortlisted"].id)
@@ -386,4 +407,6 @@ def full_graph(
         contact=contact,
         note=note,
         token=make_extension_token(user, label=f"{marker}'s laptop"),
+        mail_account=mail_account,
+        email=suggestion,
     )

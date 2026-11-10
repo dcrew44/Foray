@@ -60,7 +60,7 @@ Backend-only commands run as `cd backend && uv run python manage.py <command>`:
 - `backend/apps/<app>/`: `core` (the `db()` bridge, `defer_in_tx`, scoping, errors, the router
   factory, the HTTP client, storage, throttles), `accounts`, `llm`, `jobs` (with
   `sources/<source>.py`), `matching`, `resumes`, `applications`, `contacts`, `runs`, `chat`,
-  `notifications`, `pages`, `legacy`. An app
+  `notifications`, `mail`, `pages`, `legacy`. An app
   keeps its models and services, and as it needs them `api.py` (its routers), `tasks.py` (its
   procrastinate tasks), `fakes.py` (its `LLM_FAKE` answers) and `management/commands/`.
 - `backend/tests/`: pytest, one folder per app, plus `fixtures/`, `goldens/` and `contract/`.
@@ -186,6 +186,20 @@ An issue reads like the ones already there:
   send through it, never around it. The server is `NTFY_SERVER` and a user supplies only the
   topic; publish with `retries=0` (a repeated POST can deliver twice). Settings' test is a job
   too (`notify.test`, answered by a `notification.test` event): no request waits on ntfy.
+- **Mail is only read, and never by a model** (`apps/mail/`, `docs/gmail.md`). Everything asked
+  of Google is in `google.py`: the one scope is `gmail.readonly`, a message is fetched with
+  `format=metadata` (From, Subject, Date and Gmail's snippet; never a body), and nothing that
+  is not a GET goes to Gmail. `classify.py` (what a message is) and `matching.py` (which
+  application it is about) are pure and deterministic; grow them against
+  `tests/fixtures/mail/messages.json`, write a new `fresh` batch to measure a change, and
+  update `KNOWN_MISSES` rather than tuning on the fresh one. A confirmation is recorded on the
+  application as proof of arrival (`store.record`, the employer's own word, within a week of
+  sending); a rejection or an invitation is a suggestion, and only `suggestions.accept` (the
+  user's click) moves a stage. Tokens are stored sealed (`crypto.seal`) and never logged,
+  answered or put in an error; `GoogleError` carries Foray's sentence and a short code, never
+  Google's text. `google.Reconnect` (a revoked or expired grant) stops the checks until the
+  user connects again. The callback and the disconnect are the two requests that wait on
+  Google (`api.py` says why); every check is the worker's (`mail.check`, every 15 minutes).
 - **The API**: routers come from `apps.core.router.router()` (camelCase on the wire, snake_case
   in Python); output schemas extend `ApiModel`. Mutations answer `{ok: true, message}` (`202`
   when work was queued); expected failures raise `ApiError(status, message)` or name their

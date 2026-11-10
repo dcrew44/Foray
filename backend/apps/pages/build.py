@@ -45,6 +45,7 @@ from apps.llm import registry
 from apps.llm.models import LlmCall
 from apps.llm.pricing import rate_for
 from apps.llm.reasoning import effort_for
+from apps.mail.pages import mail_settings, match_mail
 from apps.matching import queries as match_queries
 from apps.matching.deep_eval import estimate_eval_cost
 from apps.matching.lanes import as_lane, lane_of, review_lane
@@ -429,6 +430,7 @@ def match_page(user: User, match_id: uuid.UUID) -> MatchDetailPage | None:
         tailored=_tailored_view(tailored) if tailored is not None else None,
         has_base_resume=has_base,
         knows=match_people(user.pk, match),
+        mail=match_mail(user.pk, match),
     )
 
 
@@ -939,10 +941,12 @@ def _usd(value: Decimal | None) -> float:
     return float(value or 0)
 
 
-def settings_page(user: User) -> SettingsPage:
-    """Behaviour, this month's spend, the models in use, the aggregator quota and the
-    browser extension's tokens. Keys never leave the server: only which providers have one.
-    Nor do tokens: only their labels and when each was made and last used."""
+def settings_page(user: User, *, mail: str | None = None) -> SettingsPage:
+    """Behaviour, this month's spend, the models in use, the aggregator quota, the browser
+    extension's tokens and the connected mailbox. Keys never leave the server: only which
+    providers have one. Nor do tokens: only their labels and when each was made and last used.
+    `mail` is the word a mailbox connection came back with (`?mail=connected`), which the page
+    turns into its sentence."""
     since = month_start()
     calls = LlmCall.objects.for_user(user.pk).filter(created_at__gte=since)
     by_purpose = list(
@@ -1029,4 +1033,5 @@ def settings_page(user: User) -> SettingsPage:
             )
             for token in ExtensionToken.objects.for_user(user.pk).order_by("-created_at", "id")
         ],
+        mail=mail_settings(user.pk, mail),
     )

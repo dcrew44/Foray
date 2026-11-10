@@ -24,6 +24,7 @@ from apps.contacts import api as contacts_api
 from apps.core import api as core_api
 from apps.core import errors, openapi
 from apps.jobs import api as jobs_api
+from apps.mail import api as mail_api
 from apps.matching import api as matching_api
 from apps.notifications import api as notifications_api
 from apps.pages import api as pages_api
@@ -41,6 +42,7 @@ ROUTER_MODULES = (
     contacts_api,
     chat_api,
     notifications_api,
+    mail_api,
     pages_api,
     core_api,
 )

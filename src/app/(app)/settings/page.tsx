@@ -5,6 +5,7 @@ import { PageNav } from "@/components/profile/page-nav";
 import { BehaviourForm } from "@/components/settings/behaviour-form";
 import { AppearanceForm } from "@/components/settings/appearance-form";
 import { ExtensionForm } from "@/components/settings/extension-form";
+import { MailPanel } from "@/components/settings/mail-panel";
 import { NotificationsForm } from "@/components/settings/notifications-form";
 import { SignOutButton } from "@/components/settings/sign-out-button";
 import {
@@ -45,8 +46,16 @@ const PROVIDERS: ProviderId[] = ["openai", "anthropic", "google", "deepseek", "c
  * read of Django's settings page; provider keys never leave the server, only
  * which ones are set.
  */
-export default async function SettingsPage() {
-  const page = await django<S["SettingsPage"]>("/api/pages/settings");
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // A mailbox connection comes back with one word in the address (`?mail=connected`), which
+  // Django turns into the sentence the Email section shows.
+  const { mail: word } = await searchParams;
+  const query = typeof word === "string" ? `?mail=${encodeURIComponent(word)}` : "";
+  const page = await django<S["SettingsPage"]>(`/api/pages/settings${query}`);
   const { user, settings, spend: total, byPurpose, byModel, byDay, aggregator, purposes } = page;
   const since = new Date(page.monthStart);
 
@@ -100,6 +109,15 @@ export default async function SettingsPage() {
               title="Browser extension"
             >
               <ExtensionForm initial={settings} tokens={page.extensionTokens} />
+            </Section>
+          </div>
+
+          <div className="scroll-mt-20 lg:scroll-mt-8" id="email">
+            <Section
+              description="Foray can read your Gmail, and only read it, to find employers' replies to the applications you sent."
+              title="Email"
+            >
+              <MailPanel mail={page.mail} />
             </Section>
           </div>
 
@@ -292,6 +310,7 @@ export default async function SettingsPage() {
               { id: "behaviour", label: "How Foray works for you" },
               { id: "notifications", label: "Phone notifications" },
               { id: "extension", label: "Browser extension" },
+              { id: "email", label: "Email" },
               { id: "usage", label: "Spend this month", detail: formatUsd(total.usd) },
               { id: "models", label: "Models" },
               { id: "worker", label: "Worker" },

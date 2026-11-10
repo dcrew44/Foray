@@ -3292,6 +3292,8 @@ export interface components {
             matches: number;
             /** Applied */
             applied: number;
+            /** Interviewed */
+            interviewed: number;
         };
         /** OutcomeFunnel */
         OutcomeFunnel: {

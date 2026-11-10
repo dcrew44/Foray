@@ -120,17 +120,17 @@ export default async function OutcomesPage() {
               <Section title="How these are counted">
                 <div className="text-muted-foreground max-w-[75ch] space-y-2 text-[13.5px] leading-relaxed">
                   <p>
-                    Foray keeps where each match is now, not where it has been. A match counts
-                    as applied to when it is in Applied, Interviewing or Offer, or when its
-                    application was marked sent on the Apply page. It counts as an interview
-                    when it is in Interviewing or Offer.
+                    A match counts as applied to once it has been in Applied, Interviewing or
+                    Offer, or its application was marked sent on the Apply page, and as an
+                    interview once it has been in Interviewing or Offer. It keeps both when
+                    it is later rejected or archived. Moving a match back to Found or
+                    Shortlisted says it was not applied to after all.
                   </p>
                   <p>
-                    Two things follow. An interview that ended in a rejection is no longer
-                    counted as an interview, so a rate can read low. And an application you
-                    moved to Applied by hand and later closed is no longer counted as an
-                    application, so a rate can read high. An application marked sent on the
-                    Apply page stays counted whatever happens next.
+                    Foray began keeping this in November 2026. A match that was rejected or
+                    archived before then counts as applied to only if its application was
+                    marked sent on the Apply page, and never as an interview, so for older
+                    matches these counts are the least it could be.
                   </p>
                 </div>
               </Section>

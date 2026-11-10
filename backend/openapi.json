@@ -8603,12 +8603,17 @@
           "applied": {
             "title": "Applied",
             "type": "integer"
+          },
+          "interviewed": {
+            "title": "Interviewed",
+            "type": "integer"
           }
         },
         "required": [
           "stage",
           "matches",
-          "applied"
+          "applied",
+          "interviewed"
         ],
         "title": "OutcomeClosed",
         "type": "object"

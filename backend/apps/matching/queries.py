@@ -350,6 +350,25 @@ def latest_matched_at(user_id: str) -> datetime | None:
 # --- writes from the UI and chat -----------------------------------------------------------------
 
 
+# When a match first reached Applied and Interviewing (#94), set by every statement that moves a
+# stage. A match keeps them as it moves on to Rejected or Archived, which is what lets the
+# Outcomes page count an interview that ended in a rejection; moving it back before a step
+# says it never got there, and clears that step's time. `%(stage)s` is where the match is
+# going and `%(at)s` when it got there (NULL for now).
+STAGE_TIMES = """
+    applied_at = CASE
+        WHEN %(stage)s IN ('found', 'shortlisted') THEN NULL
+        WHEN %(stage)s IN ('applied', 'interviewing', 'offer')
+            THEN coalesce(applied_at, LEAST(coalesce(%(at)s::timestamptz, now()), now()))
+        ELSE applied_at END,
+    interviewing_at = CASE
+        WHEN %(stage)s IN ('found', 'shortlisted', 'applied') THEN NULL
+        WHEN %(stage)s IN ('interviewing', 'offer')
+            THEN coalesce(interviewing_at, LEAST(coalesce(%(at)s::timestamptz, now()), now()))
+        ELSE interviewing_at END
+"""
+
+
 def set_match_stage(
     user_id: str, match_id: Any, stage: str, *, entered_at: datetime | None = None
 ) -> bool:
@@ -361,10 +380,11 @@ def set_match_stage(
         return False
     with connection.cursor() as cursor:
         cursor.execute(
-            "UPDATE job_matches SET stage = %s, stage_changed_at = CASE WHEN stage = %s "
-            "THEN stage_changed_at ELSE LEAST(coalesce(%s::timestamptz, now()), now()) END, "
-            "updated_at = now() WHERE user_id = %s AND id = %s",
-            [stage, stage, entered_at, user_id, str(parsed)],
+            "UPDATE job_matches SET stage_changed_at = CASE WHEN stage = %(stage)s "
+            "THEN stage_changed_at ELSE LEAST(coalesce(%(at)s::timestamptz, now()), now()) END, "
+            f"stage = %(stage)s, {STAGE_TIMES}, updated_at = now() "
+            "WHERE user_id = %(user)s AND id = %(id)s",
+            {"stage": stage, "at": entered_at, "user": user_id, "id": str(parsed)},
         )
         return cursor.rowcount > 0
 
@@ -621,9 +641,10 @@ def move_matches_from_stage(
         return []
     with connection.cursor() as cursor:
         cursor.execute(
-            "UPDATE job_matches SET stage = %s, stage_changed_at = now(), updated_at = now() "
-            "WHERE user_id = %s AND id = ANY(%s::uuid[]) AND stage = %s RETURNING id",
-            [to_stage, user_id, ids, from_stage],
+            f"UPDATE job_matches SET stage = %(stage)s, stage_changed_at = now(), {STAGE_TIMES}, "
+            "updated_at = now() WHERE user_id = %(user)s AND id = ANY(%(ids)s::uuid[]) "
+            "AND stage = %(from)s RETURNING id",
+            {"stage": to_stage, "at": None, "user": user_id, "ids": ids, "from": from_stage},
         )
         moved = {str(row[0]) for row in cursor.fetchall()}
     return [match_id for match_id in ids if match_id in moved]

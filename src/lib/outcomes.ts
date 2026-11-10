@@ -109,7 +109,8 @@ export function resumeName(key: string): string {
 
 /**
  * Why the timings cover fewer applications than were sent, one sentence for each reason that
- * applies: moved by hand, moved by hand and since moved on, or sent to a posting with no date.
+ * applies: moved by hand, moved by hand before its time was kept, or sent to a posting with
+ * no date.
  */
 export function timingNotes(timing: OutcomeTimings): string[] {
   const all = timing.allTime;
@@ -117,20 +118,20 @@ export function timingNotes(timing: OutcomeTimings): string[] {
   const notes: string[] = [];
   if (all.byHand === 1) {
     notes.push(
-      "1 application is in Applied because you moved it there by hand, not because it was marked sent on the Apply page. It is timed from when you moved it and has no ready time.",
+      "1 application was moved to Applied by hand, not marked sent on the Apply page. It is timed from when you moved it and has no ready time.",
     );
   } else if (all.byHand > 1) {
     notes.push(
-      `${all.byHand.toLocaleString()} applications are in Applied because you moved them there by hand, not because they were marked sent on the Apply page. They are timed from when you moved them and have no ready time.`,
+      `${all.byHand.toLocaleString()} applications were moved to Applied by hand, not marked sent on the Apply page. They are timed from when you moved them and have no ready time.`,
     );
   }
   if (timing.untimed === 1) {
     notes.push(
-      "1 application was moved to Applied by hand and has since moved on. Foray keeps only when a match entered the stage it is in now, so the time it was sent is gone and it is not timed.",
+      "1 application was moved to Applied by hand and had moved on before Foray kept when a match reaches Applied (November 2026), so it is counted and not timed.",
     );
   } else if (timing.untimed > 1) {
     notes.push(
-      `${timing.untimed.toLocaleString()} applications were moved to Applied by hand and have since moved on. Foray keeps only when a match entered the stage it is in now, so the time they were sent is gone and they are not timed.`,
+      `${timing.untimed.toLocaleString()} applications were moved to Applied by hand and had moved on before Foray kept when a match reaches Applied (November 2026), so they are counted and not timed.`,
     );
   }
   if (undated === 1) {

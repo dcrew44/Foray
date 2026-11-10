@@ -9,26 +9,26 @@ Then the funnel, and the interview rate by source, recommendation, lane and resu
 
 - its application was marked sent on the Apply page (`applications.status = 'submitted'`, which
   keeps `submitted_at` whatever happens to the match afterwards): a *recorded* application; or
-- it is in `applied`, `interviewing` or `offer` now with no such record: one the user moved
-  there *by hand*. It has no ready time, so no seen-to-ready or ready-to-applied span, and its
-  sent time is `job_matches.stage_changed_at`, which is when it was sent only while the match
-  is still in `applied`. Once it moves on, that time is gone: it stays an application, with no
-  timing (`untimed`).
+- it reached `applied` or a later step with no such record: one the user moved there *by
+  hand*. It has no ready time, so no seen-to-ready or ready-to-applied span, and its sent time
+  is when it was moved to Applied (`job_matches.applied_at`), which the match keeps as it
+  moves on.
 
-**What "reached a stage" means.** `job_matches` keeps where a match is now and nothing of where
-it has been, and no event records a move. So `reached()` says only what the present proves: a
-match in `offer` was interviewed and applied to, one in `interviewing` was applied to, and a
-match in `rejected` or `archived` is known to have got as far as `applied` only when its
-application was recorded, and no further. Three things follow, and the page says them:
+**What "reached a stage" means.** A match keeps when it first reached Applied and Interviewing
+(`applied_at`, `interviewing_at`, #94; written with every stage move by
+`matching.queries.STAGE_TIMES`), so `reached()` reads those as well as where the match is now:
+a match in `rejected` that was interviewed still counts as an interview, and one applied to by
+hand and then archived still counts as an application. A recorded application proves `applied`
+wherever the match went afterwards.
 
-- every count past `found` is a floor: a closed match is not counted at the steps it passed;
-- an interview that ended in a rejection is not counted as an interview, so an interview rate
-  can read too low;
-- an application made by hand and then closed is not counted as an application at all, so for
-  someone who tracks by hand a rate can read too high. Recorded applications do not have this
-  problem, which is why the rates by how soon an application went out use only those.
+Matches that moved before those times were kept (November 2026) have no history. The migration
+filled in what the stage a match was in proved; a match that was already closed is known to
+have been applied to only when its application was recorded, and one made by hand that had
+already moved past Applied has no sent time (`untimed`). So for an account older than that,
+the counts past `found` among its old closed matches are floors, and the page says so.
 
-Recording when a match first entered each stage would settle all three; nothing here guesses.
+The rates by how soon an application went out use recorded applications only: when a match was
+moved to Applied by hand is when the user moved a card, not when the application went in.
 
 **Small numbers.** A rate is given only on `MIN_DENOMINATOR` or more (under it the caller gets
 the counts and `None`), a 90th percentile only on `P90_MIN` or more, and the rates by how soon
@@ -105,13 +105,15 @@ _BUCKETS: Final[tuple[BucketName, ...]] = ("same_day", "three_days", "later")
 NOT_REVIEWED: Final = "none"  # a match with no deep review, or one whose verdict does not read
 
 
-def reached(stage: str, recorded: bool) -> int:
+def reached(stage: str, recorded: bool, applied: bool = False, interviewed: bool = False) -> int:
     """How far along `STEPS` a match is known to have got, as an index: from where it is now,
-    and whether its application was recorded as sent. A closed match proves nothing by its
-    stage (module docstring), and a recorded application proves `applied` wherever the match
-    was put afterwards."""
+    whether its application was recorded as sent, and whether it keeps a time it first reached
+    Applied (`applied`) or Interviewing (`interviewed`). A closed match proves nothing by its
+    stage, so those are what say how far it got before it closed."""
     here = STEPS.index(stage) if stage in STEPS else 0
-    return max(here, _APPLIED) if recorded else here
+    if interviewed:
+        return max(here, _INTERVIEWING)
+    return max(here, _APPLIED) if recorded or applied else here
 
 
 def _rate(part: int, whole: int) -> float | None:
@@ -125,11 +127,15 @@ def _rate(part: int, whole: int) -> float | None:
 # `applied` or past it (`test_the_three_reports_count_the_same_applications`). The join brings
 # only this user's application, and only one that was marked sent, so `ready_at` is a recorded
 # application's or NULL: one prepared after a match was moved by hand says nothing about how
-# that application was made. `sent_at` is NULL for one made by hand that has left `applied`.
+# that application was made. `sent_at` is NULL only for one made by hand that had left
+# `applied` before `applied_at` was kept. `interviewed` is true for a match that reached an
+# interview, wherever it is now.
 _SENT: Final = """
     SELECT m.stage,
            a.id IS NOT NULL AS recorded,
+           (m.stage IN ('interviewing', 'offer') OR m.interviewing_at IS NOT NULL) AS interviewed,
            CASE WHEN a.id IS NOT NULL THEN a.submitted_at
+                WHEN m.applied_at IS NOT NULL THEN m.applied_at
                 WHEN m.stage = 'applied' THEN m.stage_changed_at END AS sent_at,
            a.ready_at,
            j.posted_at,
@@ -140,7 +146,12 @@ _SENT: Final = """
            ON a.match_id = m.id AND a.user_id = m.user_id
           AND a.status = 'submitted' AND a.submitted_at IS NOT NULL
     WHERE m.user_id = %(user)s
-      AND (a.id IS NOT NULL OR m.stage IN ('applied', 'interviewing', 'offer'))
+      AND (
+          a.id IS NOT NULL
+          OR m.applied_at IS NOT NULL
+          OR m.interviewing_at IS NOT NULL
+          OR m.stage IN ('applied', 'interviewing', 'offer')
+      )
 """
 
 
@@ -251,16 +262,16 @@ def timing(user_id: str) -> OutcomeTimings:
 # --- interview rate by how soon it went out (#65) ------------------------------------------------
 
 # Recorded applications to dated postings, by the seconds from posted to sent (less than none
-# falls in the first bucket), with how many of each are in an interview stage now.
+# falls in the first bucket), with how many of each reached an interview.
 _BY_SPEED: Final = f"""
     WITH sent AS ({_SENT})
     SELECT CASE WHEN waited < %(same_day)s THEN 'same_day'
                 WHEN waited < %(three_days)s THEN 'three_days'
                 ELSE 'later' END,
            count(*),
-           count(*) FILTER (WHERE stage IN ('interviewing', 'offer'))
+           count(*) FILTER (WHERE interviewed)
     FROM (
-        SELECT stage, extract(epoch FROM sent_at - posted_at) AS waited
+        SELECT interviewed, extract(epoch FROM sent_at - posted_at) AS waited
         FROM sent
         WHERE recorded AND posted_at IS NOT NULL
     ) AS timed
@@ -271,7 +282,7 @@ _BY_SPEED: Final = f"""
 class OutcomeBucket(ApiModel):
     bucket: BucketName
     applications: int
-    interviews: int  # of those, in Interviewing or Offer now
+    interviews: int  # of those, the ones that reached an interview, wherever they are now
     rate: float | None  # null until `enough`, and under `MIN_DENOMINATOR` in this bucket
 
 
@@ -284,8 +295,8 @@ class OutcomeSpeed(ApiModel):
 
 def by_speed(user_id: str) -> OutcomeSpeed:
     """Recorded applications by posted-to-applied time, with how many of each reached an
-    interview. Only recorded ones: an application made by hand keeps its sent time only until
-    it moves on, so it would sit in a bucket exactly as long as it had no interview."""
+    interview. Only recorded ones: when a match was moved to Applied by hand is when the user
+    moved a card, not when the application went in."""
     with connection.cursor() as cursor:
         cursor.execute(
             _BY_SPEED,
@@ -324,7 +335,8 @@ class OutcomeStep(ApiModel):
 class OutcomeClosed(ApiModel):
     stage: Literal["rejected", "archived"]
     matches: int
-    applied: int  # of those, the ones whose application was recorded as sent
+    applied: int  # of those, the ones known to have been applied to
+    interviewed: int  # of those, the ones known to have reached an interview
 
 
 class OutcomeGroup(ApiModel):
@@ -382,13 +394,32 @@ def funnel(user_id: str) -> OutcomeFunnel:
                 default=Value(False),
                 output_field=BooleanField(),
             ),
+            was_applied=Case(
+                When(applied_at__isnull=False, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+            was_interviewed=Case(
+                When(interviewing_at__isnull=False, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
         )
-        .values("stage", "recorded", "job__source", "verdict", "lane", "tailored")
+        .values(
+            "stage",
+            "recorded",
+            "was_applied",
+            "was_interviewed",
+            "job__source",
+            "verdict",
+            "lane",
+            "tailored",
+        )
         .annotate(matches=Count("id"))
         .order_by()
     )
     steps = [0] * len(STEPS)
-    closed = {stage: [0, 0] for stage in _CLOSED}
+    closed = {stage: [0, 0, 0] for stage in _CLOSED}
     splits: dict[str, dict[str, list[int]]] = {
         "source": {},
         "recommendation": {},
@@ -397,12 +428,13 @@ def funnel(user_id: str) -> OutcomeFunnel:
     }
     for row in rows:
         matches, stage = int(row["matches"]), row["stage"]
-        far = reached(stage, row["recorded"])
+        far = reached(stage, row["recorded"], row["was_applied"], row["was_interviewed"])
         for step in range(far + 1):
             steps[step] += matches
         if stage in closed:
             closed[stage][0] += matches
             closed[stage][1] += matches if far >= _APPLIED else 0
+            closed[stage][2] += matches if far >= _INTERVIEWING else 0
         if far < _APPLIED:
             continue
         keys = {
@@ -430,6 +462,7 @@ def funnel(user_id: str) -> OutcomeFunnel:
                 stage=stage,  # pyright: ignore[reportArgumentType] (one of `_CLOSED`)
                 matches=closed[stage][0],
                 applied=closed[stage][1],
+                interviewed=closed[stage][2],
             )
             for stage in _CLOSED
         ],

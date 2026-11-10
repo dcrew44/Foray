@@ -50,6 +50,12 @@ class JobMatch(UserOwned, Timestamped):
     job = models.ForeignKey(Job, models.CASCADE, related_name="matches")
     stage = models.TextField(choices=Stage.choices, default=Stage.FOUND)
     stage_changed_at = models.DateTimeField(db_default=Now())
+    # When the match first reached Applied, and Interviewing (#94): kept when it moves on to
+    # Rejected or Archived, so an interview that ended in a rejection is still an interview,
+    # and cleared when the user moves it back before that step (it was not applied to after
+    # all). Written with the stage, by `queries.STAGE_TIMES`, and by nothing else.
+    applied_at = models.DateTimeField(null=True)
+    interviewing_at = models.DateTimeField(null=True)
     fast_score = models.SmallIntegerField(null=True)
     fast_eval = models.JSONField(null=True)  # FastScore
     deep_score = models.SmallIntegerField(null=True)

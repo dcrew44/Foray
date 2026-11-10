@@ -271,8 +271,10 @@ An issue reads like the ones already there:
 - **An outcome number comes with its count** (`apps/applications/outcomes.py`, #65, #6).
   Django decides when a number is too small to be a rate: `None` under `MIN_DENOMINATOR`, no
   bucket rates before `RATES_AFTER` recorded applications, no 90th percentile under `P90_MIN`.
-  The frontend words what it was sent and never divides. A stage a match "reached" is only what
-  its current stage proves (`reached()`), because nothing records a stage move; say what a new
+  The frontend words what it was sent and never divides. A stage a match "reached" is what
+  `reached()` says: where it is now, a recorded application, and the times it keeps
+  (`job_matches.applied_at`, `interviewing_at`, #94). Those two are written with the stage, so
+  a new statement that moves a stage includes `matching.queries.STAGE_TIMES`. Say what a new
   number cannot know rather than guessing it. A new split is one more key in `funnel()`'s
   grouped count, not another query.
 - **Contacts come from a file the user exported, and go nowhere** (`apps/contacts/`, #63).

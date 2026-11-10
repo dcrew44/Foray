@@ -36,6 +36,7 @@
     "closed": [
       {
         "applied": "number",
+        "interviewed": "number",
         "matches": "number",
         "stage": "string"
       }

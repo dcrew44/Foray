@@ -232,7 +232,9 @@ An issue reads like the ones already there:
   `ResumeVariant` is a name, the title keywords that choose it and a `VariantSpec`: the base
   resume's item ids it shows, their order, and its own headline, summary and bullets. Read one
   only through `compose(base, spec)` over `latest_base_resume`, never by copying facts into
-  it; an id the base no longer has is dropped, and an unnamed item is left out. An application
+  it; an id the base no longer has is dropped, and an unnamed item is left out. A new upload
+  keeps the ids of the items it shares with the resume before it (`edits.carry_ids`), so write
+  a base version from a fresh reading only through `pipeline._save_import`. An application
   asks `resume_for(user_id, title, variant_id)` (deterministic: whole-word keyword matches in
   the title, then the default variant, then the base resume; no model) and prints
   `resume_row(user_id, chosen.variant)`. Rendering goes through `pipeline.render_variant`,

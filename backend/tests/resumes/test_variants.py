@@ -476,9 +476,9 @@ def test_the_pdf_sent_is_the_chosen_variants_own_render(renders: list[Resume]) -
 
 
 @pytest.mark.django_db
-def test_a_variant_that_selects_nothing_from_a_new_upload_is_never_sent() -> None:
-    """A new file is read from scratch, so every item gets a new id and the variants made from
-    the old one name nothing in it."""
+def test_a_variant_that_selects_nothing_from_the_current_resume_is_never_sent() -> None:
+    """A base none of whose items the variant names: an upload keeps the ids of the items it
+    shares with the resume before it (`edits.carry_ids`), so this is a resume that shares none."""
     user = make_user(with_resume=True)
     backend, _ = two_variants(user)
     variants.update_variant(user.pk, backend.id, is_default=True)

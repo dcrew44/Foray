@@ -461,8 +461,13 @@ titles, dates, schools and contact details exist once (invariant 13), a variant 
 contradict the base, and a corrected date or a new bullet reaches every variant that did not
 reword that role. An id the base no longer has is dropped, and an item the spec does not name
 is left out: a variant is an explicit selection, which starts as everything. A new upload is
-read from scratch and gives every item a new id, so the variants made from the old file then
-select nothing; such a variant is never sent, and the Profile page says so until it is edited.
+read from scratch, so `edits.carry_ids` gives each item the id of the one it clearly is in the
+resume before it (the same employer and title, the same school and degree, the same project or
+skill name, compared without case, spaces or punctuation), and a variant keeps showing what it
+showed (#83). Only the id is carried: the words and the provenance are the new file's. An item
+the reader names differently counts as new, and a variant that names nothing in the current
+resume (a different resume altogether) is never sent; the Profile page says so until it is
+edited.
 A variant is made from the base and edited; uploading a separate file as a variant is not
 supported, because a second file would be a second set of facts.
 
